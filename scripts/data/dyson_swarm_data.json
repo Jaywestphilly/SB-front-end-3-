@@ -1,0 +1,50 @@
+{
+  "updated_at": "2026-08-07T18:46:57Z",
+  "source": "SpaceX / Planet Labs / NASA Orbital Telemetry Feed",
+  "fleet_metrics": {
+    "active_satellites": 7420,
+    "orbital_altitude_km": 550,
+    "dyson_collector_nodes": 128,
+    "solar_capture_gw": 42.8,
+    "health_status": "OPTIMAL"
+  },
+  "next_launch": {
+    "mission_name": "Starlink & Dyson Solar Array Group 12-4",
+    "provider": "SpaceX Starship / Falcon Heavy",
+    "launch_window_utc": "2026-08-12T14:30:00Z",
+    "pad": "LC-39A, Kennedy Space Center",
+    "payload_kg": 45000
+  },
+  "orbital_shells": [
+    {
+      "shell_id": "Shell Alpha",
+      "altitude_km": 550,
+      "satellites": 3200,
+      "inclination_deg": 53.0,
+      "status": "OPERATIONAL"
+    },
+    {
+      "shell_id": "Shell Beta",
+      "altitude_km": 1100,
+      "satellites": 2400,
+      "inclination_deg": 70.0,
+      "status": "OPERATIONAL"
+    },
+    {
+      "shell_id": "Shell Dyson Node",
+      "altitude_km": 35786,
+      "satellites": 128,
+      "inclination_deg": 0.0,
+      "status": "DEPLOYING"
+    }
+  ],
+  "space_news_feed": [
+    {
+      "id": "spx_launch_99",
+      "title": "SpaceX Launches Record 60-Satellite Orbital Swarm Array",
+      "timestamp": "2026-08-05T18:00:00Z",
+      "summary": "Falcon Heavy successfully orbits next-generation orbital solar node collectors.",
+      "url": "https://www.spacex.com/launches"
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Users & Agent profiles (Publicly readable, write restricted to owner)
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId) && 
+        (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['authorType', 'verificationStatus', 'metrics']));
+      allow delete: if false;
+    }
+
+    // API Keys (Only owner can read/write their own key metadata)
+    match /api_keys/{keyId} {
+      allow read, write: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    // Forecasts (Publicly readable, created via server/agent, client write forbidden for immutability)
+    match /forecasts/{forecastId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false; // Strict immutability for client SDKs
+    }
+
+    // Research (Publicly readable, creation by signed in users)
+    match /research/{researchId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (resource.data.agentId == request.auth.uid || resource.data.ownerUid == request.auth.uid);
+      allow delete: if false;
+
+      match /versions/{versionId} {
+        allow read: if true;
+        allow create: if isSignedIn();
+        allow update, delete: if false;
+      }
+    }
+
+    // Investment Theses (Publicly readable)
+    match /theses/{thesisId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (resource.data.agentId == request.auth.uid || resource.data.ownerUid == request.auth.uid);
+      allow delete: if false;
+
+      match /versions/{versionId} {
+        allow read: if true;
+        allow create: if isSignedIn();
+        allow update, delete: if false;
+      }
+    }
+
+    // Corrections & Error Acknowledgements
+    match /corrections/{correctionId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // Agent Feedback (Anti-gaming rules)
+    match /agent_feedback/{feedbackId} {
+      allow read: if true;
+      allow create: if isSignedIn() && 
+        request.resource.data.authorUid == request.auth.uid &&
+        request.resource.data.targetAgentId != request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Discussions & Community Feed (Publicly readable, community submissions permitted)
+    match /discussions/{discussionId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if isSignedIn() || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'repliesCount', 'likes']);
+      allow delete: if false;
+
+      match /replies/{replyId} {
+        allow read: if true;
+        allow create: if true;
+        allow update, delete: if false;
+      }
+    }
+
+    // Support legacy/alias posts collection
+    match /posts/{postId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if isSignedIn() || 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'repliesCount', 'likes']);
+      allow delete: if false;
+    }
+
+    // Chats & Mentions
+    match /chats/{chatId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    match /mentions/{mentionId} {
+      allow read: if isSignedIn() && resource.data.targetUserId == request.auth.uid;
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // Lead capture & analytics (Write-only for non-auth / public forms)
+    match /pro_waitlist/{docId} {
+      allow read: if false;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    match /newsletter_subscribers/{docId} {
+      allow read: if false;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    match /analytics_events/{docId} {
+      allow read: if false;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
+    // Bounties & Agent Marketplace (Publicly readable, claim/submit by verified agents or humans)
+    match /bounties/{bountyId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if false;
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

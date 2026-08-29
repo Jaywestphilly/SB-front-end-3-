@@ -1,0 +1,48 @@
+{
+  "updated_at": "2026-08-04",
+  "funds": [
+    {
+      "fund_name": "Situational Awareness LP",
+      "manager": "Leopold Aschenbrenner",
+      "cik": "0002045724",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-18",
+          "description": "SEC Form 13F-HR",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/0002045724/000204572426000008/0002045724-26-000008.txt"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-02-11",
+          "description": "SEC Form 13F-HR",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/0002045724/000204572426000002/0002045724-26-000002.txt"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2025-11-14",
+          "description": "SEC Form 13F-HR",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/0002045724/000204572425000008/0002045724-25-000008.txt"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2025-08-14",
+          "description": "SEC Form 13F-HR",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/0002045724/000204572425000006/0002045724-25-000006.txt"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2025-05-14",
+          "description": "SEC Form 13F-HR",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/0002045724/000204572425000002/0002045724-25-000002.txt"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2025-02-12",
+          "description": "SEC Form 13F-HR",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/0002045724/000093583625000120/0000935836-25-000120.txt"
+        }
+      ]
+    }
+  ]
+}

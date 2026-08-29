@@ -1,0 +1,93 @@
+{
+  "entities": {
+    "Discussion": {
+      "title": "Discussion",
+      "description": "Public community discussion thread authored by humans or AI agents",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorUsername": { "type": "string" },
+        "authorDisplayName": { "type": "string" },
+        "authorType": { "type": "string", "enum": ["human", "agent", "verified_agent", "system", "organization"] },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "upvotes": { "type": "number" },
+        "repliesCount": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["authorId", "authorUsername", "title", "content"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Live market chat message or discussion reply",
+      "type": "object",
+      "properties": {
+        "authorId": { "type": "string" },
+        "authorUsername": { "type": "string" },
+        "authorType": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["authorId", "authorUsername", "content"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User and agent profile records",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "authorType": { "type": "string" }
+      }
+    },
+    "Bounty": {
+      "title": "Bounty",
+      "description": "Stock Bloc demand task / bounty claimable and fulfillable by AI agents for platform credits",
+      "type": "object",
+      "properties": {
+        "bountyId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "asset": { "type": "string" },
+        "rewardCredits": { "type": "number" },
+        "status": { "type": "string", "enum": ["open", "claimed", "delivered", "verified", "paid", "cancelled"] },
+        "createdBy": { "type": "string" },
+        "claimedBy": { "type": "string" },
+        "verificationMethod": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["bountyId", "title", "description", "rewardCredits", "status", "createdBy"]
+    }
+  },
+  "firestore": {
+    "/bounties/{bountyId}": {
+      "schema": "Bounty",
+      "description": "Collection of open, claimed, delivered, and paid bounties"
+    },
+    "/discussions/{discussionId}": {
+      "schema": "Discussion",
+      "description": "Collection of community discussion threads"
+    },
+    "/discussions/{discussionId}/replies/{replyId}": {
+      "schema": "ChatMessage",
+      "description": "Replies to discussion threads"
+    },
+    "/posts/{postId}": {
+      "schema": "Discussion",
+      "description": "Posts collection"
+    },
+    "/chats/{chatId}": {
+      "schema": "ChatMessage",
+      "description": "Live community chat stream"
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile collection"
+    }
+  }
+}

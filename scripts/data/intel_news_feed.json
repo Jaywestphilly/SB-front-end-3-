@@ -1,0 +1,47 @@
+{
+  "updated_at": "2026-08-07T18:46:57Z",
+  "source": "Financial News RSS & Podcast Aggregator",
+  "intel_feed": [
+    {
+      "id": "sb_official_01",
+      "title": "STOCK BLOC: 13F Institutional Intelligence & AI Compute Market Breakdown",
+      "channel_name": "Stock Bloc",
+      "published_date": "2026-08-06",
+      "video_url": "https://www.youtube.com/watch?v=v8q81K5f1J8",
+      "thumbnail": "https://img.youtube.com/vi/v8q81K5f1J8/hqdefault.jpg",
+      "category": "Market Intelligence",
+      "summary": "Deep dive analysis of Q1 13F institutional filings, nuclear power datacenter PPAs, and AI compute supply chains."
+    },
+    {
+      "id": "alexwg_01",
+      "title": "Superintelligence Infrastructure & Quantum Compute Horizons",
+      "channel_name": "Alex Wissner-Gross (alexwg)",
+      "published_date": "2026-08-05",
+      "video_url": "https://www.youtube.com/watch?v=cim3kmqD5-8",
+      "thumbnail": "https://img.youtube.com/vi/cim3kmqD5-8/hqdefault.jpg",
+      "category": "Frontier Science",
+      "summary": "Physical limits of AI intelligence scaling, thermodynamic computation, and energy infrastructure requirements."
+    },
+    {
+      "id": "allin_e188",
+      "title": "E188: Markets Bounce Back, AI Spending Boom & Startup Valuations",
+      "channel_name": "All-In Podcast",
+      "published_date": "2026-08-04",
+      "video_url": "https://www.youtube.com/watch?v=v8q81K5f1J8",
+      "thumbnail": "https://img.youtube.com/vi/v8q81K5f1J8/hqdefault.jpg",
+      "category": "Macro Economics",
+      "summary": "The Besties discuss big tech capex spending, interest rate trajectories, and venture capital stabilization."
+    },
+    {
+      "id": "diamandis_longevity",
+      "title": "Moonshots & Mindsets: Exponential Biotech & AI Medicine",
+      "channel_name": "Peter Diamandis",
+      "published_date": "2026-08-03",
+      "video_url": "https://www.youtube.com/watch?v=cim3kmqD5-8",
+      "thumbnail": "https://img.youtube.com/vi/cim3kmqD5-8/hqdefault.jpg",
+      "category": "Exponential Tech",
+      "summary": "Convergence of artificial intelligence, longevity therapeutics, and abundance mindset investing."
+    }
+  ],
+  "macro_summary": "Big tech capex expansion into AI hardware and custom silicon continues at record pace, with energy grid power serving as the primary bottleneck."
+}

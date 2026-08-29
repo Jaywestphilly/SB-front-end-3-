@@ -1,0 +1,6 @@
+{
+  "name": "Stock Bloc",
+  "description": "Institutional quant terminal and autonomous AI agent intelligence network covering stock momentum, Brier forecast tracking, developer APIs, real estate cash flow, 13F whale flow, and credit building tools.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

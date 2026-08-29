@@ -1,0 +1,150 @@
+{
+  "updated_at": "2026-08-07T18:46:57Z",
+  "source": "Polygon.io / Yahoo Finance Quant Watchlist Feed",
+  "watchlist": [
+    {
+      "symbol": "SPCX",
+      "price": 125.33,
+      "change": 10.26,
+      "percent_change": 8.92,
+      "sector": "Frontier Space & AI",
+      "analysis_summary": "Top Conviction: Liquid exposure vehicle to SpaceX orbital launches, Starlink expansion, and pre-IPO AI compute giants.",
+      "sparkline": [
+        113.5,
+        116.41,
+        112.55,
+        112.2,
+        108.37,
+        114.53,
+        125.33
+      ],
+      "pinned": true
+    },
+    {
+      "symbol": "NVDA",
+      "price": 211.94,
+      "change": 5.1,
+      "percent_change": 2.47,
+      "sector": "AI Semiconductors",
+      "analysis_summary": "Core Infrastructure: Primary GPU compute provider powering frontier LLM training and hyperscaler data center buildouts.",
+      "sparkline": [
+        196.51,
+        197.01,
+        190.01,
+        195.04,
+        200.75,
+        206.64,
+        211.94
+      ],
+      "pinned": false
+    },
+    {
+      "symbol": "AAPL",
+      "price": 309.38,
+      "change": -23.64,
+      "percent_change": -7.1,
+      "sector": "Edge AI & Consumer Hardware",
+      "analysis_summary": "Edge AI Thesis: Apple Intelligence integration driving multi-year hardware refresh cycle across global device ecosystem.",
+      "sparkline": [
+        336.91,
+        340.08,
+        338.19,
+        329.85,
+        321.41,
+        311.5,
+        309.38
+      ],
+      "pinned": false
+    },
+    {
+      "symbol": "TSLA",
+      "price": 312.45,
+      "change": 14.8,
+      "percent_change": 4.97,
+      "sector": "Autonomous & Robotics",
+      "analysis_summary": "Autonomous Fleet Thesis: Full Self-Driving v13 deployment and Optimus humanoid robotics scaling across gigafactories.",
+      "sparkline": [
+        285.1,
+        290.4,
+        298.2,
+        302.5,
+        305.0,
+        310.2,
+        312.45
+      ],
+      "pinned": false
+    },
+    {
+      "symbol": "PLTR",
+      "price": 78.2,
+      "change": 3.45,
+      "percent_change": 4.62,
+      "sector": "Enterprise AI Software",
+      "analysis_summary": "AIP Execution: Artificial Intelligence Platform commercial expansion driving exponential revenue growth in US enterprise & defense.",
+      "sparkline": [
+        68.5,
+        71.2,
+        73.0,
+        74.8,
+        76.1,
+        77.5,
+        78.2
+      ],
+      "pinned": false
+    },
+    {
+      "symbol": "MSFT",
+      "price": 465.12,
+      "change": 6.8,
+      "percent_change": 1.48,
+      "sector": "Cloud & Enterprise AI",
+      "analysis_summary": "Enterprise Monopoly: Azure AI cloud expansion and Copilot integration across Microsoft 365 enterprise installed base.",
+      "sparkline": [
+        448.0,
+        452.1,
+        455.0,
+        458.3,
+        460.9,
+        463.2,
+        465.12
+      ],
+      "pinned": false
+    },
+    {
+      "symbol": "VST",
+      "price": 148.6,
+      "change": 8.25,
+      "percent_change": 5.88,
+      "sector": "Nuclear Power & Utilities",
+      "analysis_summary": "Hyperscaler Energy Moat: Nuclear power provider locking in long-term power purchase agreements directly for AI datacenters.",
+      "sparkline": [
+        128.0,
+        132.5,
+        136.1,
+        140.0,
+        142.8,
+        145.4,
+        148.6
+      ],
+      "pinned": false
+    },
+    {
+      "symbol": "ASTS",
+      "price": 34.5,
+      "change": 2.8,
+      "percent_change": 8.83,
+      "sector": "Space Cellular Broadband",
+      "analysis_summary": "Direct-to-Cellular Moat: BlueBird satellite constellation commercial launch providing global cellular broadband.",
+      "sparkline": [
+        26.4,
+        28.1,
+        30.0,
+        31.5,
+        32.8,
+        33.9,
+        34.5
+      ],
+      "pinned": false
+    }
+  ]
+}

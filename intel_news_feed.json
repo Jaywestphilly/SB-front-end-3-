@@ -1,0 +1,59 @@
+{
+  "updated_at": "2026-08-22T22:14:51Z",
+  "source": "Financial News RSS & Podcast Aggregator",
+  "intel_feed": [
+    {
+      "id": "alexwg_01",
+      "title": "Welcome to August 12, 2026",
+      "channel_name": "Alexander Wissner-Gross",
+      "published_date": "2026-08-12",
+      "video_id": "4WOBXjHR1i0",
+      "video_url": "https://www.youtube.com/watch?v=4WOBXjHR1i0",
+      "embed_url": "https://www.youtube.com/embed/4WOBXjHR1i0",
+      "watch_url": "https://www.youtube.com/watch?v=4WOBXjHR1i0",
+      "thumbnail": "https://img.youtube.com/vi/4WOBXjHR1i0/hqdefault.jpg",
+      "category": "Frontier Science",
+      "summary": "The Innermost Loop with Dr. Alex Wissner-Gross. Exploring frontier AI, synthetic minds, and physical computation."
+    },
+    {
+      "id": "allin_e188",
+      "title": "Rahm Emanuel: Trump's Foreign Policy, China, Europe's Decline, Immigration & DSA vs Democrats",
+      "channel_name": "All-In Podcast",
+      "published_date": "2026-08-11",
+      "video_id": "ViqYWhLimGg",
+      "video_url": "https://www.youtube.com/watch?v=ViqYWhLimGg",
+      "embed_url": "https://www.youtube.com/embed/ViqYWhLimGg",
+      "watch_url": "https://www.youtube.com/watch?v=ViqYWhLimGg",
+      "thumbnail": "https://img.youtube.com/vi/ViqYWhLimGg/hqdefault.jpg",
+      "category": "Macro Economics",
+      "summary": "The Besties discuss market selloffs, hedge fund margin calls, AI safety policy, and macroeconomic trends."
+    },
+    {
+      "id": "diamandis_longevity",
+      "title": "Bernie Demands the Labs Stop, Wall Street Turns GPUs Into Bonds, Grok 4.7 Takes #1 ft. Emad Mostaque",
+      "channel_name": "Peter Diamandis",
+      "published_date": "2026-08-10",
+      "video_id": "JRy1RT7gmnw",
+      "video_url": "https://www.youtube.com/watch?v=JRy1RT7gmnw",
+      "embed_url": "https://www.youtube.com/embed/JRy1RT7gmnw",
+      "watch_url": "https://www.youtube.com/watch?v=JRy1RT7gmnw",
+      "thumbnail": "https://img.youtube.com/vi/JRy1RT7gmnw/hqdefault.jpg",
+      "category": "Exponential Tech",
+      "summary": "Peter Diamandis examines AI safety myths, agentic AI frameworks, and accelerating technological convergence."
+    },
+    {
+      "id": "sb_official_01",
+      "title": "Will AI make me rich or unemployed?",
+      "channel_name": "Stock Bloc",
+      "published_date": "2026-08-06",
+      "video_id": "r9mDbMcMemg",
+      "video_url": "https://www.youtube.com/watch?v=r9mDbMcMemg",
+      "embed_url": "https://www.youtube.com/embed/r9mDbMcMemg",
+      "watch_url": "https://www.youtube.com/watch?v=r9mDbMcMemg",
+      "thumbnail": "https://img.youtube.com/vi/r9mDbMcMemg/hqdefault.jpg",
+      "category": "Market Intelligence",
+      "summary": "Official video from Stock Bloc (@stockbloc). Analyzing AI's economic impact on personal wealth building and workforce productivity."
+    }
+  ],
+  "macro_summary": "Big tech capex expansion into AI hardware and custom silicon continues at record pace, with energy grid power serving as the primary bottleneck."
+}

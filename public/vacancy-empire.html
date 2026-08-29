@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vacancy Empire | StockBloc Real Estate</title>
+<style>
+  :root {
+    --bg: #020912;
+    --panel: #0a1424;
+    --border: rgba(6, 182, 212, 0.25);
+    --border-hover: rgba(6, 182, 212, 0.6);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --green: #00ff9d;
+    --red: #ff4757;
+    --yellow: #ffa502;
+    --teal: #00e5ff;
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font); }
+  body { background-color: var(--bg); color: var(--text); overflow-y: scroll; padding: 10px; }
+  
+  .container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+  
+  /* Top HUD */
+  .hud { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; background: var(--panel); padding: 20px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+  .hud-item { display: flex; flex-direction: column; }
+  .hud-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .hud-value { font-size: 1.5rem; font-weight: 800; color: var(--text); }
+  .hud-value.positive { color: var(--green); text-shadow: 0 0 10px rgba(0,255,157,0.3); }
+  .hud-value.negative { color: var(--red); text-shadow: 0 0 10px rgba(255,71,87,0.3); }
+  .hud-value.highlight { color: var(--teal); }
+  @keyframes flashGreen {
+    0% { color: #fff; text-shadow: 0 0 30px var(--green); transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+  @keyframes pulseRed {
+    0% { color: #fff; text-shadow: 0 0 30px var(--red); transform: scale(0.95); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  .hud-value { transition: transform 0.2s; display: inline-block; }
+  .hud-value.flash-green { animation: flashGreen 0.6s ease-out; }
+  .hud-value.pulse-red { animation: pulseRed 0.6s ease-in-out; }
+
+  
+  button { background: var(--panel); color: var(--teal); border: 1px solid var(--teal); padding: 10px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+  button:hover:not(:disabled) { background: var(--teal); color: var(--bg); box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; border-color: var(--muted); color: var(--muted); }
+  button.action-btn { font-size: 0.8rem; padding: 6px 10px; margin-top: 5px; width: 100%; }
+  
+  .advance-btn { background: var(--teal); color: var(--bg); font-size: 1.1rem; padding: 15px; border-radius: 8px; border: none; box-shadow: 0 0 20px rgba(0, 229, 255, 0.2); }
+  .advance-btn:hover { box-shadow: 0 0 30px rgba(0, 229, 255, 0.6); transform: translateY(-2px); }
+
+  /* Panels */
+  .main-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+  @media (min-width: 900px) { .main-grid { grid-template-columns: 1fr 1fr; } }
+  
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .panel-title { font-size: 1.2rem; font-weight: 800; color: var(--teal); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+  
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
+  
+  .property-card { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 8px; padding: 15px; transition: transform 0.2s, border-color 0.2s; position: relative; overflow: hidden; }
+  .property-card:hover { transform: translateY(-2px); border-color: var(--border-hover); }
+  .property-title { font-weight: bold; font-size: 1.1rem; margin-bottom: 5px; color: var(--text); }
+  .property-type { font-size: 0.75rem; color: var(--muted); margin-bottom: 10px; }
+  
+  .stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; }
+  .stat-label { color: var(--muted); }
+  .stat-val { font-weight: bold; }
+  
+  .color-green { color: var(--green); }
+  .color-yellow { color: var(--yellow); }
+  .color-red { color: var(--red); }
+  
+  /* Events */
+  .event-log { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem; }
+  .event-item { padding: 8px 12px; border-radius: 4px; background: rgba(255,255,255,0.05); border-left: 3px solid var(--teal); }
+  .event-item.bad { border-left-color: var(--red); }
+  .event-item.good { border-left-color: var(--green); }
+  
+  /* Screens */
+  .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(2, 9, 18, 0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; padding: 20px; text-align: center; }
+  .overlay h1 { font-size: 3rem; color: var(--teal); margin-bottom: 20px; text-shadow: 0 0 20px rgba(0,229,255,0.5); }
+  .overlay p { max-width: 600px; color: var(--muted); margin-bottom: 30px; font-size: 1.1rem; }
+  .overlay-actions { display: flex; gap: 20px; }
+  
+  .hidden { display: none !important; }
+
+  /* Chart */
+  .chart-container { height: 150px; width: 100%; display: flex; align-items: flex-end; gap: 2px; padding-top: 10px; }
+  .chart-bar { flex: 1; background: var(--teal); min-width: 2px; opacity: 0.8; transition: height 0.3s; position: relative; }
+  .chart-bar:hover::after { content: attr(data-val); position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--teal); padding: 2px 6px; font-size: 0.7rem; border-radius: 4px; z-index: 10; white-space: nowrap; }
+
+  /* Range Slider */
+  input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin: 10px 0; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; rounded: 50%; background: var(--teal); cursor: pointer; margin-top: -6px; border-radius: 50%; }
+  input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div id="startScreen" class="overlay">
+  <h1>VACANCY EMPIRE</h1>
+  <p>StockBloc Real Estate Edition</p>
+  <p style="font-size: 0.95rem;">You start with $85,000. Buy properties, manage rents, and survive dynamic markets. Vacancy is your enemy. Grow your net worth to build your empire.</p>
+  <div class="overlay-actions">
+    <button onclick="startGame(true)">New Game</button>
+    <button id="continueBtn" class="hidden" onclick="startGame(false)">Continue</button>
+  </div>
+</div>
+
+<div id="endScreen" class="overlay hidden">
+  <h1 id="endTitle">BANKRUPT</h1>
+  <p id="endDesc">You ran out of cash.</p>
+  <div class="overlay-actions">
+    <button onclick="startGame(true)">Try Again</button>
+  </div>
+</div>
+
+<div class="container hidden" id="gameUI">
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-item">
+      <span class="hud-label">Cash</span>
+      <span class="hud-value positive" id="uiCash">$0</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">Net Worth</span>
+      <span class="hud-value highlight" id="uiNW">$0</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">Mo. Cash Flow</span>
+      <span class="hud-value" id="uiCF">$0</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">Avg Vacancy</span>
+      <span class="hud-value" id="uiVac">0%</span>
+    </div>
+    <div class="hud-item">
+      <span class="hud-label">Date</span>
+      <span class="hud-value" style="font-size: 1.2rem; margin-top: auto;" id="uiDate">Month 1, Year 1</span>
+    </div>
+    <div class="hud-item" style="justify-content: center;">
+      <button class="advance-btn" onclick="advanceMonth()">Advance Month ➔</button>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <!-- Portfolio -->
+    <div class="panel" style="grid-column: 1 / -1;">
+      <div class="panel-title">
+        <span>Your Portfolio</span>
+        <span id="uiPropCount" style="font-size: 0.9rem; color: var(--muted); font-weight: normal;">0 Properties</span>
+      </div>
+      <div class="cards-grid" id="portfolioGrid">
+        <p style="color: var(--muted); grid-column: 1/-1;">You own no properties. Buy one from the market.</p>
+      </div>
+    </div>
+    
+    <!-- Market -->
+    <div class="panel">
+      <div class="panel-title">Real Estate Market <span id="marketTrend" style="font-size: 0.8rem;"></span></div>
+      <div class="cards-grid" id="marketGrid" style="grid-template-columns: 1fr;"></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <!-- Chart -->
+      <div class="panel">
+        <div class="panel-title">Net Worth History</div>
+        <div class="chart-container" id="nwChart"></div>
+      </div>
+      <!-- Events -->
+      <div class="panel" style="flex: 1;">
+        <div class="panel-title">Activity Log</div>
+        <div class="event-log" id="eventLog"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Formatters
+const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+const pct = (val) => (val * 100).toFixed(1) + '%';
+
+// Audio
+let audioCtx;
+const playTone = (freq, type, duration, vol=0.1) => {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type; osc.frequency.value = freq;
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start();
+    gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+    setTimeout(() => { osc.stop(); }, duration * 1000);
+  } catch(e) {}
+};
+const sfx = {
+  buy: () => playTone(600, 'sine', 0.2),
+  cash: () => playTone(800, 'square', 0.1),
+  bad: () => playTone(150, 'sawtooth', 0.4, 0.2),
+  good: () => playTone(500, 'triangle', 0.3)
+};
+
+// Game State
+let state = {};
+const defaultState = {
+  cash: 85000,
+  netWorth: 85000,
+  month: 1,
+  year: 2024,
+  portfolio: [],
+  market: [],
+  events: [],
+  history: [],
+  ecoPhase: 0, // 0: expansion, 1: peak, 2: contraction, 3: trough
+  ecoTimer: 0
+};
+
+// Names & Types
+const propNames = ["Oakwood", "Maple", "Pine", "Cedar", "Elm", "River", "Sunset", "Highland", "Valley", "Ridge"];
+const propTypes = ["Single Family", "Duplex", "Quadplex", "Townhouse", "Condo"];
+
+const r = (min, max) => Math.random() * (max - min) + min;
+const rInt = (min, max) => Math.floor(r(min, max + 1));
+
+function generateProperty() {
+  const isMulti = Math.random() > 0.7;
+  const basePrice = isMulti ? rInt(200000, 600000) : rInt(80000, 300000);
+  const condition = rInt(4, 10);
+  const loc = rInt(5, 10);
+  
+  // Cap rate typically 4% to 10%
+  const cap = r(0.04, 0.10);
+  const annualNOI = basePrice * cap;
+  const monthlyRent = Math.round((annualNOI / 12) / 0.6); // roughly assuming 40% expenses
+  
+  return {
+    id: Date.now() + Math.random().toString(36).substr(2, 5),
+    name: propNames[rInt(0, propNames.length-1)] + (isMulti ? " Apartments" : " House"),
+    type: propTypes[rInt(0, propTypes.length-1)],
+    price: basePrice,
+    baseValue: basePrice, // tracks underlying value
+    rent: monthlyRent,
+    marketRent: monthlyRent,
+    vacancy: r(0.05, 0.15),
+    condition,
+    loc,
+    mortgage: 0,
+    monthlyPayment: 0
+  };
+}
+
+function refreshMarket() {
+  state.market = [];
+  const count = rInt(4, 6);
+  for(let i=0; i<count; i++) state.market.push(generateProperty());
+}
+
+function logEvent(msg, type = 'neutral') {
+  state.events.unshift({ msg, type, month: state.month, year: state.year });
+  if (state.events.length > 50) state.events.pop();
+  if (type === 'bad') sfx.bad();
+  if (type === 'good') sfx.good();
+}
+
+function getPropValue(p) {
+  // Value affected by economy and condition
+  let ecoMult = 1.0;
+  if(state.ecoPhase === 0) ecoMult = 1.05;
+  if(state.ecoPhase === 1) ecoMult = 1.15;
+  if(state.ecoPhase === 2) ecoMult = 0.95;
+  if(state.ecoPhase === 3) ecoMult = 0.85;
+  return Math.round(p.baseValue * ecoMult * (0.8 + (p.condition/10)*0.2));
+}
+
+function getPropEquity(p) {
+  return getPropValue(p) - p.mortgage;
+}
+
+function calculateNetWorth() {
+  let nw = state.cash;
+  state.portfolio.forEach(p => nw += getPropEquity(p));
+  return nw;
+}
+
+function calculateCashFlow() {
+  let cf = 0;
+  state.portfolio.forEach(p => {
+    const inc = p.rent * (1 - p.vacancy);
+    const exp = p.monthlyPayment + (getPropValue(p) * 0.015 / 12) /* taxes */ + (getPropValue(p) * 0.01 / 12) /* insurance/maint */;
+    cf += (inc - exp);
+  });
+  return Math.round(cf);
+}
+
+// Actions
+window.buyProperty = (id, leverage) => {
+  const p = state.market.find(x => x.id === id);
+  if (!p) return;
+  
+  const downPaymentPct = leverage ? 0.25 : 1.0;
+  const downPayment = p.price * downPaymentPct;
+  const closingCosts = p.price * 0.03;
+  const totalCashNeeded = downPayment + closingCosts;
+  
+  if (state.cash < totalCashNeeded) {
+    alert("Not enough cash!");
+    return;
+  }
+  
+  state.cash -= totalCashNeeded;
+  p.mortgage = p.price - downPayment;
+  // 6% interest 30 yr roughly
+  if (p.mortgage > 0) {
+    const r = 0.06 / 12;
+    const n = 360;
+    p.monthlyPayment = p.mortgage * (r * Math.pow(1+r, n)) / (Math.pow(1+r, n) - 1);
+  } else {
+    p.monthlyPayment = 0;
+  }
+  
+  state.market = state.market.filter(x => x.id !== id);
+  state.portfolio.push(p);
+  logEvent(`Bought ${p.name} for ${fmt.format(p.price)}.`, 'good');
+  sfx.buy();
+  updateUI();
+  saveGame();
+};
+
+window.sellProperty = (id) => {
+  const p = state.portfolio.find(x => x.id === id);
+  if(!p) return;
+  const val = getPropValue(p);
+  const closingCosts = val * 0.06;
+  const proceeds = val - p.mortgage - closingCosts;
+  state.cash += proceeds;
+  state.portfolio = state.portfolio.filter(x => x.id !== id);
+  logEvent(`Sold ${p.name} for ${fmt.format(val)}. Netted ${fmt.format(proceeds)}.`, proceeds > 0 ? 'good' : 'bad');
+  sfx.cash();
+  updateUI();
+  saveGame();
+};
+
+window.changeRent = (id, el) => {
+  const p = state.portfolio.find(x => x.id === id);
+  if(p) {
+    p.rent = parseInt(el.value);
+    document.getElementById(`rent_val_${id}`).innerText = fmt.format(p.rent);
+    saveGame();
+  }
+};
+
+window.renovate = (id) => {
+  const p = state.portfolio.find(x => x.id === id);
+  if(!p) return;
+  const cost = 5000;
+  if(state.cash < cost) { alert("Not enough cash!"); return; }
+  if(p.condition >= 10) { alert("Already in perfect condition!"); return; }
+  state.cash -= cost;
+  p.condition = Math.min(10, p.condition + 2);
+  p.vacancy = Math.max(0, p.vacancy - 0.05); // reduces vacancy immediately
+  logEvent(`Renovated ${p.name} for $5,000. Condition improved.`, 'neutral');
+  updateUI();
+};
+
+window.marketing = (id) => {
+  const p = state.portfolio.find(x => x.id === id);
+  if(!p) return;
+  const cost = 500;
+  if(state.cash < cost) return;
+  state.cash -= cost;
+  p.vacancy = Math.max(0, p.vacancy - 0.10);
+  logEvent(`Spent $500 on marketing for ${p.name}.`, 'neutral');
+  updateUI();
+};
+
+window.advanceMonth = () => {
+  sfx.cash();
+  
+  // Economic Engine
+  state.ecoTimer++;
+  if(state.ecoTimer > rInt(12, 36)) {
+    state.ecoTimer = 0;
+    state.ecoPhase = (state.ecoPhase + 1) % 4;
+    const phases = ["Expansion", "Peak", "Contraction", "Trough"];
+    logEvent(`Economy shifted to ${phases[state.ecoPhase]} phase.`, state.ecoPhase < 2 ? 'good' : 'bad');
+  }
+  
+  let monthlyTotal = 0;
+  
+  state.portfolio.forEach(p => {
+    // Vacancy logic: if rent > market, vacancy drifts up. If < market, drifts down.
+    // Market rent drifts slightly with economy
+    let ecoMult = [1.02, 1.05, 0.98, 0.95][state.ecoPhase];
+    p.marketRent = p.marketRent * ecoMult * r(0.99, 1.01);
+    
+    let rentRatio = p.rent / p.marketRent;
+    let targetVacancy = (rentRatio - 0.8) * 0.5; // if rent is 20% below market, 0% vac. if equal, 10%. if 20% over, 20%.
+    if(targetVacancy < 0) targetVacancy = 0;
+    if(targetVacancy > 1) targetVacancy = 1;
+    
+    // adjust condition
+    p.condition -= 0.05; 
+    if(p.condition < 5) targetVacancy += 0.1;
+    
+    // drift vacancy towards target
+    p.vacancy = p.vacancy * 0.7 + targetVacancy * 0.3;
+    
+    // Cap at bounds
+    p.vacancy = Math.max(0, Math.min(1, p.vacancy));
+    
+    const inc = p.rent * (1 - p.vacancy);
+    const exp = p.monthlyPayment + (getPropValue(p) * 0.015 / 12) + (getPropValue(p) * 0.01 / 12);
+    
+    let net = inc - exp;
+    
+    // Random Events per property
+    if(Math.random() < 0.05) {
+      const dmg = rInt(500, 3000);
+      net -= dmg;
+      logEvent(`Unexpected repairs at ${p.name} cost ${fmt.format(dmg)}.`, 'bad');
+    }
+    
+    if(p.mortgage > 0) {
+      // principal paydown (simplified)
+      p.mortgage -= p.monthlyPayment * 0.2;
+    }
+    
+    monthlyTotal += net;
+  });
+  
+  state.cash += monthlyTotal;
+  state.month++;
+  if(state.month > 12) { state.month = 1; state.year++; }
+  
+  state.netWorth = calculateNetWorth();
+  state.history.push(state.netWorth);
+  if(state.history.length > 24) state.history.shift();
+  
+  // Market refresh
+  if(Math.random() < 0.3 || state.market.length < 3) refreshMarket();
+  
+  // Bankruptcy check
+  if(state.cash < 0 && state.portfolio.length === 0) {
+    document.getElementById('endScreen').classList.remove('hidden');
+    document.getElementById('gameUI').classList.add('hidden');
+    localStorage.removeItem('vacancyEmpireSave');
+    return;
+  }
+  if(state.cash < 0) {
+    logEvent(`WARNING: NEGATIVE CASH. Sell a property to avoid bankruptcy!`, 'bad');
+  }
+  
+  updateUI();
+  saveGame();
+};
+
+function getVacancyColor(v) {
+  if (v < 0.05) return 'color-green';
+  if (v < 0.15) return 'color-yellow';
+  return 'color-red';
+}
+
+
+function animateValue(id, oldVal, newVal) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (newVal > oldVal) {
+    el.classList.remove('flash-green', 'pulse-red');
+    void el.offsetWidth; // trigger reflow
+    el.classList.add('flash-green');
+  } else if (newVal < oldVal) {
+    el.classList.remove('flash-green', 'pulse-red');
+    void el.offsetWidth;
+    el.classList.add('pulse-red');
+  }
+}
+
+let lastCash = 0;
+let lastCF = 0;
+let lastNW = 0;
+
+function updateUI() {
+
+
+  if (state.cash !== lastCash) animateValue('uiCash', lastCash, state.cash);
+  const currentCF = calculateCashFlow();
+  if (currentCF !== lastCF) animateValue('uiCF', lastCF, currentCF);
+  if (state.netWorth !== lastNW) animateValue('uiNW', lastNW, state.netWorth);
+
+  lastCash = state.cash;
+  lastCF = currentCF;
+  lastNW = state.netWorth;
+
+  document.getElementById('uiCash').innerText = fmt.format(state.cash);
+
+  const uiCashEl = document.getElementById('uiCash');
+  uiCashEl.classList.toggle('positive', state.cash >= 0);
+  uiCashEl.classList.toggle('negative', state.cash < 0);
+  
+  document.getElementById('uiNW').innerText = fmt.format(state.netWorth);
+  document.getElementById('uiCF').innerText = fmt.format(calculateCashFlow());
+  const uiCFEl = document.getElementById('uiCF');
+  uiCFEl.classList.toggle('positive', currentCF >= 0);
+  uiCFEl.classList.toggle('negative', currentCF < 0);
+  
+  const avgVac = state.portfolio.length ? (state.portfolio.reduce((s, p) => s + p.vacancy, 0) / state.portfolio.length) : 0;
+  document.getElementById('uiVac').innerText = pct(avgVac);
+  document.getElementById('uiVac').className = `hud-value ${getVacancyColor(avgVac)}`;
+  
+  document.getElementById('uiDate').innerText = `Month ${state.month}, ${state.year}`;
+  document.getElementById('uiPropCount').innerText = `${state.portfolio.length} Properties`;
+  
+  const phases = ["Expansion 🚀", "Peak ⛰️", "Contraction 📉", "Trough ❄️"];
+  document.getElementById('marketTrend').innerText = `Cycle: ${phases[state.ecoPhase]}`;
+  
+  // Portfolio
+  const pGrid = document.getElementById('portfolioGrid');
+  pGrid.innerHTML = '';
+  if(state.portfolio.length === 0) {
+    pGrid.innerHTML = '<p style="color: var(--muted); grid-column: 1/-1;">You own no properties. Buy one from the market.</p>';
+  } else {
+    state.portfolio.forEach(p => {
+      const val = getPropValue(p);
+      const inc = p.rent * (1 - p.vacancy);
+      const exp = p.monthlyPayment + (val * 0.025 / 12);
+      const net = inc - exp;
+      
+      pGrid.innerHTML += `
+        <div class="property-card">
+          <div class="property-title">${p.name}</div>
+          <div class="property-type">${p.type} • Cond: ${p.condition.toFixed(1)}/10</div>
+          <div class="stat-row"><span class="stat-label">Value</span><span class="stat-val">${fmt.format(val)}</span></div>
+          <div class="stat-row"><span class="stat-label">Mortgage</span><span class="stat-val" style="color:var(--red)">${fmt.format(p.mortgage)}</span></div>
+          <div class="stat-row"><span class="stat-label">Vacancy</span><span class="stat-val ${getVacancyColor(p.vacancy)}">${pct(p.vacancy)}</span></div>
+          <div class="stat-row"><span class="stat-label">Cash Flow</span><span class="stat-val ${net >= 0 ? 'color-green' : 'color-red'}">${fmt.format(net)}/mo</span></div>
+          
+          <div style="margin-top: 15px; margin-bottom: 5px; font-size: 0.8rem; color: var(--muted);">Set Rent: <span id="rent_val_${p.id}" class="color-green">${fmt.format(p.rent)}</span></div>
+          <input type="range" min="${Math.floor(p.marketRent*0.5)}" max="${Math.floor(p.marketRent*1.5)}" step="50" value="${p.rent}" onchange="changeRent('${p.id}', this)">
+          <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--muted); margin-bottom:10px;">
+            <span>Below Mkt</span><span>Above Mkt</span>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+            <button class="action-btn" onclick="marketing('${p.id}')">Market ($500)</button>
+            <button class="action-btn" onclick="renovate('${p.id}')">Reno ($5K)</button>
+          </div>
+          <button class="action-btn" style="border-color: var(--red); color: var(--red);" onclick="sellProperty('${p.id}')">Sell Property</button>
+        </div>
+      `;
+    });
+  }
+  
+  // Market
+  const mGrid = document.getElementById('marketGrid');
+  mGrid.innerHTML = '';
+  state.market.forEach(p => {
+    const downCash = p.price * 1.03;
+    const downLever = (p.price * 0.25) + (p.price * 0.03);
+    
+    mGrid.innerHTML += `
+      <div class="property-card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px;">
+          <div class="property-title">${p.name} <span style="font-size: 0.8rem; font-weight: normal; color: var(--muted);">${p.type}</span></div>
+          <div style="display:flex; gap: 15px; font-size: 0.85rem; color: var(--muted); margin-top: 5px;">
+            <span>Price: <strong>${fmt.format(p.price)}</strong></span>
+            <span>Pot. Rent: <strong>${fmt.format(p.marketRent)}</strong></span>
+            <span>Cond: <strong>${p.condition}/10</strong></span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button class="action-btn" onclick="buyProperty('${p.id}', true)" ${state.cash < downLever ? 'disabled' : ''}>25% Down<br>${fmt.format(downLever)}</button>
+          <button class="action-btn" onclick="buyProperty('${p.id}', false)" ${state.cash < downCash ? 'disabled' : ''}>Cash<br>${fmt.format(downCash)}</button>
+        </div>
+      </div>
+    `;
+  });
+  
+  // Events
+  const eLog = document.getElementById('eventLog');
+  eLog.innerHTML = state.events.map(e => `
+    <div class="event-item ${e.type}">
+      <span style="color: var(--muted); margin-right: 10px;">[M${e.month} Y${e.year}]</span> ${e.msg}
+    </div>
+  `).join('');
+  
+  // Chart
+  const chart = document.getElementById('nwChart');
+  if(state.history.length > 0) {
+    const maxNW = Math.max(...state.history, 100000);
+    chart.innerHTML = state.history.map(nw => `
+      <div class="chart-bar" style="height: ${Math.max(2, (nw/maxNW)*100)}%" data-val="${fmt.format(nw)}"></div>
+    `).join('');
+  }
+}
+
+function saveGame() {
+  localStorage.setItem('vacancyEmpireSave', JSON.stringify(state));
+}
+
+function loadGame() {
+  const s = localStorage.getItem('vacancyEmpireSave');
+  if(s) {
+    try { state = JSON.parse(s); return true; } catch(e) {}
+  }
+  return false;
+}
+
+window.startGame = (isNew) => {
+  if(isNew || !loadGame()) {
+    state = JSON.parse(JSON.stringify(defaultState));
+    refreshMarket();
+    logEvent("Started a new real estate empire.", "good");
+  } else {
+    logEvent("Welcome back, mogul.", "neutral");
+  }
+  
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('endScreen').classList.add('hidden');
+  document.getElementById('gameUI').classList.remove('hidden');
+  
+  updateUI();
+};
+
+// Init check
+if(localStorage.getItem('vacancyEmpireSave')) {
+  document.getElementById('continueBtn').classList.remove('hidden');
+}
+</script>
+</body>
+</html>

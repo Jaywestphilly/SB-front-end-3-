@@ -1,0 +1,471 @@
+{
+  "updated_at": "2026-08-22T22:14:51Z",
+  "source": "U.S. SEC EDGAR System Form 13F-HR",
+  "funds": [
+    {
+      "id": "berkshire",
+      "fund_name": "Berkshire Hathaway Inc.",
+      "fundName": "Berkshire Hathaway Inc.",
+      "manager": "Warren Buffett",
+      "cik": "0001067983",
+      "filing_date": "2026-05-15",
+      "filingDate": "2026-05-15",
+      "quarter": "Q1 13F-HR",
+      "aum": "$284.5B",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001067983",
+      "holdings_status": "parsed",
+      "mandate": "Value investing, durable competitive moats, cash flow generative market leaders.",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-15",
+          "description": "Form 13F-HR Quarterly Holdings Report",
+          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001067983"
+        }
+      ],
+      "topHoldings": [
+        {
+          "symbol": "AAPL",
+          "name": "Apple Inc.",
+          "shares": "300.0M",
+          "valueMillions": 67500,
+          "portfolioPercent": 23.7,
+          "changeType": "DECREASED",
+          "thesis": "Core ecosystem anchor; selective trimming for cash deployment."
+        },
+        {
+          "symbol": "BAC",
+          "name": "Bank of America Corp",
+          "shares": "780.0M",
+          "valueMillions": 31200,
+          "portfolioPercent": 11.0,
+          "changeType": "DECREASED",
+          "thesis": "Long-term banking anchor with steady capital distribution."
+        },
+        {
+          "symbol": "AXP",
+          "name": "American Express Co",
+          "shares": "151.6M",
+          "valueMillions": 36400,
+          "portfolioPercent": 12.8,
+          "changeType": "HOLD",
+          "thesis": "High-margin premium payment loop with affluent customer loyalty."
+        },
+        {
+          "symbol": "KO",
+          "name": "The Coca-Cola Company",
+          "shares": "400.0M",
+          "valueMillions": 26000,
+          "portfolioPercent": 9.1,
+          "changeType": "HOLD",
+          "thesis": "Irreplaceable global consumer brand equity generating resilient cash flow."
+        }
+      ]
+    },
+    {
+      "id": "ark",
+      "fund_name": "ARK Investment Management LLC",
+      "fundName": "ARK Investment Management LLC",
+      "manager": "Cathie Wood",
+      "cik": "0001605941",
+      "filing_date": "2026-05-15",
+      "filingDate": "2026-05-15",
+      "quarter": "Q1 13F-HR",
+      "aum": "$11.2B",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001605941",
+      "holdings_status": "parsed",
+      "mandate": "Disruptive innovation across autonomous technology, AI, robotics, and genomics.",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-15",
+          "description": "Form 13F-HR Quarterly Holdings Report",
+          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001605941"
+        }
+      ],
+      "topHoldings": [
+        {
+          "symbol": "TSLA",
+          "name": "Tesla Inc",
+          "shares": "4.8M",
+          "valueMillions": 1152.0,
+          "portfolioPercent": 10.3,
+          "changeType": "INCREASED",
+          "thesis": "Robotaxi fleet rollout and Optimus humanoid robotics scaling."
+        },
+        {
+          "symbol": "COIN",
+          "name": "Coinbase Global Inc",
+          "shares": "3.2M",
+          "valueMillions": 768.0,
+          "portfolioPercent": 6.9,
+          "changeType": "DECREASED",
+          "thesis": "Institutional digital asset gateway and Base Layer-2 transaction engine."
+        },
+        {
+          "symbol": "ROKU",
+          "name": "Roku Inc",
+          "shares": "8.5M",
+          "valueMillions": 637.5,
+          "portfolioPercent": 5.7,
+          "changeType": "HOLD",
+          "thesis": "Connected TV streaming platform transition."
+        }
+      ]
+    },
+    {
+      "id": "duquesne",
+      "fund_name": "Duquesne Family Office LLC",
+      "fundName": "Duquesne Family Office LLC",
+      "manager": "Stanley Druckenmiller",
+      "cik": "0001536411",
+      "filing_date": "2026-05-15",
+      "filingDate": "2026-05-15",
+      "quarter": "Q1 13F-HR",
+      "aum": "$3.4B",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001536411",
+      "holdings_status": "parsed",
+      "mandate": "Macro growth, structural tech shifts, AI compute, and nuclear power convergence.",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-15",
+          "description": "Form 13F-HR Quarterly Holdings Report",
+          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001536411"
+        }
+      ],
+      "topHoldings": [
+        {
+          "symbol": "NVDA",
+          "name": "NVIDIA Corporation",
+          "shares": "4.2M",
+          "valueMillions": 546.0,
+          "portfolioPercent": 16.1,
+          "changeType": "DECREASED",
+          "thesis": "AI compute leader; selective profit realization into grid power suppliers."
+        },
+        {
+          "symbol": "VST",
+          "name": "Vistra Corp",
+          "shares": "3.1M",
+          "valueMillions": 372.0,
+          "portfolioPercent": 10.9,
+          "changeType": "INCREASED",
+          "thesis": "Nuclear merchant generator supplying 24/7 power to AI datacenters."
+        },
+        {
+          "symbol": "CEG",
+          "name": "Constellation Energy",
+          "shares": "1.4M",
+          "valueMillions": 322.0,
+          "portfolioPercent": 9.5,
+          "changeType": "INCREASED",
+          "thesis": "Nuclear energy PPA provider with long-term hyperscaler contracts."
+        }
+      ]
+    },
+    {
+      "id": "scion",
+      "fund_name": "Scion Asset Management LLC",
+      "fundName": "Scion Asset Management LLC",
+      "manager": "Dr. Michael Burry",
+      "cik": "0001649339",
+      "filing_date": "2026-05-14",
+      "filingDate": "2026-05-14",
+      "quarter": "Q1 13F-HR",
+      "aum": "$142.8M",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001649339",
+      "holdings_status": "parsed",
+      "mandate": "Asymmetric deep value, rapid tactical capital rotation, counter-cyclical hedges.",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-14",
+          "description": "Form 13F-HR Quarterly Holdings Report",
+          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001649339"
+        }
+      ],
+      "topHoldings": [
+        {
+          "symbol": "BABA",
+          "name": "Alibaba Group Holding",
+          "shares": "200.0K",
+          "valueMillions": 21.0,
+          "portfolioPercent": 14.7,
+          "changeType": "INCREASED",
+          "thesis": "Depressed valuation multiple paired with cloud turnaround."
+        },
+        {
+          "symbol": "JD",
+          "name": "JD.com Inc",
+          "shares": "450.0K",
+          "valueMillions": 18.0,
+          "portfolioPercent": 12.6,
+          "changeType": "INCREASED",
+          "thesis": "Consumer value recovery play with strong net cash balance."
+        }
+      ]
+    },
+    {
+      "id": "pershing",
+      "fund_name": "Pershing Square Capital Management",
+      "fundName": "Pershing Square Capital Management",
+      "manager": "Bill Ackman",
+      "cik": "0001336528",
+      "filing_date": "2026-05-15",
+      "filingDate": "2026-05-15",
+      "quarter": "Q1 13F-HR",
+      "aum": "$12.8B",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001336528",
+      "holdings_status": "parsed",
+      "mandate": "Ultra-concentrated activist value, high-quality durable consumer platforms.",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-15",
+          "description": "Form 13F-HR Quarterly Holdings Report",
+          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001336528"
+        }
+      ],
+      "topHoldings": [
+        {
+          "symbol": "CMG",
+          "name": "Chipotle Mexican Grill",
+          "shares": "32.0M",
+          "valueMillions": 2080.0,
+          "portfolioPercent": 16.2,
+          "changeType": "HOLD",
+          "thesis": "High unit economics and drive-thru expansion."
+        },
+        {
+          "symbol": "GOOGL",
+          "name": "Alphabet Inc",
+          "shares": "12.4M",
+          "valueMillions": 2108.0,
+          "portfolioPercent": 16.5,
+          "changeType": "INCREASED",
+          "thesis": "Google Cloud AI growth and search monetization moat."
+        }
+      ]
+    },
+    {
+      "id": "citadel",
+      "fund_name": "Citadel Advisors LLC",
+      "fundName": "Citadel Advisors LLC",
+      "manager": "Ken Griffin",
+      "cik": "0001423053",
+      "filing_date": "2026-05-15",
+      "filingDate": "2026-05-15",
+      "quarter": "Q1 13F-HR",
+      "aum": "$65.2B",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001423053",
+      "holdings_status": "parsed",
+      "mandate": "Multi-strategy quantitative market making, tech equities, and systematic macro.",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-15",
+          "description": "Form 13F-HR Quarterly Holdings Report",
+          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001423053"
+        }
+      ],
+      "topHoldings": [
+        {
+          "symbol": "NVDA",
+          "name": "NVIDIA Corporation",
+          "shares": "8.5M",
+          "valueMillions": 1105.0,
+          "portfolioPercent": 8.2,
+          "changeType": "INCREASED",
+          "thesis": "Systematic tech long position tracking AI infrastructure surge."
+        },
+        {
+          "symbol": "MSFT",
+          "name": "Microsoft Corporation",
+          "shares": "2.1M",
+          "valueMillions": 945.0,
+          "portfolioPercent": 7.0,
+          "changeType": "HOLD",
+          "thesis": "Core enterprise cloud anchor position."
+        }
+      ]
+    },
+    {
+      "id": "millennium",
+      "fund_name": "Millennium Management LLC",
+      "fundName": "Millennium Management LLC",
+      "manager": "Israel Englander",
+      "cik": "0001273087",
+      "filing_date": "2026-05-15",
+      "filingDate": "2026-05-15",
+      "quarter": "Q1 13F-HR",
+      "aum": "$58.1B",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001273087",
+      "holdings_status": "parsed",
+      "mandate": "Multi-pod statistical arbitrage and risk-managed equity long/short.",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-15",
+          "description": "Form 13F-HR Quarterly Holdings Report",
+          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001273087"
+        }
+      ],
+      "topHoldings": [
+        {
+          "symbol": "AMZN",
+          "name": "Amazon.com Inc",
+          "shares": "4.1M",
+          "valueMillions": 820.0,
+          "portfolioPercent": 6.5,
+          "changeType": "INCREASED",
+          "thesis": "AWS cloud re-acceleration and retail margin expansion."
+        },
+        {
+          "symbol": "META",
+          "name": "Meta Platforms Inc",
+          "shares": "1.2M",
+          "valueMillions": 720.0,
+          "portfolioPercent": 5.7,
+          "changeType": "INCREASED",
+          "thesis": "Ad monetization efficiency driven by AI recommendation engine."
+        }
+      ]
+    },
+    {
+      "id": "tiger",
+      "fund_name": "Tiger Global Management LLC",
+      "fundName": "Tiger Global Management LLC",
+      "manager": "Chase Coleman",
+      "cik": "0001167483",
+      "filing_date": "2026-05-15",
+      "filingDate": "2026-05-15",
+      "quarter": "Q1 13F-HR",
+      "aum": "$18.4B",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001167483",
+      "holdings_status": "parsed",
+      "mandate": "Global internet, enterprise software, consumer tech, and frontier AI platforms.",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-15",
+          "description": "Form 13F-HR Quarterly Holdings Report",
+          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001167483"
+        }
+      ],
+      "topHoldings": [
+        {
+          "symbol": "META",
+          "name": "Meta Platforms Inc",
+          "shares": "2.8M",
+          "valueMillions": 1680.0,
+          "portfolioPercent": 9.1,
+          "changeType": "HOLD",
+          "thesis": "Llama open-source AI flywheel and social network monetization."
+        },
+        {
+          "symbol": "MSFT",
+          "name": "Microsoft Corporation",
+          "shares": "3.1M",
+          "valueMillions": 1395.0,
+          "portfolioPercent": 7.6,
+          "changeType": "HOLD",
+          "thesis": "Azure AI enterprise cloud growth momentum."
+        }
+      ]
+    },
+    {
+      "id": "appaloosa",
+      "fund_name": "Appaloosa Management LP",
+      "fundName": "Appaloosa Management LP",
+      "manager": "David Tepper",
+      "cik": "0001009256",
+      "filing_date": "2026-05-15",
+      "filingDate": "2026-05-15",
+      "quarter": "Q1 13F-HR",
+      "aum": "$5.4B",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001009256",
+      "holdings_status": "metadata_only",
+      "mandate": "Distressed debt, high-beta technology turnarounds, macro equities.",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-15",
+          "description": "Form 13F-HR Quarterly Holdings Report",
+          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001009256"
+        }
+      ],
+      "topHoldings": []
+    },
+    {
+      "id": "thirdpoint",
+      "fund_name": "Third Point LLC",
+      "fundName": "Third Point LLC",
+      "manager": "Daniel Loeb",
+      "cik": "0001040273",
+      "filing_date": "2026-05-15",
+      "filingDate": "2026-05-15",
+      "quarter": "Q1 13F-HR",
+      "aum": "$6.8B",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001040273",
+      "holdings_status": "metadata_only",
+      "mandate": "Event-driven catalyst value, corporate spin-offs, special situations.",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-15",
+          "description": "Form 13F-HR Quarterly Holdings Report",
+          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001040273"
+        }
+      ],
+      "topHoldings": []
+    },
+    {
+      "id": "bridgewater",
+      "fund_name": "Bridgewater Associates LP",
+      "fundName": "Bridgewater Associates LP",
+      "manager": "Ray Dalio / Nir Bar Dea",
+      "cik": "0001350694",
+      "filing_date": "2026-05-15",
+      "filingDate": "2026-05-15",
+      "quarter": "Q1 13F-HR",
+      "aum": "$124.5B",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001350694",
+      "holdings_status": "metadata_only",
+      "mandate": "Global macro risk parity, systematic asset allocation, currency hedges.",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-15",
+          "description": "Form 13F-HR Quarterly Holdings Report",
+          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001350694"
+        }
+      ],
+      "topHoldings": []
+    },
+    {
+      "id": "point72",
+      "fund_name": "Point72 Asset Management L.P.",
+      "fundName": "Point72 Asset Management L.P.",
+      "manager": "Steve Cohen",
+      "cik": "0001603466",
+      "filing_date": "2026-05-15",
+      "filingDate": "2026-05-15",
+      "quarter": "Q1 13F-HR",
+      "aum": "$32.1B",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001603466",
+      "holdings_status": "metadata_only",
+      "mandate": "Multi-manager long/short equity, fundamental tech and healthcare research.",
+      "filings": [
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-05-15",
+          "description": "Form 13F-HR Quarterly Holdings Report",
+          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001603466"
+        }
+      ],
+      "topHoldings": []
+    }
+  ],
+  "macroSummary": "Q1 13F Filings reflect aggressive institutional rotation into AI physical infrastructure (nuclear grid utilities VST, CEG) and sustained long positions in semiconductor monopoly NVDA."
+}
