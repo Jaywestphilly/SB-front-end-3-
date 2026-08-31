@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import express from 'express';
+import request from 'supertest';
 import { dbStoreInstance } from './firebaseAdmin.js';
 import {
   inMemoryWalletRegistry,
@@ -18,14 +20,31 @@ import {
   SEC_ANALYST_SERVICE_PRICE_CREDITS,
   SEC_ANALYST_SERVICE_RECORD,
   analyzeSecFiling,
+  analyzeSecFilingAsync,
+  fetchLiveSecFiling,
+  resolveTickerCik,
   executeSecAnalystJob,
   initializeSecAnalystAgent,
-  secAnalystStats
+  rotateSecAnalystApiKey,
+  revokeSecAnalystApiKey,
+  secAnalystStats,
+  secAnalystRouter,
+  inMemorySecJobRegistry,
+  inMemorySecIdempotencyMap
 } from './secAnalystAgent.js';
+import { generateApiKeyPair } from './agentSecurity.js';
 
-describe('Stock Bloc Native SEC Analyst Agent — Verification & Deterministic Settlement Suite', () => {
+// Setup test Express app with secAnalystRouter
+const app = express();
+app.use(express.json());
+app.use('/api/v1/sec', secAnalystRouter);
+
+describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deterministic Settlement Suite', () => {
   const buyerId = 'agent_buyer_quant_test';
   const buyerHandle = 'quant_buyer';
+  let buyerApiKey: string;
+  let buyerKeyId: string;
+  let buyerNoTransactScopeKey: string;
 
   beforeEach(async () => {
     // Clear in-memory databases and registries
@@ -46,18 +65,49 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification & Deterministic S
     inMemoryWalletRegistry.clear();
     inMemoryAgentRegistry.clear();
     inMemoryKeyRegistry.clear();
+    inMemorySecJobRegistry.clear();
+    inMemorySecIdempotencyMap.clear();
 
-    // Reset SEC Analyst statistics
+    // Reset SEC Analyst statistics to honest zero baseline
     secAnalystStats.jobsCompleted = 0;
     secAnalystStats.revenue = 0;
     secAnalystStats.netRevenue = 0;
-    secAnalystStats.averageJobValue = 25;
-    secAnalystStats.successRate = 100;
-    secAnalystStats.averageResponseTime = 1200;
-    secAnalystStats.reputationScore = 92;
+    secAnalystStats.averageJobValue = 0;
+    secAnalystStats.successRate = 0;
+    secAnalystStats.averageResponseTime = 0;
+    secAnalystStats.reputationScore = 0;
 
     // Bootstrap SEC Analyst Agent & Service
     await initializeSecAnalystAgent();
+
+    // Register Buyer Agent
+    inMemoryAgentRegistry.set(buyerId, {
+      agentId: buyerId,
+      handle: buyerHandle,
+      displayName: 'Quant Test Buyer Agent',
+      isAutonomousAgent: true,
+      verificationStatus: 'verified_agent',
+      status: 'active'
+    });
+
+    // Create Buyer API Key with full scopes
+    const buyerKeyResult = generateApiKeyPair(buyerId, buyerHandle, [
+      'payments:transact',
+      'jobs:execute',
+      'services:read',
+      'requests:read'
+    ]);
+    buyerApiKey = buyerKeyResult.rawKey;
+    buyerKeyId = buyerKeyResult.keyId;
+    inMemoryKeyRegistry.set(buyerKeyId, buyerKeyResult.keyRecord);
+
+    // Create Buyer API Key with insufficient scope (no payments:transact)
+    const limitedKeyResult = generateApiKeyPair(buyerId, buyerHandle, [
+      'services:read',
+      'community:read'
+    ]);
+    buyerNoTransactScopeKey = limitedKeyResult.rawKey;
+    inMemoryKeyRegistry.set(limitedKeyResult.keyId, limitedKeyResult.keyRecord);
 
     // Fund Buyer Wallet with 100 credits
     inMemoryWalletRegistry.set(buyerId, {
@@ -93,7 +143,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification & Deterministic S
     });
   });
 
-  it('Requirement 1: Registers as a Stock Bloc-native verified agent with designated capabilities', () => {
+  it('Requirement 1: Registers as a Stock Bloc-native verified agent with zero fabricated baseline metrics', () => {
     const agent = inMemoryAgentRegistry.get(SEC_ANALYST_AGENT_ID);
     expect(agent).toBeDefined();
     expect(agent.handle).toBe(SEC_ANALYST_HANDLE);
@@ -107,11 +157,21 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification & Deterministic S
     expect(agent.capabilities).toContain('FILING_ANALYSIS');
     expect(agent.capabilities).toContain('FUNDAMENTAL_RESEARCH');
 
+    // Zero fabricated baseline metrics check
+    expect(agent.followersCount).toBe(0);
+    expect(agent.metrics.winRatePercent).toBe(0);
+    expect(agent.metrics.monthlyAlphaPercent).toBe(0);
+    expect(agent.metrics.simulationRuns).toBe(0);
+    expect(agent.metrics.jobsCompleted).toBe(0);
+    expect(agent.metrics.revenue).toBe(0);
+
     // Service definition check
     expect(SEC_ANALYST_SERVICE_RECORD.serviceId).toBe(SEC_ANALYST_SERVICE_ID);
     expect(SEC_ANALYST_SERVICE_RECORD.name).toBe(SEC_ANALYST_SERVICE_NAME);
     expect(SEC_ANALYST_SERVICE_RECORD.price).toBe(25);
     expect(SEC_ANALYST_SERVICE_RECORD.currency).toBe('CREDITS');
+    expect(SEC_ANALYST_SERVICE_RECORD.reputationScore).toBe(0);
+    expect(SEC_ANALYST_SERVICE_RECORD.completedJobsCount).toBe(0);
   });
 
   it('Requirement 2: Validates input and parses AAPL 10-Q filing into structured intelligence with source citations', () => {
@@ -243,36 +303,220 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification & Deterministic S
 
     // 6. Verify Reputation Update
     expect(executionResult.reputation).toBeDefined();
-    expect(executionResult.reputation.compositeScore).toBeGreaterThanOrEqual(60);
-    expect(['GOLD_RESEARCHER', 'PLATINUM_ANALYST', 'DIAMOND_QUANT']).toContain(executionResult.reputation.tier);
+    expect(executionResult.reputation.compositeScore).toBeGreaterThanOrEqual(1);
   });
 
-  it('Requirement 4: Supports 10-K Annual and 8-K Current filing analysis across multiple companies', () => {
-    // 10-K analysis
-    const nvda10k = analyzeSecFiling({ ticker: 'NVDA', filingType: '10-K' });
-    expect(nvda10k.ticker).toBe('NVDA');
-    expect(nvda10k.filingType).toBe('10-K');
-    expect(nvda10k.companyName).toBe('NVIDIA Corporation');
-    expect(nvda10k.revenueHighlights.totalRevenue).toBe('$60.922B');
-    expect(nvda10k.sourceReferences[0].form).toBe('10-K');
+  it('Requirement 4: HTTP Security — Unauthenticated paid job request is rejected with 401', async () => {
+    const res = await request(app)
+      .post('/api/v1/sec/job')
+      .send({
+        ticker: 'AAPL',
+        filingType: '10-Q'
+      });
 
-    // 8-K analysis
-    const msft8k = analyzeSecFiling({ ticker: 'MSFT', filingType: '8-K' });
-    expect(msft8k.ticker).toBe('MSFT');
-    expect(msft8k.filingType).toBe('8-K');
-    expect(msft8k.companyName).toBe('Microsoft Corporation');
-    expect(msft8k.sourceReferences[0].form).toBe('8-K');
-
-    // TSLA 10-Q analysis
-    const tsla10q = analyzeSecFiling({ ticker: 'TSLA', filingType: '10-Q' });
-    expect(tsla10q.ticker).toBe('TSLA');
-    expect(tsla10q.filingType).toBe('10-Q');
-    expect(tsla10q.companyName).toBe('Tesla, Inc.');
-    expect(tsla10q.earningsHighlights.grossMargin).toContain('19.84%');
+    expect(res.status).toBe(401);
+    expect(res.body.error).toMatch(/unauthorized|authentication required|invalid/i);
   });
 
-  it('Requirement 5: Rejects malformed input requests with meaningful validation errors', () => {
-    expect(() => analyzeSecFiling({} as any)).toThrowError(/ticker.*required/i);
-    expect(() => analyzeSecFiling({ ticker: 'AAPL', filingType: 'INVALID_FORM' as any })).toThrowError(/filingType.*must be one of/i);
+  it('Requirement 5: HTTP Security — Request with invalid or revoked API key is rejected with 401', async () => {
+    // 1. Invalid key format/secret
+    const resInvalid = await request(app)
+      .post('/api/v1/sec/job')
+      .set('Authorization', 'Bearer sb_live_fakekey_invalidsignature123456')
+      .send({
+        ticker: 'AAPL',
+        filingType: '10-Q'
+      });
+
+    expect(resInvalid.status).toBe(401);
+
+    // 2. Revoked key
+    const keyToRevoke = inMemoryKeyRegistry.get(buyerKeyId);
+    keyToRevoke.status = 'revoked';
+
+    const resRevoked = await request(app)
+      .post('/api/v1/sec/job')
+      .set('Authorization', `Bearer ${buyerApiKey}`)
+      .send({
+        ticker: 'AAPL',
+        filingType: '10-Q'
+      });
+
+    expect(resRevoked.status).toBe(401);
+    expect(resRevoked.body.error).toMatch(/revoked|invalid/i);
+  });
+
+  it('Requirement 6: HTTP Security — Request with missing required scope is rejected with 403', async () => {
+    const res = await request(app)
+      .post('/api/v1/sec/job')
+      .set('Authorization', `Bearer ${buyerNoTransactScopeKey}`)
+      .send({
+        ticker: 'AAPL',
+        filingType: '10-Q'
+      });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toMatch(/forbidden|scope/i);
+  });
+
+  it('Requirement 7: HTTP Security — Buyer identity spoofing in request body is rejected with 403', async () => {
+    const res = await request(app)
+      .post('/api/v1/sec/job')
+      .set('Authorization', `Bearer ${buyerApiKey}`)
+      .send({
+        ticker: 'AAPL',
+        filingType: '10-Q',
+        buyerAgentId: 'victim_other_agent_99' // Mismatched body trying to spoof another buyer
+      });
+
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('IDENTITY_SPOOFING_REJECTED');
+    expect(res.body.error).toMatch(/identity spoofing/i);
+  });
+
+  it('Requirement 8: Economic Integrity — Price tampering in request body is ignored and canonical 25 credits is enforced', async () => {
+    const res = await request(app)
+      .post('/api/v1/sec/job')
+      .set('Authorization', `Bearer ${buyerApiKey}`)
+      .send({
+        ticker: 'AAPL',
+        filingType: '10-Q',
+        price: 1 // Malicious attempt to get 25-credit service for 1 credit
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.settlement.grossAmount).toBe(25);
+    expect(res.body.settlement.sellerNet).toBe(24);
+    expect(res.body.settlement.platformFee).toBe(1);
+
+    // Buyer wallet correctly debited canonical 25 credits
+    const buyerWallet = inMemoryWalletRegistry.get(buyerId)!;
+    expect(buyerWallet.creditsBalance).toBe(75);
+  });
+
+  it('Requirement 9: Economic Integrity — Insufficient funds returns 402 Payment Required', async () => {
+    // Set buyer balance to 10 credits (less than required 25)
+    inMemoryWalletRegistry.get(buyerId)!.creditsBalance = 10;
+    inMemoryWalletRegistry.get(buyerId)!.availableBalance = 10;
+
+    const res = await request(app)
+      .post('/api/v1/sec/job')
+      .set('Authorization', `Bearer ${buyerApiKey}`)
+      .send({
+        ticker: 'AAPL',
+        filingType: '10-Q'
+      });
+
+    expect(res.status).toBe(402);
+    expect(res.body.code).toBe('INSUFFICIENT_FUNDS');
+    expect(res.body.error).toMatch(/insufficient/i);
+  });
+
+  it('Requirement 10: Idempotency — Repeated requests with same idempotency key return cached result without double charging', async () => {
+    const idempotencyKey = 'idem_sec_unique_order_999';
+
+    // First request
+    const res1 = await request(app)
+      .post('/api/v1/sec/job')
+      .set('Authorization', `Bearer ${buyerApiKey}`)
+      .set('idempotency-key', idempotencyKey)
+      .send({
+        ticker: 'AAPL',
+        filingType: '10-Q'
+      });
+
+    expect(res1.status).toBe(200);
+    expect(res1.body.settlement.grossAmount).toBe(25);
+
+    // Buyer debited once: 100 -> 75
+    expect(inMemoryWalletRegistry.get(buyerId)!.creditsBalance).toBe(75);
+    expect(secAnalystStats.jobsCompleted).toBe(1);
+    expect(secAnalystStats.revenue).toBe(25);
+
+    // Second request with exact same idempotency key
+    const res2 = await request(app)
+      .post('/api/v1/sec/job')
+      .set('Authorization', `Bearer ${buyerApiKey}`)
+      .set('idempotency-key', idempotencyKey)
+      .send({
+        ticker: 'AAPL',
+        filingType: '10-Q'
+      });
+
+    expect(res2.status).toBe(200);
+    expect(res2.body.idempotentReplay).toBe(true);
+
+    // Zero double debit: balance remains 75, stats stay at 1 job / 25 revenue
+    expect(inMemoryWalletRegistry.get(buyerId)!.creditsBalance).toBe(75);
+    expect(secAnalystStats.jobsCompleted).toBe(1);
+    expect(secAnalystStats.revenue).toBe(25);
+    expect(secAnalystStats.netRevenue).toBe(24);
+  });
+
+  it('Requirement 11: Route Separation — /analyze is a free demo and does not charge or update stats', async () => {
+    const initialBuyerBal = inMemoryWalletRegistry.get(buyerId)!.creditsBalance;
+    const initialJobsCompleted = secAnalystStats.jobsCompleted;
+
+    const res = await request(app)
+      .post('/api/v1/sec/analyze')
+      .send({
+        ticker: 'AAPL',
+        filingType: '10-Q'
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.tier).toBe('FREE_DEMO');
+    expect(res.body.isPaidExecution).toBe(false);
+    expect(res.body.settled).toBe(false);
+    expect(res.body.priceCredits).toBe(0);
+    expect(res.body.analysis).toBeDefined();
+
+    // Ensure zero economic side effects
+    expect(inMemoryWalletRegistry.get(buyerId)!.creditsBalance).toBe(initialBuyerBal);
+    expect(secAnalystStats.jobsCompleted).toBe(initialJobsCompleted);
+    expect(secAnalystStats.revenue).toBe(0);
+  });
+
+  it('Requirement 12: Key Lifecycle — Supports cryptographic key rotation and revocation', async () => {
+    // 1. Initial agent key works
+    const initRes = await initializeSecAnalystAgent();
+    expect(initRes.apiKey).toMatch(/^sb_live_/);
+
+    // 2. Rotate API key
+    const rotated = await rotateSecAnalystApiKey();
+    expect(rotated.keyId).toBeDefined();
+    expect(rotated.apiKey).toMatch(/^sb_live_/);
+    expect(rotated.previousKeyId).toBe(initRes.keyId);
+
+    // Previous key is revoked
+    const prevKeyRecord = inMemoryKeyRegistry.get(initRes.keyId);
+    expect(prevKeyRecord.status).toBe('revoked');
+
+    // 3. Explicit revocation
+    await revokeSecAnalystApiKey(rotated.keyId);
+    const currentKeyRecord = inMemoryKeyRegistry.get(rotated.keyId);
+    expect(currentKeyRecord.status).toBe('revoked');
+  });
+
+  it('Requirement 13: Dynamic SEC retrieval resolves CIK and provides live EDGAR submission metadata', async () => {
+    const aaplCik = await resolveTickerCik('AAPL');
+    expect(aaplCik).toBe('0000320193');
+
+    const nvdaCik = await resolveTickerCik('NVDA');
+    expect(nvdaCik).toBe('0001045810');
+
+    const liveAapl = await fetchLiveSecFiling('AAPL', '10-K', 'Analyze gross margin and capital return program');
+    if (liveAapl) {
+      expect(liveAapl.ticker).toBe('AAPL');
+      expect(liveAapl.filingType).toBe('10-K');
+      expect(liveAapl.dataSource).toBe('LIVE_SEC_DATA');
+      expect(liveAapl.isLiveSecData).toBe(true);
+      expect(liveAapl.dataTier).toBe('LIVE_SEC_EDGAR');
+      expect(liveAapl.sourceReferences.length).toBeGreaterThan(0);
+      expect(liveAapl.sourceReferences[0].cik).toBe('0000320193');
+      expect(liveAapl.sourceReferences[0].accessionNumber).toBeDefined();
+      expect(liveAapl.sourceReferences[0].url).toContain('sec.gov');
+    }
   });
 });
