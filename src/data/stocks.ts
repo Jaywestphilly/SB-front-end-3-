@@ -14532,10 +14532,100 @@ export const INITIAL_STOCKS: StockTicker[] = [
     ],
     "asymmetryPotentialStars": 4.8,
     "isPinned": false
+  },
+  {
+    "symbol": "AMTM",
+    "name": "Amentum Holdings, Inc.",
+    "price": 28.40,
+    "change": 1.15,
+    "changePercent": 4.22,
+    "category": "ai_infra",
+    "sparkline": [
+      26.50,
+      26.85,
+      27.20,
+      26.90,
+      27.65,
+      27.90,
+      28.40
+    ],
+    "history": {
+      "1D": [
+        { "time": "0:00", "price": 26.50 },
+        { "time": "1:00", "price": 26.85 },
+        { "time": "2:00", "price": 27.20 },
+        { "time": "3:00", "price": 26.90 },
+        { "time": "4:00", "price": 27.65 },
+        { "time": "5:00", "price": 27.90 },
+        { "time": "6:00", "price": 28.40 }
+      ],
+      "1W": [
+        { "time": "Day 1", "price": 25.80 },
+        { "time": "Day 2", "price": 26.30 },
+        { "time": "Day 3", "price": 26.75 },
+        { "time": "Day 4", "price": 26.40 },
+        { "time": "Day 5", "price": 27.10 },
+        { "time": "Day 6", "price": 27.80 },
+        { "time": "Day 7", "price": 28.40 }
+      ],
+      "1M": [
+        { "time": "Week 1", "price": 24.20 },
+        { "time": "Week 2", "price": 25.10 },
+        { "time": "Week 3", "price": 26.00 },
+        { "time": "Week 4", "price": 27.30 },
+        { "time": "Week 5", "price": 28.40 }
+      ],
+      "1Y": [
+        { "time": "Month 1", "price": 22.10 },
+        { "time": "Month 2", "price": 23.50 },
+        { "time": "Month 3", "price": 24.80 },
+        { "time": "Month 4", "price": 25.90 },
+        { "time": "Month 5", "price": 26.70 },
+        { "time": "Month 6", "price": 27.50 },
+        { "time": "Month 7", "price": 28.40 }
+      ],
+      "ALL": [
+        { "time": "Year 1", "price": 22.10 },
+        { "time": "Year 2", "price": 23.80 },
+        { "time": "Year 3", "price": 25.20 },
+        { "time": "Year 4", "price": 26.40 },
+        { "time": "Year 5", "price": 27.10 },
+        { "time": "Year 6", "price": 27.80 },
+        { "time": "Year 7", "price": 28.40 }
+      ]
+    },
+    "marketCap": "$7.1B",
+    "peRatio": "18.4",
+    "dividendYield": "1.2%",
+    "high52": 34.20,
+    "low52": 22.10,
+    "volume": "3.4M",
+    "rsi": 58.4,
+    "description": "Global engineering and advanced technology solutions partner to the U.S. Federal Government, allied defense forces, and critical infrastructure enterprises. Formed via the transformational merger with Jacobs' Critical Mission Solutions (CMS) and Cyber & Intelligence businesses.",
+    "tags": [
+      "AI Infrastructure",
+      "Defense & Intelligence",
+      "Government Services",
+      "Critical Infrastructure",
+      "Space Mission Support",
+      "Nuclear & Clean Energy",
+      "High Asymmetry"
+    ],
+    "asymmetryPotentialStars": 4.6,
+    "isPinned": false
   }
 ];
 
 export const STOCK_NEWS_FEED: StockNews[] = [
+  {
+    id: "news_amtm_1",
+    title: "Amentum (AMTM) Secures Landmark Federal Engineering & Defense Tech Modernization Contracts Post-Merger",
+    source: "Defense News & Reuters",
+    timeAgo: "3m ago",
+    url: "https://www.amentum.com",
+    relatedSymbol: "AMTM",
+    sentiment: "positive",
+  },
   {
     id: "news_mp_1",
     title: "MP Materials Scales Mountain Pass NdPr Refining and Downstream Magnetics Production for Defense and AI Robotics",

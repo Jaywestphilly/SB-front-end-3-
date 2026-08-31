@@ -357,10 +357,15 @@ export class MarketDataService {
     "AMD", "GOOGL", "MU", "CORZ", "BTC-USD", "DOT-USD", "META", "TSM", "^NYA",
     "SPY", "^GSPC", "AMZN", "NVT", "AIPO", "QQQ", "APLD", "^IXIC",
     "MOD", "INTC", "HAWK", "SMH", "SOXX", "POWL", "ASML",
-    "GLD", "SLV", "CPER", "MP", "ALAB"
+    "GLD", "SLV", "CPER", "MP", "ALAB", "AMTM"
   ];
 
   private static COMPANY_METADATA: Record<string, { name: string; sector: string; summary: string }> = {
+    AMTM: {
+      name: "Amentum Holdings, Inc.",
+      sector: "Critical Infrastructure & Defense Tech",
+      summary: "Advanced Federal Engineering & Defense Tech: Global government technology solutions partner delivering mission modernization, cyber operations, nuclear/clean energy stewardship, and space mission integration."
+    },
     MP: {
       name: "MP Materials Corp.",
       sector: "Critical Minerals & Rare Earth Elements",
