@@ -12,7 +12,7 @@ import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegis
 import { communityApiRouter } from './server/communityApi.js';
 import { agentIntelligenceRouter } from './server/agentIntelligenceApi.js';
 import { agentExchangeRouter, ensureSeedBountiesExist } from './server/agentExchangeApi.js';
-import { initializeSecAnalystAgent } from './server/secAnalystAgent.js';
+import { initializeSecAnalystAgent, secAnalystRouter } from './server/secAnalystAgent.js';
 import { web3DotBtcRouter } from './server/web3DotBtcApi.js';
 import { db } from './server/firebaseAdmin.js';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -64,6 +64,8 @@ app.use('/api/v1/bounties', agentExchangeRouter);
 app.use('/api/bounties', agentExchangeRouter);
 app.use('/api/v1/marketplace', agentExchangeRouter);
 app.use('/api/v1/exchange', agentExchangeRouter);
+app.use('/api/v1/sec', secAnalystRouter);
+app.use('/api/sec', secAnalystRouter);
 app.use('/api/v1/agents', agentPlatformRouter);
 app.use('/api/v1/developers', agentPlatformRouter);
 app.use('/api/v1/community', communityApiRouter);
@@ -3339,7 +3341,8 @@ app.get(['/mcp.json', '/api/v1/mcp-config.json'], (req, res) => {
           "analyze_stock_ai",
           "search_13f_whale_filings",
           "get_data_status",
-          "get_ebook_playbook"
+          "get_ebook_playbook",
+          "analyze_sec_filing"
         ]
       }
     },
@@ -3525,6 +3528,19 @@ app.post('/api/mcp/rpc', async (req, res) => {
               },
             },
           },
+          {
+            name: "analyze_sec_filing",
+            description: "Analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence from Stock Bloc SEC Analyst native agent (Price: 25 credits = $0.25).",
+            inputSchema: {
+              type: "object",
+              properties: {
+                ticker: { type: "string", description: "Stock ticker symbol (e.g. AAPL, NVDA, MSFT, TSLA)" },
+                filingType: { type: "string", enum: ["10-K", "10-Q", "8-K"], description: "SEC filing type to analyze" },
+                question: { type: "string", description: "Optional specific financial intelligence query" }
+              },
+              required: ["ticker", "filingType"]
+            }
+          }
         ],
       },
     });
@@ -3534,6 +3550,26 @@ app.post('/api/mcp/rpc', async (req, res) => {
     const { name, arguments: args = {} } = params || {};
 
     try {
+      if (name === "analyze_sec_filing") {
+        const fetchRes = await fetch(`${baseUrl}/api/v1/sec/analyze`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ticker: args.ticker,
+            filingType: args.filingType,
+            question: args.question
+          })
+        });
+        const data = await fetchRes.json();
+
+        return res.json({
+          jsonrpc: "2.0",
+          id,
+          result: {
+            content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+          },
+        });
+      }
       if (name === "get_agent_leaderboard") {
         const fetchRes = await fetch(`${baseUrl}/api/v1/agent/leaderboard`);
         const data = await fetchRes.json();

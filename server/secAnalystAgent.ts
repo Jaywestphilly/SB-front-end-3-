@@ -6,6 +6,7 @@
  */
 
 import crypto from 'crypto';
+import { Router, Request, Response } from 'express';
 import { db } from './firebaseAdmin.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { AgentApiKeyRecord, AgentApiScope, AgentService, AgentJob } from '../src/types.js';
@@ -1262,6 +1263,127 @@ export async function initializeSecAnalystAgent(): Promise<{
     apiKey: rawKey
   };
 }
+
+// ==========================================
+// 8. REST & MARKETPLACE ROUTER
+// ==========================================
+
+export const secAnalystRouter = Router();
+
+// POST /api/v1/sec/analyze - Direct filing analysis API
+secAnalystRouter.post(['/analyze', '/'], (req: Request, res: Response) => {
+  try {
+    const { ticker, filingType, question } = req.body || {};
+    
+    if (!ticker || typeof ticker !== 'string' || ticker.trim().length === 0) {
+      return res.status(400).json({
+        error: 'Validation error: "ticker" is required and cannot be empty.',
+        code: 'INVALID_TICKER'
+      });
+    }
+
+    const validTypes: SecFilingType[] = ['10-K', '10-Q', '8-K'];
+    if (!filingType || !validTypes.includes(filingType)) {
+      return res.status(400).json({
+        error: `Validation error: "filingType" must be one of: ${validTypes.join(', ')}.`,
+        code: 'UNSUPPORTED_FILING_TYPE',
+        supportedTypes: validTypes
+      });
+    }
+
+    const analysis = analyzeSecFiling({
+      ticker: String(ticker).toUpperCase().trim(),
+      filingType: filingType as SecFilingType,
+      question: question ? String(question).trim() : undefined
+    });
+
+    return res.status(200).json({
+      success: true,
+      service: SEC_ANALYST_SERVICE_NAME,
+      serviceId: SEC_ANALYST_SERVICE_ID,
+      priceCredits: SEC_ANALYST_SERVICE_PRICE_CREDITS,
+      analysis
+    });
+  } catch (err: any) {
+    return res.status(400).json({
+      error: err.message || 'Error processing SEC filing analysis',
+      code: 'ANALYSIS_ERROR'
+    });
+  }
+});
+
+// GET /api/v1/sec/service - Inspect service record & capabilities
+secAnalystRouter.get(['/service', '/info'], (_req: Request, res: Response) => {
+  return res.status(200).json({
+    success: true,
+    service: SEC_ANALYST_SERVICE_RECORD,
+    agent: {
+      agentId: SEC_ANALYST_AGENT_ID,
+      displayName: SEC_ANALYST_DISPLAY_NAME,
+      handle: SEC_ANALYST_HANDLE,
+      category: SEC_ANALYST_CATEGORY,
+      capabilities: SEC_ANALYST_CAPABILITIES,
+      pricing: {
+        priceCredits: SEC_ANALYST_SERVICE_PRICE_CREDITS,
+        usdEquivalent: '$0.25',
+        currency: 'CREDITS',
+        paymentRail: 'PLATFORM_CREDITS'
+      }
+    }
+  });
+});
+
+// POST /api/v1/sec/job - Execute authenticated job with settlement lifecycle
+secAnalystRouter.post('/job', async (req: Request, res: Response) => {
+  try {
+    const { jobId = `job_sec_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`, ticker, filingType, question, buyerAgentId = 'agent_buyer_default' } = req.body || {};
+
+    if (!ticker || !filingType) {
+      return res.status(400).json({
+        error: 'Validation error: "ticker" and "filingType" are required.',
+        code: 'INVALID_INPUT'
+      });
+    }
+
+    const result = await executeSecAnalystJob({
+      jobId,
+      input: {
+        ticker: String(ticker).toUpperCase().trim(),
+        filingType: filingType as SecFilingType,
+        question: question ? String(question).trim() : undefined
+      },
+      requesterAgentId: buyerAgentId,
+      requesterHandle: (req as any).agentKey?.agentId || buyerAgentId,
+      price: SEC_ANALYST_SERVICE_PRICE_CREDITS
+    });
+
+    return res.status(200).json(result);
+  } catch (err: any) {
+    return res.status(500).json({
+      error: err.message || 'Failed to execute SEC analyst job',
+      code: 'JOB_EXECUTION_ERROR'
+    });
+  }
+});
+
+// GET /api/v1/sec/stats - Agent statistics & performance
+secAnalystRouter.get('/stats', (_req: Request, res: Response) => {
+  const wallet = inMemoryWalletRegistry.get(SEC_ANALYST_AGENT_ID);
+  return res.status(200).json({
+    agentId: SEC_ANALYST_AGENT_ID,
+    displayName: SEC_ANALYST_DISPLAY_NAME,
+    stats: secAnalystStats,
+    wallet: wallet || {
+      agentId: SEC_ANALYST_AGENT_ID,
+      creditsBalance: 100,
+      availableBalance: 100,
+      reservedBalance: 0,
+      lifetimeGrossEarnings: secAnalystStats.revenue,
+      lifetimeNetEarnings: secAnalystStats.netRevenue,
+      lifetimeSpent: 0
+    }
+  });
+});
 
 // Auto-initialize on module load
 initializeSecAnalystAgent().catch(() => {});

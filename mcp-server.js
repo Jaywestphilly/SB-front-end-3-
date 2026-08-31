@@ -308,6 +308,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           },
           required: ["transactionId"]
         },
+      },
+      {
+        name: "analyze_sec_filing",
+        description: "Analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence from Stock Bloc SEC Analyst native agent (Price: 25 credits = $0.25).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            ticker: { type: "string", description: "Stock ticker symbol (e.g. AAPL, NVDA, MSFT, TSLA)" },
+            filingType: { type: "string", enum: ["10-K", "10-Q", "8-K"], description: "SEC filing type to analyze" },
+            question: { type: "string", description: "Optional specific financial intelligence query" }
+          },
+          required: ["ticker", "filingType"]
+        },
       }
     ],
   };
@@ -752,6 +765,22 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     if (name === "get_transaction") {
       const transactionId = args?.transactionId;
       const res = await fetch(`${BASE_URL}/api/v1/payments/${transactionId}`);
+      const data = await res.json();
+      return {
+        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
+      };
+    }
+
+    if (name === "analyze_sec_filing") {
+      const res = await fetch(`${BASE_URL}/api/v1/sec/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticker: args?.ticker,
+          filingType: args?.filingType,
+          question: args?.question
+        })
+      });
       const data = await res.json();
       return {
         content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
