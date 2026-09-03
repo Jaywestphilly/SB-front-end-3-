@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000" fill="none">
+const fs = require('fs');
+const path = require('path');
+const { Resvg } = require('@resvg/resvg-js');
+const { execSync } = require('child_process');
+
+function buildLogoSvg() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000" fill="none">
   <defs>
     <!-- High quality 3D shadows and glows -->
     <filter id="sbDropShadow" x="-20%" y="-20%" width="140%" height="140%">
@@ -259,4 +265,28 @@
     <!-- Arrowhead Tip Gleam -->
     <polygon points="768,276 738,322 724,316" fill="#c8fcff" opacity="0.8" />
   </g>
-</svg>
+</svg>`;
+}
+
+function generateAssets() {
+  const publicDir = path.join(__dirname, '../public');
+  const svg = buildLogoSvg();
+
+  // 1. Write SVG to public/logo.svg and public/stockbloc-logo.svg
+  fs.writeFileSync(path.join(publicDir, 'logo.svg'), svg);
+  fs.writeFileSync(path.join(publicDir, 'stockbloc-logo.svg'), svg);
+  console.log('Saved SVG logos');
+
+  // 2. Render high resolution PNG with Resvg
+  const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 1024 } });
+  const pngData = resvg.render().asPng();
+  fs.writeFileSync(path.join(publicDir, 'logo.png'), pngData);
+  fs.writeFileSync(path.join(publicDir, 'stockbloc-logo.png'), pngData);
+  console.log('Rendered 1024x1024 PNG logos (size:', pngData.length, 'bytes)');
+
+  // 3. Render high-quality JPG with convert (ImageMagick)
+  execSync(`convert public/logo.png -background "#030712" -flatten -quality 96 public/logo.jpg`);
+  console.log('Rendered public/logo.jpg (size:', fs.statSync(path.join(publicDir, 'logo.jpg')).size, 'bytes)');
+}
+
+generateAssets();

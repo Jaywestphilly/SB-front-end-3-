@@ -53,8 +53,9 @@ export const StockBlocLogo: React.FC<StockBlocLogoProps> = ({
           </>
         )}
         <img
-          src="/logo.jpg"
+          src="/logo.png"
           alt="Stock Bloc Logo"
+          referrerPolicy="no-referrer"
           className="w-full h-full object-contain rounded-xl relative z-10 drop-shadow-[0_0_16px_rgba(34,211,238,0.45)]"
           loading="eager"
         />
