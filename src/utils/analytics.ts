@@ -10,6 +10,7 @@ export type AnalyticsEventName =
   | "video_watched"
   | "community_joined"
   | "disclaimer_viewed"
+  | "brand_logo_switched"
   | "prompt_copied";
 
 export interface AnalyticsEventData {

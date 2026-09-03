@@ -1,6 +1,5 @@
-import React from "react";
-import { motion } from "motion/react";
-import { StockBlocLogo } from "./StockBlocLogo";
+import React, { useState } from "react";
+import { StockBlocLogo, StockBlocLogoVariant } from "./StockBlocLogo";
 import {
   Flame,
   Layers,
@@ -20,6 +19,9 @@ import {
   Youtube,
   Briefcase,
   HelpCircle,
+  Check,
+  Download,
+  Eye,
 } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics";
 import { trackEvent } from "../utils/analytics";
@@ -35,6 +37,25 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
   onSelectTab,
   onOpenLinktree,
 }) => {
+  const [activeVariant, setActiveVariant] = useState<StockBlocLogoVariant>(() => {
+    try {
+      const stored = localStorage.getItem("stockbloc_logo_variant");
+      if (stored === "3d" || stored === "flat") return stored;
+    } catch {}
+    return "3d";
+  });
+
+  const handleSelectVariant = (variant: StockBlocLogoVariant) => {
+    setActiveVariant(variant);
+    try {
+      localStorage.setItem("stockbloc_logo_variant", variant);
+    } catch {}
+    window.dispatchEvent(
+      new CustomEvent("stockbloc:logo_variant", { detail: { variant } })
+    );
+    triggerHaptic("selection");
+    trackEvent("brand_logo_switched", { variant });
+  };
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-6 space-y-8 font-mono select-none">
       {/* Hero Header Card */}
@@ -118,6 +139,228 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
             >
               <Youtube className="w-4 h-4 text-rose-400" />
               <span>FOLLOW ON YOUTUBE</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Official Brand Identity & Dual Emblem Selector */}
+      <div className="relative bg-gradient-to-b from-black via-slate-950 to-black border-2 border-cyan-500/40 rounded-3xl p-6 sm:p-8 text-white space-y-6 shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/30 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 font-black shadow-inner shrink-0">
+              <Sparkles className="w-5 h-5 text-cyan-400 animate-pulse" />
+            </div>
+            <div>
+              <h2 className="text-lg sm:text-xl font-black font-mono text-cyan-200 uppercase tracking-wider alien-text-glow">
+                OFFICIAL STOCK BLOC BRAND EMBLEM SUITE
+              </h2>
+              <p className="text-xs text-cyan-400/80 font-mono tracking-wider uppercase mt-0.5">
+                Liberty Bell + SB Interlocking Architecture + Bull Momentum Arrow
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs font-mono text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 px-3 py-1.5 rounded-xl w-fit">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <span>ACTIVE EMBLEM: <strong className="text-white">{activeVariant === "3d" ? "3D METALLIC" : "2D FLAT"}</strong></span>
+          </div>
+        </div>
+
+        {/* Dual Emblem Comparison & Switcher Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Logo 1 Card: 3D Chrome Metallic */}
+          <div
+            className={`relative rounded-2xl p-5 border-2 transition-all duration-300 flex flex-col justify-between ${
+              activeVariant === "3d"
+                ? "bg-cyan-950/30 border-cyan-400 shadow-[0_0_25px_rgba(6,182,212,0.35)]"
+                : "bg-black/70 border-cyan-500/20 hover:border-cyan-500/50"
+            }`}
+          >
+            <div className="space-y-4">
+              {/* Badge & Title */}
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-400/30 px-2.5 py-1 rounded-md">
+                  LOGO 1 // 3D METALLIC
+                </span>
+                {activeVariant === "3d" && (
+                  <span className="flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded-md">
+                    <Check className="w-3 h-3" /> ACTIVE TERMINAL
+                  </span>
+                )}
+              </div>
+
+              {/* Live Preview Display on Dark Surface */}
+              <div className="relative h-48 w-full bg-[#020617] rounded-xl border border-cyan-500/30 flex items-center justify-center overflow-hidden group">
+                <div className="absolute inset-0 bg-[radial-gradient(#083344_1px,transparent_1px)] [background-size:14px_14px] opacity-40 pointer-events-none" />
+                <div className="absolute inset-0 bg-cyan-500/15 rounded-full blur-2xl group-hover:bg-cyan-400/25 transition-all pointer-events-none" />
+                <img
+                  src="/Logo1.png"
+                  alt="Stock Bloc 3D Metallic Emblem"
+                  referrerPolicy="no-referrer"
+                  className="h-36 w-36 object-contain relative z-10 drop-shadow-[0_4px_20px_rgba(6,182,212,0.6)] group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+
+              <div>
+                <h3 className="font-mono font-extrabold text-white text-sm uppercase">
+                  3D Metallic Chrome Emblem
+                </h3>
+                <p className="text-xs text-neutral-300 font-sans mt-1 leading-relaxed">
+                  Sculpted chrome luster with specular lighting, beveled yoke arch, and gradient metallic depth for dark UI terminals.
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-5 space-y-2 pt-4 border-t border-cyan-500/20">
+              <button
+                type="button"
+                onClick={() => handleSelectVariant("3d")}
+                className={`w-full py-2.5 px-4 font-mono font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  activeVariant === "3d"
+                    ? "bg-cyan-400 text-black shadow-lg shadow-cyan-400/30"
+                    : "bg-cyan-950/50 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/50"
+                }`}
+              >
+                {activeVariant === "3d" ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>ACTIVE TERMINAL EMBLEM</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4" />
+                    <span>SET AS TERMINAL EMBLEM</span>
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href="/Logo1.png"
+                  download="StockBloc_Logo1_Transparent.png"
+                  className="flex-1 py-1.5 px-2.5 bg-black/60 hover:bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Download className="w-3 h-3 text-cyan-400" />
+                  <span>TRANSPARENT PNG</span>
+                </a>
+                <a
+                  href="/Logo1.jpeg"
+                  download="StockBloc_Logo1_Original.jpeg"
+                  className="flex-1 py-1.5 px-2.5 bg-black/60 hover:bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Download className="w-3 h-3 text-cyan-400" />
+                  <span>ORIGINAL JPG</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Logo 2 Card: 2D Flat Vector */}
+          <div
+            className={`relative rounded-2xl p-5 border-2 transition-all duration-300 flex flex-col justify-between ${
+              activeVariant === "flat"
+                ? "bg-cyan-950/30 border-cyan-400 shadow-[0_0_25px_rgba(6,182,212,0.35)]"
+                : "bg-black/70 border-cyan-500/20 hover:border-cyan-500/50"
+            }`}
+          >
+            <div className="space-y-4">
+              {/* Badge & Title */}
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono font-black uppercase tracking-widest text-cyan-400 bg-cyan-500/10 border border-cyan-400/30 px-2.5 py-1 rounded-md">
+                  LOGO 2 // 2D FLAT VECTOR
+                </span>
+                {activeVariant === "flat" && (
+                  <span className="flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded-md">
+                    <Check className="w-3 h-3" /> ACTIVE TERMINAL
+                  </span>
+                )}
+              </div>
+
+              {/* Live Preview Display on Dark Surface */}
+              <div className="relative h-48 w-full bg-[#020617] rounded-xl border border-cyan-500/30 flex items-center justify-center overflow-hidden group">
+                <div className="absolute inset-0 bg-[radial-gradient(#083344_1px,transparent_1px)] [background-size:14px_14px] opacity-40 pointer-events-none" />
+                <div className="absolute inset-0 bg-cyan-500/15 rounded-full blur-2xl group-hover:bg-cyan-400/25 transition-all pointer-events-none" />
+                <img
+                  src="/Logo2.png"
+                  alt="Stock Bloc 2D Flat Emblem"
+                  referrerPolicy="no-referrer"
+                  className="h-36 w-36 object-contain relative z-10 drop-shadow-[0_4px_20px_rgba(6,182,212,0.6)] group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+
+              <div>
+                <h3 className="font-mono font-extrabold text-white text-sm uppercase">
+                  2D Precision Flat Emblem
+                </h3>
+                <p className="text-xs text-neutral-300 font-sans mt-1 leading-relaxed">
+                  Ultra-clean flat vector geometry with razor-sharp geometric contours, high contrast solid cyan fills, and minimalist silhouette.
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-5 space-y-2 pt-4 border-t border-cyan-500/20">
+              <button
+                type="button"
+                onClick={() => handleSelectVariant("flat")}
+                className={`w-full py-2.5 px-4 font-mono font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  activeVariant === "flat"
+                    ? "bg-cyan-400 text-black shadow-lg shadow-cyan-400/30"
+                    : "bg-cyan-950/50 border border-cyan-500/40 text-cyan-200 hover:bg-cyan-900/50"
+                }`}
+              >
+                {activeVariant === "flat" ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>ACTIVE TERMINAL EMBLEM</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4" />
+                    <span>SET AS TERMINAL EMBLEM</span>
+                  </>
+                )}
+              </button>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href="/Logo2.png"
+                  download="StockBloc_Logo2_Transparent.png"
+                  className="flex-1 py-1.5 px-2.5 bg-black/60 hover:bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Download className="w-3 h-3 text-cyan-400" />
+                  <span>TRANSPARENT PNG</span>
+                </a>
+                <a
+                  href="/Logo2.jpeg"
+                  download="StockBloc_Logo2_Original.jpeg"
+                  className="flex-1 py-1.5 px-2.5 bg-black/60 hover:bg-cyan-950/40 border border-cyan-500/30 text-cyan-300 text-[10px] font-mono font-bold rounded-lg transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Download className="w-3 h-3 text-cyan-400" />
+                  <span>ORIGINAL JPG</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Global Export & Package Toolbar */}
+        <div className="p-4 bg-cyan-950/30 border border-cyan-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 text-cyan-300">
+            <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+            <span>High-res assets generated: 1024×1024 transparent PNGs, 1200×1200 social card, & PWA icons</span>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <a
+              href="/logo.jpg"
+              download="StockBloc_Social_Banner.jpg"
+              className="py-1.5 px-3 bg-black/60 hover:bg-cyan-900/50 border border-cyan-400/40 text-cyan-200 text-[11px] font-mono font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 flex-1 sm:flex-initial"
+            >
+              <Download className="w-3.5 h-3.5 text-cyan-400" />
+              <span>SOCIAL BANNER (1200×1200)</span>
             </a>
           </div>
         </div>
@@ -394,3 +637,5 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
     </div>
   );
 };
+
+export default BrandLandingHub;
