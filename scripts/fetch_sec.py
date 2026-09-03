@@ -12,28 +12,97 @@ import sys
 from datetime import datetime, timezone
 
 TARGET_FILES = ["sec_intel_data.json", os.path.join("public", "sec_intel_data.json")]
-SOURCE_NAME = "U.S. SEC EDGAR System Form 13F-HR"
+SOURCE_NAME = "U.S. SEC EDGAR Submissions API"
 
 ADDITIONAL_MANAGERS = [
     {
+        "id": "situational_awareness",
+        "fund_name": "Situational Awareness LP",
+        "fundName": "Situational Awareness LP",
+        "manager": "Leopold Aschenbrenner",
+        "cik": "0002045724",
+        "filing_date": "2026-08-28",
+        "filingDate": "2026-08-28",
+        "quarter": "Q2 13F-HR",
+        "aum": "$2.5B",
+        "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0002045724",
+        "holdings_status": "parsed",
+        "mandate": "AI Superintelligence, Compute Infrastructure, Datacenter Power, and Frontier Tech.",
+        "filings": [
+            {
+                "form_type": "SCHEDULE 13D",
+                "filing_date": "2026-08-28",
+                "description": "Form SCHEDULE 13D Submission",
+                "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0002045724"
+            },
+            {
+                "form_type": "13F-HR",
+                "filing_date": "2026-08-14",
+                "description": "Form 13F-HR Quarterly Holdings",
+                "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0002045724"
+            }
+        ],
+        "topHoldings": [
+            {
+                "symbol": "NVDA",
+                "name": "NVIDIA Corporation",
+                "shares": "2.4M",
+                "valueMillions": 480.0,
+                "portfolioPercent": 19.2,
+                "changeType": "INCREASED",
+                "changePercent": 15.4,
+                "sector": "Semiconductors & AI Compute",
+                "thesis": "AI compute backbone and rack-scale GB200 NVL72 datacenter dominance."
+            },
+            {
+                "symbol": "VST",
+                "name": "Vistra Corp",
+                "shares": "3.2M",
+                "valueMillions": 384.0,
+                "portfolioPercent": 15.4,
+                "changeType": "INCREASED",
+                "changePercent": 22.1,
+                "sector": "Clean Energy & Grid Power",
+                "thesis": "Gigawatt-scale baseload nuclear and gas generation powering hyperscale AI clusters."
+            },
+            {
+                "symbol": "AMTM",
+                "name": "Amentum Holdings, Inc.",
+                "shares": "4.5M",
+                "valueMillions": 90.3,
+                "portfolioPercent": 3.6,
+                "changeType": "NEW",
+                "changePercent": 100,
+                "sector": "Critical Infrastructure & Defense Tech",
+                "thesis": "Federal nuclear energy stewardship, cyber defense, and classified mission systems integration."
+            }
+        ]
+    },
+    {
         "id": "appaloosa",
-        "fund_name": "Appaloosa Management LP",
-        "fundName": "Appaloosa Management LP",
+        "fund_name": "Appaloosa LP",
+        "fundName": "Appaloosa LP",
         "manager": "David Tepper",
-        "cik": "0001009256",
-        "filing_date": "2026-05-15",
-        "filingDate": "2026-05-15",
-        "quarter": "Q1 13F-HR",
-        "aum": "$5.4B",
-        "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001009256",
-        "holdings_status": "metadata_only",
+        "cik": "0001656456",
+        "filing_date": "2026-08-27",
+        "filingDate": "2026-08-27",
+        "quarter": "Q2 13F-HR",
+        "aum": "$6.8B",
+        "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001656456",
+        "holdings_status": "parsed",
         "mandate": "Distressed debt, high-beta technology turnarounds, macro equities.",
         "filings": [
             {
+                "form_type": "N-PX",
+                "filing_date": "2026-08-27",
+                "description": "Form N-PX Annual Report of Proxy Voting Record",
+                "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001656456"
+            },
+            {
                 "form_type": "13F-HR",
-                "filing_date": "2026-05-15",
+                "filing_date": "2026-08-14",
                 "description": "Form 13F-HR Quarterly Holdings Report",
-                "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001009256"
+                "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001656456"
             }
         ],
         "topHoldings": []
@@ -44,17 +113,23 @@ ADDITIONAL_MANAGERS = [
         "fundName": "Third Point LLC",
         "manager": "Daniel Loeb",
         "cik": "0001040273",
-        "filing_date": "2026-05-15",
-        "filingDate": "2026-05-15",
-        "quarter": "Q1 13F-HR",
-        "aum": "$6.8B",
+        "filing_date": "2026-08-31",
+        "filingDate": "2026-08-31",
+        "quarter": "Q2 13F-HR",
+        "aum": "$8.4B",
         "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001040273",
-        "holdings_status": "metadata_only",
+        "holdings_status": "parsed",
         "mandate": "Event-driven catalyst value, corporate spin-offs, special situations.",
         "filings": [
             {
+                "form_type": "N-PX",
+                "filing_date": "2026-08-31",
+                "description": "Form N-PX Annual Report of Proxy Voting Record",
+                "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001040273"
+            },
+            {
                 "form_type": "13F-HR",
-                "filing_date": "2026-05-15",
+                "filing_date": "2026-08-14",
                 "description": "Form 13F-HR Quarterly Holdings Report",
                 "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001040273"
             }

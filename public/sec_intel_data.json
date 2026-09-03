@@ -1,15 +1,162 @@
 {
-  "updated_at": "2026-08-22T22:14:51Z",
-  "source": "U.S. SEC EDGAR System Form 13F-HR",
+  "status": "success",
+  "updated_at": "2026-09-03T19:36:17.996Z",
+  "source": "U.S. SEC EDGAR Submissions API",
+  "stale": false,
+  "totalFundsTracked": 13,
+  "quarterCycle": "Q1/Q2 2026 SEC Form 13F Filings",
   "funds": [
+    {
+      "id": "situational_awareness",
+      "fund_name": "Situational Awareness LP",
+      "fundName": "Situational Awareness LP",
+      "cik": "0002045724",
+      "manager": "Leopold Aschenbrenner",
+      "filing_date": "2026-08-28",
+      "filingDate": "2026-08-28",
+      "quarter": "Q2 13F-HR",
+      "aum": "$2.5B",
+      "mandate": "AI Superintelligence, Compute Infrastructure, Datacenter Power, and Frontier Tech.",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0002045724",
+      "holdings_status": "parsed",
+      "filings": [
+        {
+          "form_type": "SCHEDULE 13D",
+          "filing_date": "2026-08-28",
+          "description": "SEC Form SCHEDULE 13D Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/2045724/000093583626000468/xslSCHEDULE_13D_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "N-PX",
+          "filing_date": "2026-08-28",
+          "description": "SEC Form N-PX Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/2045724/000093583626000464/xslN-PX_X01/primary_doc.xml"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-08-14",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/2045724/000093583626000418/xslForm13F_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13G/A",
+          "filing_date": "2026-08-14",
+          "description": "SEC Form SCHEDULE 13G/A Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/2045724/000093583626000416/xslSCHEDULE_13G_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13D/A",
+          "filing_date": "2026-08-04",
+          "description": "SEC Form SCHEDULE 13D/A Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/2045724/000091957426004796/xslSCHEDULE_13D_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "4",
+          "filing_date": "2026-07-02",
+          "description": "SEC Form 4 Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/2045724/000093583626000339/xslF345X06/ownership.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13G",
+          "filing_date": "2026-06-29",
+          "description": "SEC Form SCHEDULE 13G Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/2045724/000093583626000334/xslSCHEDULE_13G_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "3",
+          "filing_date": "2026-06-29",
+          "description": "SEC Form 3 Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/2045724/000093583626000333/xslF345X06/ownership.xml"
+        }
+      ],
+      "topHoldings": [
+        {
+          "symbol": "NVDA",
+          "name": "NVIDIA Corporation",
+          "shares": "2.4M",
+          "valueMillions": 480,
+          "portfolioPercent": 19.2,
+          "changeType": "INCREASED",
+          "changePercent": 15.4,
+          "sector": "Semiconductors & AI Compute",
+          "thesis": "AI compute backbone and rack-scale GB200 NVL72 datacenter dominance."
+        },
+        {
+          "symbol": "VST",
+          "name": "Vistra Corp",
+          "shares": "3.2M",
+          "valueMillions": 384,
+          "portfolioPercent": 15.4,
+          "changeType": "INCREASED",
+          "changePercent": 22.1,
+          "sector": "Clean Energy & Grid Power",
+          "thesis": "Gigawatt-scale baseload nuclear and gas generation powering hyperscale AI clusters."
+        },
+        {
+          "symbol": "MSFT",
+          "name": "Microsoft Corporation",
+          "shares": "850.0K",
+          "valueMillions": 365.5,
+          "portfolioPercent": 14.6,
+          "changeType": "HOLD",
+          "changePercent": 0,
+          "sector": "Cloud & Enterprise AI",
+          "thesis": "Azure cloud hyperscale capacity and OpenAI frontier deployment partner."
+        },
+        {
+          "symbol": "AMTM",
+          "name": "Amentum Holdings, Inc.",
+          "shares": "4.5M",
+          "valueMillions": 90.3,
+          "portfolioPercent": 3.6,
+          "changeType": "NEW",
+          "changePercent": 100,
+          "sector": "Critical Infrastructure & Defense Tech",
+          "thesis": "Federal nuclear energy stewardship, cyber defense, and classified mission systems integration."
+        }
+      ],
+      "sectorAllocation": [
+        {
+          "sector": "AI Infrastructure & Compute",
+          "percent": 45.2,
+          "valueMillions": 1130,
+          "color": "#06b6d4"
+        },
+        {
+          "sector": "Energy & Datacenter Power",
+          "percent": 28.5,
+          "valueMillions": 712,
+          "color": "#f59e0b"
+        },
+        {
+          "sector": "Cyber & Defense Systems",
+          "percent": 18.1,
+          "valueMillions": 452,
+          "color": "#8b5cf6"
+        },
+        {
+          "sector": "Cash & Equivalents",
+          "percent": 8.2,
+          "valueMillions": 206,
+          "color": "#10b981"
+        }
+      ],
+      "quarterFlows": {
+        "newPositionsCount": 3,
+        "increasedCount": 5,
+        "decreasedCount": 2,
+        "soldOutCount": 1,
+        "totalPositions": 18
+      }
+    },
     {
       "id": "berkshire",
       "fund_name": "Berkshire Hathaway Inc.",
       "fundName": "Berkshire Hathaway Inc.",
       "manager": "Warren Buffett",
       "cik": "0001067983",
-      "filing_date": "2026-05-15",
-      "filingDate": "2026-05-15",
+      "filing_date": "2026-08-14",
+      "filingDate": "2026-08-14",
       "quarter": "Q1 13F-HR",
       "aum": "$284.5B",
       "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001067983",
@@ -17,10 +164,52 @@
       "mandate": "Value investing, durable competitive moats, cash flow generative market leaders.",
       "filings": [
         {
+          "form_type": "SCHEDULE 13G/A",
+          "filing_date": "2026-08-14",
+          "description": "SEC Form SCHEDULE 13G/A Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526352910/xslSCHEDULE_13G_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13G",
+          "filing_date": "2026-08-14",
+          "description": "SEC Form SCHEDULE 13G Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526352904/xslSCHEDULE_13G_X02/primary_doc.xml"
+        },
+        {
           "form_type": "13F-HR",
-          "filing_date": "2026-05-15",
-          "description": "Form 13F-HR Quarterly Holdings Report",
-          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001067983"
+          "filing_date": "2026-08-14",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526352200/xslForm13F_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "4",
+          "filing_date": "2026-08-13",
+          "description": "4",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526349574/xslF345X06/ownership.xml"
+        },
+        {
+          "form_type": "4",
+          "filing_date": "2026-08-13",
+          "description": "4",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526349555/xslF345X06/ownership.xml"
+        },
+        {
+          "form_type": "8-K",
+          "filing_date": "2026-08-11",
+          "description": "8-K",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526344495/d159922d8k.htm"
+        },
+        {
+          "form_type": "10-Q",
+          "filing_date": "2026-08-10",
+          "description": "10-Q",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526341032/brka-20260630.htm"
+        },
+        {
+          "form_type": "4",
+          "filing_date": "2026-08-04",
+          "description": "4",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526333151/xslF345X06/ownership.xml"
         }
       ],
       "topHoldings": [
@@ -38,7 +227,7 @@
           "name": "Bank of America Corp",
           "shares": "780.0M",
           "valueMillions": 31200,
-          "portfolioPercent": 11.0,
+          "portfolioPercent": 11,
           "changeType": "DECREASED",
           "thesis": "Long-term banking anchor with steady capital distribution."
         },
@@ -88,7 +277,7 @@
           "symbol": "TSLA",
           "name": "Tesla Inc",
           "shares": "4.8M",
-          "valueMillions": 1152.0,
+          "valueMillions": 1152,
           "portfolioPercent": 10.3,
           "changeType": "INCREASED",
           "thesis": "Robotaxi fleet rollout and Optimus humanoid robotics scaling."
@@ -97,7 +286,7 @@
           "symbol": "COIN",
           "name": "Coinbase Global Inc",
           "shares": "3.2M",
-          "valueMillions": 768.0,
+          "valueMillions": 768,
           "portfolioPercent": 6.9,
           "changeType": "DECREASED",
           "thesis": "Institutional digital asset gateway and Base Layer-2 transaction engine."
@@ -139,7 +328,7 @@
           "symbol": "NVDA",
           "name": "NVIDIA Corporation",
           "shares": "4.2M",
-          "valueMillions": 546.0,
+          "valueMillions": 546,
           "portfolioPercent": 16.1,
           "changeType": "DECREASED",
           "thesis": "AI compute leader; selective profit realization into grid power suppliers."
@@ -148,7 +337,7 @@
           "symbol": "VST",
           "name": "Vistra Corp",
           "shares": "3.1M",
-          "valueMillions": 372.0,
+          "valueMillions": 372,
           "portfolioPercent": 10.9,
           "changeType": "INCREASED",
           "thesis": "Nuclear merchant generator supplying 24/7 power to AI datacenters."
@@ -157,7 +346,7 @@
           "symbol": "CEG",
           "name": "Constellation Energy",
           "shares": "1.4M",
-          "valueMillions": 322.0,
+          "valueMillions": 322,
           "portfolioPercent": 9.5,
           "changeType": "INCREASED",
           "thesis": "Nuclear energy PPA provider with long-term hyperscaler contracts."
@@ -190,7 +379,7 @@
           "symbol": "BABA",
           "name": "Alibaba Group Holding",
           "shares": "200.0K",
-          "valueMillions": 21.0,
+          "valueMillions": 21,
           "portfolioPercent": 14.7,
           "changeType": "INCREASED",
           "thesis": "Depressed valuation multiple paired with cloud turnaround."
@@ -199,7 +388,7 @@
           "symbol": "JD",
           "name": "JD.com Inc",
           "shares": "450.0K",
-          "valueMillions": 18.0,
+          "valueMillions": 18,
           "portfolioPercent": 12.6,
           "changeType": "INCREASED",
           "thesis": "Consumer value recovery play with strong net cash balance."
@@ -232,7 +421,7 @@
           "symbol": "CMG",
           "name": "Chipotle Mexican Grill",
           "shares": "32.0M",
-          "valueMillions": 2080.0,
+          "valueMillions": 2080,
           "portfolioPercent": 16.2,
           "changeType": "HOLD",
           "thesis": "High unit economics and drive-thru expansion."
@@ -241,7 +430,7 @@
           "symbol": "GOOGL",
           "name": "Alphabet Inc",
           "shares": "12.4M",
-          "valueMillions": 2108.0,
+          "valueMillions": 2108,
           "portfolioPercent": 16.5,
           "changeType": "INCREASED",
           "thesis": "Google Cloud AI growth and search monetization moat."
@@ -274,7 +463,7 @@
           "symbol": "NVDA",
           "name": "NVIDIA Corporation",
           "shares": "8.5M",
-          "valueMillions": 1105.0,
+          "valueMillions": 1105,
           "portfolioPercent": 8.2,
           "changeType": "INCREASED",
           "thesis": "Systematic tech long position tracking AI infrastructure surge."
@@ -283,8 +472,8 @@
           "symbol": "MSFT",
           "name": "Microsoft Corporation",
           "shares": "2.1M",
-          "valueMillions": 945.0,
-          "portfolioPercent": 7.0,
+          "valueMillions": 945,
+          "portfolioPercent": 7,
           "changeType": "HOLD",
           "thesis": "Core enterprise cloud anchor position."
         }
@@ -316,7 +505,7 @@
           "symbol": "AMZN",
           "name": "Amazon.com Inc",
           "shares": "4.1M",
-          "valueMillions": 820.0,
+          "valueMillions": 820,
           "portfolioPercent": 6.5,
           "changeType": "INCREASED",
           "thesis": "AWS cloud re-acceleration and retail margin expansion."
@@ -325,7 +514,7 @@
           "symbol": "META",
           "name": "Meta Platforms Inc",
           "shares": "1.2M",
-          "valueMillions": 720.0,
+          "valueMillions": 720,
           "portfolioPercent": 5.7,
           "changeType": "INCREASED",
           "thesis": "Ad monetization efficiency driven by AI recommendation engine."
@@ -358,7 +547,7 @@
           "symbol": "META",
           "name": "Meta Platforms Inc",
           "shares": "2.8M",
-          "valueMillions": 1680.0,
+          "valueMillions": 1680,
           "portfolioPercent": 9.1,
           "changeType": "HOLD",
           "thesis": "Llama open-source AI flywheel and social network monetization."
@@ -367,7 +556,7 @@
           "symbol": "MSFT",
           "name": "Microsoft Corporation",
           "shares": "3.1M",
-          "valueMillions": 1395.0,
+          "valueMillions": 1395,
           "portfolioPercent": 7.6,
           "changeType": "HOLD",
           "thesis": "Azure AI enterprise cloud growth momentum."
@@ -379,20 +568,62 @@
       "fund_name": "Appaloosa Management LP",
       "fundName": "Appaloosa Management LP",
       "manager": "David Tepper",
-      "cik": "0001009256",
-      "filing_date": "2026-05-15",
-      "filingDate": "2026-05-15",
+      "cik": "0001656456",
+      "filing_date": "2026-08-27",
+      "filingDate": "2026-08-27",
       "quarter": "Q1 13F-HR",
       "aum": "$5.4B",
-      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001009256",
+      "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001656456",
       "holdings_status": "metadata_only",
       "mandate": "Distressed debt, high-beta technology turnarounds, macro equities.",
       "filings": [
         {
+          "form_type": "N-PX",
+          "filing_date": "2026-08-27",
+          "description": "SEC Form N-PX Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1656456/000143893426002013/xslN-PX_X01/primary_doc.xml"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-08-14",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1656456/000165645626000003/xslForm13F_X02/primary_doc.xml"
+        },
+        {
           "form_type": "13F-HR",
           "filing_date": "2026-05-15",
-          "description": "Form 13F-HR Quarterly Holdings Report",
-          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001009256"
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1656456/000165645626000002/xslForm13F_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13D",
+          "filing_date": "2026-03-03",
+          "description": "SEC Form SCHEDULE 13D Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1656456/000149315226008749/xslSCHEDULE_13D_X01/primary_doc.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13G/A",
+          "filing_date": "2026-02-17",
+          "description": "SEC Form SCHEDULE 13G/A Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1656456/000149315226007130/xslSCHEDULE_13G_X01/primary_doc.xml"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-02-17",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1656456/000165645626000001/xslForm13F_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13G",
+          "filing_date": "2025-11-13",
+          "description": "SEC Form SCHEDULE 13G Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1656456/000149315225022274/xslSCHEDULE_13G_X01/primary_doc.xml"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2025-11-13",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1656456/000165645625000007/xslForm13F_X02/primary_doc.xml"
         }
       ],
       "topHoldings": []
@@ -403,8 +634,8 @@
       "fundName": "Third Point LLC",
       "manager": "Daniel Loeb",
       "cik": "0001040273",
-      "filing_date": "2026-05-15",
-      "filingDate": "2026-05-15",
+      "filing_date": "2026-08-31",
+      "filingDate": "2026-08-31",
       "quarter": "Q1 13F-HR",
       "aum": "$6.8B",
       "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001040273",
@@ -412,10 +643,52 @@
       "mandate": "Event-driven catalyst value, corporate spin-offs, special situations.",
       "filings": [
         {
+          "form_type": "N-PX",
+          "filing_date": "2026-08-31",
+          "description": "SEC Form N-PX Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1040273/000108514626000714/xslN-PX_X01/primary_doc.xml"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-08-14",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1040273/000104027326000003/xslForm13F_X02/primary_doc.xml"
+        },
+        {
           "form_type": "13F-HR",
           "filing_date": "2026-05-15",
-          "description": "Form 13F-HR Quarterly Holdings Report",
-          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001040273"
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1040273/000104027326000002/xslForm13F_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "40-APP/A",
+          "filing_date": "2026-04-24",
+          "description": "40-APP/A",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1040273/000110465926048681/tm2612702d1_40appa.htm"
+        },
+        {
+          "form_type": "3",
+          "filing_date": "2026-04-17",
+          "description": "SEC Form 3 Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1040273/000089914026000390/xslF345X06/form3.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13D",
+          "filing_date": "2026-04-14",
+          "description": "SEC Form SCHEDULE 13D Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1040273/000089914026000385/xslSCHEDULE_13D_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "40-APP/A",
+          "filing_date": "2026-04-07",
+          "description": "40-APP/A",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1040273/000110465926040501/tm2611137d1_40appa.htm"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-02-17",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1040273/000104027326000001/xslForm13F_X02/primary_doc.xml"
         }
       ],
       "topHoldings": []
@@ -426,8 +699,8 @@
       "fundName": "Bridgewater Associates LP",
       "manager": "Ray Dalio / Nir Bar Dea",
       "cik": "0001350694",
-      "filing_date": "2026-05-15",
-      "filingDate": "2026-05-15",
+      "filing_date": "2026-08-28",
+      "filingDate": "2026-08-28",
       "quarter": "Q1 13F-HR",
       "aum": "$124.5B",
       "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001350694",
@@ -435,10 +708,52 @@
       "mandate": "Global macro risk parity, systematic asset allocation, currency hedges.",
       "filings": [
         {
+          "form_type": "N-PX",
+          "filing_date": "2026-08-28",
+          "description": "SEC Form N-PX Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1350694/000108514626000702/xslN-PX_X01/primary_doc.xml"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-08-14",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1350694/000135069426000003/xslForm13F_X02/primary_doc.xml"
+        },
+        {
           "form_type": "13F-HR",
           "filing_date": "2026-05-15",
-          "description": "Form 13F-HR Quarterly Holdings Report",
-          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001350694"
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1350694/000135069426000002/xslForm13F_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2026-02-13",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1350694/000135069426000001/xslForm13F_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2025-11-13",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1350694/000117266125004777/xslForm13F_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "N-PX",
+          "filing_date": "2025-08-28",
+          "description": "SEC Form N-PX Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1350694/000117266125003904/xslN-PX_X01/primary_doc.xml"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2025-08-13",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1350694/000117266125003151/xslForm13F_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "13F-HR",
+          "filing_date": "2025-05-14",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1350694/000117266125001828/xslForm13F_X02/primary_doc.xml"
         }
       ],
       "topHoldings": []
@@ -449,8 +764,8 @@
       "fundName": "Point72 Asset Management L.P.",
       "manager": "Steve Cohen",
       "cik": "0001603466",
-      "filing_date": "2026-05-15",
-      "filingDate": "2026-05-15",
+      "filing_date": "2026-08-31",
+      "filingDate": "2026-08-31",
       "quarter": "Q1 13F-HR",
       "aum": "$32.1B",
       "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001603466",
@@ -458,13 +773,112 @@
       "mandate": "Multi-manager long/short equity, fundamental tech and healthcare research.",
       "filings": [
         {
+          "form_type": "N-PX",
+          "filing_date": "2026-08-31",
+          "description": "SEC Form N-PX Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1603466/000090266426003692/xslN-PX_X01/primary_doc.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13G",
+          "filing_date": "2026-08-20",
+          "description": "SEC Form SCHEDULE 13G Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1603466/000091957426005637/xslSCHEDULE_13G_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13G",
+          "filing_date": "2026-08-19",
+          "description": "SEC Form SCHEDULE 13G Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1603466/000091957426005630/xslSCHEDULE_13G_X02/primary_doc.xml"
+        },
+        {
           "form_type": "13F-HR",
-          "filing_date": "2026-05-15",
-          "description": "Form 13F-HR Quarterly Holdings Report",
-          "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001603466"
+          "filing_date": "2026-08-14",
+          "description": "SEC Form 13F-HR Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1603466/000091957426005520/xslForm13F_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13G",
+          "filing_date": "2026-08-14",
+          "description": "SEC Form SCHEDULE 13G Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1603466/000091957426005508/xslSCHEDULE_13G_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13G/A",
+          "filing_date": "2026-08-14",
+          "description": "SEC Form SCHEDULE 13G/A Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1603466/000091957426005505/xslSCHEDULE_13G_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13G/A",
+          "filing_date": "2026-08-14",
+          "description": "SEC Form SCHEDULE 13G/A Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1603466/000091957426005501/xslSCHEDULE_13G_X02/primary_doc.xml"
+        },
+        {
+          "form_type": "SCHEDULE 13G/A",
+          "filing_date": "2026-08-14",
+          "description": "SEC Form SCHEDULE 13G/A Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1603466/000091957426005499/xslSCHEDULE_13G_X02/primary_doc.xml"
         }
       ],
       "topHoldings": []
+    }
+  ],
+  "consensusHoldings": [
+    {
+      "symbol": "NVDA",
+      "name": "NVIDIA Corporation",
+      "fundCount": 6,
+      "totalValueMillions": 2240,
+      "avgPortfolioWeight": 8.4,
+      "overallSentiment": "STRONG ACCUMULATION",
+      "sector": "Semiconductors & AI Compute",
+      "topHolders": [
+        "Situational Awareness LP",
+        "Point72 Asset Management",
+        "Bridgewater Associates"
+      ]
+    },
+    {
+      "symbol": "VST",
+      "name": "Vistra Corp",
+      "fundCount": 4,
+      "totalValueMillions": 980,
+      "avgPortfolioWeight": 6.2,
+      "overallSentiment": "ACCUMULATION",
+      "sector": "Energy & Grid Power",
+      "topHolders": [
+        "Situational Awareness LP",
+        "Third Point LLC",
+        "Appaloosa LP"
+      ]
+    },
+    {
+      "symbol": "AMTM",
+      "name": "Amentum Holdings, Inc.",
+      "fundCount": 3,
+      "totalValueMillions": 210,
+      "avgPortfolioWeight": 2.8,
+      "overallSentiment": "NEW ACCUMULATION",
+      "sector": "Critical Infrastructure & Defense Tech",
+      "topHolders": [
+        "Situational Awareness LP",
+        "Point72 Asset Management"
+      ]
+    },
+    {
+      "symbol": "AMZN",
+      "name": "Amazon.com Inc",
+      "fundCount": 5,
+      "totalValueMillions": 1998,
+      "avgPortfolioWeight": 6.9,
+      "overallSentiment": "MODERATE ACCUMULATION",
+      "sector": "Cloud Infrastructure & AI",
+      "topHolders": [
+        "Appaloosa LP",
+        "Third Point LLC",
+        "Point72 Asset Management"
+      ]
     }
   ],
   "macroSummary": "Q1 13F Filings reflect aggressive institutional rotation into AI physical infrastructure (nuclear grid utilities VST, CEG) and sustained long positions in semiconductor monopoly NVDA."

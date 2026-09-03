@@ -418,14 +418,13 @@ export class MarketDataService {
     path.join(process.cwd(), "public", "market_watchlist_data.json")
   ];
 
-  public static getProviderName(): string {
-    const configuredProvider = process.env.MARKET_DATA_PROVIDER || 'auto';
-    if (configuredProvider !== 'auto') return configuredProvider;
+  private static cache: { data: MarketFeedData; timestamp: number } | null = null;
+  private static CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes in-memory cache
 
-    if (process.env.MARKET_DATA_API_KEY || process.env.ALPHA_VANTAGE_API_KEY) return 'Alpha Vantage API';
-    if (process.env.FINNHUB_API_KEY) return 'Finnhub API';
-    if (process.env.POLYGON_API_KEY) return 'Polygon.io API';
-    return 'Yahoo Finance Quant Feed';
+  public static getProviderName(): string {
+    const configuredProvider = process.env.MARKET_DATA_PROVIDER;
+    if (configuredProvider && configuredProvider !== 'auto') return configuredProvider;
+    return 'Yahoo Finance chart API';
   }
 
   public static getStalenessThresholds() {
@@ -653,17 +652,21 @@ export class MarketDataService {
    * If live provider succeeds for records, updates them with full quant indicators & signals.
    * If live provider fails or yields invalid output, preserves the last verified dataset and marks feed as stale.
    */
-  public static async refreshMarketData(): Promise<MarketFeedData> {
+  public static async refreshMarketData(forceRefresh = false): Promise<MarketFeedData> {
+    const now = Date.now();
+    if (!forceRefresh && MarketDataService.cache && (now - MarketDataService.cache.timestamp < MarketDataService.CACHE_TTL_MS)) {
+      return MarketDataService.cache.data;
+    }
+
     const persisted = MarketDataService.loadPersistedData();
     const baseWatchlist = persisted?.watchlist || [];
 
-    const apiKey = process.env.MARKET_DATA_API_KEY || process.env.ALPHA_VANTAGE_API_KEY;
     const updatedWatchlist: WatchlistStock[] = [];
     let successCount = 0;
     const nowIso = new Date().toISOString();
 
-    // Fetch stock quotes in parallel batches of 8 for high throughput and sub-5s execution
-    const BATCH_SIZE = 8;
+    // Fetch stock quotes directly from Yahoo Finance chart API in parallel batches of 12
+    const BATCH_SIZE = 12;
     for (let i = 0; i < MarketDataService.WATCHLIST_SYMBOLS.length; i += BATCH_SIZE) {
       const batchSymbols = MarketDataService.WATCHLIST_SYMBOLS.slice(i, i + BATCH_SIZE);
       
@@ -693,22 +696,8 @@ export class MarketDataService {
             low52: 0,
           } as WatchlistStock);
 
-          let fetched: Partial<WatchlistStock> | null = null;
-
-          // 1. Try Alpha Vantage if API Key is configured
-          if (apiKey) {
-            const querySymbol = symbol === 'SPCX' ? 'SPCX' : symbol;
-            fetched = await MarketDataService.fetchAlphaVantageQuoteForSymbol(querySymbol, apiKey);
-          }
-
-          // 2. Fallback to Yahoo Finance if Alpha Vantage key absent or rate-limited/failed
-          if (!fetched) {
-            if (symbol === 'SPCX') {
-              fetched = await MarketDataService.fetchYahooQuoteForSymbol('SPCX'); // Destiny Tech100 proxy
-            } else {
-              fetched = await MarketDataService.fetchYahooQuoteForSymbol(symbol);
-            }
-          }
+          // Fetch live quote directly from Yahoo Finance chart API
+          const fetched = await MarketDataService.fetchYahooQuoteForSymbol(symbol);
 
           let mergedStock: WatchlistStock;
 
@@ -727,7 +716,7 @@ export class MarketDataService {
               low52: fetched.low52 ?? baseStock.low52,
               volume: fetched.volume ?? baseStock.volume,
               last_updated: nowIso,
-              source: MarketDataService.getProviderName()
+              source: "Yahoo Finance chart API"
             };
           } else {
             // Provider failed for this stock -> preserve last verified record
@@ -817,6 +806,11 @@ export class MarketDataService {
         console.error(`Failed to write dataset to ${filePath}:`, e);
       }
     }
+
+    MarketDataService.cache = {
+      data: dataset,
+      timestamp: Date.now()
+    };
 
     return dataset;
   }

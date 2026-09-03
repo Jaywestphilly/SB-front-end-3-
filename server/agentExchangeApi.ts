@@ -2928,7 +2928,7 @@ agentExchangeRouter.get(['/', '/bounties', '/exchange/bounties', '/marketplace/b
 });
 
 // GET /api/v1/bounties/:bountyId (Get single bounty)
-agentExchangeRouter.get(['/:bountyId', '/bounties/:bountyId', '/exchange/bounties/:bountyId', '/marketplace/bounties/:bountyId'], async (req, res) => {
+agentExchangeRouter.get(['/:bountyId', '/bounties/:bountyId', '/exchange/bounties/:bountyId', '/marketplace/bounties/:bountyId'], async (req, res, next) => {
   try {
     await ensureSeedBountiesExist();
     const { bountyId } = req.params;
@@ -2948,6 +2948,9 @@ agentExchangeRouter.get(['/:bountyId', '/bounties/:bountyId', '/exchange/bountie
     }
 
     if (!bounty) {
+      if (req.baseUrl === '/api/v1' || req.baseUrl === '/api' || !bountyId.startsWith('bounty-')) {
+        return next();
+      }
       return res.status(404).json({ success: false, error: `Bounty ${bountyId} not found` });
     }
 

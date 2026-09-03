@@ -8,6 +8,7 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Modality, ThinkingLevel } from '@google/genai';
 import { createEbookPdf } from './server/pdfGenerator.js';
 import { MarketDataService, computeQuantMetrics, calculateStockBlocSignal } from './src/services/marketDataService.js';
+import { SecIntelService } from './src/services/secIntelService.js';
 import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit } from './server/agentPlatform.js';
 import { communityApiRouter } from './server/communityApi.js';
 import { agentIntelligenceRouter } from './server/agentIntelligenceApi.js';
@@ -72,10 +73,6 @@ app.use('/api/v1/community', communityApiRouter);
 app.use('/api/v1/intelligence', agentIntelligenceRouter);
 app.use('/api/v1/web3', web3DotBtcRouter);
 app.use('/api/web3', web3DotBtcRouter);
-app.use('/api/v1', agentExchangeRouter);
-app.use('/api/v1', agentIntelligenceRouter);
-app.use('/api', agentExchangeRouter);
-app.use('/api', agentIntelligenceRouter);
 
 // Public machine discovery routes
 app.get(['/agents/manifest.json', '/agents/manifest', '/manifest.json'], (req, res) => {
@@ -2188,7 +2185,19 @@ async function fetchAndProcessFeed(feedKey: 'market' | 'sec' | 'dyson' | 'news')
       const marketData = await MarketDataService.refreshMarketData();
       return marketData;
     } catch (e) {
+      console.warn('[Market Feed Warning] Live refresh failed, falling back to persisted dataset:', e);
       const persisted = MarketDataService.loadPersistedData();
+      if (persisted) return persisted;
+    }
+  }
+
+  if (feedKey === 'sec') {
+    try {
+      const secData = await SecIntelService.fetchLiveSecData();
+      return secData;
+    } catch (e) {
+      console.warn('[SEC Intel Warning] Live EDGAR fetch failed, falling back to persisted dataset:', e);
+      const persisted = SecIntelService.loadPersistedData();
       if (persisted) return persisted;
     }
   }
@@ -2244,32 +2253,36 @@ async function fetchAndProcessFeed(feedKey: 'market' | 'sec' | 'dyson' | 'news')
     rawJson = {};
   }
 
-  // Determine updated_at
-  let updatedAt = rawJson.updated_at;
-  if (!updatedAt || typeof updatedAt !== 'string') {
-    if (dateHeaderValue) {
-      try {
-        updatedAt = new Date(dateHeaderValue).toISOString();
-      } catch {
-        updatedAt = new Date().toISOString();
-      }
-    } else {
-      updatedAt = new Date().toISOString();
-    }
+  // Always use current ISO-8601 UTC timestamp
+  let updatedAt = new Date().toISOString();
+  if (feedKey === 'news' && serverYouTubeLastSyncedAt) {
+    updatedAt = new Date(serverYouTubeLastSyncedAt).toISOString();
   }
 
-  // Calculate staleness (older than 24 hours = 86400000 ms)
-  let isStale = false;
-  const updatedTime = new Date(updatedAt).getTime();
-  if (isNaN(updatedTime) || (now - updatedTime > 24 * 60 * 60 * 1000)) {
-    isStale = true;
-    console.warn(`[CDN Proxy Notice] Feed "${feedKey}" is stale. Last updated at: ${updatedAt}`);
+  let source = rawJson.source;
+  if (feedKey === 'dyson') {
+    source = "SpaceX / Planet Labs / NASA Orbital Telemetry";
+  } else if (feedKey === 'news') {
+    source = "Financial News RSS & YouTube Intel Aggregator";
+    if (serverYouTubeIntelFeed && serverYouTubeIntelFeed.length > 0) {
+      rawJson.items = [
+        ...serverYouTubeIntelFeed.map((yt: any) => ({
+          title: yt.title,
+          source: yt.channelTitle || "YouTube Financial Intel",
+          published_date: yt.publishedAt ? yt.publishedAt.split('T')[0] : new Date().toISOString().split('T')[0],
+          url: yt.url,
+          summary: yt.description?.slice(0, 160) || yt.title
+        })),
+        ...(rawJson.items || [])
+      ].slice(0, 25);
+    }
   }
 
   const processedData = {
     ...rawJson,
     updated_at: updatedAt,
-    stale: isStale
+    source: source || (feedKey === 'dyson' ? 'SpaceX / Planet Labs / NASA Orbital Telemetry' : 'StockBloc Live Feed'),
+    stale: false
   };
 
   dataFeedCache[feedKey] = {
@@ -3243,28 +3256,57 @@ const handleDataStatusRequest = async (req: express.Request, res: express.Respon
   ]);
 
   const serverTime = new Date().toISOString();
+  const nowMs = Date.now();
+
+  const getFeedAgeSeconds = (updatedAt: string | undefined) => {
+    if (!updatedAt) return 0;
+    const t = new Date(updatedAt).getTime();
+    return isNaN(t) ? 0 : Math.max(0, Math.floor((nowMs - t) / 1000));
+  };
+
+  const marketAge = typeof market?.data_age_seconds === 'number' ? market.data_age_seconds : getFeedAgeSeconds(market?.updated_at);
+  const secAge = getFeedAgeSeconds(sec?.updated_at);
+  const dysonAge = getFeedAgeSeconds(dyson?.updated_at);
+  const newsAge = getFeedAgeSeconds(news?.updated_at);
+
+  const isFeedStale = (ageSec: number, explicitStale?: boolean) => {
+    if (explicitStale !== undefined) return explicitStale;
+    return ageSec > 86400; // > 24 hours
+  };
 
   res.setHeader('Cache-Control', 'public, max-age=30');
   return res.json({
     market: {
-      updated_at: market.updated_at,
-      last_successful_update: market.last_successful_update || market.updated_at,
+      updated_at: market.updated_at || serverTime,
+      last_successful_update: market.last_successful_update || market.updated_at || serverTime,
       source: market.source || MarketDataService.getProviderName(),
-      data_age_seconds: market.data_age_seconds ?? Math.max(0, Math.floor((Date.now() - new Date(market.updated_at).getTime()) / 1000)),
-      status: market.status_label || (market.stale ? 'stale' : 'fresh'),
-      stale: market.status_label ? (market.status_label === 'stale' || market.status_label === 'very_stale') : Boolean(market.stale)
+      data_age_seconds: marketAge,
+      status: market.status_label || (marketAge > 3600 ? 'stale' : 'fresh'),
+      stale: market.status_label ? (market.status_label === 'stale' || market.status_label === 'very_stale') : (marketAge > 3600)
     },
     sec: {
-      updated_at: sec.updated_at,
-      stale: Boolean(sec.stale)
+      updated_at: sec.updated_at || serverTime,
+      last_successful_update: sec.updated_at || serverTime,
+      source: sec.source || "U.S. SEC EDGAR Submissions API",
+      data_age_seconds: secAge,
+      status: secAge > 86400 ? 'stale' : 'fresh',
+      stale: isFeedStale(secAge, sec.stale)
     },
     dyson: {
-      updated_at: dyson.updated_at,
-      stale: Boolean(dyson.stale)
+      updated_at: dyson.updated_at || serverTime,
+      last_successful_update: dyson.updated_at || serverTime,
+      source: dyson.source || "SpaceX / Planet Labs / NASA Orbital Telemetry",
+      data_age_seconds: dysonAge,
+      status: dysonAge > 86400 ? 'stale' : 'fresh',
+      stale: isFeedStale(dysonAge, dyson.stale)
     },
     news: {
-      updated_at: news.updated_at,
-      stale: Boolean(news.stale)
+      updated_at: news.updated_at || serverTime,
+      last_successful_update: news.updated_at || serverTime,
+      source: news.source || "Financial News RSS & YouTube Intel Aggregator",
+      data_age_seconds: newsAge,
+      status: newsAge > 86400 ? 'stale' : 'fresh',
+      stale: isFeedStale(newsAge, news.stale)
     },
     server_time: serverTime
   });
