@@ -3158,9 +3158,13 @@ function scheduleNext5AMESTSync() {
 }
 
 // Warm up feed on server boot & start 5:00 AM EST schedule timer
-syncServerYouTubeIntelFeed().then(() => {
-  scheduleNext5AMESTSync();
-});
+syncServerYouTubeIntelFeed()
+  .then(() => {
+    scheduleNext5AMESTSync();
+  })
+  .catch((err) => {
+    console.warn('YouTube feed warm-up warning (non-blocking):', err?.message || err);
+  });
 
 // Endpoint to fetch the 5:00 AM EST synced YouTube Intel feed
 app.get('/api/intel/youtube-feed', async (req, res) => {
@@ -5831,7 +5835,11 @@ function getRouteMetadata(reqPath: string, query: Record<string, any>, host: str
 }
 
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
+  const isProduction = process.env.NODE_ENV === 'production' || 
+    (typeof __filename !== 'undefined' && __filename.includes('dist')) ||
+    (!process.argv[1]?.endsWith('server.ts') && fs.existsSync(path.join(process.cwd(), 'dist', 'index.html')));
+
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
