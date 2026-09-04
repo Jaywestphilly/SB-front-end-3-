@@ -15,6 +15,7 @@ import {
   RefreshCw,
   FileText,
   Eye,
+  AlertTriangle,
 } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics";
 import { ViewTab } from "../types";
@@ -46,16 +47,24 @@ export const CheckoutSuccess: React.FC<Props> = ({
 }) => {
   const [copiedKey, setCopiedKey] = useState(false);
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [previewItem, setPreviewItem] = useState<{ title: string; downloadUrl: string; category?: string } | null>(null);
 
   useEffect(() => {
     const fetchSessionInfo = async () => {
       setIsLoading(true);
+      setError(null);
       const effectiveSessionId =
         sessionId ||
         new URLSearchParams(window.location.search).get("session_id") ||
-        `cs_test_sb_${Date.now()}`;
+        "";
+
+      if (!effectiveSessionId) {
+        setError("No checkout session ID provided.");
+        setIsLoading(false);
+        return;
+      }
 
       try {
         const res = await fetch(
@@ -64,8 +73,9 @@ export const CheckoutSuccess: React.FC<Props> = ({
           )}`
         );
         const data = await res.json();
-        if (data.status === "ok" && data.order) {
+        if (res.ok && data.status === "ok" && data.order) {
           setOrderDetails(data.order);
+          setError(null);
 
           // Save to localStorage and invoke post-checkout link handler
           try {
@@ -74,7 +84,9 @@ export const CheckoutSuccess: React.FC<Props> = ({
             }
             if (data.order.apiKey) {
               localStorage.setItem("stockbloc_api_key", data.order.apiKey);
-              localStorage.setItem("stockbloc_api_credits", "3000");
+              if (typeof data.order.apiCreditsRemaining === "number") {
+                localStorage.setItem("stockbloc_api_credits", String(data.order.apiCreditsRemaining));
+              }
             }
             fetch("/api/user/link-purchases", {
               method: "POST",
@@ -90,83 +102,12 @@ export const CheckoutSuccess: React.FC<Props> = ({
             console.error("Failed to link post-checkout purchases:", err);
           }
         } else {
-          // Fallback mock session state for preview UI
-          setOrderDetails({
-            sessionId: effectiveSessionId,
-            email: "customer@stockbloc.ai",
-            totalPaid: "$5.00",
-            timestamp: new Date().toISOString(),
-            apiKey: `sb_live_${Math.random().toString(36).substring(2, 12)}_${Math.random().toString(36).substring(2, 8)}`,
-            apiCreditsRemaining: 3000,
-            items: [
-              {
-                id: "wealth_operating_system",
-                title: "The Stock Bloc Wealth Operating System (260 Pages)",
-                category: "playbook",
-                downloadUrl: "/api/download/ebook/wealth_operating_system",
-              },
-              {
-                id: "future_wealth_blueprint",
-                title: "Stock Bloc: The Future Wealth Blueprint (108 Pages)",
-                category: "playbook",
-                downloadUrl: "/api/download/ebook/future_wealth_blueprint",
-              },
-              {
-                id: "bundle_trilogy_complete",
-                title: "Complete Stock Bloc Trilogy Playbook Bundle",
-                category: "playbook",
-                downloadUrl: "/api/download/playbook/bundle_trilogy_complete",
-              },
-              {
-                id: "playbook_13f_whale",
-                title: "13F Whale Tracking & SEC Filing Playbook",
-                category: "playbook",
-                downloadUrl: "/api/download/playbook/playbook_13f_whale",
-              },
-              {
-                id: "playbook_credit_800",
-                title: "Credit 800+ Dispute & FICO Repair Blueprint",
-                category: "playbook",
-                downloadUrl: "/api/download/playbook/playbook_credit_800",
-              },
-              {
-                id: "playbook_reit_realestate",
-                title: "Real Estate & REIT Cash Flow Matrix",
-                category: "playbook",
-                downloadUrl: "/api/download/playbook/playbook_reit_realestate",
-              },
-            ],
-          });
+          setError(data.error || "Payment verification failed or session unpaid.");
+          setOrderDetails(null);
         }
-      } catch {
-        setOrderDetails({
-          sessionId: effectiveSessionId,
-          email: "customer@stockbloc.ai",
-          totalPaid: "$97.00",
-          timestamp: new Date().toISOString(),
-          apiKey: `sb_live_a89x7f9a21b3_${Date.now().toString(36)}`,
-          apiCreditsRemaining: 3000,
-          items: [
-            {
-              id: "playbook_13f_whale",
-              title: "13F Whale Tracking & SEC Filing Playbook",
-              category: "playbook",
-              downloadUrl: "/api/download/playbook/playbook_13f_whale",
-            },
-            {
-              id: "playbook_credit_800",
-              title: "Credit 800+ Dispute & FICO Repair Blueprint",
-              category: "playbook",
-              downloadUrl: "/api/download/playbook/playbook_credit_800",
-            },
-            {
-              id: "playbook_reit_realestate",
-              title: "Real Estate & REIT Cash Flow Matrix",
-              category: "playbook",
-              downloadUrl: "/api/download/playbook/playbook_reit_realestate",
-            },
-          ],
-        });
+      } catch (err: any) {
+        setError(err.message || "Failed to reach verification endpoint.");
+        setOrderDetails(null);
       } finally {
         setIsLoading(false);
       }
@@ -190,6 +131,41 @@ export const CheckoutSuccess: React.FC<Props> = ({
         <p className="text-emerald-400 text-xs uppercase font-bold animate-pulse">
           VERIFYING STRIPE CHECKOUT PAYMENT & PROVISIONING DIGITAL ASSETS...
         </p>
+      </div>
+    );
+  }
+
+  if (error || !orderDetails) {
+    return (
+      <div className="bg-[#0a0505] border-2 border-rose-500/50 alien-block-cut p-8 text-center space-y-4 font-mono my-8 max-w-xl mx-auto shadow-2xl">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-rose-500/20 border-2 border-rose-400 text-rose-300 mx-auto">
+          <AlertTriangle className="w-7 h-7" />
+        </div>
+        <div className="space-y-1">
+          <span className="text-[10px] font-bold text-rose-400 uppercase tracking-widest bg-rose-950/80 border border-rose-500/40 px-3 py-1 rounded">
+            PAYMENT UNVERIFIED
+          </span>
+          <h2 className="text-xl font-black font-tech text-white uppercase tracking-wide mt-2">
+            CHECKOUT VERIFICATION FAILED
+          </h2>
+          <p className="text-xs text-neutral-400 font-sans max-w-md mx-auto">
+            {error || "We could not verify a completed Stripe payment for this session. Digital assets and credits are provisioned only after confirmed settlement."}
+          </p>
+        </div>
+        <div className="flex items-center justify-center gap-3 pt-4">
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 border border-neutral-700 text-white text-xs font-tech font-bold uppercase rounded-lg transition-all"
+          >
+            Retry Verification
+          </button>
+          <button
+            onClick={() => onSelectTab("pricing")}
+            className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-black text-xs font-tech font-black uppercase rounded-lg transition-all shadow-md shadow-amber-400/20"
+          >
+            Return to Store
+          </button>
+        </div>
       </div>
     );
   }

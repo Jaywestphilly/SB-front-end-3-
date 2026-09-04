@@ -119,18 +119,18 @@ export class PlatformCreditsProvider implements PaymentProvider {
    */
   async getOrCreateWallet(agentId: string, defaultCredits = PLATFORM_ECONOMICS.defaultTrialCredits): Promise<AgentWalletBalance> {
     try {
+      // Check in-memory registry first for the most current live runtime balance
+      const memWallet = inMemoryWalletRegistry.get(agentId);
+      if (memWallet && typeof memWallet.creditsBalance === 'number') {
+        return memWallet;
+      }
+
       const ref = db.collection('agent_wallets').doc(agentId);
       const snap = await ref.get();
       if (snap.exists) {
         const data = snap.data() as AgentWalletBalance;
         inMemoryWalletRegistry.set(agentId, data);
         return data;
-      }
-
-      // If document doesn't exist in db, check in-memory registry
-      const memWallet = inMemoryWalletRegistry.get(agentId);
-      if (memWallet && typeof memWallet.creditsBalance === 'number') {
-        return memWallet;
       }
 
       const isTreasury = agentId === PLATFORM_TREASURY_ACCOUNT_ID;
@@ -702,21 +702,26 @@ export class PlatformCreditsProvider implements PaymentProvider {
         ...(bW || {}),
         agentId: b.buyer.agentId,
         creditsBalance: b.buyer.currentBalance,
-        availableBalance: b.buyer.currentBalance
+        availableBalance: b.buyer.currentBalance,
+        lifetimeSpent: (bW?.lifetimeSpent || 0) + (b.buyer.debited || 0)
       });
       const sW = inMemoryWalletRegistry.get(b.seller.agentId);
       inMemoryWalletRegistry.set(b.seller.agentId, {
         ...(sW || {}),
         agentId: b.seller.agentId,
         creditsBalance: b.seller.currentBalance,
-        availableBalance: b.seller.currentBalance
+        availableBalance: b.seller.currentBalance,
+        lifetimeGrossEarnings: (sW?.lifetimeGrossEarnings || 0) + settlementResult.grossAmount,
+        lifetimeNetEarnings: (sW?.lifetimeNetEarnings || 0) + (b.seller.credited || 0),
+        lifetimePlatformFeesPaid: (sW?.lifetimePlatformFeesPaid || 0) + settlementResult.platformFee
       });
       const tW = inMemoryWalletRegistry.get(b.treasury.accountId);
       inMemoryWalletRegistry.set(b.treasury.accountId, {
         ...(tW || {}),
         agentId: b.treasury.accountId,
         creditsBalance: b.treasury.currentBalance,
-        availableBalance: b.treasury.currentBalance
+        availableBalance: b.treasury.currentBalance,
+        totalSettledVolume: (tW?.totalSettledVolume || 0) + settlementResult.grossAmount
       });
     }
 

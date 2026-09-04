@@ -199,9 +199,13 @@ export function validateProductionStartupSafety(): {
     process.env.AGENT_API_SECRET_KEY = generatedSecret;
     warnings.push('AGENT_API_SECRET_KEY was missing; dynamically generated secure runtime key.');
   } else if (INSECURE_PLACEHOLDER_KEYS.has(agentSecret) || agentSecret.includes('stock_bloc_agent_secret_2026') || agentSecret.includes('insecure')) {
-    const generatedSecret = crypto.randomBytes(32).toString('hex');
-    process.env.AGENT_API_SECRET_KEY = generatedSecret;
-    warnings.push(`AGENT_API_SECRET_KEY was insecure placeholder in ${isProd ? 'production' : 'development'}; dynamically replaced with cryptographically secure runtime key.`);
+    if (isProd) {
+      errors.push(`CRITICAL: Production Startup Safety Check Failed — AGENT_PLATFORM_MASTER_KEY / AGENT_API_SECRET_KEY contains insecure placeholder secret.`);
+    } else {
+      const generatedSecret = crypto.randomBytes(32).toString('hex');
+      process.env.AGENT_API_SECRET_KEY = generatedSecret;
+      warnings.push(`AGENT_API_SECRET_KEY was insecure placeholder in development; dynamically replaced with cryptographically secure runtime key.`);
+    }
   }
 
   // 2. Check Stripe Configuration when payment mode is production
@@ -240,6 +244,9 @@ export function validateProductionStartupSafety(): {
 
   if (errors.length > 0) {
     console.error('⚠️ Production Startup Safety Errors:', errors.join('; '));
+    if (isProd) {
+      throw new Error(`Production Startup Safety Check Failed: ${errors.join('; ')}`);
+    }
   }
 
   return {

@@ -49,6 +49,14 @@ export const processedWebhookEvents = new Set<string>();
 export const capturedPaymentIntents = new Set<string>();
 export const refundedTransactions = new Set<string>();
 export const settledTransactions = new Map<string, any>();
+export const recordedStripeSessions = new Map<string, any>();
+export const fulfilledStripeSessions = new Map<string, {
+  sessionId: string;
+  agentId: string;
+  creditsGranted: number;
+  creditsBalance: number;
+  fulfilledAt: string;
+}>();
 
 export class StripePaymentProvider implements PaymentProvider {
   rail = 'STRIPE' as const;

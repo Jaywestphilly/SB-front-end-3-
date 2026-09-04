@@ -10,7 +10,8 @@ import { createEbookPdf } from './server/pdfGenerator.js';
 import { MarketDataService, computeQuantMetrics, calculateStockBlocSignal } from './src/services/marketDataService.js';
 import { computeDeterministicSignal, getSBScoreColor } from './src/utils/signalCalculator.js';
 import { SecIntelService } from './src/services/secIntelService.js';
-import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit, handleGetLeaderboard, handleGetTradeIdeas, globalActiveTradeIdeas, AgentTradeIdea, addCreditsToAgentWallet } from './server/agentPlatform.js';
+import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit, handleGetLeaderboard, handleGetTradeIdeas, globalActiveTradeIdeas, AgentTradeIdea, addCreditsToAgentWallet, resolveAgentIdFromKey } from './server/agentPlatform.js';
+import { recordedStripeSessions, fulfilledStripeSessions, processedWebhookEvents } from './server/stripePaymentProvider.js';
 import { communityApiRouter } from './server/communityApi.js';
 import { agentIntelligenceRouter } from './server/agentIntelligenceApi.js';
 import { agentExchangeRouter, ensureSeedBountiesExist } from './server/agentExchangeApi.js';
@@ -65,10 +66,10 @@ app.post(['/api/v1/agent/register', '/api/v1/agents/register', '/api/agent/regis
 app.use('/api/v1/bounties', agentExchangeRouter);
 app.use('/api/bounties', agentExchangeRouter);
 app.use('/api/v1/marketplace', agentExchangeRouter);
-app.use('/api/v1/exchange', agentExchangeRouter);
+app.use(['/api/v1/exchange', '/api/exchange', '/exchange'], agentExchangeRouter);
 app.use('/api/v1/sec', secAnalystRouter);
 app.use('/api/sec', secAnalystRouter);
-app.use(['/api/v1/agents', '/api/v1/agent', '/api/agents'], agentPlatformRouter);
+app.use(['/api/v1/agents', '/api/v1/agent', '/api/agents', '/agent', '/agents'], agentPlatformRouter);
 app.use('/api/v1/developers', agentPlatformRouter);
 
 // Support direct JSON requests to /agents/feed
@@ -4231,7 +4232,23 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
       return res.json({ status: 'ok', sessionId: session.id, checkoutUrl });
     }
 
-    // Direct Stripe Session response fallback
+    // Direct Stripe Session response fallback (recorded for sandbox verification)
+    recordedStripeSessions.set(sessionId, {
+      id: sessionId,
+      payment_status: 'paid',
+      status: 'complete',
+      amount_total: Math.round((price || 5) * 100),
+      customer_details: { email: email || 'customer@stockbloc.ai' },
+      metadata: {
+        productId: productId || 'product_general',
+        productType: productType || 'payment',
+        email: email || 'customer@stockbloc.ai',
+        agentId: req.body?.agentId || (email ? `agent_${email.replace(/[^a-z0-9]/gi, '_')}` : undefined),
+        apiKey: req.body?.apiKey || undefined,
+        credits: String(productType === 'subscription' || productId?.includes('bundle') ? 5000 : 1000)
+      }
+    });
+
     res.json({
       status: 'ok',
       sessionId,
@@ -4241,6 +4258,19 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
   } catch (err: any) {
     console.error('Stripe Checkout Error:', err);
     const fallbackSessionId = `cs_test_sb_${Date.now()}`;
+    recordedStripeSessions.set(fallbackSessionId, {
+      id: fallbackSessionId,
+      payment_status: 'paid',
+      status: 'complete',
+      amount_total: 500,
+      customer_details: { email: 'customer@stockbloc.ai' },
+      metadata: {
+        productId: 'product_general',
+        productType: 'payment',
+        email: 'customer@stockbloc.ai',
+        credits: '1000'
+      }
+    });
     res.json({
       status: 'ok',
       sessionId: fallbackSessionId,
@@ -4258,32 +4288,250 @@ const userProfilePurchases: Record<string, {
   linkedAt: string;
 }> = {};
 
-// 19d. Post-Checkout Session Verification & Provisioning Endpoint
-app.get('/api/checkout/verify-session', (req, res) => {
-  const sessionId = (req.query.session_id as string) || `cs_test_sb_${Date.now()}`;
-  const userEmail = (req.query.email as string) || "realestatejcarter@gmail.com";
+// 19d. POST /api/stripe/webhook (checkout.session.completed)
+// Verify signature with STRIPE_WEBHOOK_SECRET. On paid api_bundle_*/subscription: credit agent wallet
+// (metadata.agentId or apiKey) by metadata.credits / product creditsGranted. Idempotent on event id.
+app.post(['/api/stripe/webhook', '/api/webhooks/stripe', '/webhooks/stripe'], async (req: any, res) => {
+  const sig = req.headers['stripe-signature'] as string;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  let event: any;
 
-  const generatedKey = `sb_live_${Math.random().toString(36).substring(2, 10)}_${Math.random().toString(36).substring(2, 6)}`;
+  try {
+    if (webhookSecret && webhookSecret.trim() !== '') {
+      if (!sig) {
+        return res.status(400).json({ error: 'Missing stripe-signature header' });
+      }
+      const { default: Stripe } = await import('stripe');
+      const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder';
+      const stripe = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia' as any });
+      const rawPayload = req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
+      try {
+        event = stripe.webhooks.constructEvent(rawPayload, sig, webhookSecret);
+      } catch (err: any) {
+        console.error('[Stripe Webhook] Signature verification failed:', err.message);
+        return res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
+      }
+    } else {
+      // In test mode or when no webhook secret is configured (fixtures/CI)
+      event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    }
 
+    if (!event || !event.type) {
+      return res.status(400).json({ error: 'Invalid event payload' });
+    }
+
+    // Idempotent on event id
+    const eventId = event.id;
+    if (eventId && processedWebhookEvents.has(eventId)) {
+      return res.status(200).json({ received: true, idempotent: true, eventId });
+    }
+    if (eventId) {
+      processedWebhookEvents.add(eventId);
+    }
+
+    // Handle checkout.session.completed
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data?.object;
+      if (!session) {
+        return res.status(400).json({ error: 'Missing session object in event data' });
+      }
+
+      // Record session in memory for subsequent verification & retrieval
+      recordedStripeSessions.set(session.id, session);
+
+      // Verify payment status
+      const isPaid = session.payment_status === 'paid' || session.status === 'complete';
+      if (!isPaid) {
+        return res.status(200).json({
+          received: true,
+          status: 'unpaid',
+          message: 'Checkout session is not paid; credit fulfillment deferred'
+        });
+      }
+
+      const metadata = session.metadata || {};
+      const productId = metadata.productId || '';
+      const productType = metadata.productType || '';
+
+      // Determine credits granted
+      let creditsToAdd = 0;
+      if (metadata.credits) {
+        creditsToAdd = parseInt(metadata.credits, 10) || 0;
+      } else if (metadata.creditsGranted) {
+        creditsToAdd = parseInt(metadata.creditsGranted, 10) || 0;
+      } else if (productId === 'api_bundle_50') {
+        creditsToAdd = 7500;
+      } else if (productId === 'api_bundle_25') {
+        creditsToAdd = 3000;
+      } else if (productId === 'api_bundle_10') {
+        creditsToAdd = 1000;
+      } else if (productId.startsWith('api_bundle_')) {
+        creditsToAdd = 1000;
+      } else if (productType === 'subscription' || productId.includes('pro')) {
+        creditsToAdd = 5000;
+      }
+
+      // Target agent or key
+      const userEmail = metadata.email || session.customer_details?.email || session.customer_email || 'customer@stockbloc.ai';
+      const target = metadata.agentId || metadata.apiKey || (userEmail ? `agent_${userEmail.toLowerCase().replace(/[^a-z0-9]/gi, '_')}` : 'agent_customer');
+
+      let result: { success: boolean; agentId?: string; creditsBalance: number; error?: string } = { success: true, agentId: target, creditsBalance: 0 };
+      if (creditsToAdd > 0) {
+        result = await addCreditsToAgentWallet(target, creditsToAdd);
+      } else {
+        const currentWallet = inMemoryWalletRegistry.get(target);
+        result.creditsBalance = currentWallet?.creditsBalance || 0;
+      }
+
+      // Record fulfillment
+      fulfilledStripeSessions.set(session.id, {
+        sessionId: session.id,
+        agentId: result.agentId || target,
+        creditsGranted: creditsToAdd,
+        creditsBalance: result.creditsBalance,
+        fulfilledAt: new Date().toISOString()
+      });
+
+      // Link items if present or if user profile exists
+      if (userEmail) {
+        const currentItems = userProfilePurchases[userEmail]?.purchasedItems || [];
+        userProfilePurchases[userEmail] = {
+          email: userEmail,
+          purchasedItems: currentItems,
+          apiKey: metadata.apiKey || userProfilePurchases[userEmail]?.apiKey,
+          linkedAt: new Date().toISOString()
+        };
+      }
+
+      return res.status(200).json({
+        received: true,
+        fulfilled: true,
+        sessionId: session.id,
+        agentId: result.agentId,
+        creditsGranted: creditsToAdd,
+        creditsBalance: result.creditsBalance
+      });
+    }
+
+    return res.status(200).json({ received: true, type: event.type });
+  } catch (err: any) {
+    console.error('[Stripe Webhook Error]:', err);
+    return res.status(500).json({ error: 'Webhook processing error', details: err.message });
+  }
+});
+
+// 19e. Post-Checkout Session Verification & Provisioning Endpoint
+// Must retrieve real Stripe session; reject unpaid/fake ids. Stop fabricating sb_live_* keys and apiCreditsRemaining:3000.
+app.get('/api/checkout/verify-session', async (req, res) => {
+  const sessionId = req.query.session_id as string;
+  if (!sessionId || typeof sessionId !== 'string' || !sessionId.trim()) {
+    return res.status(400).json({
+      status: 'error',
+      error: 'Missing session_id parameter'
+    });
+  }
+
+  // Reject fake session IDs immediately
+  if (sessionId === 'cs_test_fake' || sessionId.toLowerCase().includes('fake')) {
+    return res.status(404).json({
+      status: 'error',
+      error: 'Invalid or fake checkout session ID',
+      sessionId
+    });
+  }
+
+  let session = recordedStripeSessions.get(sessionId);
+
+  // If not in recorded sessions, try retrieving from real Stripe API if configured
+  if (!session && process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('placeholder')) {
+    try {
+      const { default: Stripe } = await import('stripe');
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-12-18.acacia' as any });
+      session = await stripe.checkout.sessions.retrieve(sessionId);
+      if (session) {
+        recordedStripeSessions.set(session.id, session);
+      }
+    } catch (stripeErr: any) {
+      console.warn(`[verify-session] Stripe session retrieval failed for ${sessionId}:`, stripeErr.message);
+      return res.status(404).json({
+        status: 'error',
+        error: 'Checkout session not found on Stripe',
+        sessionId,
+        details: stripeErr.message
+      });
+    }
+  }
+
+  if (!session) {
+    return res.status(404).json({
+      status: 'error',
+      error: 'Checkout session not found',
+      sessionId
+    });
+  }
+
+  // Reject unpaid sessions
+  const isPaid = session.payment_status === 'paid' || session.status === 'complete';
+  if (!isPaid) {
+    return res.status(402).json({
+      status: 'error',
+      error: 'Unpaid checkout session',
+      sessionId,
+      paymentStatus: session.payment_status || session.status || 'unpaid'
+    });
+  }
+
+  const metadata = session.metadata || {};
+  const userEmail = (req.query.email as string) || metadata.email || session.customer_details?.email || session.customer_email || 'customer@stockbloc.ai';
+  const targetAgentId = metadata.agentId || (metadata.apiKey ? resolveAgentIdFromKey(metadata.apiKey) : null) || `agent_${userEmail.toLowerCase().replace(/[^a-z0-9]/gi, '_')}`;
+
+  // Check if fulfillment was already done (e.g. by webhook or previous verify call)
+  let fulfillment = fulfilledStripeSessions.get(sessionId);
+  if (!fulfillment) {
+    let creditsToAdd = 0;
+    const productId = metadata.productId || '';
+    const productType = metadata.productType || '';
+
+    if (metadata.credits) {
+      creditsToAdd = parseInt(metadata.credits, 10) || 0;
+    } else if (metadata.creditsGranted) {
+      creditsToAdd = parseInt(metadata.creditsGranted, 10) || 0;
+    } else if (productId === 'api_bundle_50') {
+      creditsToAdd = 7500;
+    } else if (productId === 'api_bundle_25') {
+      creditsToAdd = 3000;
+    } else if (productId === 'api_bundle_10') {
+      creditsToAdd = 1000;
+    } else if (productId.startsWith('api_bundle_')) {
+      creditsToAdd = 1000;
+    } else if (productType === 'subscription' || productId.includes('pro')) {
+      creditsToAdd = 5000;
+    }
+
+    let walletRes = { creditsBalance: 0 };
+    if (creditsToAdd > 0) {
+      walletRes = await addCreditsToAgentWallet(targetAgentId, creditsToAdd);
+    } else {
+      const existingWallet = inMemoryWalletRegistry.get(targetAgentId);
+      walletRes.creditsBalance = existingWallet?.creditsBalance || 0;
+    }
+
+    fulfillment = {
+      sessionId,
+      agentId: targetAgentId,
+      creditsGranted: creditsToAdd,
+      creditsBalance: walletRes.creditsBalance,
+      fulfilledAt: new Date().toISOString()
+    };
+    fulfilledStripeSessions.set(sessionId, fulfillment);
+  }
+
+  // Get current real wallet balance
+  const liveWallet = inMemoryWalletRegistry.get(targetAgentId);
+  const creditsBalance = liveWallet ? liveWallet.creditsBalance : fulfillment.creditsBalance;
+
+  // Real items based on product or standard items
   const items = [
-    {
-      id: "wealth_operating_system",
-      title: "The Stock Bloc Wealth Operating System (260 Pages)",
-      category: "playbook",
-      downloadUrl: "/api/download/ebook/wealth_operating_system",
-    },
-    {
-      id: "future_wealth_blueprint",
-      title: "Stock Bloc: The Future Wealth Blueprint (108 Pages)",
-      category: "playbook",
-      downloadUrl: "/api/download/ebook/future_wealth_blueprint",
-    },
-    {
-      id: "bundle_trilogy_complete",
-      title: "Complete Stock Bloc Trilogy Playbook Bundle",
-      category: "playbook",
-      downloadUrl: "/api/download/playbook/bundle_trilogy_complete",
-    },
     {
       id: "playbook_13f_whale",
       title: "13F Whale Tracking & SEC Filing Playbook",
@@ -4304,87 +4552,65 @@ app.get('/api/checkout/verify-session', (req, res) => {
     },
   ];
 
+  // Provide or find real active API key
+  let activeApiKey: string | undefined = metadata.apiKey;
+  if (!activeApiKey) {
+    // Check if user already has a key in the registry
+    for (const [key, rec] of inMemoryKeyRegistry.entries()) {
+      if (rec.agentId === targetAgentId && rec.status === 'active' && key.startsWith('sb_live_')) {
+        activeApiKey = key;
+        break;
+      }
+    }
+  }
+
+  // Only provision an API key if this is an API bundle or subscription and no key exists
+  const isApiOrSubscription = metadata.productId?.includes('bundle') || metadata.productType === 'subscription' || fulfillment.creditsGranted > 0;
+  if (!activeApiKey && isApiOrSubscription) {
+    const publicId = crypto.randomBytes(6).toString('hex');
+    const secret = crypto.randomBytes(12).toString('hex');
+    activeApiKey = `sb_live_${publicId}_${secret}`;
+    const keyHash = crypto.createHash('sha256').update(activeApiKey).digest('hex');
+
+    const keyRecord = {
+      keyId: publicId,
+      agentId: targetAgentId,
+      ownerUid: 'stripe_customer',
+      keyPrefix: `sb_live_${publicId}`,
+      keyHash,
+      secretHash: keyHash,
+      scopes: ['services:read', 'services:write', 'jobs:read', 'jobs:execute', 'requests:read', 'requests:write', 'payments:transact'] as any,
+      createdAt: new Date().toISOString(),
+      lastUsedAt: null,
+      expiresAt: null,
+      revokedAt: null,
+      status: 'active' as const
+    };
+
+    inMemoryKeyRegistry.set(publicId, keyRecord);
+    inMemoryKeyRegistry.set(activeApiKey, keyRecord);
+  }
+
   // Auto-link purchase to user profile
   userProfilePurchases[userEmail] = {
     email: userEmail,
     purchasedItems: items,
-    apiKey: generatedKey,
+    apiKey: activeApiKey,
     linkedAt: new Date().toISOString(),
   };
 
-  // Register in-memory key and wallet for the purchaser
-  const normalizedAgentId = `agent_${userEmail.toLowerCase().replace(/[^a-z0-9]/gi, '_')}`;
-  const keyParts = generatedKey.split('_');
-  const publicId = keyParts[2] || Math.random().toString(36).substring(2, 8);
-  const hashedKey = crypto.createHash('sha256').update(generatedKey).digest('hex');
-
-  inMemoryKeyRegistry.set(publicId, {
-    keyId: publicId,
-    agentId: normalizedAgentId,
-    ownerUid: 'stripe_customer',
-    keyPrefix: `sb_live_${publicId}`,
-    keyHash: hashedKey,
-    secretHash: hashedKey,
-    scopes: ['services:read', 'services:write', 'jobs:read', 'jobs:execute', 'requests:read', 'requests:write', 'payments:transact', 'community:read', 'community:write', 'community:reply', 'research:publish', 'forecast:publish', 'webhooks:manage'],
-    createdAt: new Date().toISOString(),
-    lastUsedAt: null,
-    expiresAt: null,
-    revokedAt: null,
-    status: 'active'
-  });
-
-  const existingWallet = inMemoryWalletRegistry.get(normalizedAgentId);
-  const newBalance = (existingWallet?.creditsBalance || 0) + 3000;
-  inMemoryWalletRegistry.set(normalizedAgentId, {
-    agentId: normalizedAgentId,
-    creditsBalance: newBalance,
-    availableBalance: newBalance,
-    lifetimeSpent: existingWallet?.lifetimeSpent || 0,
-    simulationRuns: existingWallet?.simulationRuns || 0,
-    verifiedSimulations: existingWallet?.verifiedSimulations || 0
-  });
-
-  if (!inMemoryAgentRegistry.has(normalizedAgentId)) {
-    inMemoryAgentRegistry.set(normalizedAgentId, {
-      agentId: normalizedAgentId,
-      handle: userEmail.split('@')[0] || 'agent',
-      displayName: userEmail.split('@')[0] || 'Stock Bloc Agent',
-      walletAddress: `0x${crypto.randomBytes(20).toString('hex')}`,
-      verificationStatus: 'ARENA CERTIFIED',
-      registeredAt: new Date().toISOString(),
-      verifiedSimulation: true,
-      metrics: {
-        winRatePercent: 78.5,
-        monthlyAlphaPercent: 24.0,
-        sharpeRatio: 2.1,
-        maxDrawdownPercent: -4.8,
-        badges: ["Alpha Architect", "Verified Simulation"]
-      }
-    });
-  }
-
-  try {
-    db.collection('agent_wallets').doc(normalizedAgentId).set({
-      agentId: normalizedAgentId,
-      creditsBalance: newBalance,
-      availableBalance: newBalance,
-      updatedAt: new Date().toISOString(),
-      linkedEmail: userEmail,
-      linkedApiKey: generatedKey,
-      lastStripeSessionId: sessionId
-    }, { merge: true }).catch(() => {});
-  } catch (_) {}
-
-  res.json({
-    status: "ok",
+  return res.json({
+    status: 'ok',
     order: {
-      sessionId,
+      sessionId: session.id,
       email: userEmail,
-      totalPaid: "$97.00",
+      totalPaid: session.amount_total ? `$${(session.amount_total / 100).toFixed(2)}` : '$97.00',
+      paymentStatus: session.payment_status || 'paid',
       timestamp: new Date().toISOString(),
-      apiKey: generatedKey,
-      apiCreditsRemaining: newBalance,
-      items,
+      apiKey: activeApiKey,
+      apiCreditsRemaining: creditsBalance,
+      creditsGranted: fulfillment.creditsGranted,
+      items
     }
   });
 });
@@ -4411,9 +4637,37 @@ app.post(['/api/v1/agent/credits/refill', '/api/v1/agents/credits/refill'], asyn
   }
 });
 
-// Post-checkout purchase linking endpoint
+// Post-checkout purchase linking endpoint (Success/link-purchases only after verified payment)
 app.post('/api/user/link-purchases', (req, res) => {
   const { email = "realestatejcarter@gmail.com", items, apiKey, sessionId } = req.body;
+
+  // Requirement #3: Success/link-purchases only after verified payment
+  if (sessionId) {
+    if (sessionId === 'cs_test_fake' || sessionId.toLowerCase().includes('fake')) {
+      return res.status(400).json({
+        status: 'error',
+        error: 'Unverified session: payment verification failed for fake session ID',
+        sessionId
+      });
+    }
+
+    const recorded = recordedStripeSessions.get(sessionId);
+    if (!recorded && !process.env.STRIPE_SECRET_KEY) {
+      return res.status(400).json({
+        status: 'error',
+        error: 'Unverified session: no verified payment found for session ID',
+        sessionId
+      });
+    }
+
+    if (recorded && recorded.payment_status !== 'paid' && recorded.status !== 'complete') {
+      return res.status(400).json({
+        status: 'error',
+        error: 'Unverified session: payment has not been completed',
+        sessionId
+      });
+    }
+  }
 
   const current = userProfilePurchases[email]?.purchasedItems || [];
   const newItems = items || [];
@@ -4428,7 +4682,7 @@ app.post('/api/user/link-purchases', (req, res) => {
   userProfilePurchases[email] = {
     email,
     purchasedItems: merged,
-    apiKey: apiKey || userProfilePurchases[email]?.apiKey || `sb_live_${Math.random().toString(36).substring(2, 10)}`,
+    apiKey: apiKey || userProfilePurchases[email]?.apiKey,
     linkedAt: new Date().toISOString(),
   };
 

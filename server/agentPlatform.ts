@@ -229,6 +229,23 @@ export function verifyAndDebitAgentCredit(authHeader: string | undefined, cost =
   };
 }
 
+// Helper to resolve an agentId from an API key or public ID
+export function resolveAgentIdFromKey(token?: string): string | null {
+  if (!token) return null;
+  if (token.startsWith('sb_live_')) {
+    const parts = token.split('_');
+    const publicId = parts[2];
+    const keyRecord = inMemoryKeyRegistry.get(publicId) || inMemoryKeyRegistry.get(token);
+    if (keyRecord?.agentId) return keyRecord.agentId;
+    const registeredAgent = inMemoryAgentRegistry.get(publicId);
+    if (registeredAgent?.agentId) return registeredAgent.agentId;
+  }
+  if (inMemoryKeyRegistry.has(token)) {
+    return inMemoryKeyRegistry.get(token)!.agentId;
+  }
+  return null;
+}
+
 // Helper to atomically credit an agent's platform wallet (e.g. from Stripe checkout or bounty settlement)
 export async function addCreditsToAgentWallet(agentIdOrKey: string, creditsToAdd: number): Promise<{
   success: boolean;
@@ -246,17 +263,24 @@ export async function addCreditsToAgentWallet(agentIdOrKey: string, creditsToAdd
   if (agentIdOrKey.startsWith('sb_live_')) {
     const parts = agentIdOrKey.split('_');
     const publicId = parts[2];
-    const registeredAgent = inMemoryAgentRegistry.get(publicId);
-    if (registeredAgent?.agentId) {
-      resolvedAgentId = registeredAgent.agentId;
+    const keyRecord = inMemoryKeyRegistry.get(publicId) || inMemoryKeyRegistry.get(agentIdOrKey);
+    if (keyRecord?.agentId) {
+      resolvedAgentId = keyRecord.agentId;
     } else {
-      try {
-        const snap = await db.collection('agent_api_keys').where('publicId', '==', publicId).limit(1).get();
-        if (!snap.empty) {
-          resolvedAgentId = snap.docs[0].data().agentId;
-        }
-      } catch (_) {}
+      const registeredAgent = inMemoryAgentRegistry.get(publicId);
+      if (registeredAgent?.agentId) {
+        resolvedAgentId = registeredAgent.agentId;
+      } else {
+        try {
+          const snap = await db.collection('agent_api_keys').where('publicId', '==', publicId).limit(1).get();
+          if (!snap.empty) {
+            resolvedAgentId = snap.docs[0].data().agentId;
+          }
+        } catch (_) {}
+      }
     }
+  } else if (inMemoryKeyRegistry.has(agentIdOrKey)) {
+    resolvedAgentId = inMemoryKeyRegistry.get(agentIdOrKey)!.agentId;
   }
 
   let wallet = inMemoryWalletRegistry.get(resolvedAgentId);
@@ -272,8 +296,8 @@ export async function addCreditsToAgentWallet(agentIdOrKey: string, creditsToAdd
   if (!wallet) {
     wallet = {
       agentId: resolvedAgentId,
-      creditsBalance: 100,
-      availableBalance: 100,
+      creditsBalance: 0,
+      availableBalance: 0,
       lifetimeSpent: 0,
       lifetimeGrossEarnings: 0,
       simulationRuns: 0,
@@ -382,6 +406,7 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
     inMemoryAgentRegistry.set(agentId, agentRecord);
     inMemoryAgentRegistry.set(finalHandle.toLowerCase(), agentRecord);
     inMemoryKeyRegistry.set(publicId, { ...keyRecord, secretHash: keyHash });
+    inMemoryKeyRegistry.set(rawKey, { ...keyRecord, secretHash: keyHash });
     inMemoryWalletRegistry.set(agentId, {
       creditsBalance: 100,
       lifetimeSpent: 0,
@@ -699,8 +724,8 @@ agentPlatformRouter.post('/keys/:keyId/rotate', authenticateHuman, async (req, r
 });
 
 
-// GET /api/v1/agents/me (also /me and /api/v1/agent/me)
-agentPlatformRouter.get('/me', authenticateAgent, async (req, res) => {
+// GET /api/v1/agents/me (also /me, /agent/me, /agents/me)
+agentPlatformRouter.get(['/me', '/agent/me', '/agents/me'], authenticateAgent, async (req, res) => {
   const agent: AgentIdentity = (req as any).agent;
   if (!agent) {
     return res.status(401).json({ error: 'Unauthorized agent identity.' });
@@ -728,6 +753,10 @@ agentPlatformRouter.get('/me', authenticateAgent, async (req, res) => {
   return res.json({
     status: 'ok',
     ...agent,
+    agent: {
+      ...agent,
+      creditsBalance
+    },
     creditsBalance,
     wallet: {
       agentId,
