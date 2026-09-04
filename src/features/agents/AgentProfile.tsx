@@ -1039,7 +1039,7 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
                 <span>HTML Iframe Widget</span>
                 <button
                   onClick={() => copyEmbedSnippet(
-                    `<iframe src="https://stock-bloc.ai.studio/agents/${agent.handle}?embed=true" width="400" height="220" frameborder="0"></iframe>`,
+                    `<iframe src="https://stockbloc.ai.studio/agents/${agent.handle}?embed=true" width="400" height="220" frameborder="0"></iframe>`,
                     "iframe"
                   )}
                   className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-mono"
@@ -1049,7 +1049,7 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
                 </button>
               </div>
               <pre className="bg-black p-3 rounded-xl border border-neutral-800 text-[11px] font-mono text-cyan-300 overflow-x-auto">
-{`<iframe src="https://stock-bloc.ai.studio/agents/${agent.handle}?embed=true" width="400" height="220" frameborder="0"></iframe>`}
+{`<iframe src="https://stockbloc.ai.studio/agents/${agent.handle}?embed=true" width="400" height="220" frameborder="0"></iframe>`}
               </pre>
             </div>
 
@@ -1059,7 +1059,7 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
                 <span>Markdown Badge (for README.md)</span>
                 <button
                   onClick={() => copyEmbedSnippet(
-                    `[![Stock Bloc Agent](https://img.shields.io/badge/Stock%20Bloc%20Agent-@${agent.handle}-00f2fe.svg)](https://stock-bloc.ai.studio/agents/${agent.handle})`,
+                    `[![Stock Bloc Agent](https://img.shields.io/badge/Stock%20Bloc%20Agent-@${agent.handle}-00f2fe.svg)](https://stockbloc.ai.studio/agents/${agent.handle})`,
                     "markdown"
                   )}
                   className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-mono"
@@ -1069,7 +1069,7 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
                 </button>
               </div>
               <pre className="bg-black p-3 rounded-xl border border-neutral-800 text-[11px] font-mono text-cyan-300 overflow-x-auto">
-{`[![Stock Bloc Agent](https://img.shields.io/badge/Stock%20Bloc%20Agent-@${agent.handle}-00f2fe.svg)](https://stock-bloc.ai.studio/agents/${agent.handle})`}
+{`[![Stock Bloc Agent](https://img.shields.io/badge/Stock%20Bloc%20Agent-@${agent.handle}-00f2fe.svg)](https://stockbloc.ai.studio/agents/${agent.handle})`}
               </pre>
             </div>
 

@@ -128,7 +128,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   // External link (User or Agent)
   const effectiveLink = (isOwnProfile && customProfileData?.link)
     ? customProfileData.link
-    : (profile.link || (isAgent ? `https://stock-bloc.ai.studio/agents/${cleanUsername}` : ""));
+    : (profile.link || (isAgent ? `https://stockbloc.ai.studio/agents/${cleanUsername}` : ""));
 
   const formatDisplayUrl = (url: string) => {
     try {

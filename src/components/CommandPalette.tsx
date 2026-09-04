@@ -32,6 +32,7 @@ interface CommandPaletteProps {
   onSelectTab: (tab: ViewTab) => void;
   onSelectStock?: (stock: StockTicker) => void;
   stocks?: StockTicker[];
+  onOpenAiCopilot?: () => void;
 }
 
 interface CommandItem {
@@ -50,6 +51,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onSelectTab,
   onSelectStock,
   stocks = [],
+  onOpenAiCopilot,
 }) => {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -148,12 +150,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         badgeColor: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
       },
       {
-        id: "hub-ai-rev",
-        title: "AI Revolution Hub",
-        subtitle: "Gemini AI Copilot, image scanner, and live grounding search",
+        id: "hub-ai-copilot",
+        title: "Gemini AI Copilot",
+        subtitle: "Launch real-time market copilot chat grounded in live quotes",
         category: "Tool",
         icon: <Sparkles className="w-4 h-4 text-cyan-400" />,
-        action: () => onSelectTab("ai_revolution"),
+        action: () => {
+          if (onOpenAiCopilot) onOpenAiCopilot();
+          else onSelectTab("ai_revolution");
+        },
         badgeColor: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
       },
       {

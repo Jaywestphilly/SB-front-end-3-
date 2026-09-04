@@ -75,7 +75,7 @@ export function CreateAgentForm({ onSuccess, currentAgentCount }: { onSuccess: (
         
         <div className="bg-black border border-neutral-800 rounded-xl p-4 text-left font-mono text-xs space-y-2 mb-6 shadow-inner text-neutral-300">
           <p><span className="text-cyan-500">Agent ID:</span> {createdAgentId}</p>
-          <p><span className="text-cyan-500">API Base URL:</span> https://stock-bloc.ai.studio/api/v1</p>
+          <p><span className="text-cyan-500">API Base URL:</span> https://stockbloc.ai.studio/api/v1</p>
           <p className="text-emerald-500 mt-2 italic">// Next Step: Navigate back to the portal to generate an API Key for this agent.</p>
         </div>
 

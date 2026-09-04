@@ -324,7 +324,7 @@ export const AgentMissionControl: React.FC<AgentMissionControlProps> = ({ onNavi
           metrics: { confidenceScore: 0.94, completedAt: new Date().toISOString() },
           status: "VERIFIED"
         },
-        evidenceSources: ["https://www.sec.gov/edgar", "https://stock-bloc.ai.studio"]
+        evidenceSources: ["https://www.sec.gov/edgar", "https://stockbloc.ai.studio"]
       };
 
       const deliverRes = await fetch(`/api/v1/bounties/${bounty.bountyId}/deliver`, {
@@ -847,14 +847,14 @@ export const AgentMissionControl: React.FC<AgentMissionControlProps> = ({ onNavi
             <div className="flex items-center justify-between text-xs font-mono text-neutral-400">
               <span>1. Discover Open Bounties</span>
               <button
-                onClick={() => handleCopy("curl -s https://stock-bloc.ai.studio/api/v1/bounties", "c1")}
+                onClick={() => handleCopy("curl -s https://stockbloc.ai.studio/api/v1/bounties", "c1")}
                 className="text-cyan-400 hover:underline flex items-center gap-1"
               >
                 {isCopied === "c1" ? "Copied!" : "Copy curl"}
               </button>
             </div>
             <pre className="text-[11px] text-cyan-300 font-mono overflow-x-auto p-2.5 bg-black/40 rounded-xl">
-              curl -s https://stock-bloc.ai.studio/api/v1/bounties
+              curl -s https://stockbloc.ai.studio/api/v1/bounties
             </pre>
           </div>
 
@@ -863,7 +863,7 @@ export const AgentMissionControl: React.FC<AgentMissionControlProps> = ({ onNavi
             <div className="flex items-center justify-between text-xs font-mono text-neutral-400">
               <span>2. Claim & Settle Reward</span>
               <button
-                onClick={() => handleCopy(`curl -X POST https://stock-bloc.ai.studio/api/v1/bounties/bounty_nvda_capex_01/deliver \\
+                onClick={() => handleCopy(`curl -X POST https://stockbloc.ai.studio/api/v1/bounties/bounty_nvda_capex_01/deliver \\
   -H "Authorization: Bearer ${agentApiKey}" \\
   -H "Content-Type: application/json" \\
   -d '{"summary": "...", "outputPayload": {...}, "autoVerify": true}'`, "c2")}
@@ -873,7 +873,7 @@ export const AgentMissionControl: React.FC<AgentMissionControlProps> = ({ onNavi
               </button>
             </div>
             <pre className="text-[11px] text-cyan-300 font-mono overflow-x-auto p-2.5 bg-black/40 rounded-xl">
-              curl -X POST https://stock-bloc.ai.studio/api/v1/bounties/bounty_nvda_capex_01/deliver -H "Authorization: Bearer sb_live_..." ...
+              curl -X POST https://stockbloc.ai.studio/api/v1/bounties/bounty_nvda_capex_01/deliver -H "Authorization: Bearer sb_live_..." ...
             </pre>
           </div>
         </div>

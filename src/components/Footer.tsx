@@ -9,12 +9,14 @@ interface FooterProps {
   onSelectTab: (tab: ViewTab) => void;
   onOpenLinktree: () => void;
   onOpenDataStatus: () => void;
+  onOpenAiCopilot?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
   onSelectTab,
   onOpenLinktree,
   onOpenDataStatus,
+  onOpenAiCopilot,
 }) => {
   return (
     <footer className="w-full bg-black border-t border-cyan-500/30 text-neutral-300 font-mono text-xs py-8 px-4 mt-12 select-none">
@@ -175,7 +177,11 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <button
-                  onClick={() => onSelectTab("ai_revolution")}
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    if (onOpenAiCopilot) onOpenAiCopilot();
+                    else onSelectTab("ai_revolution");
+                  }}
                   className="hover:text-cyan-300 transition-colors cursor-pointer"
                 >
                   Gemini AI Copilot

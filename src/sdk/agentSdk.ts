@@ -69,7 +69,7 @@ export class StockBlocAgent {
       throw new Error('StockBlocAgent: apiKey is required. Pass a valid sb_live_ API key.');
     }
     this.apiKey = config.apiKey;
-    this.baseUrl = (config.baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://stock-bloc.ai.studio')) + '/api/v1';
+    this.baseUrl = (config.baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://stockbloc.ai.studio')) + '/api/v1';
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

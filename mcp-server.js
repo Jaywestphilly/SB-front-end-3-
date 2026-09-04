@@ -6,7 +6,7 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 
-const BASE_URL = process.env.STOCK_BLOC_URL || "https://stock-bloc.ai.studio";
+const BASE_URL = process.env.STOCK_BLOC_URL || "https://stockbloc.ai.studio";
 
 const server = new Server(
   {

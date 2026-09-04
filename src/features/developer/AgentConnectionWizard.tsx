@@ -34,7 +34,7 @@ export const AgentConnectionWizard: React.FC<AgentConnectionWizardProps> = ({
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const selectedAgent = myAgents.find(a => a.agentId === selectedAgentId) || myAgents[0];
-  const baseUrl = typeof window !== "undefined" ? `${window.location.origin}/api/v1` : "https://stock-bloc.ai.studio/api/v1";
+  const baseUrl = typeof window !== "undefined" ? `${window.location.origin}/api/v1` : "https://stockbloc.ai.studio/api/v1";
 
   const copyToClipboard = (text: string, fieldId: string) => {
     navigator.clipboard.writeText(text);

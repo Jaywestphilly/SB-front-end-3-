@@ -160,6 +160,18 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => {
               triggerHaptic("selection");
+              if (onOpenAiAssistant) onOpenAiAssistant();
+            }}
+            className="px-2.5 py-1.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-200 border border-cyan-400/60 hover:bg-cyan-950/40 alien-block-cut-sm text-[11px] font-mono font-black transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0 glow-cyan shadow-sm"
+            title="Launch Gemini AI Market Copilot Chat"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+            <span className="hidden sm:inline">COPILOT CHAT</span>
+          </button>
+
+          <button
+            onClick={() => {
+              triggerHaptic("selection");
               if (onSelectTab) onSelectTab("web3_dot_btc");
             }}
             className="px-2.5 py-1.5 bg-gradient-to-r from-orange-500/20 to-purple-500/20 text-cyan-200 border border-cyan-400/50 hover:bg-cyan-950/40 alien-block-cut-sm text-[11px] font-mono font-black transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0 glow-cyan"

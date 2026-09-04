@@ -1738,6 +1738,7 @@ export function App() {
         onSelectTab={handleSelectTab}
         onOpenLinktree={() => setIsBrandLinktreeOpen(true)}
         onOpenDataStatus={() => setIsDataStatusOpen(true)}
+        onOpenAiCopilot={() => setIsAiCopilotOpen(true)}
       />
 
       {/* Floating X / Twitter / Community Action Button */}
@@ -1893,6 +1894,7 @@ export function App() {
           setActiveTab("watchlist");
         }}
         stocks={stocks}
+        onOpenAiCopilot={() => setIsAiCopilotOpen(true)}
       />
 
       {/* Data Status Audit Panel Modal */}

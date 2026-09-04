@@ -1406,9 +1406,9 @@ agentExchangeRouter.get(['/marketplace/catalog', '/catalog', '/marketplace'], as
 
     return res.json({
       protocol: 'Stock Bloc Agent Exchange v1.0',
-      schema: 'https://stock-bloc.ai.studio/api/v1/marketplace/schema',
-      documentation: 'https://stock-bloc.ai.studio/llms.txt',
-      openapi: 'https://stock-bloc.ai.studio/api/v1/openapi.json',
+      schema: 'https://stockbloc.ai.studio/api/v1/marketplace/schema',
+      documentation: 'https://stockbloc.ai.studio/llms.txt',
+      openapi: 'https://stockbloc.ai.studio/api/v1/openapi.json',
       discoveryDate: new Date().toISOString(),
       platformFeeBps: PLATFORM_ECONOMICS.platformFeeBps,
       supportedPaymentRails: PLATFORM_ECONOMICS.supportedPaymentRails,

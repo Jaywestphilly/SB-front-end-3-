@@ -1,8 +1,8 @@
 # Stock Bloc — Autonomous Financial Market Terminal & Quant AI Agent Engine
 
-[![Canonical Live Production URL](https://img.shields.io/badge/Production%20Terminal-https%3A%2F%2Fstock--bloc.ai.studio-cyan?style=for-the-badge)](https://stock-bloc.ai.studio)
-[![OpenAPI Spec](https://img.shields.io/badge/OpenAPI-3.0.1-blue?style=for-the-badge)](https://stock-bloc.ai.studio/api/v1/openapi.json)
-[![LLM Specification](https://img.shields.io/badge/LLMs.txt-Agent%20Ready-emerald?style=for-the-badge)](https://stock-bloc.ai.studio/llms.txt)
+[![Canonical Live Production URL](https://img.shields.io/badge/Production%20Terminal-https%3A%2F%2Fstock--bloc.ai.studio-cyan?style=for-the-badge)](https://stockbloc.ai.studio)
+[![OpenAPI Spec](https://img.shields.io/badge/OpenAPI-3.0.1-blue?style=for-the-badge)](https://stockbloc.ai.studio/api/v1/openapi.json)
+[![LLM Specification](https://img.shields.io/badge/LLMs.txt-Agent%20Ready-emerald?style=for-the-badge)](https://stockbloc.ai.studio/llms.txt)
 
 **Stock Bloc** is an autonomous financial market intelligence terminal, SEC 13F whale tracker, quant AI agent arena, credit repair generator, and wealth operating system.
 
@@ -10,12 +10,12 @@
 
 ## 🌐 Canonical URLs & Agent Endpoints
 
-- **Canonical Live Application**: [https://stock-bloc.ai.studio](https://stock-bloc.ai.studio)
-- **Machine LLM Specification**: [https://stock-bloc.ai.studio/llms.txt](https://stock-bloc.ai.studio/llms.txt)
-- **OpenAPI 3.0.1 Schema**: [https://stock-bloc.ai.studio/api/v1/openapi.json](https://stock-bloc.ai.studio/api/v1/openapi.json)
-- **AI Plugin Manifest**: [https://stock-bloc.ai.studio/.well-known/ai-plugin.json](https://stock-bloc.ai.studio/.well-known/ai-plugin.json)
-- **MCP Tool Configuration**: [https://stock-bloc.ai.studio/api/v1/mcp-config.json](https://stock-bloc.ai.studio/api/v1/mcp-config.json)
-- **Data Status & Freshness API**: [https://stock-bloc.ai.studio/api/v1/data-status](https://stock-bloc.ai.studio/api/v1/data-status)
+- **Canonical Live Application**: [https://stockbloc.ai.studio](https://stockbloc.ai.studio)
+- **Machine LLM Specification**: [https://stockbloc.ai.studio/llms.txt](https://stockbloc.ai.studio/llms.txt)
+- **OpenAPI 3.0.1 Schema**: [https://stockbloc.ai.studio/api/v1/openapi.json](https://stockbloc.ai.studio/api/v1/openapi.json)
+- **AI Plugin Manifest**: [https://stockbloc.ai.studio/.well-known/ai-plugin.json](https://stockbloc.ai.studio/.well-known/ai-plugin.json)
+- **MCP Tool Configuration**: [https://stockbloc.ai.studio/api/v1/mcp-config.json](https://stockbloc.ai.studio/api/v1/mcp-config.json)
+- **Data Status & Freshness API**: [https://stockbloc.ai.studio/api/v1/data-status](https://stockbloc.ai.studio/api/v1/data-status)
 
 ---
 

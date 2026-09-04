@@ -688,11 +688,93 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
         </div>
 
         {positions.length === 0 ? (
-          <div className="p-8 text-center bg-black/40 rounded-xl border border-dashed border-cyan-500/30 space-y-3">
-            <DollarSign className="w-10 h-10 text-cyan-500/40 mx-auto" />
-            <p className="text-sm text-neutral-300 font-sans">
-              No portfolio holdings added yet. Click "Add Position" above to start tracking.
-            </p>
+          <div className="p-6 sm:p-8 bg-black/60 rounded-xl border border-cyan-500/40 space-y-6">
+            {/* Cold-Start Architecture Guide */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-cyan-500/20 pb-6">
+              <div className="p-4 rounded-xl bg-cyan-950/20 border border-cyan-500/30">
+                <span className="text-[10px] font-mono font-bold uppercase text-cyan-400 block mb-1">FOUNDATIONAL CONCEPT</span>
+                <h3 className="text-sm font-bold text-white mb-1.5 flex items-center gap-1.5">
+                  <Building2 className="w-4 h-4 text-cyan-400 shrink-0" />
+                  What is Stock Bloc?
+                </h3>
+                <p className="text-xs text-neutral-300 font-sans leading-relaxed">
+                  Stock Bloc is an autonomous sovereign wealth terminal and AI agent platform combining real-time market data, SEC 13F institutional whale tracking, and quantitative momentum models.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-purple-950/20 border border-purple-500/30">
+                <span className="text-[10px] font-mono font-bold uppercase text-purple-400 block mb-1">THEMATIC CLUSTERS</span>
+                <h3 className="text-sm font-bold text-white mb-1.5 flex items-center gap-1.5">
+                  <Layers className="w-4 h-4 text-purple-400 shrink-0" />
+                  What is a "Bloc"?
+                </h3>
+                <p className="text-xs text-neutral-300 font-sans leading-relaxed">
+                  A Bloc is a curated thematic basket of correlated secular growth assets (e.g., Tsunami Infrastructure, Nuclear Energy, GovTech Defense, Optical Interposers) evaluated on unified 5-factor quantitative momentum.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/30">
+                <span className="text-[10px] font-mono font-bold uppercase text-amber-400 block mb-1">DEFAULT QUANT ENGINE</span>
+                <h3 className="text-sm font-bold text-white mb-1.5 flex items-center gap-1.5">
+                  <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+                  Why Tsunami is Default?
+                </h3>
+                <p className="text-xs text-neutral-300 font-sans leading-relaxed">
+                  The Super Sonic Tsunami represents the critical physical AI infrastructure buildout — power generation, optical interconnects, and data center compute — driving non-cyclical multi-year enterprise demand.
+                </p>
+              </div>
+            </div>
+
+            {/* Empty State Action CTAs */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+              <div className="space-y-1 text-center sm:text-left">
+                <h4 className="text-sm font-bold text-cyan-200">Start Building Your Sovereign Bloc</h4>
+                <p className="text-xs text-neutral-400 font-sans">
+                  Seed high-conviction Tsunami infrastructure leaders or add individual tickers to track P&L and quantitative signals.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => {
+                    triggerHaptic("success");
+                    const seeds: PortfolioPosition[] = [
+                      { id: "pos_nvda", symbol: "NVDA", shares: 10, avgCost: 120, targetPrice: 245, notes: "Tsunami compute core anchor" },
+                      { id: "pos_vst", symbol: "VST", shares: 15, avgCost: 125, targetPrice: 195, notes: "Nuclear baseload power PPA" },
+                      { id: "pos_be", symbol: "BE", shares: 30, avgCost: 24, targetPrice: 52, notes: "Fuel cell on-site power" },
+                      { id: "pos_amtm", symbol: "AMTM", shares: 25, avgCost: 26, targetPrice: 38, notes: "Defense AI engineering" }
+                    ];
+                    setPositions(seeds);
+                  }}
+                  className="px-3.5 py-2 rounded-lg bg-emerald-500/20 border border-emerald-400 text-emerald-300 hover:bg-emerald-500/30 text-xs font-bold uppercase flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Seed Tsunami Core (NVDA, VST, BE, AMTM)</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setIsAddingPosition(true);
+                  }}
+                  className="px-3.5 py-2 rounded-lg bg-cyan-500 text-black hover:bg-cyan-400 text-xs font-bold uppercase flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Position</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    onSelectTab("watchlist");
+                  }}
+                  className="px-3.5 py-2 rounded-lg bg-neutral-900 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40 text-xs font-bold uppercase flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Eye className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Browse Watchlist</span>
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="overflow-x-auto">

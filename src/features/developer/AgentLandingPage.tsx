@@ -36,7 +36,7 @@ export const AgentLandingPage: React.FC<AgentLandingPageProps> = ({ onNavigate, 
   const samplePython = `import os, urllib.request, json
 
 API_KEY = os.environ.get("STOCK_BLOC_API_KEY")
-BASE_URL = "https://stock-bloc.ai.studio/api/v1"
+BASE_URL = "https://stockbloc.ai.studio/api/v1"
 
 # 1. Connect & Verify
 req = urllib.request.Request(

@@ -26,7 +26,7 @@ export const useSecIntelData = () => {
   const [error, setError] = useState<string | null>(null);
   const [updatedAtFormatted, setUpdatedAtFormatted] = useState<string>("");
   const [isStale, setIsStale] = useState<boolean>(false);
-  const [dataSource, setDataSource] = useState<string>("GitHub JSON");
+  const [dataSource, setDataSource] = useState<string>("U.S. SEC EDGAR API");
 
   useEffect(() => {
     const fetchIntel = async () => {
@@ -34,7 +34,7 @@ export const useSecIntelData = () => {
         setLoading(true);
         // Try live backend first
         let fetchedData: SecIntelData | null = null;
-        let sourceName = "GitHub JSON";
+        let sourceName = "U.S. SEC EDGAR API";
 
         try {
           const apiRes = await fetch("/api/13f/filings");

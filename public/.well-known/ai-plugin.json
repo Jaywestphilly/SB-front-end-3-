@@ -9,9 +9,9 @@
   },
   "api": {
     "type": "openapi",
-    "url": "https://stock-bloc.ai.studio/api/v1/openapi.json"
+    "url": "https://stockbloc.ai.studio/api/v1/openapi.json"
   },
-  "logo_url": "https://stock-bloc.ai.studio/favicon.ico",
+  "logo_url": "https://stockbloc.ai.studio/favicon.ico",
   "contact_email": "realestatejcarter@gmail.com",
-  "legal_info_url": "https://stock-bloc.ai.studio"
+  "legal_info_url": "https://stockbloc.ai.studio"
 }

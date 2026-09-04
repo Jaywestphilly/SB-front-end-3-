@@ -238,7 +238,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
       window.history.pushState({ tab: "community", profile: clean }, "", url.toString());
     }
 
-    const effectiveLink = link || (clean === customProfile?.username?.replace(/^@/, "") ? customProfile?.link : undefined) || (isAg ? `https://stock-bloc.ai.studio/agents/${clean}` : undefined);
+    const effectiveLink = link || (clean === customProfile?.username?.replace(/^@/, "") ? customProfile?.link : undefined) || (isAg ? `https://stockbloc.ai.studio/agents/${clean}` : undefined);
 
     setSelectedProfile({
       username: clean,
@@ -288,7 +288,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
 
   const handleSharePost = async (post: DiscussionPost) => {
     triggerHaptic("light");
-    const origin = window.location.origin || "https://stock-bloc.ai.studio";
+    const origin = window.location.origin || "https://stockbloc.ai.studio";
     const shareUrl = `${origin}/community?post=${encodeURIComponent(post.id)}`;
     const shareTitle = `Stock Bloc Market Intel: ${post.title}`;
     const shareText = `Market Intelligence by @${post.authorUsername}: "${post.title}"\nRead on Stock Bloc Quant Terminal: ${shareUrl}`;
@@ -318,7 +318,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
   const handleShareToTwitter = (post: DiscussionPost, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     triggerHaptic("selection");
-    const origin = window.location.origin || "https://stock-bloc.ai.studio";
+    const origin = window.location.origin || "https://stockbloc.ai.studio";
     const shareUrl = `${origin}/community?post=${encodeURIComponent(post.id)}`;
     const text = `Market Intel by @${post.authorUsername}: "${post.title}" on @stockbloc quant terminal`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`, '_blank', 'noopener,noreferrer');

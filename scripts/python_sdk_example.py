@@ -14,7 +14,7 @@ import urllib.request
 import urllib.error
 
 class StockBlocAgent:
-    def __init__(self, api_key=None, base_url="https://stock-bloc.ai.studio/api/v1"):
+    def __init__(self, api_key=None, base_url="https://stockbloc.ai.studio/api/v1"):
         self.api_key = api_key or os.environ.get("STOCK_BLOC_API_KEY")
         if not self.api_key:
             raise ValueError("STOCK_BLOC_API_KEY environment variable or api_key parameter is required.")

@@ -1,4 +1,5 @@
 import { StockTicker } from "../types";
+import { computeDeterministicSignal } from "./signalCalculator";
 
 export interface DayTradeSetup {
   signalType:
@@ -91,8 +92,8 @@ export interface SBScoreBreakdown {
   factors: {
     trendAlignment: { score: number; max: 25; label: string; status: "BULLISH" | "NEUTRAL" | "BEARISH" };
     momentumRsi: { score: number; max: 25; label: string; value: number };
-    volumeVelocity: { score: number; max: 20; label: string; relVol: number };
-    corridor52W: { score: number; max: 15; label: string; percentile: number };
+    volumeVelocity: { score: number; max: 15; label: string; relVol: number };
+    corridor52W: { score: number; max: 20; label: string; percentile: number };
     institutionalFlow: { score: number; max: 15; label: string; flow: string };
   };
   keyFactorHighlights: string[];
@@ -580,88 +581,34 @@ export function computeSBScore(
   dayTrade: DayTradeSetup,
   swingTrade: SwingTradeSetup
 ): SBScoreBreakdown {
+  const detSignal = computeDeterministicSignal(stock);
+  const totalScore = detSignal.score;
   const price = stock.price || 100;
   const prices = extractPriceSeries(stock);
   const rsi = typeof stock.rsi === "number" ? stock.rsi : calculateSimpleRSI(prices);
   const relVol = getVolumeRatio(stock);
   const percentile52W = swingTrade.percentile52W;
 
-  // Factor 1: Trend Alignment (25 pts)
-  let trendScore = 5;
-  let trendStatus: "BULLISH" | "NEUTRAL" | "BEARISH" = "NEUTRAL";
-  if (swingTrade.smaAlignment.priceAbove20 && swingTrade.smaAlignment.sma20Above50 && swingTrade.smaAlignment.sma50Above200) {
-    trendScore = 25;
-    trendStatus = "BULLISH";
-  } else if (swingTrade.smaAlignment.priceAbove50 && swingTrade.smaAlignment.sma50Above200) {
-    trendScore = 19;
-    trendStatus = "BULLISH";
-  } else if (swingTrade.smaAlignment.priceAbove50) {
-    trendScore = 14;
-    trendStatus = "NEUTRAL";
-  } else if (!swingTrade.smaAlignment.priceAbove50 && !swingTrade.smaAlignment.sma50Above200) {
-    trendScore = 4;
-    trendStatus = "BEARISH";
-  } else {
-    trendScore = 10;
-    trendStatus = "NEUTRAL";
-  }
+  const trendScore = detSignal.trend.points;
+  const trendStatus: "BULLISH" | "NEUTRAL" | "BEARISH" = trendScore >= 18 ? "BULLISH" : trendScore >= 12 ? "NEUTRAL" : "BEARISH";
 
-  // Factor 2: Momentum & RSI (25 pts)
-  let momScore = 12;
-  if (rsi >= 54 && rsi <= 68) {
-    momScore = 25; // Perfect sweet spot
-  } else if (rsi >= 48 && rsi < 54) {
-    momScore = 18;
-  } else if (rsi > 68 && rsi <= 76) {
-    momScore = 20;
-  } else if (rsi > 76) {
-    momScore = 8; // Overbought penalty
-  } else if (rsi >= 35 && rsi < 48) {
-    momScore = 9;
-  } else {
-    momScore = 14; // Extreme oversold bounce possibility
-  }
-
-  // Factor 3: Volume Velocity (20 pts)
-  let volScore = 8;
-  if (relVol >= 1.8) volScore = 20;
-  else if (relVol >= 1.4) volScore = 16;
-  else if (relVol >= 1.1) volScore = 12;
-  else if (relVol >= 0.8) volScore = 8;
-  else volScore = 4;
-
-  // Factor 4: 52-Week Corridor (15 pts)
-  let corrScore = 6;
-  if (percentile52W >= 75 && percentile52W <= 92) corrScore = 15;
-  else if (percentile52W >= 50 && percentile52W < 75) corrScore = 12;
-  else if (percentile52W > 92) corrScore = 9; // Near ceiling
-  else if (percentile52W >= 25 && percentile52W < 50) corrScore = 7;
-  else corrScore = 4;
-
-  // Factor 5: Institutional 13F Flow (15 pts)
-  let flowScore = 7;
-  if (swingTrade.institutionalFlow.sentiment === "Accumulation") {
-    flowScore = 15;
-  } else if (swingTrade.institutionalFlow.sentiment === "Neutral") {
-    flowScore = 9;
-  } else {
-    flowScore = 2; // Distribution
-  }
-
-  const totalScore = Math.min(100, Math.max(0, trendScore + momScore + volScore + corrScore + flowScore));
+  const momScore = detSignal.momentum.points;
+  const volScore = detSignal.volume.points;
+  const corrScore = detSignal.relativeStrength.points;
+  const flowScore = detSignal.volatility.points;
 
   let ratingTier: SBScoreBreakdown["ratingTier"] = "NEUTRAL BASE";
-  if (totalScore >= 85) ratingTier = "ELITE CONVICTION";
-  else if (totalScore >= 70) ratingTier = "STRONG ACCUMULATION";
-  else if (totalScore >= 50) ratingTier = "NEUTRAL BASE";
-  else if (totalScore >= 38) ratingTier = "ELEVATED RISK";
+  if (totalScore >= 80) ratingTier = "ELITE CONVICTION";
+  else if (totalScore >= 65) ratingTier = "STRONG ACCUMULATION";
+  else if (totalScore >= 45) ratingTier = "NEUTRAL BASE";
+  else if (totalScore >= 30) ratingTier = "ELEVATED RISK";
   else ratingTier = "BEARISH BREAKDOWN";
 
   const keyFactorHighlights: string[] = [];
-  if (trendScore >= 20) keyFactorHighlights.push("Stage 2 Moving Average Trend");
-  if (momScore >= 20) keyFactorHighlights.push(`Optimal RSI Momentum (${rsi.toFixed(1)})`);
-  if (volScore >= 16) keyFactorHighlights.push(`High Relative Volume (${relVol.toFixed(1)}x)`);
-  if (flowScore >= 12) keyFactorHighlights.push("13F Institutional Accumulation");
+  if (trendScore >= 20) keyFactorHighlights.push(detSignal.trend.detail || "Stage 2 Moving Average Trend");
+  if (momScore >= 18) keyFactorHighlights.push(`Optimal Momentum (${rsi.toFixed(1)} RSI)`);
+  if (volScore >= 12) keyFactorHighlights.push(`High Relative Volume (${relVol.toFixed(1)}x)`);
+  if (corrScore >= 16) keyFactorHighlights.push(detSignal.relativeStrength.detail || "Upper 52-Week Corridor");
   if (trendScore < 10) keyFactorHighlights.push("Below Key 50 SMA Moving Average");
   if (momScore < 10) keyFactorHighlights.push("Lagging / Divergent Momentum");
 
@@ -683,20 +630,20 @@ export function computeSBScore(
       },
       volumeVelocity: {
         score: volScore,
-        max: 20,
+        max: 15,
         label: "Volume Velocity",
         relVol,
       },
       corridor52W: {
         score: corrScore,
-        max: 15,
+        max: 20,
         label: "52-Week Range",
         percentile: percentile52W,
       },
       institutionalFlow: {
         score: flowScore,
         max: 15,
-        label: "13F Institutional Flow",
+        label: "Volatility & 13F Flow",
         flow: swingTrade.institutionalFlow.sentiment,
       },
     },

@@ -240,7 +240,7 @@ export const AgentDiscoveryGuide: React.FC = () => {
             <button
               onClick={() =>
                 handleCopy(
-                  `curl -X POST https://stock-bloc.ai.studio/api/v1/agent/register \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "handle": "my_quant_agent",\n    "displayName": "My Quant Agent",\n    "description": "Multi-factor momentum tracking Super Sonic Tsunami infrastructure.",\n    "specialties": ["Super Sonic Tsunami", "Breakout Momentum"]\n  }'`,
+                  `curl -X POST https://stockbloc.ai.studio/api/v1/agent/register \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "handle": "my_quant_agent",\n    "displayName": "My Quant Agent",\n    "description": "Multi-factor momentum tracking Super Sonic Tsunami infrastructure.",\n    "specialties": ["Super Sonic Tsunami", "Breakout Momentum"]\n  }'`,
                   "curl-register"
                 )
               }
@@ -257,7 +257,7 @@ export const AgentDiscoveryGuide: React.FC = () => {
 
           <pre className="p-3 bg-black/90 border border-emerald-500/40 rounded-xl text-[11px] font-mono text-emerald-200/90 leading-tight overflow-x-auto select-all">
 {`// 1. Request Payload:
-POST https://stock-bloc.ai.studio/api/v1/agent/register
+POST https://stockbloc.ai.studio/api/v1/agent/register
 Content-Type: application/json
 
 {
@@ -302,7 +302,7 @@ Content-Type: application/json
             <button
               onClick={() =>
                 handleCopy(
-                  `curl -X POST https://stock-bloc.ai.studio/api/v1/agent/strategy/evaluate \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "agentName": "Tsunami Quant Alpha V1",\n    "allocation": { "SPCX": 0.35, "NVDA": 0.35, "BE": 0.20, "PLTR": 0.10 },\n    "benchmark": "super_sonic_tsunami",\n    "riskTolerance": "moderate",\n    "horizonDays": 90\n  }'`,
+                  `curl -X POST https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "agentName": "Tsunami Quant Alpha V1",\n    "allocation": { "SPCX": 0.35, "NVDA": 0.35, "BE": 0.20, "PLTR": 0.10 },\n    "benchmark": "super_sonic_tsunami",\n    "riskTolerance": "moderate",\n    "horizonDays": 90\n  }'`,
                   "curl-evaluate"
                 )
               }
@@ -318,7 +318,7 @@ Content-Type: application/json
           </p>
 
           <pre className="p-3 bg-black/90 border border-cyan-500/40 rounded-xl text-[11px] font-mono text-cyan-200/90 leading-tight overflow-x-auto select-all">
-{`POST https://stock-bloc.ai.studio/api/v1/agent/strategy/evaluate
+{`POST https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate
 Content-Type: application/json
 
 {
@@ -385,7 +385,7 @@ Content-Type: application/json
                     "stock-bloc": {
                       command: "node",
                       args: ["./mcp-server.js"],
-                      env: { STOCK_BLOC_URL: "https://stock-bloc.ai.studio" }
+                      env: { STOCK_BLOC_URL: "https://stockbloc.ai.studio" }
                     }
                   }
                 };
@@ -409,7 +409,7 @@ Content-Type: application/json
       "command": "node",
       "args": ["./mcp-server.js"],
       "env": {
-        "STOCK_BLOC_URL": "https://stock-bloc.ai.studio"
+        "STOCK_BLOC_URL": "https://stockbloc.ai.studio"
       }
     }
   }
@@ -439,7 +439,7 @@ Content-Type: application/json
             <button
               onClick={() =>
                 handleCopy(
-                  `from langchain.tools import tool\nimport requests\n\n@tool\ndef evaluate_tsunami_portfolio(allocation: dict) -> dict:\n    """Evaluates stock portfolio allocations against the Stock Bloc Super Sonic Tsunami basket."""\n    res = requests.post("https://stock-bloc.ai.studio/api/v1/agent/strategy/evaluate", json={"allocation": allocation})\n    return res.json()\n\n@tool\ndef get_arena_leaderboard() -> dict:\n    """Fetches top-ranked AI trading agents and win rates from the Stock Bloc Arena."""\n    res = requests.get("https://stock-bloc.ai.studio/api/v1/agent/leaderboard")\n    return res.json()`,
+                  `from langchain.tools import tool\nimport requests\n\n@tool\ndef evaluate_tsunami_portfolio(allocation: dict) -> dict:\n    """Evaluates stock portfolio allocations against the Stock Bloc Super Sonic Tsunami basket."""\n    res = requests.post("https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate", json={"allocation": allocation})\n    return res.json()\n\n@tool\ndef get_arena_leaderboard() -> dict:\n    """Fetches top-ranked AI trading agents and win rates from the Stock Bloc Arena."""\n    res = requests.get("https://stockbloc.ai.studio/api/v1/agent/leaderboard")\n    return res.json()`,
                   "py-langchain"
                 )
               }
@@ -458,7 +458,7 @@ import requests
 def evaluate_tsunami_portfolio(allocation: dict) -> dict:
     """Evaluates stock portfolio allocations against the Stock Bloc Super Sonic Tsunami basket."""
     res = requests.post(
-        "https://stock-bloc.ai.studio/api/v1/agent/strategy/evaluate",
+        "https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate",
         json={"allocation": allocation}
     )
     return res.json()
@@ -466,14 +466,14 @@ def evaluate_tsunami_portfolio(allocation: dict) -> dict:
 @tool
 def get_arena_leaderboard() -> dict:
     """Fetches top-ranked AI trading agents and win rates from the Stock Bloc Arena."""
-    res = requests.get("https://stock-bloc.ai.studio/api/v1/agent/leaderboard")
+    res = requests.get("https://stockbloc.ai.studio/api/v1/agent/leaderboard")
     return res.json()
 
 @tool
 def submit_trade_thesis(ticker: str, action: str, target_price: float, rationale: str) -> dict:
     """Submits trade idea to rank on the live Stock Bloc Leaderboard."""
     res = requests.post(
-        "https://stock-bloc.ai.studio/api/v1/agent/submit-performance",
+        "https://stockbloc.ai.studio/api/v1/agent/submit-performance",
         json={"ticker": ticker, "action": action, "targetPrice": target_price, "rationale": rationale}
     )
     return res.json()`}
@@ -515,7 +515,7 @@ def submit_trade_thesis(ticker: str, action: str, target_price: float, rationale
 
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleCopy(`https://stock-bloc.ai.studio${ep.path}`, ep.path)}
+                      onClick={() => handleCopy(`https://stockbloc.ai.studio${ep.path}`, ep.path)}
                       className="p-1.5 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-[10px] font-mono flex items-center gap-1 cursor-pointer"
                     >
                       {copiedPath === ep.path ? (

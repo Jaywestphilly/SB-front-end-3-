@@ -635,12 +635,12 @@ export const TradeScreenerPanel: React.FC<TradeScreenerPanelProps> = ({
               <div className="p-3 alien-block-cut-sm bg-black/50 border border-emerald-500/30 space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-emerald-400 font-bold uppercase text-[10px]">4. 52-Week Corridor</span>
-                  <span className="font-mono font-bold text-emerald-200">{sbScore.factors.corridor52W.score}/15 pts</span>
+                  <span className="font-mono font-bold text-emerald-200">{sbScore.factors.corridor52W.score}/20 pts</span>
                 </div>
                 <div className="w-full bg-neutral-900 h-2 rounded-full overflow-hidden border border-neutral-800">
                   <div
                     className="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all"
-                    style={{ width: `${(sbScore.factors.corridor52W.score / 15) * 100}%` }}
+                    style={{ width: `${(sbScore.factors.corridor52W.score / 20) * 100}%` }}
                   />
                 </div>
                 <div className="text-[11px] text-neutral-300 font-sans leading-tight">

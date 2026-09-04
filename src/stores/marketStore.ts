@@ -45,7 +45,7 @@ export const useMarketStore = create<MarketState>((set) => ({
   setMarketDataUpdatedAt: (marketDataUpdatedAt) => set({ marketDataUpdatedAt }),
   marketDataIsStale: false,
   setMarketDataIsStale: (marketDataIsStale) => set({ marketDataIsStale }),
-  marketDataSource: "GitHub JSON / Live API",
+  marketDataSource: "Yahoo Finance chart API",
   setMarketDataSource: (marketDataSource) => set({ marketDataSource }),
   selectedStock: null,
   setSelectedStock: (selectedStock) => set({ selectedStock }),

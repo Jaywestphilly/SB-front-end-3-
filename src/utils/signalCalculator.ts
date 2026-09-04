@@ -150,11 +150,19 @@ export function getSBScoreColor(score: number): SBScoreColorStyle {
 
 /**
  * Deterministically computes the Stock Bloc Signal and component points breakdown from verified market metrics.
+ * Formula: MOM 25, TREND 25, Rel Strength 20, VOL 15, Volatility 15, clamped 0–100.
  */
-export function computeDeterministicSignal(stock: StockTicker): DeterministicSignal {
+export function computeDeterministicSignal(stock: StockTicker | any): DeterministicSignal {
   const price = stock.price || 100;
-  const changePct = stock.changePercent || 0;
-  const rsi = stock.rsi ?? (stock.quantMetrics?.rsi14 ?? 50);
+  const changePct = typeof stock.changePercent === "number" 
+    ? stock.changePercent 
+    : typeof stock.percent_change === "number" 
+      ? stock.percent_change 
+      : 0;
+  const quant = stock.quantMetrics || stock.quant;
+  const rsi = typeof stock.rsi === "number" 
+    ? stock.rsi 
+    : (quant?.rsi14 ?? 50);
 
   // 1. Momentum (Max 25 pts)
   let momentumPts = 12.5;
@@ -179,9 +187,9 @@ export function computeDeterministicSignal(stock: StockTicker): DeterministicSig
 
   // 2. Trend (Max 25 pts)
   let trendPts = 12.5;
-  const sma20 = stock.quantMetrics?.sma20;
-  const sma50 = stock.quantMetrics?.sma50;
-  const sma200 = stock.quantMetrics?.sma200;
+  const sma20 = quant?.sma20;
+  const sma50 = quant?.sma50;
+  const sma200 = quant?.sma200;
 
   let trendDetail = "Baseline trend alignment";
   if (sma20 !== undefined && sma20 !== null) {
@@ -198,6 +206,19 @@ export function computeDeterministicSignal(stock: StockTicker): DeterministicSig
     else if (above20 && above50) trendDetail = "Above 20D / 50D";
     else if (above20) trendDetail = "Above 20D SMA";
     else trendDetail = "Below 20D / 50D / 200D";
+  } else if (quant?.priceVsSma20Pct !== undefined && quant?.priceVsSma20Pct !== null) {
+    const p20 = quant.priceVsSma20Pct;
+    const p50 = quant.priceVsSma50Pct ?? p20;
+    if (p20 > 0 && p50 > 0) {
+      trendPts = 22 + Math.min(3, Math.max(0, changePct * 0.2));
+      trendDetail = "Above 20D / 50D Moving Averages";
+    } else if (p20 > 0) {
+      trendPts = 16;
+      trendDetail = "Above 20D Moving Average";
+    } else {
+      trendPts = 7;
+      trendDetail = "Below Key Moving Averages";
+    }
   }
 
   const trendComp: SignalComponent = {
@@ -208,10 +229,12 @@ export function computeDeterministicSignal(stock: StockTicker): DeterministicSig
   };
 
   // 3. Volume (Max 15 pts)
-  let volRatio = stock.volumeVsAvgRatio ?? 1.0;
+  let volRatio = stock.volumeVsAvgRatio ?? quant?.volumeVsAvg20Ratio ?? 1.0;
   if (!volRatio || volRatio === 0) {
     if (stock.volumeNum && stock.avgVolumeNum && stock.avgVolumeNum > 0) {
       volRatio = Number((stock.volumeNum / stock.avgVolumeNum).toFixed(2));
+    } else if (stock.volume && stock.avgVolume && stock.avgVolume > 0) {
+      volRatio = Number((stock.volume / stock.avgVolume).toFixed(2));
     } else {
       volRatio = 1.0;
     }
@@ -226,13 +249,13 @@ export function computeDeterministicSignal(stock: StockTicker): DeterministicSig
     name: "Volume",
     points: Math.round(volumePts),
     maxPoints: 15,
-    detail: `${volRatio}x average volume`
+    detail: `${typeof volRatio === 'number' ? volRatio.toFixed(2) : volRatio}x average volume`
   };
 
   // 4. Relative Strength / 52W Range (Max 20 pts)
-  const high52 = stock.high52;
-  const low52 = stock.low52;
-  let percentile52 = 50;
+  const high52 = stock.high52 ?? quant?.high52;
+  const low52 = stock.low52 ?? quant?.low52;
+  let percentile52 = typeof quant?.percentile52Week === 'number' ? quant.percentile52Week : 50;
   let rsDetail = "Midband range positioning";
   if (high52 && low52 && high52 > low52) {
     percentile52 = Math.round(((price - low52) / (high52 - low52)) * 100);

@@ -8,6 +8,7 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Modality, ThinkingLevel } from '@google/genai';
 import { createEbookPdf } from './server/pdfGenerator.js';
 import { MarketDataService, computeQuantMetrics, calculateStockBlocSignal } from './src/services/marketDataService.js';
+import { computeDeterministicSignal, getSBScoreColor } from './src/utils/signalCalculator.js';
 import { SecIntelService } from './src/services/secIntelService.js';
 import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit } from './server/agentPlatform.js';
 import { communityApiRouter } from './server/communityApi.js';
@@ -67,8 +68,16 @@ app.use('/api/v1/marketplace', agentExchangeRouter);
 app.use('/api/v1/exchange', agentExchangeRouter);
 app.use('/api/v1/sec', secAnalystRouter);
 app.use('/api/sec', secAnalystRouter);
-app.use('/api/v1/agents', agentPlatformRouter);
+app.use(['/api/v1/agents', '/api/v1/agent', '/api/agents'], agentPlatformRouter);
 app.use('/api/v1/developers', agentPlatformRouter);
+
+// Support direct JSON requests to /agents/feed
+app.get('/agents/feed', (req, res, next) => {
+  if (req.headers.accept?.includes('application/json') || req.query.format === 'json') {
+    return res.redirect(307, '/api/v1/agents/feed');
+  }
+  next();
+});
 app.use('/api/v1/community', communityApiRouter);
 app.use('/api/v1/intelligence', agentIntelligenceRouter);
 app.use('/api/v1/web3', web3DotBtcRouter);
@@ -238,34 +247,119 @@ async function generateContentWithRetry(
   }
 }
 
-// 1. Stock AI Intelligence & Sector Analysis
+// Helper functions for live market grounding and SB score alignment
+function findWatchlistStock(symbolOrQuery: string) {
+  if (!symbolOrQuery) return null;
+  const clean = String(symbolOrQuery).toUpperCase().replace(/^\$/, '').trim();
+  const persisted = MarketDataService.loadPersistedData();
+  const list = persisted?.watchlist || [];
+  return list.find(s => s.symbol.toUpperCase() === clean) ||
+    list.find(s => (s.name || '').toUpperCase() === clean) ||
+    list.find(s => (s.name || '').toUpperCase().includes(clean)) || null;
+}
+
+function detectQueryIntent(query: string, activeTicker?: string) {
+  const cleanQuery = (query || '').trim();
+  if (activeTicker) {
+    const s = findWatchlistStock(activeTicker);
+    if (s) return { type: 'ticker' as const, stock: s };
+  }
+
+  const persisted = MarketDataService.loadPersistedData();
+  const list = persisted?.watchlist || [];
+
+  for (const s of list) {
+    const sym = s.symbol.toUpperCase();
+    const regex = new RegExp(`(^|[^A-Z0-9])\\$?${sym}([^A-Z0-9]|$)`, 'i');
+    if (regex.test(cleanQuery)) {
+      return { type: 'ticker' as const, stock: s };
+    }
+  }
+
+  for (const s of list) {
+    if (s.name && s.name.length > 3 && cleanQuery.toLowerCase().includes(s.name.toLowerCase())) {
+      return { type: 'ticker' as const, stock: s };
+    }
+  }
+
+  const blocKeywords = [
+    { name: 'tsunami', label: 'Super Sonic Tsunami / AI Infrastructure' },
+    { name: 'robotics', label: 'Robotics & Autonomous Systems' },
+    { name: 'space', label: 'Space Tech & Orbital Infrastructure' },
+    { name: 'energy', label: 'AI Power Grid & Nuclear Energy' },
+    { name: 'nuclear', label: 'Next-Gen Nuclear & SMR' },
+    { name: 'chips', label: 'Semiconductors & HBM Memory' },
+    { name: 'semiconductor', label: 'Semiconductors & Foundries' },
+    { name: 'defense', label: 'Defense Tech & Aerospace' },
+    { name: 'reit', label: 'Data Center & Digital Infrastructure REITs' },
+    { name: 'crypto', label: 'Web3 & Digital Assets' },
+  ];
+  for (const b of blocKeywords) {
+    if (cleanQuery.toLowerCase().includes(b.name)) {
+      return { type: 'bloc' as const, bloc: b };
+    }
+  }
+
+  return null;
+}
+
+// 1. Stock AI Intelligence & Sector Analysis (Grounded in Live Data & Deterministic SB Score)
 app.post('/api/ai/stock-analysis', async (req, res) => {
   try {
     const { symbol, name, price, changePercent, category, description } = req.body;
-    
+    const cleanSym = (symbol || '').toUpperCase().replace(/^\$/, '').trim();
+    const matchedStock = findWatchlistStock(cleanSym) || {
+      symbol: cleanSym,
+      name: name || cleanSym,
+      price: price || 100,
+      percent_change: changePercent || 0,
+      change: 0,
+      category: category || 'tsunami',
+      sector: category || 'AI Infrastructure',
+      sparkline: []
+    };
+
+    const det = computeDeterministicSignal(matchedStock);
+    const colorStyle = getSBScoreColor(det.score);
+    const effectivePrice = matchedStock.price ?? price ?? 100;
+    const effectivePct = matchedStock.percent_change ?? changePercent ?? 0;
+    const effectiveName = matchedStock.name || name || cleanSym;
+
     const ai = getGenAI();
     if (!ai) {
       return res.json({
-        analysis: `### **Stock Bloc Market Brief: ${symbol} (${name})**\n\n- **Price Action**: Currently trading at **$${price}** (${changePercent >= 0 ? '+' : ''}${changePercent}% today).\n- **Sector Position**: Core asset in **${category || 'Tech/AI'}**.\n- **Stock Bloc Take**: Seeing sustained demand due to massive capital expansion in AI hyperscale datacenters, memory chips, and power grid infrastructure.`,
-        sentiment: changePercent >= 0 ? 'Bullish' : 'Neutral',
-        catalysts: ['AI Hardware Surge', 'Energy Grid Demand', 'Hyperscale CapEx']
+        analysis: `### **Stock Bloc Quant Analysis: $${cleanSym} (${effectiveName})**\n\n- **SB Score**: **${det.score}/100** [${det.label}] — *${colorStyle.tierDescription}*\n- **Live Price**: **$${effectivePrice}** (${effectivePct >= 0 ? '+' : ''}${effectivePct}% today)\n- **Factor Breakdown**:\n  - **Momentum (Max 25)**: **${det.momentum.points}/25** (${det.momentum.detail})\n  - **Trend (Max 25)**: **${det.trend.points}/25** (${det.trend.detail})\n  - **Relative Strength (Max 20)**: **${det.relativeStrength.points}/20** (${det.relativeStrength.detail})\n  - **Volume (Max 15)**: **${det.volume.points}/15** (${det.volume.detail})\n  - **Volatility & Risk (Max 15)**: **${det.volatility.points}/15** (${det.volatility.detail})\n- **Tactical Implication**: ${colorStyle.implication.summary}\n  - *Day Setup*: ${colorStyle.implication.dayTrade}\n  - *Swing Setup*: ${colorStyle.implication.swingTrade}`,
+        sentiment: det.score >= 60 ? 'Bullish' : (det.score >= 40 ? 'Neutral' : 'Caution'),
+        sbScore: det.score,
+        signal: det,
+        catalysts: ['Hyperscale CapEx Acceleration', 'AI Datacenter Power Demand', 'Semiconductor Supply Tightness']
       });
     }
 
     const prompt = `You are Stock Bloc AI, a top quantitative financial analyst specializing in AI infrastructure, semiconductor foundries, HBM memory chips, energy grids, and tech indexes.
-Analyze this asset:
-Symbol: ${symbol}
-Company: ${name}
-Current Price: $${price}
-Daily Change: ${changePercent}%
-Description: ${description}
+Analyze this asset with strict quantitative grounding in the live verified metrics below:
+Symbol: ${cleanSym}
+Company: ${effectiveName}
+Live Price: $${effectivePrice}
+Daily Change: ${effectivePct}%
+Stock Bloc (SB) Score: ${det.score}/100 [${det.label}] (${colorStyle.tierDescription})
+Quantitative Factor Points Breakdown:
+- Momentum: ${det.momentum.points}/25 (${det.momentum.detail})
+- Trend: ${det.trend.points}/25 (${det.trend.detail})
+- Relative Strength: ${det.relativeStrength.points}/20 (${det.relativeStrength.detail})
+- Volume: ${det.volume.points}/15 (${det.volume.detail})
+- Volatility: ${det.volatility.points}/15 (${det.volatility.detail})
+Tactical Setup: ${colorStyle.implication.summary}
 
 Provide a concise, ultra-sharp 3-bullet breakdown in markdown format:
-1. **Core Catalyst**: What is driving recent price action in relation to AI infrastructure, memory, energy, or tech index momentum?
-2. **Competitive Moat / Growth Driver**: Key advantages or catalysts.
-3. **Stock Bloc Signal**: Short-term sentiment verdict (Bullish, Neutral, or Caution) with 1 key metric to watch.
+1. **Live Quantitative Stance & SB Score**: Cite the exact SB Score of ${det.score}/100 and highlight which factors (${det.momentum.points}/25 Momentum, ${det.trend.points}/25 Trend, ${det.relativeStrength.points}/20 Rel Strength, ${det.volume.points}/15 Vol, ${det.volatility.points}/15 Volatility) are driving the setup.
+2. **Core Catalysts & Moat**: What fundamental drivers (AI infrastructure, datacenter power, silicon demand, or hyperscale capex) impact this stock?
+3. **Tactical Action & Risk Levels**: Day and swing outlook based on the score tier (${colorStyle.tier}) with key risk levels to watch.
 
-Keep it scannable, punchy, and financial-pro level.`;
+Strict rules:
+- Ground all assertions in the provided quantitative numbers.
+- Do NOT output canned blurbs about real estate cash flow, credit repair/FICO tricks, or YouTube channel promotion.
+- Keep it scannable, punchy, and financial-pro level.`;
 
     const response = await generateContentWithRetry(ai, {
       contents: prompt,
@@ -273,8 +367,10 @@ Keep it scannable, punchy, and financial-pro level.`;
 
     res.json({
       analysis: response.text || 'Analysis currently unavailable.',
-      sentiment: changePercent >= 0 ? 'Bullish' : 'Neutral',
-      catalysts: ['AI Hardware Surge', 'Energy Grid Demand', 'Memory Chip Shortage']
+      sentiment: det.score >= 60 ? 'Bullish' : (det.score >= 40 ? 'Neutral' : 'Caution'),
+      sbScore: det.score,
+      signal: det,
+      catalysts: ['Hyperscale CapEx Acceleration', 'AI Datacenter Power Demand', 'Semiconductor Supply Tightness']
     });
   } catch (err: any) {
     if (isTransientAiError(err)) {
@@ -282,10 +378,25 @@ Keep it scannable, punchy, and financial-pro level.`;
     } else {
       console.error('Gemini Stock Analysis API Error:', err?.message || err);
     }
+    const fallbackSym = (req.body?.symbol || 'ASSET').toUpperCase().replace(/^\$/, '');
+    const stock = findWatchlistStock(fallbackSym) || {
+      symbol: fallbackSym,
+      name: req.body?.name || fallbackSym,
+      price: req.body?.price || 100,
+      percent_change: req.body?.changePercent || 0,
+      change: 0,
+      category: 'tsunami',
+      sector: 'AI Infrastructure',
+      sparkline: []
+    };
+    const det = computeDeterministicSignal(stock);
+    const colorStyle = getSBScoreColor(det.score);
     res.json({
-      analysis: `### **Stock Bloc Market Brief**\n\n${req.body?.name || 'Asset'} continues to see key volume in AI hardware and market index channels.`,
-      sentiment: 'Bullish',
-      catalysts: ['AI Hardware Expansion']
+      analysis: `### **Stock Bloc Quant Analysis: $${stock.symbol} (${stock.name})**\n\n- **SB Score**: **${det.score}/100** [${det.label}] — *${colorStyle.tierDescription}*\n- **Live Price**: **$${stock.price}** (${stock.percent_change >= 0 ? '+' : ''}${stock.percent_change}% today)\n- **Factor Breakdown**: MOM **${det.momentum.points}/25**, TREND **${det.trend.points}/25**, Rel Strength **${det.relativeStrength.points}/20**, VOL **${det.volume.points}/15**, Volatility **${det.volatility.points}/15**.\n- **Tactical Implication**: ${colorStyle.implication.summary}`,
+      sentiment: det.score >= 60 ? 'Bullish' : (det.score >= 40 ? 'Neutral' : 'Caution'),
+      sbScore: det.score,
+      signal: det,
+      catalysts: ['AI Hardware Expansion', 'Power Grid Infrastructure']
     });
   }
 });
@@ -733,29 +844,130 @@ app.post('/api/ai/generate-music', async (req, res) => {
   }
 });
 
-// 6. General Stock Bloc Copilot AI query
+// 6. General Stock Bloc Copilot AI query (Grounded in Live Watchlist & Deterministic SB Scores)
 app.post('/api/ai/copilot', async (req, res) => {
   try {
     const { query, activeTicker } = req.body;
+    const cleanQuery = (query || '').trim();
+    const intent = detectQueryIntent(cleanQuery, activeTicker);
+
+    // Case A: Query or active context targets a specific ticker
+    if (intent && intent.type === 'ticker') {
+      const stock = intent.stock;
+      const det = computeDeterministicSignal(stock);
+      const colorStyle = getSBScoreColor(det.score);
+      const effectivePrice = stock.price ?? 100;
+      const effectivePct = stock.percent_change ?? 0;
+
+      const fallbackText = `### **Stock Bloc Quant Intelligence: $${stock.symbol} (${stock.name})**\n\n- **SB Score**: **${det.score}/100** [${det.label}] — *${colorStyle.tierDescription}*\n- **Live Price**: **$${effectivePrice}** (${effectivePct >= 0 ? '+' : ''}${effectivePct}% today)\n- **Factor Points Breakdown (Clamped 0–100)**:\n  - **Momentum (Max 25)**: **${det.momentum.points}/25** (${det.momentum.detail})\n  - **Trend (Max 25)**: **${det.trend.points}/25** (${det.trend.detail})\n  - **Relative Strength (Max 20)**: **${det.relativeStrength.points}/20** (${det.relativeStrength.detail})\n  - **Volume (Max 15)**: **${det.volume.points}/15** (${det.volume.detail})\n  - **Volatility & Risk (Max 15)**: **${det.volatility.points}/15** (${det.volatility.detail})\n- **Tactical Setup**: ${colorStyle.implication.summary}\n  - *Day Trading*: ${colorStyle.implication.dayTrade}\n  - *Swing Horizon*: ${colorStyle.implication.swingTrade}`;
+
+      const ai = getGenAI();
+      if (!ai) {
+        return res.json({ reply: fallbackText });
+      }
+
+      const prompt = `You are Stock Bloc Copilot, an elite quantitative financial analyst.
+The user is asking: "${cleanQuery}"
+LIVE VERIFIED MARKET GROUNDING FOR $${stock.symbol} (${stock.name}):
+- Current Price: $${effectivePrice} (${effectivePct >= 0 ? '+' : ''}${effectivePct}%)
+- Deterministic SB Score: ${det.score}/100 [${det.label}] (${colorStyle.tierDescription})
+- 5-Factor Score Points:
+  * Momentum: ${det.momentum.points}/25 (${det.momentum.detail})
+  * Trend: ${det.trend.points}/25 (${det.trend.detail})
+  * Relative Strength: ${det.relativeStrength.points}/20 (${det.relativeStrength.detail})
+  * Volume: ${det.volume.points}/15 (${det.volume.detail})
+  * Volatility: ${det.volatility.points}/15 (${det.volatility.detail})
+- Tactical Setup: ${colorStyle.implication.summary}
+- Day-trade Outlook: ${colorStyle.implication.dayTrade}
+- Swing-trade Outlook: ${colorStyle.implication.swingTrade}
+
+CRITICAL DIRECTIVES:
+1. You MUST explicitly cite the exact SB Score of ${det.score}/100 and reference key factor points (MOM ${det.momentum.points}/25, TREND ${det.trend.points}/25, Rel Strength ${det.relativeStrength.points}/20, VOL ${det.volume.points}/15, Volatility ${det.volatility.points}/15).
+2. Directly answer the user's question with institutional precision.
+3. REFUSE and strictly omit any canned real-estate cash flow, credit repair/FICO trick, or YouTube channel promotion blurbs because this question names a ticker/stock. Keep the response 100% focused on quantitative stock analysis, catalysts, and tactical trade setups.`;
+
+      try {
+        const response = await generateContentWithRetry(ai, { contents: prompt });
+        return res.json({ reply: response.text || fallbackText });
+      } catch (genErr) {
+        return res.json({ reply: fallbackText });
+      }
+    }
+
+    // Case B: Query targets a thematic Bloc (e.g. Tsunami, Energy, Robotics, Space, Chips)
+    if (intent && intent.type === 'bloc') {
+      const persisted = MarketDataService.loadPersistedData();
+      const list = persisted?.watchlist || [];
+      const blocName = intent.bloc.name;
+      const blocStocks = list.filter(s => {
+        const b = (s.bloc || s.category || '').toLowerCase();
+        return b.includes(blocName) || blocName.includes(b);
+      }).slice(0, 6);
+
+      const constituents = blocStocks.map(s => {
+        const d = computeDeterministicSignal(s);
+        return {
+          symbol: s.symbol,
+          name: s.name,
+          price: s.price,
+          pct: s.percent_change,
+          score: d.score,
+          label: d.label
+        };
+      });
+
+      const avgScore = constituents.length > 0
+        ? Math.round(constituents.reduce((acc, c) => acc + c.score, 0) / constituents.length)
+        : 72;
+
+      const fallbackText = `### **Stock Bloc Quantitative Intel: ${intent.bloc.label}**\n\n- **Bloc Composite SB Score**: **${avgScore}/100**\n- **Core Constituent Rankings**:\n${constituents.map(c => `  - **$${c.symbol}** (${c.name}): **SB Score ${c.score}/100** [${c.label}] · $${c.price} (${c.pct >= 0 ? '+' : ''}${c.pct}%)`).join('\n')}\n\n*All scores computed via deterministic 5-factor quant engine (MOM 25, TREND 25, Rel Strength 20, VOL 15, Volatility 15).*`;
+
+      const ai = getGenAI();
+      if (!ai) {
+        return res.json({ reply: fallbackText });
+      }
+
+      const prompt = `You are Stock Bloc Copilot, an elite quantitative financial analyst.
+The user is asking: "${cleanQuery}"
+THEMATIC BLOC CONTEXT: ${intent.bloc.label}
+Constituents and live verified SB Scores:
+${constituents.map(c => `- $${c.symbol} (${c.name}): Price $${c.price} (${c.pct >= 0 ? '+' : ''}${c.pct}%), SB Score ${c.score}/100 [${c.label}]`).join('\n')}
+Bloc Composite Score: ${avgScore}/100
+
+CRITICAL DIRECTIVES:
+1. Directly analyze the thematic bloc and cite constituent SB Scores.
+2. Ground all points in the live metrics above.
+3. REFUSE and strictly omit any canned real-estate, credit repair, or YouTube channel promotion blurbs because this question names a thematic bloc.`;
+
+      try {
+        const response = await generateContentWithRetry(ai, { contents: prompt });
+        return res.json({ reply: response.text || fallbackText });
+      } catch (genErr) {
+        return res.json({ reply: fallbackText });
+      }
+    }
+
+    // Case C: General question without ticker or bloc
     const ai = getGenAI();
-    
     if (!ai) {
       return res.json({
-        reply: `Stock Bloc Quant AI is tracking wealth strategies across **Real Estate Cash Flow**, **Credit 800+ Score Optimization**, **YouTube Video Masterclasses**, and **Market Intelligence** (${activeTicker || 'Stock Bloc Tickers'}).`
+        reply: `### **Stock Bloc Quantitative Copilot**\n\nI am connected to the live market telemetry feed. You can ask me to evaluate any stock ticker or thematic bloc:\n- **Individual Tickers**: e.g., *"What is the SB Score for NVDA?"*, *"Analyze Bloom Energy (BE) quant setup"*, *"Compare VST and CEG"*\n- **Thematic Blocs**: e.g., *"Break down the Super Sonic Tsunami bloc"*, *"Best energy grid tickers"*\n\nEvery evaluation cites the verified **0–100 SB Score** with its 5-factor breakdown: Momentum (25), Trend (25), Relative Strength (20), Volume (15), and Volatility (15).`
       });
     }
 
-    const prompt = `You are Stock Bloc AI Assistant embedded in the Stock Bloc Wealth & Market Intelligence platform (linktr.ee/StockBloc).
-You are an expert wealth strategist specializing in four core wealth pillars:
-1. **Real Estate Investing**: Rental property cash flow, Cap Rates, Cash-on-Cash ROI, House Hacking (3.5% down FHA), BRRRR method, DSCR loans, and REITs ($O, $PLD, $EQIX).
-2. **Credit Score Building & Repair**: Reaching 800+ FICO, managing the 5 factors (35% payment history, 30% utilization, 15% age, 10% mix, 10% inquiries), the 15/3 statement date payment trick, authorized users, and disputing errors under FCRA.
-3. **Stock Market & AI Infrastructure**: Hardware cycles, SK Hynix HBM3e memory, Bloom Energy fuel cells, ASML EUV lithography, grid power (PLPC, AMSC), foundries (TSM), and indexes (QQQ, SPY, BTC).
-4. **YouTube Channel Content**: Recommending video lessons from the Stock Bloc YouTube channel.
+    const isExplicitWealthQuestion = /credit|fico|real estate|rental|mortgage|youtube/i.test(cleanQuery);
 
-User Question: "${query}"
-Active Ticker Context: ${activeTicker || 'General Wealth & Market Intelligence'}
+    const prompt = `You are Stock Bloc Copilot, an institutional quant financial assistant.
+User Question: "${cleanQuery}"
+Active Context: ${activeTicker || 'Stock Bloc Live Feed'}
 
-Provide a sharp, encouraging, actionable 3-bullet response using markdown formatted for mobile reading. Keep it professional, highly financial-literate, and concise.`;
+${isExplicitWealthQuestion ? `The user asked specifically about personal finance/wealth topics. Answer cleanly and concisely with actionable advice.` : `The user asked a general question. Explain Stock Bloc's core quantitative philosophy:
+1. **Deterministic SB Score (0-100)**: Momentum (25 pts), Trend (25 pts), Relative Strength (20 pts), Volume (15 pts), and Volatility (15 pts).
+2. **Thematic Blocs**: Super Sonic Tsunami (AI infrastructure, power grids, advanced packaging, hyperscale capex), Defense Tech, Space, Robotics, etc.
+3. Invite the user to name any ticker (e.g. NVDA, BE, VST, SPCX, SKHY) for an instant live quantitative factor breakdown.
+Do NOT output unsolicited canned blurbs about real estate cash flow, credit repair tricks, or YouTube channel promotion.`}
+
+Provide a crisp, professional markdown response.`;
 
     const response = await generateContentWithRetry(ai, {
       contents: prompt,
@@ -768,7 +980,9 @@ Provide a sharp, encouraging, actionable 3-bullet response using markdown format
     } else {
       console.error('Copilot AI Error:', err?.message || err);
     }
-    res.json({ reply: `Stock Bloc Quant AI is tracking wealth strategies across **Real Estate Cash Flow**, **Credit 800+ Score Optimization**, **YouTube Masterclasses**, and **Market Tickers** (${req.body?.activeTicker || 'All Tickers'}). Ask any question on house hacking, 15/3 credit tricks, or Tsunami stocks!` });
+    res.json({
+      reply: `### **Stock Bloc Copilot Online**\n\nLive quantitative engine active. Enter any ticker symbol (e.g. **$NVDA**, **$BE**, **$VST**, **$SPCX**) or thematic bloc (e.g. **Tsunami**, **Grid Energy**, **HBM Memory**) for an instant deterministic 0–100 SB Score breakdown.`
+    });
   }
 });
 
@@ -1397,7 +1611,7 @@ app.get('/llms.txt', (req, res) => {
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     return res.sendFile(filePath);
   }
-  res.type('text/plain').send(`https://stock-bloc.ai.studio`);
+  res.type('text/plain').send(`https://stockbloc.ai.studio`);
 });
 
 // 14. OpenAI & LangChain AI Plugin Manifest
@@ -1414,10 +1628,10 @@ app.get('/.well-known/ai-plugin.json', (req, res) => {
     description_for_human: "Real-time stock momentum, 13F hedge fund analytics, credit dispute letter generation, and real estate ROI tools.",
     description_for_model: "Stock Bloc provides AI agents with live market data, SEC 13F filings, FCRA dispute letters, and financial calculators via machine-readable Express proxy JSON endpoints.",
     auth: { type: "none" },
-    api: { type: "openapi", url: "https://stock-bloc.ai.studio/api/v1/openapi.json" },
-    logo_url: "https://stock-bloc.ai.studio/favicon.ico",
+    api: { type: "openapi", url: "https://stockbloc.ai.studio/api/v1/openapi.json" },
+    logo_url: "https://stockbloc.ai.studio/favicon.ico",
     contact_email: "realestatejcarter@gmail.com",
-    legal_info_url: "https://stock-bloc.ai.studio"
+    legal_info_url: "https://stockbloc.ai.studio"
   });
 });
 
@@ -1435,7 +1649,7 @@ app.get('/api/v1/openapi.json', (req, res) => {
       description: "Machine-readable quantitative wealth and market intelligence endpoints for AI Agents, Custom GPTs, and LangChain runners.",
       version: "v1.0.0"
     },
-    servers: [{ url: "https://stock-bloc.ai.studio" }]
+    servers: [{ url: "https://stockbloc.ai.studio" }]
   });
 });
 
@@ -2152,11 +2366,11 @@ app.get('/.well-known/ai-plugin.json', (req, res) => {
     auth: { type: "none" },
     api: {
       type: "openapi",
-      url: "/api/v1/openapi.json"
+      url: "https://stockbloc.ai.studio/api/v1/openapi.json"
     },
-    logo_url: "/icon.png",
+    logo_url: "https://stockbloc.ai.studio/favicon.ico",
     contact_email: "support@stockbloc.ai",
-    legal_info_url: "https://linktr.ee/StockBloc"
+    legal_info_url: "https://stockbloc.ai.studio"
   });
 });
 
@@ -3204,12 +3418,87 @@ app.post('/api/intel/youtube-feed/sync', async (req, res) => {
   });
 });
 
-// Proxy Endpoints
-app.get('/api/data/market', async (req, res) => {
+// Proxy Endpoints: Unified Market Data with sbScore, bloc, CSV export and ?bloc= filter
+app.get(['/api/data/market', '/api/data/market.csv'], async (req, res) => {
   const data = await fetchAndProcessFeed('market');
+  const blocQuery = req.query.bloc ? String(req.query.bloc).toLowerCase().trim() : null;
+  const isCsv = req.path.endsWith('.csv') || req.query.format === 'csv' || req.headers.accept?.includes('text/csv');
+
+  let watchlist = [...(data.watchlist || [])];
+
+  // Enrich every ticker with the exact same deterministic sbScore (0-100) and bloc
+  watchlist = watchlist.map(stock => {
+    const det = computeDeterministicSignal(stock);
+    const resolvedBloc = stock.bloc || stock.category || "tsunami";
+    return {
+      ...stock,
+      sbScore: det.score,
+      bloc: resolvedBloc,
+      signal: {
+        ...(stock.signal || {}),
+        signalScore: det.score,
+        deterministicScore: det.score,
+        label: det.label,
+        components: {
+          momentum: det.momentum.points,
+          trend: det.trend.points,
+          relativeStrength: det.relativeStrength.points,
+          volume: det.volume.points,
+          volatility: det.volatility.points
+        }
+      }
+    };
+  });
+
+  if (blocQuery && blocQuery !== 'all') {
+    watchlist = watchlist.filter(s => {
+      const b = (s.bloc || s.category || '').toLowerCase();
+      return b.includes(blocQuery) || blocQuery.includes(b);
+    });
+  }
+
+  const updatedAt = data.updated_at || new Date().toISOString();
+
+  if (isCsv) {
+    const headers = [
+      "Symbol", "Name", "Price", "Change", "PercentChange", "SBScore", "Bloc", "SignalLabel", "Volume", "AvgVolume", "52WHigh", "52WLow", "Sector"
+    ];
+    const rows = watchlist.map(s => [
+      `"${s.symbol}"`,
+      `"${(s.name || s.symbol).replace(/"/g, '""')}"`,
+      s.price ?? 0,
+      s.change ?? 0,
+      s.percent_change ?? 0,
+      s.sbScore ?? 0,
+      `"${s.bloc || 'tsunami'}"`,
+      `"${s.signal?.label || 'NEUTRAL'}"`,
+      s.volume ?? 0,
+      s.avgVolume ?? 0,
+      s.high52 ?? 0,
+      s.low52 ?? 0,
+      `"${(s.sector || 'Market').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="stockbloc_market_${blocQuery || 'all'}.csv"`);
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    res.setHeader('X-Data-As-Of', updatedAt);
+    return res.send(csvContent);
+  }
+
+  const responseData = {
+    ...data,
+    updated_at: updatedAt,
+    source: data.source || "Yahoo Finance chart API",
+    total_assets: watchlist.length,
+    bloc_filter: blocQuery || "all",
+    watchlist
+  };
+
   res.setHeader('Cache-Control', 'public, max-age=60');
-  res.setHeader('X-Data-As-Of', data.updated_at || 'unknown');
-  return res.json(data);
+  res.setHeader('X-Data-As-Of', updatedAt);
+  return res.json(responseData);
 });
 
 app.get('/api/data/sec', async (req, res) => {
@@ -3328,8 +3617,8 @@ app.get('/llms.txt', (req, res) => {
 > Stock Bloc is an autonomous financial market intelligence terminal, SEC 13F whale tracker, quant agent arena, and instructional playbooks hub.
 
 ## Canonical Production URLs & Host
-- Base URL: https://stock-bloc.ai.studio
-- Web Terminal: https://stock-bloc.ai.studio/
+- Base URL: https://stockbloc.ai.studio
+- Web Terminal: https://stockbloc.ai.studio/
 
 ## Public Backend Data Feeds (JSON)
 - Market Watchlist & Price Feed: https://raw.githubusercontent.com/Jaywestphilly/stock-bloc-backend/main/market_watchlist_data.json
@@ -3338,10 +3627,10 @@ app.get('/llms.txt', (req, res) => {
 - Dyson Swarm AI Telemetry: https://raw.githubusercontent.com/Jaywestphilly/stock-bloc-backend/main/dyson_swarm_data.json
 
 ## Machine Discovery & Agent Endpoints
-- OpenAPI 3.0 Specification: https://stock-bloc.ai.studio/api/v1/openapi.json
-- AI Plugin Manifest: https://stock-bloc.ai.studio/.well-known/ai-plugin.json
-- Data Pipeline Freshness Status API: https://stock-bloc.ai.studio/api/v1/data-status
-- Model Context Protocol (MCP) Config: https://stock-bloc.ai.studio/api/v1/mcp-config.json
+- OpenAPI 3.0 Specification: https://stockbloc.ai.studio/api/v1/openapi.json
+- AI Plugin Manifest: https://stockbloc.ai.studio/.well-known/ai-plugin.json
+- Data Pipeline Freshness Status API: https://stockbloc.ai.studio/api/v1/data-status
+- Model Context Protocol (MCP) Config: https://stockbloc.ai.studio/api/v1/mcp-config.json
 
 ## API Endpoint Classifications (Live vs. Illustrative)
 ### Live Production Endpoints
@@ -3962,7 +4251,7 @@ app.get('/pricing.json', (req, res) => {
         "name": "Stock Bloc Wealth Playbook Trilogy",
         "price_usd": 97.00,
         "type": "digital_download",
-        "checkout_url_stripe": "https://stock-bloc.ai.studio/checkout/trilogy",
+        "checkout_url_stripe": "https://stockbloc.ai.studio/checkout/trilogy",
         "crypto_payment_supported": true
       },
       {
@@ -3970,14 +4259,14 @@ app.get('/pricing.json', (req, res) => {
         "name": "Quant Suite Pro Subscription",
         "price_usd": 25.00,
         "type": "recurring_monthly",
-        "checkout_url_stripe": "https://stock-bloc.ai.studio/checkout/pro"
+        "checkout_url_stripe": "https://stockbloc.ai.studio/checkout/pro"
       },
       {
         "id": "agent-api-refill-5",
         "name": "AI Agent API Key Credit Refill",
         "price_usd": 5.00,
         "type": "api_credits",
-        "checkout_url_stripe": "https://stock-bloc.ai.studio/checkout/api-5"
+        "checkout_url_stripe": "https://stockbloc.ai.studio/checkout/api-5"
       }
     ]
   });

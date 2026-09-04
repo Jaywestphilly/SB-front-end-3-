@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { computeDeterministicSignal, getSBScoreColor } from '../utils/signalCalculator';
 
 // --- Interfaces ---
 
@@ -56,6 +57,9 @@ export interface WatchlistStock {
   news?: Array<{ title: string; source: string; time?: string; sentiment?: string; url?: string; }>;
   quant?: QuantMetrics;
   signal?: StockBlocSignal;
+  sbScore?: number;
+  bloc?: string;
+  category?: string;
   last_updated?: string;
   source?: string;
 }
@@ -230,121 +234,55 @@ export function computeQuantMetrics(stock: Partial<WatchlistStock>): QuantMetric
 
 // --- Stock Bloc Signal Scoring Engine ---
 
-export function calculateStockBlocSignal(stock: WatchlistStock, quant: QuantMetrics): StockBlocSignal {
-  const components: SignalCategoryScore[] = [];
+export function calculateStockBlocSignal(stock: WatchlistStock, quant?: QuantMetrics): StockBlocSignal {
+  const det = computeDeterministicSignal(stock);
+  const colorStyle = getSBScoreColor(det.score);
 
-  // 1. Momentum Category (25%)
-  let momentumScore = 50;
-  const rsi = quant.rsi14 !== null ? quant.rsi14 : 50;
-  if (rsi >= 50 && rsi <= 70) {
-    momentumScore = 70 + ((rsi - 50) / 20) * 30; // 70 to 100
-  } else if (rsi > 70) {
-    momentumScore = 80 - ((rsi - 70) / 30) * 40; // overbought penalty
-  } else if (rsi < 30) {
-    momentumScore = 30; // oversold
-  } else {
-    momentumScore = 40 + ((rsi - 30) / 20) * 20;
-  }
-  if (stock.percent_change > 0) momentumScore = Math.min(100, momentumScore + Math.min(15, stock.percent_change * 2));
-  if (stock.percent_change < 0) momentumScore = Math.max(0, momentumScore - Math.min(15, Math.abs(stock.percent_change) * 2));
-
-  components.push({
-    name: "Momentum",
-    score: Math.round(momentumScore),
-    weight: 0.25,
-    detail: `RSI 14 at ${rsi} with 1-day change of ${stock.percent_change >= 0 ? '+' : ''}${stock.percent_change}%`
-  });
-
-  // 2. Trend Category (25%)
-  let trendScore = 50;
-  if (quant.priceVsSma20Pct !== null && quant.priceVsSma50Pct !== null) {
-    if (quant.priceVsSma20Pct > 0 && quant.priceVsSma50Pct > 0) {
-      trendScore = 85 + Math.min(15, quant.priceVsSma20Pct);
-    } else if (quant.priceVsSma20Pct > 0) {
-      trendScore = 65;
-    } else if (quant.priceVsSma20Pct < 0 && quant.priceVsSma50Pct < 0) {
-      trendScore = 25;
-    } else {
-      trendScore = 45;
+  const components: SignalCategoryScore[] = [
+    {
+      name: "Momentum",
+      score: Math.round((det.momentum.points / det.momentum.maxPoints) * 100),
+      weight: 0.25,
+      detail: det.momentum.detail
+    },
+    {
+      name: "Trend",
+      score: Math.round((det.trend.points / det.trend.maxPoints) * 100),
+      weight: 0.25,
+      detail: det.trend.detail
+    },
+    {
+      name: "Relative Strength",
+      score: Math.round((det.relativeStrength.points / det.relativeStrength.maxPoints) * 100),
+      weight: 0.20,
+      detail: det.relativeStrength.detail
+    },
+    {
+      name: "Volume",
+      score: Math.round((det.volume.points / det.volume.maxPoints) * 100),
+      weight: 0.15,
+      detail: det.volume.detail
+    },
+    {
+      name: "Volatility",
+      score: Math.round((det.volatility.points / det.volatility.maxPoints) * 100),
+      weight: 0.15,
+      detail: det.volatility.detail
     }
-  }
-  components.push({
-    name: "Trend",
-    score: Math.round(Math.min(100, Math.max(0, trendScore))),
-    weight: 0.25,
-    detail: quant.priceVsSma20Pct !== null ? `Trading ${quant.priceVsSma20Pct >= 0 ? '+' : ''}${quant.priceVsSma20Pct}% vs 20-day SMA` : "Baseline trend alignment"
-  });
-
-  // 3. Volume Category (15%)
-  let volumeScore = 50;
-  const volRatio = quant.volumeVsAvg20Ratio || 1.0;
-  if (volRatio > 1.2 && stock.percent_change > 0) {
-    volumeScore = 85 + Math.min(15, (volRatio - 1.2) * 20);
-  } else if (volRatio > 1.0) {
-    volumeScore = 65;
-  } else if (volRatio < 0.7) {
-    volumeScore = 35;
-  }
-  components.push({
-    name: "Volume",
-    score: Math.round(Math.min(100, Math.max(0, volumeScore))),
-    weight: 0.15,
-    detail: `Volume ratio relative to 20-day avg: ${volRatio}x`
-  });
-
-  // 4. Relative Strength / 52W Range (20%)
-  let rangeScore = 50;
-  const pct52 = quant.percentile52Week !== null ? quant.percentile52Week : 50;
-  if (pct52 >= 70 && pct52 <= 95) {
-    rangeScore = 85 + ((pct52 - 70) / 25) * 15;
-  } else if (pct52 > 95) {
-    rangeScore = 80;
-  } else if (pct52 < 30) {
-    rangeScore = 30;
-  } else {
-    rangeScore = 40 + ((pct52 - 30) / 40) * 30;
-  }
-  components.push({
-    name: "52W Range Positioning",
-    score: Math.round(Math.min(100, Math.max(0, rangeScore))),
-    weight: 0.20,
-    detail: `Positioned at ${pct52}% of 52-week price corridor`
-  });
-
-  // 5. Volatility & Risk (15%)
-  let volScore = 60;
-  const vol = quant.volatility;
-  if (vol !== null) {
-    if (vol < 20) volScore = 80;
-    else if (vol < 40) volScore = 65;
-    else if (vol < 60) volScore = 50;
-    else volScore = 35;
-  }
-  components.push({
-    name: "Volatility Risk",
-    score: Math.round(volScore),
-    weight: 0.15,
-    detail: vol !== null ? `Annualized historical volatility: ${vol}%` : "Standard volatility band"
-  });
-
-  // Weighted Composite
-  const totalScore = Math.round(
-    components.reduce((sum, item) => sum + item.score * item.weight, 0)
-  );
-  const boundedScore = Math.min(100, Math.max(0, totalScore));
+  ];
 
   let signalLabel: StockBlocSignal["signalLabel"] = "Neutral";
-  if (boundedScore >= 80) signalLabel = "Strong Bullish";
-  else if (boundedScore >= 60) signalLabel = "Bullish";
-  else if (boundedScore >= 40) signalLabel = "Neutral";
-  else if (boundedScore >= 20) signalLabel = "Caution";
+  if (det.score >= 75) signalLabel = "Strong Bullish";
+  else if (det.score >= 60) signalLabel = "Bullish";
+  else if (det.score >= 40) signalLabel = "Neutral";
+  else if (det.score >= 25) signalLabel = "Caution";
   else signalLabel = "Bearish";
 
   return {
-    signalScore: boundedScore,
+    signalScore: det.score,
     signalLabel,
     components,
-    summary: `Quant Composite Score ${boundedScore}/100 [${signalLabel}]: Momentum (${components[0].score}/100), Trend (${components[1].score}/100), Volume (${components[2].score}/100)`
+    summary: `SB Score ${det.score}/100 (${colorStyle.tierDescription}) · MOM ${det.momentum.points}/25, TREND ${det.trend.points}/25, REL_STR ${det.relativeStrength.points}/20, VOL ${det.volume.points}/15, VOLATILITY ${det.volatility.points}/15`
   };
 }
 
@@ -352,12 +290,17 @@ export function calculateStockBlocSignal(stock: WatchlistStock, quant: QuantMetr
 
 export class MarketDataService {
   private static WATCHLIST_SYMBOLS = [
-    "SPCX", "NVDA", "AEHR", "AAPL", "TSLA", "PLTR", "MSFT", "VST", "ASTS",
-    "POET", "AAOI", "QUBT", "XSD", "HBM", "LITE", "CRWV", "BE", "SNDK",
-    "AMD", "GOOGL", "MU", "CORZ", "BTC-USD", "DOT-USD", "META", "TSM", "^NYA",
-    "SPY", "^GSPC", "AMZN", "NVT", "AIPO", "QQQ", "APLD", "^IXIC",
-    "MOD", "INTC", "HAWK", "SMH", "SOXX", "POWL", "ASML",
-    "GLD", "SLV", "CPER", "MP", "ALAB", "AMTM"
+    "MSFT", "GOOGL", "AMZN", "META", "ORCL", "BABA", "TCEHY", "CRWV", "AAPL", "TSLA",
+    "SPCX", "STRIP", "CEG", "VST", "TLN", "BE", "SMR", "OKLO", "NEE", "ETN",
+    "GEV", "PWR", "EME", "FIX", "HUBB", "POWL", "CAT", "CMI", "VRT", "MOD",
+    "NVT", "SMCI", "ANET", "AVGO", "MRVL", "COHR", "CRDO", "IPGP", "LITE", "AAOI",
+    "POET", "LWLG", "CSCO", "CIEN", "NVDA", "AMD", "TSM", "ASML", "AMAT", "LRCX",
+    "KLAC", "AEHR", "DELL", "ARM", "CDNS", "SNPS", "PLTR", "MU", "WDC", "SNDK",
+    "PSTG", "STX", "GOLD", "FCX", "RKLB", "ASTS", "CORZ", "IREN", "APLD", "WULF",
+    "MARA", "BTC-USD", "DOT-USD", "GLD", "SLV", "CPER", "EQIX", "DLR", "AUR", "MBLY",
+    "ISRG", "SYM", "TER", "CGNX", "OUST", "HOOD", "COIN", "SQ", "AFRM", "SOFI",
+    "UPST", "CRCL", "MP", "ALAB", "AMTM", "QUBT", "XSD", "HBM", "^NYA", "SPY",
+    "^GSPC", "AIPO", "QQQ", "^IXIC", "INTC", "HAWK", "SMH", "SOXX"
   ];
 
   private static COMPANY_METADATA: Record<string, { name: string; sector: string; summary: string }> = {
@@ -471,6 +414,16 @@ export class MarketDataService {
             else if (ageSeconds > thresholds.delayed) statusLabel = "stale";
             else if (ageSeconds > thresholds.fresh) statusLabel = "delayed";
 
+            const enrichedWatchlist = (json.watchlist || []).map((item: any) => {
+              const sig = calculateStockBlocSignal(item, item.quant);
+              return {
+                ...item,
+                sbScore: sig.signalScore,
+                bloc: item.bloc || item.category || "tsunami",
+                signal: sig
+              };
+            });
+
             return {
               status: statusLabel === "very_stale" || statusLabel === "stale" ? "stale" : "success",
               updated_at: updatedAt,
@@ -479,7 +432,7 @@ export class MarketDataService {
               data_age_seconds: ageSeconds,
               status_label: statusLabel,
               market_status: MarketDataService.getMarketStatus(),
-              watchlist: json.watchlist
+              watchlist: enrichedWatchlist
             };
           }
         } catch (e) {
@@ -750,6 +703,8 @@ export class MarketDataService {
 
           mergedStock.quant = quant;
           mergedStock.signal = signal;
+          mergedStock.sbScore = signal.signalScore;
+          mergedStock.bloc = mergedStock.category || (baseStock as any).category || (baseStock as any).bloc || "tsunami";
 
           return mergedStock;
         })
