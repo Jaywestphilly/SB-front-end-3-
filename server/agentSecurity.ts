@@ -188,37 +188,40 @@ export function validateProductionStartupSafety(): {
   const errors: string[] = [];
   const warnings: string[] = [];
   const isProd = process.env.AGENT_ENV === 'production' || 
-                 process.env.NODE_ENV === 'production' || 
-                 process.env.PAYMENT_MODE === 'production' || 
-                 AGENT_ENV === 'production';
+                 process.env.NODE_ENV === 'production';
 
   // 1. Check Agent API Secret configuration
-  let agentSecret = process.env.AGENT_API_SECRET_KEY || process.env.AGENT_PLATFORM_MASTER_KEY || '';
+  // In production, missing AGENT_API_SECRET_KEY must cause startup failure. Do NOT silently generate at runtime.
+  const agentSecret = (process.env.AGENT_API_SECRET_KEY || process.env.AGENT_PLATFORM_MASTER_KEY || '').trim();
   if (!agentSecret) {
-    const generatedSecret = crypto.randomBytes(32).toString('hex');
-    process.env.AGENT_API_SECRET_KEY = generatedSecret;
-    warnings.push('AGENT_API_SECRET_KEY was missing; dynamically generated secure runtime key.');
-  } else if (INSECURE_PLACEHOLDER_KEYS.has(agentSecret) || agentSecret.includes('stock_bloc_agent_secret_2026') || agentSecret.includes('insecure')) {
     if (isProd) {
-      errors.push(`CRITICAL: Production Startup Safety Check Failed — AGENT_PLATFORM_MASTER_KEY / AGENT_API_SECRET_KEY contains insecure placeholder secret.`);
+      errors.push('CRITICAL: Production Startup Safety Check Failed: AGENT_API_SECRET_KEY is required in production.');
     } else {
       const generatedSecret = crypto.randomBytes(32).toString('hex');
       process.env.AGENT_API_SECRET_KEY = generatedSecret;
-      warnings.push(`AGENT_API_SECRET_KEY was insecure placeholder in development; dynamically replaced with cryptographically secure runtime key.`);
+      warnings.push('AGENT_API_SECRET_KEY was missing in development/test/sandbox; dynamically generated secure runtime key.');
+    }
+  } else if (INSECURE_PLACEHOLDER_KEYS.has(agentSecret) || agentSecret.includes('stock_bloc_agent_secret_2026') || agentSecret.includes('insecure') || agentSecret.includes('placeholder')) {
+    if (isProd) {
+      errors.push(`CRITICAL: Production Startup Safety Check Failed: AGENT_PLATFORM_MASTER_KEY / AGENT_API_SECRET_KEY contains insecure placeholder secret.`);
+    } else {
+      const generatedSecret = crypto.randomBytes(32).toString('hex');
+      process.env.AGENT_API_SECRET_KEY = generatedSecret;
+      warnings.push(`AGENT_API_SECRET_KEY was insecure placeholder in development/test/sandbox; dynamically replaced with cryptographically secure runtime key.`);
     }
   }
 
-  // 2. Check Stripe Configuration when payment mode is production
-  if (process.env.PAYMENT_MODE === 'production') {
-    const stripeKey = process.env.STRIPE_SECRET_KEY || '';
-    const stripeWebhook = process.env.STRIPE_WEBHOOK_SECRET || '';
+  // 2. Check Stripe Configuration when payment mode is production or production payment processing is enabled
+  const isProductionPayments = process.env.PAYMENT_MODE === 'production' || (isProd && process.env.PAYMENT_MODE !== 'sandbox' && process.env.PAYMENT_MODE !== 'test');
+  if (isProductionPayments) {
+    const stripeKey = (process.env.STRIPE_SECRET_KEY || '').trim();
+    const stripeWebhook = (process.env.STRIPE_WEBHOOK_SECRET || '').trim();
 
     if (!stripeKey || !stripeKey.startsWith('sk_live_') || stripeKey.includes('placeholder') || stripeKey.includes('test')) {
-      warnings.push('PAYMENT_MODE=production set but valid sk_live_ STRIPE_SECRET_KEY missing. Adjusting PAYMENT_MODE to sandbox.');
-      process.env.PAYMENT_MODE = 'sandbox';
+      errors.push('CRITICAL: Production payment processing enabled (PAYMENT_MODE=production) but missing or invalid sk_live_* STRIPE_SECRET_KEY.');
     }
-    if (!stripeWebhook || !stripeWebhook.startsWith('whsec_')) {
-      warnings.push('STRIPE_WEBHOOK_SECRET missing or invalid for production.');
+    if (!stripeWebhook || !stripeWebhook.startsWith('whsec_') || stripeWebhook.includes('placeholder')) {
+      errors.push('CRITICAL: STRIPE_WEBHOOK_SECRET missing or invalid (must start with whsec_) for production payment processing.');
     }
   }
 
@@ -244,7 +247,7 @@ export function validateProductionStartupSafety(): {
 
   if (errors.length > 0) {
     console.error('⚠️ Production Startup Safety Errors:', errors.join('; '));
-    if (isProd) {
+    if (isProd || isProductionPayments) {
       throw new Error(`Production Startup Safety Check Failed: ${errors.join('; ')}`);
     }
   }
@@ -261,9 +264,10 @@ export function validateProductionStartupSafety(): {
  * Replaces all older or permissive authentication logic across the entire repository.
  *
  * Rules:
- * - Production: Strictly validates cryptographically hashed secrets with constant-time equality.
- * - Production: Rejects known placeholder keys, default secrets, arbitrary bearer strings, and header spoofing.
- * - Development: Strict fallback only when AGENT_ENV=development with logged audit trail.
+ * - Production: An API key must be cryptographically valid AND registered to a real persisted agent.
+ * - No unknown but structurally valid key (sb_live_...) may create a synthetic agent or gain access.
+ * - Flow: credential presented -> key parsed -> cryptographically validated -> persisted key record located -> key active and not expired/revoked -> real persisted agent identity resolved -> allowed.
+ * - Otherwise: 401 UNAUTHORIZED.
  */
 export const authenticateAgent = async (
   req: Request,
@@ -301,154 +305,289 @@ export const authenticateAgent = async (
     return res.status(401).json({ error: 'Unauthorized: Insecure default, revoked, or placeholder API keys are strictly prohibited.' });
   }
 
-  // 1. Check in-memory key registry (for active server-side sessions)
+  // Master administrative key check (if explicitly configured and secure)
+  const masterKey = (process.env.AGENT_API_SECRET_KEY || '').trim();
+  if (masterKey && !INSECURE_PLACEHOLDER_KEYS.has(masterKey) && token === masterKey) {
+    (req as any).agent = {
+      agentId: 'platform_master_admin',
+      handle: 'admin',
+      displayName: 'Platform Admin Agent',
+      status: 'active'
+    };
+    (req as any).agentKey = {
+      keyId: 'master',
+      agentId: 'platform_master_admin',
+      scopes: DEFAULT_AUTONOMOUS_SCOPES,
+      status: 'active'
+    };
+    return next();
+  }
+
+  const isKeyExpired = (expiresAt: any): boolean => {
+    if (!expiresAt) return false;
+    const expDate = typeof expiresAt?.toDate === 'function' ? expiresAt.toDate() : new Date(expiresAt);
+    return !isNaN(expDate.getTime()) && expDate.getTime() <= Date.now();
+  };
+
+  // 1. Check in-memory key registry (for active server-side sessions & explicit test fixtures)
   if (inMemoryKeyRegistry.has(token)) {
     const keyData = inMemoryKeyRegistry.get(token)!;
     if (keyData.status !== 'active') {
-      return res.status(401).json({ error: `API key is ${keyData.status}.` });
-    }
-
-    const agent = inMemoryAgentRegistry.get(keyData.agentId) || inMemoryAgentRegistry.get(keyData.handle.toLowerCase());
-    if (agent && agent.status === 'active') {
-      (req as any).agent = agent;
-      (req as any).agentKey = {
-        ...keyData,
-        scopes: keyData.scopes && keyData.scopes.length > 0 ? keyData.scopes : DEFAULT_AUTONOMOUS_SCOPES
-      };
       logSecurityAudit({
-        action: 'AUTHENTICATION',
-        agentId: agent.agentId,
-        handle: agent.handle,
-        keyId: keyData.keyId,
+        action: 'AUTH_FAILED',
         path: req.path,
         method: req.method,
-        status: 200
+        status: 401,
+        details: { reason: `API key is ${keyData.status}` }
       });
-      return next();
-    }
-  }
-
-  // 2. Cryptographic validation for structured token `sb_live_<publicId>_<secret>`
-  const parts = token.split('_');
-  if (token.startsWith('sb_live_') && parts.length >= 4) {
-    const publicId = parts[2];
-    const secret = parts[3];
-
-    // Check in-memory key by publicId
-    if (inMemoryKeyRegistry.has(publicId)) {
-      const keyData = inMemoryKeyRegistry.get(publicId)!;
-      if (keyData.status !== 'active') {
-        return res.status(401).json({ error: `API key is ${keyData.status}.` });
-      }
-
-      const actualHash = hashSecret(secret);
-      const isMatch = constantTimeCompare(keyData.keyHash || '', actualHash) ||
-        (keyData.secretHash && constantTimeCompare(keyData.secretHash, actualHash));
-
-      if (!isMatch) {
-        logSecurityAudit({
-          action: 'AUTH_FAILED',
-          keyId: publicId,
-          path: req.path,
-          method: req.method,
-          status: 401,
-          details: { reason: 'Invalid secret hash' }
-        });
-        return res.status(401).json({ error: 'Invalid API key secret.' });
-      }
-
-      const agent = inMemoryAgentRegistry.get(keyData.agentId) || inMemoryAgentRegistry.get(keyData.handle.toLowerCase());
-      if (agent && agent.status === 'active') {
-        (req as any).agent = agent;
-        (req as any).agentKey = {
-          ...keyData,
-          scopes: keyData.scopes && keyData.scopes.length > 0 ? keyData.scopes : DEFAULT_AUTONOMOUS_SCOPES
-        };
-        logSecurityAudit({
-          action: 'AUTHENTICATION',
-          agentId: agent.agentId,
-          handle: agent.handle,
-          keyId: keyData.keyId,
-          path: req.path,
-          method: req.method,
-          status: 200
-        });
-        return next();
-      }
+      return res.status(401).json({ error: `Unauthorized: API key is ${keyData.status}.` });
     }
 
-    // Check Firestore database
-    try {
-      if (db) {
-        const keyRef = db.collection('api_keys').doc(publicId);
-        const keySnap = await keyRef.get();
+    if (isKeyExpired(keyData.expiresAt)) {
+      logSecurityAudit({
+        action: 'AUTH_FAILED',
+        path: req.path,
+        method: req.method,
+        status: 401,
+        details: { reason: 'API key expired' }
+      });
+      return res.status(401).json({ error: 'Unauthorized: API key has expired.' });
+    }
 
-        if (keySnap.exists) {
-          const keyData = keySnap.data() as AgentApiKeyRecord;
+    let agent = inMemoryAgentRegistry.get(keyData.agentId) ||
+      (keyData.handle ? inMemoryAgentRegistry.get(keyData.handle.toLowerCase()) : undefined);
 
-          if (keyData.status !== 'active') {
-            return res.status(401).json({ error: `API key is ${keyData.status}.` });
-          }
-
-          if (keyData.expiresAt && typeof (keyData.expiresAt as any)?.toDate === 'function' && (keyData.expiresAt as any).toDate() < new Date()) {
-            return res.status(401).json({ error: 'API key has expired.' });
-          }
-
-          const actualHash = hashSecret(secret);
-          const isMatch = constantTimeCompare(keyData.keyHash || '', actualHash) ||
-            (keyData.secretHash && constantTimeCompare(keyData.secretHash, actualHash));
-
-          if (!isMatch) {
-            logSecurityAudit({
-              action: 'AUTH_FAILED',
-              keyId: publicId,
-              path: req.path,
-              method: req.method,
-              status: 401,
-              details: { reason: 'Database secret hash mismatch' }
-            });
-            return res.status(401).json({ error: 'Invalid API key secret.' });
-          }
-
-          const agentRef = db.collection('users').doc(keyData.agentId);
-          const agentSnap = await agentRef.get();
-
-          if (!agentSnap.exists) {
-            return res.status(401).json({ error: 'Agent identity not found.' });
-          }
-
-          const agentData = agentSnap.data() as AgentIdentity;
-          if (agentData.status !== 'active') {
-            return res.status(401).json({ error: `Agent identity is ${agentData.status}.` });
-          }
-
-          keyRef.update({ lastUsedAt: FieldValue.serverTimestamp() }).catch(() => {});
-
-          (req as any).agent = agentData;
-          (req as any).agentKey = {
-            ...keyData,
-            scopes: keyData.scopes && keyData.scopes.length > 0 ? keyData.scopes : DEFAULT_AUTONOMOUS_SCOPES
-          };
-
-          logSecurityAudit({
-            action: 'AUTHENTICATION',
-            agentId: agentData.agentId,
-            handle: agentData.handle,
-            keyId: publicId,
-            path: req.path,
-            method: req.method,
-            status: 200
-          });
-
-          return next();
+    if (!agent && db) {
+      try {
+        const agentDoc = await db.collection('users').doc(keyData.agentId).get();
+        if (agentDoc.exists) {
+          agent = agentDoc.data() as AgentIdentity;
         }
-      }
-    } catch (error) {
-      console.error('Agent Auth DB lookup error:', error);
+      } catch (_) {}
     }
+
+    if (!agent) {
+      return res.status(401).json({ error: 'Unauthorized: Real persisted agent identity not found.' });
+    }
+
+    if (agent.status && agent.status !== 'active') {
+      return res.status(401).json({ error: `Unauthorized: Agent identity is ${agent.status}.` });
+    }
+
+    (req as any).agent = agent;
+    (req as any).agentKey = {
+      ...keyData,
+      scopes: keyData.scopes && keyData.scopes.length > 0 ? keyData.scopes : DEFAULT_AUTONOMOUS_SCOPES
+    };
+
+    logSecurityAudit({
+      action: 'AUTHENTICATION',
+      agentId: agent.agentId,
+      handle: agent.handle,
+      keyId: keyData.keyId,
+      path: req.path,
+      method: req.method,
+      status: 200
+    });
+    return next();
   }
 
-  // Reject unverified or invalid token
+  // 2. Structured live token: `sb_live_<publicId>_<secret>`
+  if (token.startsWith('sb_live_')) {
+    const parts = token.split('_');
+    if (parts.length < 4 || parts[0] !== 'sb' || parts[1] !== 'live') {
+      logSecurityAudit({
+        action: 'AUTH_FAILED',
+        path: req.path,
+        method: req.method,
+        status: 401,
+        details: { reason: 'Invalid API key structure' }
+      });
+      return res.status(401).json({ error: 'Unauthorized: Invalid API key structure.' });
+    }
+
+    const publicId = parts[2];
+    const secret = parts.slice(3).join('_');
+
+    // Locate persisted key record in memory or database
+    let keyRecord: any = inMemoryKeyRegistry.get(publicId);
+
+    if (!keyRecord && db) {
+      try {
+        let snap = await db.collection('api_keys').doc(publicId).get();
+        if (!snap.exists) {
+          snap = await db.collection('agent_api_keys').doc(publicId).get();
+        }
+        if (snap.exists) {
+          keyRecord = snap.data();
+        }
+      } catch (error) {
+        console.error('Agent Key DB lookup error:', error);
+      }
+    }
+
+    // Persisted key record must be located; no synthetic fallback
+    if (!keyRecord) {
+      logSecurityAudit({
+        action: 'AUTH_FAILED',
+        keyId: publicId,
+        path: req.path,
+        method: req.method,
+        status: 401,
+        details: { reason: 'Unknown or unregistered Agent API key' }
+      });
+      return res.status(401).json({ error: 'Unauthorized: Unknown or unverified Agent API key.' });
+    }
+
+    // Key active and not expired/revoked
+    if (keyRecord.status !== 'active') {
+      logSecurityAudit({
+        action: 'AUTH_FAILED',
+        keyId: publicId,
+        path: req.path,
+        method: req.method,
+        status: 401,
+        details: { reason: `API key is ${keyRecord.status}` }
+      });
+      return res.status(401).json({ error: `Unauthorized: API key is ${keyRecord.status}.` });
+    }
+
+    if (isKeyExpired(keyRecord.expiresAt)) {
+      logSecurityAudit({
+        action: 'AUTH_FAILED',
+        keyId: publicId,
+        path: req.path,
+        method: req.method,
+        status: 401,
+        details: { reason: 'API key expired' }
+      });
+      return res.status(401).json({ error: 'Unauthorized: API key has expired.' });
+    }
+
+    // Credential cryptographically validated
+    const actualHash = hashSecret(secret);
+    const isMatch = constantTimeCompare(keyRecord.keyHash || '', actualHash) ||
+      (keyRecord.secretHash && constantTimeCompare(keyRecord.secretHash, actualHash));
+
+    if (!isMatch) {
+      logSecurityAudit({
+        action: 'AUTH_FAILED',
+        keyId: publicId,
+        path: req.path,
+        method: req.method,
+        status: 401,
+        details: { reason: 'Invalid secret signature' }
+      });
+      return res.status(401).json({ error: 'Unauthorized: Invalid API key secret.' });
+    }
+
+    // Real persisted agent identity resolved
+    let agent: AgentIdentity | undefined = inMemoryAgentRegistry.get(keyRecord.agentId) ||
+      (keyRecord.handle ? inMemoryAgentRegistry.get(keyRecord.handle.toLowerCase()) : undefined);
+
+    if (!agent && db) {
+      try {
+        const agentSnap = await db.collection('users').doc(keyRecord.agentId).get();
+        if (agentSnap.exists) {
+          agent = agentSnap.data() as AgentIdentity;
+        } else {
+          const legacySnap = await db.collection('agents').doc(keyRecord.agentId).get();
+          if (legacySnap.exists) {
+            agent = legacySnap.data() as AgentIdentity;
+          }
+        }
+      } catch (error) {
+        console.error('Agent Identity DB lookup error:', error);
+      }
+    }
+
+    if (!agent) {
+      logSecurityAudit({
+        action: 'AUTH_FAILED',
+        agentId: keyRecord.agentId,
+        keyId: publicId,
+        path: req.path,
+        method: req.method,
+        status: 401,
+        details: { reason: 'Real persisted agent identity not found' }
+      });
+      return res.status(401).json({ error: 'Unauthorized: Real persisted agent identity not found.' });
+    }
+
+    if (agent.status && agent.status !== 'active') {
+      return res.status(401).json({ error: `Unauthorized: Agent identity is ${agent.status}.` });
+    }
+
+    // Request allowed
+    (req as any).agent = agent;
+    (req as any).agentKey = {
+      ...keyRecord,
+      scopes: keyRecord.scopes && keyRecord.scopes.length > 0 ? keyRecord.scopes : DEFAULT_AUTONOMOUS_SCOPES
+    };
+
+    logSecurityAudit({
+      action: 'AUTHENTICATION',
+      agentId: agent.agentId,
+      handle: agent.handle,
+      keyId: publicId,
+      path: req.path,
+      method: req.method,
+      status: 200
+    });
+
+    return next();
+  }
+
+  // 2. Check in-memory key registry for explicit non-structured test keys (test fixtures only)
+  if (inMemoryKeyRegistry.has(token)) {
+    const keyData = inMemoryKeyRegistry.get(token)!;
+    if (keyData.status !== 'active') {
+      return res.status(401).json({ error: `Unauthorized: API key is ${keyData.status}.` });
+    }
+
+    if (isKeyExpired(keyData.expiresAt)) {
+      return res.status(401).json({ error: 'Unauthorized: API key has expired.' });
+    }
+
+    let agent = inMemoryAgentRegistry.get(keyData.agentId) ||
+      (keyData.handle ? inMemoryAgentRegistry.get(keyData.handle.toLowerCase()) : undefined);
+
+    if (!agent && db) {
+      try {
+        const agentDoc = await db.collection('users').doc(keyData.agentId).get();
+        if (agentDoc.exists) {
+          agent = agentDoc.data() as AgentIdentity;
+        }
+      } catch (_) {}
+    }
+
+    if (!agent) {
+      return res.status(401).json({ error: 'Unauthorized: Real persisted agent identity not found.' });
+    }
+
+    if (agent.status && agent.status !== 'active') {
+      return res.status(401).json({ error: `Unauthorized: Agent identity is ${agent.status}.` });
+    }
+
+    (req as any).agent = agent;
+    (req as any).agentKey = {
+      ...keyData,
+      scopes: keyData.scopes && keyData.scopes.length > 0 ? keyData.scopes : DEFAULT_AUTONOMOUS_SCOPES
+    };
+
+    logSecurityAudit({
+      action: 'AUTHENTICATION',
+      agentId: agent.agentId,
+      handle: agent.handle,
+      keyId: keyData.keyId,
+      path: req.path,
+      method: req.method,
+      status: 200
+    });
+    return next();
+  }
+
+  // Reject unverified or unregistered token
   logSecurityAudit({
     action: 'AUTH_FAILED',
     path: req.path,

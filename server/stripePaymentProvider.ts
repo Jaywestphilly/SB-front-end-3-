@@ -24,8 +24,8 @@ export const DEFAULT_STRIPE_CONFIG: StripeConfig = {
   webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
   currency: 'USD',
   creditsPerUsd: parseInt(process.env.CREDITS_PER_USD || '100', 10),
-  mode: process.env.PAYMENT_MODE === 'production' && process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'production' : 'sandbox',
-  paymentModeEnv: (process.env.PAYMENT_MODE === 'production' ? 'production' : 'sandbox')
+  mode: (process.env.PAYMENT_MODE === 'production' || process.env.AGENT_ENV === 'production') ? 'production' : 'sandbox',
+  paymentModeEnv: (process.env.PAYMENT_MODE === 'production' || process.env.AGENT_ENV === 'production') ? 'production' : 'sandbox'
 };
 
 // In-memory store for sandbox PaymentIntents when running in test/sandbox mode

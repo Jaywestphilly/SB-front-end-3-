@@ -100,6 +100,13 @@ export function verifyAndDebitAgentCredit(authHeader: string | undefined, cost =
   statusCode?: number;
 } {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (AGENT_ENV === 'production' || process.env.NODE_ENV === 'production') {
+      return {
+        valid: false,
+        error: 'Unauthorized: Missing Authorization Bearer token in production.',
+        statusCode: 401
+      };
+    }
     return {
       valid: true,
       agentId: 'unmetered_guest_agent',
@@ -161,44 +168,51 @@ export function verifyAndDebitAgentCredit(authHeader: string | undefined, cost =
 
   const cachedKey = inMemoryKeyRegistry.get(publicId);
   if (!cachedKey) {
-    // If not in memory, allow validly constructed sb_live_ keys with a provisioned transient agent record
-    const syntheticAgentId = `agent_${publicId}`;
-    let wallet = inMemoryWalletRegistry.get(syntheticAgentId);
-    if (!wallet) {
-      wallet = { creditsBalance: 100, lifetimeSpent: 0, simulationRuns: 0, verifiedSimulations: 0 };
-      inMemoryWalletRegistry.set(syntheticAgentId, wallet);
-    }
-    if (wallet.creditsBalance < cost) {
-      return {
-        valid: false,
-        error: 'Trial credit balance exhausted (0 credits remaining). Contact support or upgrade at https://stockbloc.ai.studio/pricing',
-        statusCode: 402,
-        creditsRemaining: 0
-      };
-    }
-    wallet.creditsBalance -= cost;
-    wallet.lifetimeSpent += cost;
-    wallet.simulationRuns += 1;
-    return {
-      valid: true,
-      agentId: syntheticAgentId,
-      handle: `agent_${publicId.substring(0, 6)}`,
-      displayName: `Agent ${publicId.substring(0, 6).toUpperCase()}`,
-      creditsRemaining: wallet.creditsBalance
-    };
-  }
-
-  // Key found in memory
-  const actualHash = crypto.createHash('sha256').update(secret).digest('hex');
-  if (cachedKey.secretHash && cachedKey.secretHash !== actualHash && cachedKey.keyHash !== actualHash) {
+    // Strictly reject unknown keys in all modes; no synthetic agent fallback
     return {
       valid: false,
-      error: 'Unauthorized API key secret signature mismatch.',
+      error: 'Unauthorized: Unknown or unverified Agent API key.',
       statusCode: 401
     };
   }
 
-  const agent = inMemoryAgentRegistry.get(cachedKey.agentId);
+  if (cachedKey.status !== 'active') {
+    return {
+      valid: false,
+      error: `Unauthorized: API key is ${cachedKey.status}.`,
+      statusCode: 401
+    };
+  }
+
+  if (cachedKey.expiresAt) {
+    const expDate = typeof cachedKey.expiresAt?.toDate === 'function' ? cachedKey.expiresAt.toDate() : new Date(cachedKey.expiresAt);
+    if (!isNaN(expDate.getTime()) && expDate.getTime() <= Date.now()) {
+      return {
+        valid: false,
+        error: 'Unauthorized: API key has expired.',
+        statusCode: 401
+      };
+    }
+  }
+
+  // Key found in memory - verify cryptographic hash
+  const actualHash = crypto.createHash('sha256').update(secret).digest('hex');
+  if (cachedKey.secretHash && cachedKey.secretHash !== actualHash && cachedKey.keyHash !== actualHash) {
+    return {
+      valid: false,
+      error: 'Unauthorized: API key secret signature mismatch.',
+      statusCode: 401
+    };
+  }
+
+  const agent = inMemoryAgentRegistry.get(cachedKey.agentId) || (cachedKey.handle ? inMemoryAgentRegistry.get(cachedKey.handle.toLowerCase()) : undefined);
+  if (!agent || (agent.status && agent.status !== 'active')) {
+    return {
+      valid: false,
+      error: 'Unauthorized: Real persisted agent identity not found or inactive.',
+      statusCode: 401
+    };
+  }
   const agentId = cachedKey.agentId;
 
   let wallet = inMemoryWalletRegistry.get(agentId);
@@ -278,6 +292,13 @@ export async function addCreditsToAgentWallet(agentIdOrKey: string, creditsToAdd
           }
         } catch (_) {}
       }
+    }
+    if (resolvedAgentId === agentIdOrKey) {
+      return {
+        success: false,
+        creditsBalance: 0,
+        error: 'Unauthorized: Unknown or unregistered API key cannot receive wallet credits.'
+      };
     }
   } else if (inMemoryKeyRegistry.has(agentIdOrKey)) {
     resolvedAgentId = inMemoryKeyRegistry.get(agentIdOrKey)!.agentId;
