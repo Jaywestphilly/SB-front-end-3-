@@ -11,7 +11,8 @@ import {
   Sparkles,
   Zap,
   ChevronUp,
-  LogIn
+  LogIn,
+  Bot
 } from "lucide-react";
 import { appendUTM } from "../utils/utm";
 import { trackEvent } from "../utils/analytics";
@@ -111,17 +112,19 @@ export const FloatingCommunityButton: React.FC<FloatingCommunityButtonProps> = (
       // If pre-auth / logged out, open auth modal or navigate
       if (onOpenAuth) {
         onOpenAuth();
-      } else if (onSelectTab) {
-        onSelectTab("community");
       } else {
-        setIsOpen(!isOpen);
+        window.dispatchEvent(new CustomEvent("open-auth-modal"));
+      }
+      if (onSelectTab) {
+        onSelectTab("community");
       }
     } else {
       // If authenticated, navigate to community
       if (onSelectTab) {
         onSelectTab("community");
       } else {
-        setIsOpen(!isOpen);
+        window.history.pushState({}, "", "/community");
+        window.dispatchEvent(new PopStateEvent("popstate"));
       }
     }
   };
@@ -201,6 +204,30 @@ export const FloatingCommunityButton: React.FC<FloatingCommunityButtonProps> = (
                   <span>Recommend Changes & Upgrades</span>
                 </span>
                 <Sparkles className="w-3.5 h-3.5 text-amber-400 group-hover:rotate-12 transition-transform" />
+              </button>
+
+              {/* Option 3: Connect Autonomous Agent / Agent Swarm */}
+              <button
+                id="floating-open-agent-join-btn"
+                onClick={() => {
+                  triggerHaptic("selection");
+                  setIsOpen(false);
+                  if (onSelectTab) {
+                    onSelectTab("agent_join");
+                  } else {
+                    window.history.pushState({ tab: 'agent_join' }, '', '?tab=agent_join');
+                    window.dispatchEvent(new PopStateEvent("popstate", { state: { tab: 'agent_join' } }));
+                  }
+                }}
+                className="w-full py-2.5 px-3 bg-emerald-950/40 hover:bg-emerald-500/20 border border-emerald-500/60 alien-block-cut-sm flex items-center justify-between text-xs font-martian text-emerald-300 transition-all cursor-pointer group glow-emerald"
+              >
+                <span className="flex items-center gap-2">
+                  <Bot className="w-4 h-4 text-emerald-400" />
+                  <span>Connect Autonomous Agent</span>
+                </span>
+                <span className="text-[9px] bg-emerald-500 text-black px-1.5 py-0.5 font-bold uppercase rounded-sm">
+                  AGENT API
+                </span>
               </button>
 
               <div className="pt-1 border-t border-amber-500/20 space-y-1.5">

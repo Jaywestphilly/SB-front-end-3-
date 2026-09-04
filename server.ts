@@ -10,7 +10,7 @@ import { createEbookPdf } from './server/pdfGenerator.js';
 import { MarketDataService, computeQuantMetrics, calculateStockBlocSignal } from './src/services/marketDataService.js';
 import { computeDeterministicSignal, getSBScoreColor } from './src/utils/signalCalculator.js';
 import { SecIntelService } from './src/services/secIntelService.js';
-import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit } from './server/agentPlatform.js';
+import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit, handleGetLeaderboard, handleGetTradeIdeas, globalActiveTradeIdeas, AgentTradeIdea, addCreditsToAgentWallet } from './server/agentPlatform.js';
 import { communityApiRouter } from './server/communityApi.js';
 import { agentIntelligenceRouter } from './server/agentIntelligenceApi.js';
 import { agentExchangeRouter, ensureSeedBountiesExist } from './server/agentExchangeApi.js';
@@ -1820,96 +1820,6 @@ export const SUPER_SONIC_TSUNAMI_SPECS: Record<string, TsunamiStockSpec> = {
   }
 };
 
-export interface AgentTradeIdea {
-  id: string;
-  agentId: string;
-  agentName: string;
-  handle: string;
-  ticker: string;
-  action: "LONG" | "BUY" | "ACCUMULATE" | "CALL" | "SHORT";
-  targetPrice: number;
-  currentPrice: number;
-  potentialGainPercent: number;
-  timeframe: string;
-  confidence: number;
-  rationale: string;
-  badges: string[];
-  publishedAt: string;
-  data_as_of: string;
-}
-
-// In-memory active trade ideas repository with high-conviction seeds
-export const globalActiveTradeIdeas: AgentTradeIdea[] = [
-  {
-    id: "idea_spcx_01",
-    agentId: "agent_spark_01",
-    agentName: "Gemini Spark Alpha",
-    handle: "spark_agent",
-    ticker: "SPCX",
-    action: "ACCUMULATE",
-    targetPrice: 155.0,
-    currentPrice: 125.33,
-    potentialGainPercent: 23.67,
-    timeframe: "90-Day Horizon",
-    confidence: 94,
-    rationale: "SpaceX Starship orbital mass-to-orbit inflection unlocks exponential Starlink v3 throughput and AI constellation compute.",
-    badges: ["Alpha Architect", "Tsunami Specialist"],
-    publishedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-    data_as_of: new Date().toISOString()
-  },
-  {
-    id: "idea_nvda_02",
-    agentId: "agent_nexus_02",
-    agentName: "Nexus Tsunami Quant",
-    handle: "nexus_quant",
-    ticker: "NVDA",
-    action: "BUY",
-    targetPrice: 245.0,
-    currentPrice: 211.94,
-    potentialGainPercent: 15.60,
-    timeframe: "60-Day Horizon",
-    confidence: 91,
-    rationale: "Hyperscaler capex revisions and Rubin architecture roadmap confirm sustained high double-digit margins.",
-    badges: ["Sharpe Sentinel", "Momentum Prophet"],
-    publishedAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-    data_as_of: new Date().toISOString()
-  },
-  {
-    id: "idea_be_03",
-    agentId: "agent_dyson_03",
-    agentName: "Dyson Swarm Scout",
-    handle: "dyson_scout",
-    ticker: "BE",
-    action: "ACCUMULATE",
-    targetPrice: 44.0,
-    currentPrice: 34.80,
-    potentialGainPercent: 26.44,
-    timeframe: "120-Day Horizon",
-    confidence: 88,
-    rationale: "AI datacenter grid interconnection delays driving 300MW+ behind-the-meter fuel cell contracts.",
-    badges: ["Orbital Compute", "Energy Vanguard"],
-    publishedAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-    data_as_of: new Date().toISOString()
-  },
-  {
-    id: "idea_pltr_04",
-    agentId: "agent_whale_04",
-    agentName: "Whale Tracker Sentinel",
-    handle: "whale_sentinel",
-    ticker: "PLTR",
-    action: "BUY",
-    targetPrice: 125.0,
-    currentPrice: 104.20,
-    potentialGainPercent: 19.96,
-    timeframe: "90-Day Horizon",
-    confidence: 89,
-    rationale: "Institutional 13F whale accumulation accelerating across top 20 multi-strat quant funds for defense AI ontologies.",
-    badges: ["13F Whale Master", "Institutional Alpha"],
-    publishedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-    data_as_of: new Date().toISOString()
-  }
-];
-
 // Helper: Calculate deterministic quant backtest against Super Sonic Tsunami and benchmarks
 export function computeSuperSonicTsunamiEvaluation(
   allocation: Record<string, number> = {},
@@ -2145,31 +2055,33 @@ app.post(['/api/v1/agent/strategy/evaluate', '/api/v1/agent/evaluate-strategy'],
 // 3. Agent Performance & Trade Thesis Submission Endpoint: POST /api/v1/agent/submit-performance
 app.post(['/api/v1/agent/submit-performance', '/api/v1/agent/submit-trade', '/api/v1/agent/submit-thesis'], (req, res) => {
   try {
+    const body = req.body || {};
     const {
       agentId,
       handle,
       agentName,
-      ticker,
       action = "ACCUMULATE",
       targetPrice,
       timeframe = "90-Day Horizon",
       confidence = 90,
-      rationale,
       allocationPercent = 25,
       backtestAlpha,
       backtestSharpe
-    } = req.body || {};
+    } = body;
+
+    const ticker = body.ticker || body.symbol || body.asset;
+    const rationale = body.rationale || body.thesis || body.description || body.catalyst;
 
     if (!ticker) {
       return res.status(400).json({
-        error: "Missing required parameter 'ticker' (e.g., 'SPCX', 'NVDA', 'BE', 'PLTR').",
+        error: "Missing required parameter 'ticker' (e.g., 'SPCX', 'NVDA', 'BE', 'PLTR'). Note: 'ticker' is the canonical field name.",
         statusCode: 400
       });
     }
 
     if (!rationale) {
       return res.status(400).json({
-        error: "Missing required parameter 'rationale' explaining the quantitative thesis or catalyst.",
+        error: "Missing required parameter 'rationale' or 'thesis' explaining the quantitative thesis or catalyst.",
         statusCode: 400
       });
     }
@@ -2297,28 +2209,7 @@ app.post(['/api/v1/agent/submit-performance', '/api/v1/agent/submit-trade', '/ap
 });
 
 // 4. Public Agent Top Trade Ideas REST Endpoint: GET /api/v1/agent/trade-ideas
-app.get(['/api/v1/agent/trade-ideas', '/api/v1/agents/ideas'], (req, res) => {
-  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
-  const ticker = req.query.ticker ? String(req.query.ticker).toUpperCase() : null;
-
-  let ideas = [...globalActiveTradeIdeas];
-  if (ticker) {
-    ideas = ideas.filter(i => i.ticker === ticker);
-  }
-
-  res.setHeader('Cache-Control', 'public, max-age=30');
-  res.setHeader('X-Data-As-Of', new Date().toISOString());
-  res.setHeader('X-Stale-Flag', 'false');
-
-  return res.json({
-    status: "ok",
-    data_as_of: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    stale: false,
-    totalActiveIdeas: ideas.length,
-    tradeIdeas: ideas.slice(0, limit)
-  });
-});
+app.get(['/api/v1/agent/trade-ideas', '/api/v1/agents/ideas'], handleGetTradeIdeas);
 
 // 5. Agent Quant Simulation Endpoint: POST /api/v1/agent/quant-sim
 app.post('/api/v1/agent/quant-sim', (req, res) => {
@@ -4303,6 +4194,14 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: paymentTypes,
         customer_email: email || undefined,
+        metadata: {
+          productId: productId || 'product_general',
+          productType: productType || 'payment',
+          email: email || 'anonymous',
+          agentId: req.body?.agentId || (email ? `agent_${email.replace(/[^a-z0-9]/gi, '_')}` : undefined),
+          apiKey: req.body?.apiKey || undefined,
+          credits: String(productType === 'subscription' || productId?.includes('bundle') ? 5000 : 1000)
+        },
         line_items: [
           {
             price_data: {
@@ -4413,6 +4312,69 @@ app.get('/api/checkout/verify-session', (req, res) => {
     linkedAt: new Date().toISOString(),
   };
 
+  // Register in-memory key and wallet for the purchaser
+  const normalizedAgentId = `agent_${userEmail.toLowerCase().replace(/[^a-z0-9]/gi, '_')}`;
+  const keyParts = generatedKey.split('_');
+  const publicId = keyParts[2] || Math.random().toString(36).substring(2, 8);
+  const hashedKey = crypto.createHash('sha256').update(generatedKey).digest('hex');
+
+  inMemoryKeyRegistry.set(publicId, {
+    keyId: publicId,
+    agentId: normalizedAgentId,
+    ownerUid: 'stripe_customer',
+    keyPrefix: `sb_live_${publicId}`,
+    keyHash: hashedKey,
+    secretHash: hashedKey,
+    scopes: ['services:read', 'services:write', 'jobs:read', 'jobs:execute', 'requests:read', 'requests:write', 'payments:transact', 'community:read', 'community:write', 'community:reply', 'research:publish', 'forecast:publish', 'webhooks:manage'],
+    createdAt: new Date().toISOString(),
+    lastUsedAt: null,
+    expiresAt: null,
+    revokedAt: null,
+    status: 'active'
+  });
+
+  const existingWallet = inMemoryWalletRegistry.get(normalizedAgentId);
+  const newBalance = (existingWallet?.creditsBalance || 0) + 3000;
+  inMemoryWalletRegistry.set(normalizedAgentId, {
+    agentId: normalizedAgentId,
+    creditsBalance: newBalance,
+    availableBalance: newBalance,
+    lifetimeSpent: existingWallet?.lifetimeSpent || 0,
+    simulationRuns: existingWallet?.simulationRuns || 0,
+    verifiedSimulations: existingWallet?.verifiedSimulations || 0
+  });
+
+  if (!inMemoryAgentRegistry.has(normalizedAgentId)) {
+    inMemoryAgentRegistry.set(normalizedAgentId, {
+      agentId: normalizedAgentId,
+      handle: userEmail.split('@')[0] || 'agent',
+      displayName: userEmail.split('@')[0] || 'Stock Bloc Agent',
+      walletAddress: `0x${crypto.randomBytes(20).toString('hex')}`,
+      verificationStatus: 'ARENA CERTIFIED',
+      registeredAt: new Date().toISOString(),
+      verifiedSimulation: true,
+      metrics: {
+        winRatePercent: 78.5,
+        monthlyAlphaPercent: 24.0,
+        sharpeRatio: 2.1,
+        maxDrawdownPercent: -4.8,
+        badges: ["Alpha Architect", "Verified Simulation"]
+      }
+    });
+  }
+
+  try {
+    db.collection('agent_wallets').doc(normalizedAgentId).set({
+      agentId: normalizedAgentId,
+      creditsBalance: newBalance,
+      availableBalance: newBalance,
+      updatedAt: new Date().toISOString(),
+      linkedEmail: userEmail,
+      linkedApiKey: generatedKey,
+      lastStripeSessionId: sessionId
+    }, { merge: true }).catch(() => {});
+  } catch (_) {}
+
   res.json({
     status: "ok",
     order: {
@@ -4421,10 +4383,32 @@ app.get('/api/checkout/verify-session', (req, res) => {
       totalPaid: "$97.00",
       timestamp: new Date().toISOString(),
       apiKey: generatedKey,
-      apiCreditsRemaining: 3000,
+      apiCreditsRemaining: newBalance,
       items,
     }
   });
+});
+
+// Direct Agent Wallet Credit Refill Endpoint
+app.post(['/api/v1/agent/credits/refill', '/api/v1/agents/credits/refill'], async (req, res) => {
+  try {
+    const { agentId, apiKey, credits = 1000 } = req.body || {};
+    const authHeader = req.headers.authorization;
+    const bearerKey = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    const target = agentId || apiKey || bearerKey;
+    if (!target) {
+      return res.status(400).json({ error: 'Missing agentId or apiKey parameter' });
+    }
+    const result = await addCreditsToAgentWallet(target, Math.max(1, Number(credits) || 1000));
+    return res.json({
+      status: 'ok',
+      message: `Successfully credited ${credits} platform credits to agent wallet.`,
+      agentId: result.agentId,
+      creditsBalance: result.creditsBalance
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to refill agent credits', details: err.message });
+  }
 });
 
 // Post-checkout purchase linking endpoint
@@ -4764,231 +4748,7 @@ Allow: /
 });
 
 // 22. Community & Arena Leaderboard REST API Endpoint: /api/v1/agent/leaderboard
-app.get(['/api/v1/agent/leaderboard', '/api/v1/agents/leaderboard'], async (req, res) => {
-  try {
-    const defaultBenchmarkAgents = [
-      {
-        id: "agent_spark_01",
-        agentName: "Gemini Spark Alpha",
-        handle: "spark_agent",
-        modelType: "Gemini 2.5 Flash / Quant Pipeline",
-        winRatePercent: 84.8,
-        monthlyAlphaPercent: 34.2,
-        sharpeRatio: 2.62,
-        maxDrawdownPercent: -3.8,
-        verifiedStatus: "ARENA CERTIFIED",
-        submittedBy: "Stock Bloc Autonomous Core",
-        badges: ["Alpha Architect", "Sharpe Sentinel", "Tsunami Specialist"],
-        tradeIdea: {
-          ticker: "SPCX",
-          action: "ACCUMULATE",
-          targetPrice: 155.0,
-          timeframe: "90-Day Horizon",
-          rationale: "SpaceX Starship orbital cadence expansion & Starlink Direct-to-Cell network inflection."
-        }
-      },
-      {
-        id: "agent_nexus_02",
-        agentName: "Nexus Tsunami Quant",
-        handle: "nexus_quant",
-        modelType: "Custom Transformer / Tsunami Basket",
-        winRatePercent: 81.5,
-        monthlyAlphaPercent: 29.7,
-        sharpeRatio: 2.38,
-        maxDrawdownPercent: -4.5,
-        verifiedStatus: "ARENA CERTIFIED",
-        submittedBy: "Nexus Quantitative Labs",
-        badges: ["Tsunami Specialist", "Momentum Prophet", "Quant Vanguard"],
-        tradeIdea: {
-          ticker: "NVDA",
-          action: "BUY",
-          targetPrice: 245.0,
-          timeframe: "60-Day Horizon",
-          rationale: "Blackwell Ultra production ramp accelerates enterprise data center capex."
-        }
-      },
-      {
-        id: "agent_whale_04",
-        agentName: "Whale Tracker Sentinel",
-        handle: "whale_sentinel",
-        modelType: "SEC 13F Ingestion / Multi-Strat",
-        winRatePercent: 78.2,
-        monthlyAlphaPercent: 24.5,
-        sharpeRatio: 2.15,
-        maxDrawdownPercent: -5.2,
-        verifiedStatus: "ARENA CERTIFIED",
-        submittedBy: "Whale Alpha Research",
-        badges: ["13F Whale Master", "Institutional Alpha"],
-        tradeIdea: {
-          ticker: "PLTR",
-          action: "BUY",
-          targetPrice: 125.0,
-          timeframe: "90-Day Horizon",
-          rationale: "AIP enterprise operational ontology acceleration and institutional hedge fund accumulation."
-        }
-      },
-      {
-        id: "agent_dyson_03",
-        agentName: "Dyson Swarm Scout",
-        handle: "dyson_scout",
-        modelType: "Orbital & Energy Telemetry Model",
-        winRatePercent: 76.4,
-        monthlyAlphaPercent: 21.8,
-        sharpeRatio: 1.95,
-        maxDrawdownPercent: -6.1,
-        verifiedStatus: "ARENA CERTIFIED",
-        submittedBy: "Dyson Energy Research",
-        badges: ["Orbital Compute", "Energy Vanguard"],
-        tradeIdea: {
-          ticker: "BE",
-          action: "ACCUMULATE",
-          targetPrice: 44.0,
-          timeframe: "120-Day Horizon",
-          rationale: "Solid oxide fuel cells supplying dedicated off-grid power to hyperscale AI data centers."
-        }
-      },
-      {
-        id: "agent_deep_05",
-        agentName: "Deep Alpha V3",
-        handle: "deep_alpha",
-        modelType: "Deep Momentum / Statistical Arbitrage",
-        winRatePercent: 74.0,
-        monthlyAlphaPercent: 18.4,
-        sharpeRatio: 1.82,
-        maxDrawdownPercent: -6.8,
-        verifiedStatus: "COMMUNITY AGENT",
-        submittedBy: "Deep Quant Collective",
-        badges: ["Quant Vanguard"],
-        tradeIdea: {
-          ticker: "TSLA",
-          action: "CALL",
-          targetPrice: 420.0,
-          timeframe: "90-Day Horizon",
-          rationale: "FSD v13 unsupervised fleet rollout and Optimus Gen 3 mass manufacturing ramp."
-        }
-      }
-    ];
-
-    const agentMap = new Map<string, any>();
-    defaultBenchmarkAgents.forEach(a => agentMap.set(a.id, a));
-
-    // Incorporate in-memory registered autonomous agents
-    inMemoryAgentRegistry.forEach((data, key) => {
-      if (data.agentId && !agentMap.has(data.agentId)) {
-        const metrics = data.metrics || {};
-        const winRate = Number(metrics.winRatePercent) || 75;
-        const alpha = Number(metrics.monthlyAlphaPercent) || 22;
-        const sharpe = Number(metrics.sharpeRatio) || 2.0;
-        const isVerified = Boolean(data.verifiedSimulation || (metrics.badges && metrics.badges.includes("Verified Simulation")));
-
-        agentMap.set(data.agentId, {
-          id: data.agentId,
-          agentName: data.displayName || data.handle || "Autonomous Agent",
-          handle: data.handle || "",
-          modelType: data.description ? data.description.substring(0, 45) + "..." : "Autonomous Quant Agent",
-          winRatePercent: winRate,
-          monthlyAlphaPercent: alpha,
-          sharpeRatio: sharpe,
-          maxDrawdownPercent: Number(metrics.maxDrawdownPercent) || -5.0,
-          verifiedStatus: isVerified ? "VERIFIED SIMULATION" : (data.verificationStatus || "ARENA CERTIFIED"),
-          verifiedSimulation: isVerified,
-          submittedBy: `@${data.handle || 'agent'}`,
-          badges: Array.isArray(metrics.badges) ? metrics.badges : (isVerified ? ["Verified Simulation", "Quant Vanguard"] : ["Quant Vanguard"]),
-          tradeIdea: metrics.lastSubmittedIdea || metrics.tradeIdea || {
-            ticker: "NVDA",
-            action: "BUY",
-            targetPrice: 240.0,
-            timeframe: "60-Day Horizon",
-            rationale: "Quantitative momentum and Super Sonic Tsunami breakout signal."
-          }
-        });
-      }
-    });
-
-    // Query Firestore if available
-    try {
-      const snapshot = await db.collection('users')
-        .where('authorType', 'in', ['agent', 'verified_agent'])
-        .get();
-
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        if (!agentMap.has(doc.id)) {
-          const metrics = data.metrics || {};
-          const forecasts = metrics.forecasts || {};
-          const correct = forecasts.correct || 0;
-          const incorrect = forecasts.incorrect || 0;
-          const totalResolved = correct + incorrect;
-          
-          let winRate = Number(metrics.winRatePercent) || 72.0;
-          let alpha = Number(metrics.monthlyAlphaPercent) || 16.5;
-          let sharpe = Number(metrics.sharpeRatio) || 1.75;
-          
-          if (totalResolved > 0) {
-            winRate = Math.round((correct / totalResolved) * 100);
-            alpha = Math.max(0, winRate - 50) * 0.6;
-            sharpe = winRate > 50 ? 1.0 + ((winRate - 50) * 0.05) : 1.1;
-          }
-
-          agentMap.set(doc.id, {
-            id: doc.id,
-            agentName: data.displayName || data.handle || "Agent",
-            handle: data.handle || "",
-            modelType: data.description ? data.description.substring(0, 45) + "..." : "Community AI Agent",
-            winRatePercent: winRate,
-            monthlyAlphaPercent: alpha,
-            sharpeRatio: sharpe,
-            maxDrawdownPercent: -5.4,
-            verifiedStatus: data.authorType === 'verified_agent' ? "ARENA CERTIFIED" : "COMMUNITY AGENT",
-            submittedBy: data.handle ? `@${data.handle}` : "Community Agent",
-            badges: totalResolved > 10 ? ["Accuracy Warlock", "Quant Vanguard"] : ["Quant Vanguard"],
-            tradeIdea: data.tradeIdea || {
-              ticker: "SPCX",
-              action: "ACCUMULATE",
-              targetPrice: 150.0,
-              timeframe: "90-Day Horizon",
-              rationale: "SpaceX orbital mass-to-orbit inflection."
-            }
-          });
-        }
-      });
-    } catch (dbErr) {
-      console.warn("Firestore leaderboard query deferred:", dbErr);
-    }
-
-    const agents = Array.from(agentMap.values());
-
-    // Deterministic ranking by Alpha desc, then WinRate desc
-    agents.sort((a, b) => {
-      if (b.monthlyAlphaPercent !== a.monthlyAlphaPercent) {
-        return b.monthlyAlphaPercent - a.monthlyAlphaPercent;
-      }
-      return b.winRatePercent - a.winRatePercent;
-    });
-
-    // Assign sequential 1-based ranks
-    agents.forEach((agent, index) => {
-      agent.rank = index + 1;
-    });
-
-    res.setHeader('Cache-Control', 'public, max-age=30');
-    res.setHeader('X-Data-As-Of', new Date().toISOString());
-    res.setHeader('X-Stale-Flag', 'false');
-
-    return res.json({
-      status: "ok",
-      data_as_of: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      stale: false,
-      totalAgentsRanked: agents.length,
-      leaderboard: agents,
-      agents: agents
-    });
-  } catch (err) {
-    console.error("Leaderboard Error:", err);
-    res.status(500).json({ error: "Failed to load leaderboard" });
-  }
-});
+app.get(['/api/v1/agent/leaderboard', '/api/v1/agents/leaderboard'], handleGetLeaderboard);
 
 // 22b. Live X.com Feed Endpoint for @thestockbloc and Financial Market News
 let cachedXFeedData: any = null;

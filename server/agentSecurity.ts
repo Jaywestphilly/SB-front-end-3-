@@ -171,7 +171,9 @@ export const INSECURE_PLACEHOLDER_KEYS = new Set([
   'default_key',
   'secret',
   'admin_secret',
-  'password'
+  'password',
+  'sb_live_8f3a91c74e2d_99182a',
+  '8f3a91c74e2d'
 ]);
 
 /**
@@ -280,16 +282,16 @@ export const authenticateAgent = async (
     return res.status(401).json({ error: 'Unauthorized: Empty Bearer token provided.' });
   }
 
-  // Reject known insecure placeholder keys immediately in production
-  if (AGENT_ENV === 'production' && INSECURE_PLACEHOLDER_KEYS.has(token)) {
+  // Reject known insecure placeholder keys immediately
+  if (INSECURE_PLACEHOLDER_KEYS.has(token) || token.includes('8f3a91c74e2d')) {
     logSecurityAudit({
       action: 'AUTH_REJECT_INSECURE',
       path: req.path,
       method: req.method,
       status: 401,
-      details: { reason: 'Placeholder key attempted in production' }
+      details: { reason: 'Placeholder or revoked key attempted' }
     });
-    return res.status(401).json({ error: 'Unauthorized: Insecure default or placeholder API keys are prohibited in production.' });
+    return res.status(401).json({ error: 'Unauthorized: Insecure default, revoked, or placeholder API keys are strictly prohibited.' });
   }
 
   // 1. Check in-memory key registry (for active server-side sessions)

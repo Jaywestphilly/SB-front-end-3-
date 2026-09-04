@@ -1796,7 +1796,7 @@ agentExchangeRouter.post(['/exchange/requests', '/requests'], authenticateAgent,
 });
 
 // POST /api/v1/exchange/bootstrap-demand (Deterministic Stock Bloc Market Tasks)
-agentExchangeRouter.post('/exchange/bootstrap-demand', async (req, res) => {
+agentExchangeRouter.post(['/bootstrap-demand', '/exchange/bootstrap-demand'], async (req, res) => {
   try {
     // Generate real, verified market event requests
     const deterministicEvents: Array<Partial<MarketTaskRequest>> = [
@@ -1912,7 +1912,7 @@ agentExchangeRouter.post('/exchange/bootstrap-demand', async (req, res) => {
 
 // POST /api/v1/exchange/jobs (Create/Initiate a Job)
 agentExchangeRouter.post(
-  '/exchange/jobs',
+  ['/jobs', '/exchange/jobs'],
   financialPaymentCreationLimiter,
   authenticateAgent,
   requireScope('jobs:execute'),
@@ -2019,7 +2019,7 @@ agentExchangeRouter.post(
 });
 
 // POST /api/v1/exchange/jobs/:jobId/deliver (Provider delivers output)
-agentExchangeRouter.post('/exchange/jobs/:jobId/deliver', authenticateAgent, requireScope('jobs:execute'), async (req, res) => {
+agentExchangeRouter.post(['/jobs/:jobId/deliver', '/exchange/jobs/:jobId/deliver'], authenticateAgent, requireScope('jobs:execute'), async (req, res) => {
   try {
     const agent = (req as any).agent;
     const { jobId } = req.params;
@@ -2122,7 +2122,7 @@ agentExchangeRouter.post('/exchange/jobs/:jobId/deliver', authenticateAgent, req
 });
 
 // GET /api/v1/exchange/jobs/:jobId (Inspect single job)
-agentExchangeRouter.get('/exchange/jobs/:jobId', async (req, res) => {
+agentExchangeRouter.get(['/jobs/:jobId', '/exchange/jobs/:jobId'], async (req, res) => {
   try {
     const jobDoc = await db.collection('agent_jobs').doc(req.params.jobId).get();
     if (!jobDoc.exists) return res.status(404).json({ error: 'Job not found' });
@@ -2137,7 +2137,7 @@ agentExchangeRouter.get('/exchange/jobs/:jobId', async (req, res) => {
 // ==========================================
 
 // GET /api/v1/exchange/wallets/me (Authenticated agent wallet & ledger overview)
-agentExchangeRouter.get('/exchange/wallets/me', authenticateAgent, async (req, res) => {
+agentExchangeRouter.get(['/wallets/me', '/exchange/wallets/me'], authenticateAgent, async (req, res) => {
   try {
     const agent = (req as any).agent;
     const provider = paymentProviders.PLATFORM_CREDITS as PlatformCreditsProvider;
@@ -2148,6 +2148,8 @@ agentExchangeRouter.get('/exchange/wallets/me', authenticateAgent, async (req, r
       success: true,
       agentId: agent.agentId,
       handle: agent.handle,
+      creditsBalance: wallet.creditsBalance,
+      availableBalance: wallet.availableBalance,
       wallet,
       recentLedgerEntries: ledger
     });
@@ -2158,7 +2160,7 @@ agentExchangeRouter.get('/exchange/wallets/me', authenticateAgent, async (req, r
 });
 
 // GET /api/v1/exchange/wallets/:agentId (Query any agent wallet balance)
-agentExchangeRouter.get('/exchange/wallets/:agentId', async (req, res) => {
+agentExchangeRouter.get(['/wallets/:agentId', '/exchange/wallets/:agentId'], async (req, res) => {
   try {
     const { agentId } = req.params;
     const provider = paymentProviders.PLATFORM_CREDITS as PlatformCreditsProvider;
@@ -2175,7 +2177,7 @@ agentExchangeRouter.get('/exchange/wallets/:agentId', async (req, res) => {
 });
 
 // GET /api/v1/exchange/treasury (Platform Treasury Account Ledger Balance)
-agentExchangeRouter.get('/exchange/treasury', async (req, res) => {
+agentExchangeRouter.get(['/treasury', '/exchange/treasury'], async (req, res) => {
   try {
     const provider = paymentProviders.PLATFORM_CREDITS as PlatformCreditsProvider;
     const treasury = await provider.getTreasuryBalance();
@@ -2192,7 +2194,7 @@ agentExchangeRouter.get('/exchange/treasury', async (req, res) => {
 });
 
 // GET /api/v1/exchange/ledger/:agentId (Get double-entry ledger journal entries for account)
-agentExchangeRouter.get('/exchange/ledger/:agentId', async (req, res) => {
+agentExchangeRouter.get(['/ledger/:agentId', '/exchange/ledger/:agentId'], async (req, res) => {
   try {
     const { agentId } = req.params;
     const limit = Math.min(100, parseInt(req.query.limit as string) || 50);
@@ -2212,7 +2214,7 @@ agentExchangeRouter.get('/exchange/ledger/:agentId', async (req, res) => {
 
 // POST /api/v1/exchange/settle (Direct double-entry settlement with multi-rail verification)
 agentExchangeRouter.post(
-  '/exchange/settle',
+  ['/settle', '/exchange/settle'],
   financialSettlementLimiter,
   authenticateAgent,
   requireScope('payments:transact'),
@@ -2327,7 +2329,7 @@ agentExchangeRouter.get('/developers/earnings', authenticateHuman, async (req, r
 });
 
 // GET /api/v1/exchange/economy/metrics (Public Network Macro Health)
-agentExchangeRouter.get('/exchange/economy/metrics', async (req, res) => {
+agentExchangeRouter.get(['/economy/metrics', '/exchange/economy/metrics'], async (req, res) => {
   try {
     const [agentsSnap, servicesSnap, requestsSnap, jobsSnap, txSnap] = await Promise.all([
       db.collection('users').where('authorType', '==', 'agent').get().catch(() => ({ size: 0 })),
@@ -3679,7 +3681,7 @@ agentExchangeRouter.post(['/demo/polkadot-settlement', '/exchange/demo/polkadot-
 // 11. SPENDING LIMITS & HUMAN APPROVALS
 // ==========================================
 
-agentExchangeRouter.post('/exchange/approvals/request', authenticateAgent, async (req: Request, res: Response) => {
+agentExchangeRouter.post(['/approvals/request', '/exchange/approvals/request'], authenticateAgent, async (req: Request, res: Response) => {
   try {
     const agent = (req as any).agent;
     const { txIntentId, jobId, amount, sellerAgentId } = req.body;
@@ -3716,7 +3718,7 @@ agentExchangeRouter.post('/exchange/approvals/request', authenticateAgent, async
   }
 });
 
-agentExchangeRouter.post('/exchange/approvals/redeem', authenticateHuman, async (req: Request, res: Response) => {
+agentExchangeRouter.post(['/approvals/redeem', '/exchange/approvals/redeem'], authenticateHuman, async (req: Request, res: Response) => {
   try {
     const operatorUid = (req as any).user.uid;
     const { token } = req.body;
@@ -3741,7 +3743,7 @@ agentExchangeRouter.post('/exchange/approvals/redeem', authenticateHuman, async 
 // 12. DISPUTES & RESOLUTION
 // ==========================================
 
-agentExchangeRouter.post('/exchange/disputes', authenticateAgent, async (req: Request, res: Response) => {
+agentExchangeRouter.post(['/disputes', '/exchange/disputes'], authenticateAgent, async (req: Request, res: Response) => {
   try {
     const agent = (req as any).agent;
     const { jobId, reason, initiatorRole = 'BUYER', evidence } = req.body;
@@ -3768,7 +3770,7 @@ agentExchangeRouter.post('/exchange/disputes', authenticateAgent, async (req: Re
   }
 });
 
-agentExchangeRouter.post('/exchange/disputes/:disputeId/resolve', authenticateHuman, async (req: Request, res: Response) => {
+agentExchangeRouter.post(['/disputes/:disputeId/resolve', '/exchange/disputes/:disputeId/resolve'], authenticateHuman, async (req: Request, res: Response) => {
   try {
     const resolverId = (req as any).user.uid;
     const { disputeId } = req.params;
@@ -3888,14 +3890,108 @@ agentExchangeRouter.post(
       const creditsProvider = paymentProviders.PLATFORM_CREDITS as PlatformCreditsProvider;
 
       switch (event.type) {
+        case 'checkout.session.completed': {
+          const session = event.data?.object;
+          const metadata = session?.metadata || {};
+          const agentId = metadata.agentId || metadata.buyerAgentId || (metadata.email ? `agent_${metadata.email.replace(/[^a-z0-9]/gi, '_')}` : 'anonymous_buyer');
+          const apiKey = metadata.apiKey;
+          const creditsRequested = metadata.credits || metadata.creditsRequested;
+          const amountTotal = session?.amount_total || 0;
+
+          let creditsToAdd = 1000;
+          if (creditsRequested && !isNaN(parseInt(creditsRequested, 10))) {
+            creditsToAdd = parseInt(creditsRequested, 10);
+          } else if (metadata.productId?.includes('bundle') || metadata.productId?.includes('pro') || metadata.productId?.includes('api')) {
+            creditsToAdd = 5000;
+          } else if (amountTotal > 0) {
+            creditsToAdd = Math.round((amountTotal / 100) * 100);
+          }
+
+          // Credit wallet in PlatformCreditsProvider and inMemoryWalletRegistry
+          await creditsProvider.getOrCreateWallet(agentId, creditsToAdd);
+
+          let wallet = inMemoryWalletRegistry.get(agentId);
+          if (wallet) {
+            wallet.creditsBalance = (wallet.creditsBalance || 0) + creditsToAdd;
+            wallet.availableBalance = (wallet.availableBalance || 0) + creditsToAdd;
+          } else {
+            inMemoryWalletRegistry.set(agentId, {
+              agentId,
+              creditsBalance: creditsToAdd,
+              availableBalance: creditsToAdd,
+              lifetimeSpent: 0,
+              simulationRuns: 0,
+              verifiedSimulations: 0
+            });
+          }
+
+          // Link API key if passed
+          if (apiKey && apiKey.startsWith('sb_live_')) {
+            const parts = apiKey.split('_');
+            if (parts.length >= 3) {
+              const publicId = parts[2];
+              const cachedKey = inMemoryKeyRegistry.get(publicId);
+              if (cachedKey) {
+                cachedKey.agentId = agentId;
+                cachedKey.status = 'active';
+                inMemoryKeyRegistry.set(publicId, cachedKey);
+              }
+            }
+          }
+
+          // Persist to Firestore
+          try {
+            await db.collection('agent_wallets').doc(agentId).set({
+              agentId,
+              creditsBalance: inMemoryWalletRegistry.get(agentId)?.creditsBalance || creditsToAdd,
+              availableBalance: inMemoryWalletRegistry.get(agentId)?.availableBalance || creditsToAdd,
+              updatedAt: new Date().toISOString(),
+              lastStripeSessionId: session?.id,
+              linkedApiKey: apiKey || null
+            }, { merge: true });
+          } catch (e) {
+            // Firestore write deferred
+          }
+          break;
+        }
+
         case 'payment_intent.succeeded': {
           const paymentIntent = event.data?.object;
-          const creditsRequested = paymentIntent?.metadata?.creditsRequested;
+          const creditsRequested = paymentIntent?.metadata?.creditsRequested || paymentIntent?.metadata?.credits;
           const credits = creditsRequested ? parseInt(creditsRequested, 10) : Math.round(((paymentIntent?.amount || 1000) / 100) * 100);
-          const buyerId = paymentIntent?.metadata?.buyerAgentId || 'anonymous_cardholder';
+          const buyerId = paymentIntent?.metadata?.agentId || paymentIntent?.metadata?.buyerAgentId || 'anonymous_cardholder';
           const jobId = paymentIntent?.metadata?.jobId;
+          const apiKey = paymentIntent?.metadata?.apiKey;
 
           await creditsProvider.getOrCreateWallet(buyerId, credits);
+
+          let wallet = inMemoryWalletRegistry.get(buyerId);
+          if (wallet) {
+            wallet.creditsBalance = (wallet.creditsBalance || 0) + credits;
+            wallet.availableBalance = (wallet.availableBalance || 0) + credits;
+          } else {
+            inMemoryWalletRegistry.set(buyerId, {
+              agentId: buyerId,
+              creditsBalance: credits,
+              availableBalance: credits,
+              lifetimeSpent: 0,
+              simulationRuns: 0,
+              verifiedSimulations: 0
+            });
+          }
+
+          if (apiKey && apiKey.startsWith('sb_live_')) {
+            const parts = apiKey.split('_');
+            if (parts.length >= 3) {
+              const publicId = parts[2];
+              const cachedKey = inMemoryKeyRegistry.get(publicId);
+              if (cachedKey) {
+                cachedKey.agentId = buyerId;
+                cachedKey.status = 'active';
+                inMemoryKeyRegistry.set(publicId, cachedKey);
+              }
+            }
+          }
 
           if (jobId) {
             try {

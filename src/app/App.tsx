@@ -464,6 +464,10 @@ export function App() {
     } catch (e) {
       console.warn("Could not clear reload flag:", e);
     }
+
+    const handleOpenAuthModal = () => setIsAuthOpen(true);
+    window.addEventListener("open-auth-modal", handleOpenAuthModal);
+    return () => window.removeEventListener("open-auth-modal", handleOpenAuthModal);
   }, []);
 
   // Global Keyboard Shortcuts ('/', 'Esc', Cmd+K)
