@@ -61,6 +61,12 @@ export const WatchlistIntelligenceHeader: React.FC<WatchlistIntelligenceHeaderPr
                   <Clock className="w-3 h-3 text-current" />
                   <span>{freshness.label} ({freshness.ageText})</span>
                 </span>
+
+                {/* Active Monitored Assets Count */}
+                <span className="px-2.5 py-1 alien-block-cut-sm border border-cyan-500/40 bg-cyan-950/40 text-cyan-300 text-[10px] font-martian font-bold flex items-center gap-1.5">
+                  <Activity className="w-3 h-3 text-cyan-400" />
+                  <span>{totalStocks} ASSETS</span>
+                </span>
               </div>
 
               {/* Action Controls: Chart Style & Manual Refresh */}
@@ -119,7 +125,7 @@ export const WatchlistIntelligenceHeader: React.FC<WatchlistIntelligenceHeaderPr
             <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-cyan-400/80 pt-1.5 border-t border-cyan-900/50">
               <div className="flex items-center gap-1.5">
                 <span className="text-cyan-500/70 font-alien-hud">FEED PROVIDER:</span>
-                <span className="font-bold text-cyan-200">{marketDataSource || "Alpha Vantage Quant API"}</span>
+                <span className="font-bold text-cyan-200">{marketDataSource || "Yahoo Finance API"}</span>
               </div>
 
               <div className="flex items-center gap-1.5">

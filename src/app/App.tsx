@@ -803,23 +803,33 @@ export function App() {
       "Name",
       "Price ($)",
       "Change (%)",
+      "SBScore",
+      "Bloc",
+      "SignalLabel",
       "Volume",
       "Market Cap",
       "RSI",
       "Asymmetry Stars",
       "Category",
     ];
-    const rows = filteredStocks.map((s) => [
-      `"${s.symbol}"`,
-      `"${s.name.replace(/"/g, '""')}"`,
-      s.price,
-      s.changePercent,
-      `"${s.volume}"`,
-      `"${s.marketCap}"`,
-      getStockRsi(s),
-      s.asymmetryPotentialStars ?? 0,
-      `"${s.category}"`,
-    ]);
+    const rows = filteredStocks.map((s) => {
+      const sig = computeDeterministicSignal(s);
+      const blocName = s.bloc || s.category || "tsunami";
+      return [
+        `"${s.symbol}"`,
+        `"${s.name.replace(/"/g, '""')}"`,
+        s.price,
+        s.changePercent,
+        sig.score,
+        `"${blocName}"`,
+        `"${sig.label}"`,
+        `"${s.volume}"`,
+        `"${s.marketCap}"`,
+        getStockRsi(s),
+        s.asymmetryPotentialStars ?? 0,
+        `"${s.category}"`,
+      ];
+    });
 
     const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -904,7 +914,7 @@ export function App() {
 
     try {
       let res = await fetch("/api/data/market");
-      let sourceName = "CDN Proxy / Market Watchlist";
+      let sourceName = "Yahoo Finance API";
       if (!res.ok) {
         res = await fetch("/market_watchlist_data.json");
         sourceName = "Local Proxy Fallback";
@@ -1253,7 +1263,7 @@ export function App() {
                 className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-extrabold shrink-0 flex items-center gap-1.5 cursor-pointer"
               >
                 <Database className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Firebase Sync</span>
+                <span>Cloud Sync / Join</span>
               </button>
 
               <button
@@ -1742,7 +1752,10 @@ export function App() {
       />
 
       {/* Floating X / Twitter / Community Action Button */}
-      <FloatingCommunityButton />
+      <FloatingCommunityButton
+        onSelectTab={handleSelectTab}
+        onOpenAuth={() => setIsAuthOpen(true)}
+      />
 
       <Suspense fallback={null}>
         {/* Full Disclaimer Modal */}

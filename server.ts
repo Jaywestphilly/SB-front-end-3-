@@ -4494,7 +4494,7 @@ app.get('/api/user/profile-purchases', (req, res) => {
         downloadUrl: "/api/download/playbook/playbook_reit_realestate",
       },
     ],
-    apiKey: "sb_live_8f3a91c74e2d_99182a",
+    apiKey: null,
     linkedAt: new Date().toISOString(),
   };
 

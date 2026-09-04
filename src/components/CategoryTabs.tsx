@@ -36,11 +36,11 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
     { id: "all", label: "All Watchlist", icon: Sparkles },
     { id: "my_bloc", label: "My Bloc", icon: Bookmark },
     { id: "robotics", label: "Robotics & Self-Driving", icon: Bot },
-    { id: "tsunami", label: "Super sonic Tsunami", icon: Flame },
+    { id: "tsunami", label: "Super Sonic Tsunami", icon: Flame },
     { id: "asymmetry", label: "Max Asymmetry", icon: Star },
     { id: "reits", label: "Real Estate REITs", icon: Building2 },
     { id: "credit_fin", label: "Credit & FinTech", icon: CreditCard },
-    { id: "ai_infra", label: " Infrastructure", icon: Cpu },
+    { id: "ai_infra", label: "AI Infrastructure & Cloud", icon: Cpu },
     { id: "memory", label: "Memory & Chips", icon: MemoryStick },
     { id: "energy", label: "Energy & Grid", icon: Zap },
     { id: "indexes", label: "Indexes & Tech", icon: LineChart },
@@ -58,13 +58,13 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
       case "asymmetry":
         return "Maximum Asymmetry Upside Matrix";
       case "tsunami":
-        return "Super sonic Tsunami";
+        return "Super Sonic Tsunami";
       case "reits":
         return "Real Estate REITs";
       case "credit_fin":
         return "Credit & FinTech";
       case "ai_infra":
-        return " Infra & Cloud";
+        return "AI Infrastructure & Cloud Compute";
       case "memory":
         return "Memory Chips & Hardware";
       case "energy":
@@ -107,8 +107,8 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
         })}
       </div>
 
-      {/* List Title */}
-      <div className="flex items-end justify-between pt-1 pb-1 border-b border-cyan-500/20 pb-2">
+      {/* List Title & Bloc Definition Context Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between pt-1 pb-1 border-b border-cyan-500/20 gap-2">
         <div>
           <h2 className="text-xl font-black font-mono tracking-wider text-cyan-100 uppercase leading-tight flex items-center gap-2">
             <span className="w-2 h-2 bg-cyan-400 inline-block animate-ping" />
@@ -117,6 +117,11 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
           <p className="text-[10px] text-cyan-400/70 font-mono">
             // {itemCount} ASSETS MONITORED IN QUANT MATRIX
           </p>
+        </div>
+
+        {/* Cold-Start Definition Pill */}
+        <div className="text-[10px] font-sans text-neutral-400 max-w-md text-left sm:text-right">
+          <span className="text-cyan-300 font-mono font-bold">What is a Bloc?</span> A curated thematic basket evaluated by 5-factor quantitative momentum. <span className="text-emerald-300 font-mono font-bold">Super Sonic Tsunami</span> is default as it tracks the foundational AI compute, power grid, and space infrastructure layer.
         </div>
       </div>
     </div>

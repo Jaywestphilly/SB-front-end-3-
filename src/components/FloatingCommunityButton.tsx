@@ -9,23 +9,29 @@ import {
   Lightbulb, 
   Users, 
   Sparkles,
-  Zap
+  Zap,
+  ChevronUp,
+  LogIn
 } from "lucide-react";
 import { appendUTM } from "../utils/utm";
 import { trackEvent } from "../utils/analytics";
 import { triggerHaptic } from "../utils/haptics";
 import { ViewTab } from "../types";
 import { UpgradeRecommendationModal } from "./UpgradeRecommendationModal";
+import { useAuth } from "../contexts/AuthContext";
 
 interface FloatingCommunityButtonProps {
   onSelectTab?: (tab: ViewTab) => void;
   onOpenUpgradesModal?: () => void;
+  onOpenAuth?: () => void;
 }
 
 export const FloatingCommunityButton: React.FC<FloatingCommunityButtonProps> = ({
   onSelectTab,
-  onOpenUpgradesModal
+  onOpenUpgradesModal,
+  onOpenAuth
 }) => {
+  const { user } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
@@ -99,6 +105,27 @@ export const FloatingCommunityButton: React.FC<FloatingCommunityButtonProps> = (
     }
   };
 
+  const handleMainButtonClick = () => {
+    triggerHaptic("selection");
+    if (!user) {
+      // If pre-auth / logged out, open auth modal or navigate
+      if (onOpenAuth) {
+        onOpenAuth();
+      } else if (onSelectTab) {
+        onSelectTab("community");
+      } else {
+        setIsOpen(!isOpen);
+      }
+    } else {
+      // If authenticated, navigate to community
+      if (onSelectTab) {
+        onSelectTab("community");
+      } else {
+        setIsOpen(!isOpen);
+      }
+    }
+  };
+
   if (isDismissed || !isVisible) return null;
 
   return (
@@ -127,6 +154,27 @@ export const FloatingCommunityButton: React.FC<FloatingCommunityButtonProps> = (
             </div>
 
             <div className="space-y-2">
+              {/* Option 0: Auth Action if logged out */}
+              {!user && onOpenAuth && (
+                <button
+                  id="floating-open-auth-btn"
+                  onClick={() => {
+                    triggerHaptic("success");
+                    setIsOpen(false);
+                    onOpenAuth();
+                  }}
+                  className="w-full py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-black alien-block-cut-sm flex items-center justify-between text-xs font-zen font-black transition-all cursor-pointer shadow-lg shadow-amber-400/20"
+                >
+                  <span className="flex items-center gap-2">
+                    <LogIn className="w-4 h-4 text-black" />
+                    <span>Sign In / Join The Bloc</span>
+                  </span>
+                  <span className="text-[9px] bg-black text-amber-300 px-1.5 py-0.5 font-bold uppercase rounded-sm">
+                    AUTH
+                  </span>
+                </button>
+              )}
+
               {/* Option 1: Live Community Hub */}
               <button
                 id="floating-open-community-btn"
@@ -201,35 +249,45 @@ export const FloatingCommunityButton: React.FC<FloatingCommunityButtonProps> = (
               JOIN THE BLOC
             </div>
             <p className="text-[10px] font-martian text-neutral-300 mt-0.5">
-              Live Alpha Community • Propose Feature Upgrades • Social Feeds
+              {!user ? "Click to Sign In & Join Sovereign Alpha Community" : "Click to Navigate to Live Community Hub"}
             </p>
           </div>
         )}
         
         {/* Trigger Button with Alien HUD Styling */}
         <div 
-          className="relative group pointer-events-auto"
+          className="relative group pointer-events-auto flex items-center shadow-xl shadow-amber-500/50"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
           <button
             id="floating-join-the-bloc-btn"
-            onClick={() => {
+            onClick={handleMainButtonClick}
+            className="pl-4 pr-3 h-12 alien-block-cut bg-amber-400 text-black flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all cursor-pointer border-2 border-amber-200 glow-amber font-zen font-black tracking-wider uppercase text-xs"
+            title={!user ? "Click to Sign In or Join the Bloc" : "Click to Open Live Community Hub"}
+          >
+            <MessageSquare className="w-5 h-5 text-black fill-black/20" />
+            <span>JOIN THE BLOC</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-700 animate-ping ml-0.5" />
+          </button>
+
+          <button
+            id="floating-options-caret-btn"
+            onClick={(e) => {
+              e.stopPropagation();
               triggerHaptic("selection");
               setIsOpen(!isOpen);
             }}
-            className="px-4 h-12 alien-block-cut bg-amber-400 text-black shadow-xl shadow-amber-500/50 flex items-center justify-center gap-2 hover:scale-105 active:scale-95 transition-all cursor-pointer border-2 border-amber-200 glow-amber"
-            title="Join the Stock Bloc Community & Recommend Upgrades"
+            className="h-12 px-2 bg-amber-500 hover:bg-amber-300 text-black border-y-2 border-r-2 border-amber-200 flex items-center justify-center cursor-pointer transition-colors"
+            title="Options & Social Links"
           >
-            <MessageSquare className="w-5 h-5 text-black fill-black/20" />
-            <span className="font-black font-zen tracking-wider uppercase text-xs">JOIN THE BLOC</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-700 animate-ping ml-0.5" />
+            <ChevronUp className={`w-3.5 h-3.5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
           </button>
 
           <button
             id="floating-dismiss-btn"
             onClick={handleDismiss}
-            className="absolute -top-2 -right-2 w-6 h-6 bg-black/90 text-amber-300 border border-amber-500/60 rounded-full flex items-center justify-center hover:bg-amber-400 hover:text-black transition-colors cursor-pointer shadow-lg"
+            className="absolute -top-2 -right-2 w-6 h-6 bg-black/90 text-amber-300 border border-amber-500/60 rounded-full flex items-center justify-center hover:bg-amber-400 hover:text-black transition-colors cursor-pointer shadow-lg z-10"
             title="Dismiss widget"
           >
             <X className="w-3 h-3" />

@@ -39,7 +39,9 @@ export interface StockTicker {
   isPinned?: boolean;
   tags: string[];
   signalScore?: number;
+  sbScore?: number;
   signalLabel?: string;
+  bloc?: string;
   volumeNum?: number;
   avgVolumeNum?: number;
   volumeVsAvgRatio?: number;

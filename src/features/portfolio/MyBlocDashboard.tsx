@@ -60,6 +60,7 @@ import {
   Eye,
   FileText,
   Watch,
+  Users,
 } from "lucide-react";
 import { NotFinancialAdviceTag } from "../../components/NotFinancialAdviceTag";
 import { StockTicker, ViewTab } from "../../types";
@@ -109,6 +110,10 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
   
   // Helper to load positions and merge any newly saved watchlist paper trades
   const loadPositionsFromStorage = useCallback((): PortfolioPosition[] => {
+    // Pre-auth security: do not load or render holdings until Firebase auth succeeds
+    if (!currentUser) {
+      return [];
+    }
     try {
       const savedPortfolio = safeStorage.getItem("stockbloc_portfolio_positions");
       let currentPositions: PortfolioPosition[] = savedPortfolio ? JSON.parse(savedPortfolio) : [];
@@ -138,26 +143,21 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
         }
       }
 
-      if (currentPositions.length === 0) {
-        return [
-          { id: "1", symbol: "NVDA", shares: 25, avgCost: 109.58, targetPrice: 158.59, notes: "AI GPU dominance" },
-          { id: "2", symbol: "PLTR", shares: 150, avgCost: 21.75, targetPrice: 44.26, notes: "AIP defense contract surge" },
-          { id: "3", symbol: "O", shares: 80, avgCost: 51.41, targetPrice: 63.18, notes: "Monthly REIT dividend" },
-        ];
-      }
-
       return currentPositions;
     } catch {
       return [];
     }
-  }, []);
+  }, [currentUser]);
 
   // Firebase Auth & Settings State
   const [portfolioVisibility, setPortfolioVisibility] = useState<"Public Portfolio" | "Private Portfolio">("Private Portfolio");
   const [isSavingVisibility, setIsSavingVisibility] = useState(false);
 
-  // Local state persisted in localStorage and Firestore
-  const [positions, setPositions] = useState<PortfolioPosition[]>(loadPositionsFromStorage);
+  // Local state persisted in localStorage and Firestore - strictly empty pre-auth
+  const [positions, setPositions] = useState<PortfolioPosition[]>(() => {
+    if (!currentUser) return [];
+    return loadPositionsFromStorage();
+  });
 
   // Listen for portfolio position updates across modals / tabs
   useEffect(() => {
@@ -203,16 +203,14 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
           console.error("Failed to load user settings/portfolio", e);
         }
       } else {
-        // Clear sensitive portfolio data from local storage on sign out
+        // Clear sensitive portfolio data from local storage on sign out; never inject mock positions
         safeStorage.removeItem("stockbloc_portfolio_positions");
         safeStorage.removeItem("stockbloc_paper_trades");
         safeStorage.removeItem("stockbloc_user_prefs");
+        safeStorage.removeItem("stockbloc_api_key");
         clearUserStorage();
-        setPositions([
-          { id: "1", symbol: "NVDA", shares: 25, avgCost: 109.58, targetPrice: 158.59, notes: "AI GPU dominance" },
-          { id: "2", symbol: "PLTR", shares: 150, avgCost: 21.75, targetPrice: 44.26, notes: "AIP defense contract surge" },
-          { id: "3", symbol: "O", shares: 80, avgCost: 51.41, targetPrice: 63.18, notes: "Monthly REIT dividend" },
-        ]);
+        setPositions([]);
+        setApiKey(null);
       }
     };
     
@@ -268,7 +266,14 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
 
   // API Key & Subscription State
   const [apiKey, setApiKey] = useState<string | null>(() => {
-    return safeStorage.getItem("stockbloc_api_key") || "sb_live_8f3a91c74e2d_99182a";
+    // Pre-auth security: do not populate API key until Firebase auth succeeds
+    if (!currentUser) return null;
+    const stored = safeStorage.getItem("stockbloc_api_key");
+    if (stored === "sb_live_8f3a91c74e2d_99182a") {
+      safeStorage.removeItem("stockbloc_api_key");
+      return null;
+    }
+    return stored || null;
   });
   const [apiCredits, setApiCredits] = useState<number>(() => {
     const val = safeStorage.getItem("stockbloc_api_credits");
@@ -287,55 +292,29 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
     category: string;
     downloadUrl: string;
   }>>(() => {
+    if (!currentUser) return [];
     try {
       const saved = safeStorage.getItem("stockbloc_purchased_ebooks");
       if (saved) return JSON.parse(saved);
     } catch (e) {
       console.error(e);
     }
-    return [
-      {
-        id: "wealth_operating_system",
-        title: "The Stock Bloc Wealth Operating System (260 Pages)",
-        category: "playbook",
-        downloadUrl: "/api/download/ebook/wealth_operating_system",
-      },
-      {
-        id: "future_wealth_blueprint",
-        title: "Stock Bloc: The Future Wealth Blueprint (108 Pages)",
-        category: "playbook",
-        downloadUrl: "/api/download/ebook/future_wealth_blueprint",
-      },
-      {
-        id: "playbook_13f_whale",
-        title: "13F Whale Tracking & SEC Filing Playbook",
-        category: "playbook",
-        downloadUrl: "/api/download/playbook/playbook_13f_whale",
-      },
-      {
-        id: "playbook_credit_800",
-        title: "Credit 800+ Dispute & FICO Repair Blueprint",
-        category: "playbook",
-        downloadUrl: "/api/download/playbook/playbook_credit_800",
-      },
-      {
-        id: "playbook_reit_realestate",
-        title: "Real Estate & REIT Cash Flow Matrix",
-        category: "playbook",
-        downloadUrl: "/api/download/playbook/playbook_reit_realestate",
-      },
-    ];
+    return [];
   });
 
   useEffect(() => {
     const syncProfilePurchases = async () => {
+      if (!currentUser?.email) {
+        setPurchasedItems([]);
+        return;
+      }
       try {
-        const res = await fetch("/api/user/profile-purchases?email=realestatejcarter@gmail.com");
+        const res = await fetch(`/api/user/profile-purchases?email=${encodeURIComponent(currentUser.email)}`);
         const data = await res.json();
         if (data.status === "ok" && data.profile?.purchasedItems?.length) {
           setPurchasedItems(data.profile.purchasedItems);
           safeStorage.setItem("stockbloc_purchased_ebooks", JSON.stringify(data.profile.purchasedItems));
-          if (data.profile.apiKey) {
+          if (data.profile.apiKey && data.profile.apiKey !== "sb_live_8f3a91c74e2d_99182a") {
             setApiKey(data.profile.apiKey);
             safeStorage.setItem("stockbloc_api_key", data.profile.apiKey);
           }
@@ -345,7 +324,7 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
       }
     };
     syncProfilePurchases();
-  }, []);
+  }, [currentUser]);
 
   const handleCopyKey = () => {
     if (!apiKey) return;
@@ -356,6 +335,10 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
   };
 
   const handleGenerateKey = async () => {
+    if (!currentUser) {
+      onOpenAuth();
+      return;
+    }
     setIsGeneratingKey(true);
     triggerHaptic("light");
 
@@ -615,63 +598,92 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
 
       {activeDashboardTab === "overview" ? (
         <>
-          {/* Portfolio High-Level Valuation Banner */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-cyan-500/30">
-          <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/20">
-            <span className="text-[11px] text-cyan-400/80 uppercase font-mono block">
-              PORTFOLIO VALUE
-            </span>
-            <span className="text-xl sm:text-2xl font-black font-mono text-white mt-1 block">
-              ${portfolioSummary.currentValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/20">
-            <span className="text-[11px] text-cyan-400/80 uppercase font-mono block">
-              TOTAL COST BASIS
-            </span>
-            <span className="text-xl sm:text-2xl font-black font-mono text-neutral-300 mt-1 block">
-              ${portfolioSummary.totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-          </div>
-
-          <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/20">
-            <span className="text-[11px] text-cyan-400/80 uppercase font-mono block">
-              UNREALIZED GAIN/LOSS
-            </span>
-            <div className="flex items-center gap-2 mt-1">
-              <span
-                className={`text-xl sm:text-2xl font-black font-mono ${
-                  portfolioSummary.totalPnl >= 0 ? "text-emerald-400" : "text-rose-400"
-                }`}
-              >
-                {portfolioSummary.totalPnl >= 0 ? "+" : ""}$
-                {portfolioSummary.totalPnl.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
+          {/* Portfolio High-Level Valuation Banner - Gated pre-auth */}
+          {!currentUser ? (
+            <div className="mt-6 pt-6 border-t border-cyan-500/30">
+              <div className="p-6 rounded-2xl bg-black/80 border border-cyan-500/40 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+                <div className="space-y-1 text-center md:text-left">
+                  <div className="flex items-center justify-center md:justify-start gap-2">
+                    <Lock className="w-4 h-4 text-cyan-400" />
+                    <span className="text-xs font-mono font-bold uppercase text-cyan-300">
+                      AUTHENTICATION REQUIRED FOR SOVEREIGN VALUATION
+                    </span>
+                  </div>
+                  <p className="text-xs text-neutral-400 font-sans max-w-xl">
+                    Portfolio balances, total cost basis, unrealized gain/loss, and total return are securely isolated to authenticated accounts. Sign in to synchronize your portfolio.
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    onClick={() => {
+                      triggerHaptic("selection");
+                      onOpenAuth();
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-cyan-500 text-black font-extrabold text-xs uppercase hover:bg-cyan-400 transition-all cursor-pointer shadow-lg shadow-cyan-500/20"
+                  >
+                    SIGN IN TO UNLOCK VALUATION
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-cyan-500/30">
+              <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/20">
+                <span className="text-[11px] text-cyan-400/80 uppercase font-mono block">
+                  PORTFOLIO VALUE
+                </span>
+                <span className="text-xl sm:text-2xl font-black font-mono text-white mt-1 block">
+                  ${portfolioSummary.currentValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
 
-          <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/20">
-            <span className="text-[11px] text-cyan-400/80 uppercase font-mono block">
-              TOTAL RETURN
-            </span>
-            <div className="flex items-center gap-1 mt-1">
-              {portfolioSummary.totalPnlPercent >= 0 ? (
-                <ArrowUpRight className="w-5 h-5 text-emerald-400" />
-              ) : (
-                <ArrowDownRight className="w-5 h-5 text-rose-400" />
-              )}
-              <span
-                className={`text-xl sm:text-2xl font-black font-mono ${
-                  portfolioSummary.totalPnlPercent >= 0 ? "text-emerald-400" : "text-rose-400"
-                }`}
-              >
-                {portfolioSummary.totalPnlPercent >= 0 ? "+" : ""}
-                {portfolioSummary.totalPnlPercent.toFixed(2)}%
-              </span>
+              <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/20">
+                <span className="text-[11px] text-cyan-400/80 uppercase font-mono block">
+                  TOTAL COST BASIS
+                </span>
+                <span className="text-xl sm:text-2xl font-black font-mono text-neutral-300 mt-1 block">
+                  ${portfolioSummary.totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/20">
+                <span className="text-[11px] text-cyan-400/80 uppercase font-mono block">
+                  UNREALIZED GAIN/LOSS
+                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span
+                    className={`text-xl sm:text-2xl font-black font-mono ${
+                      portfolioSummary.totalPnl >= 0 ? "text-emerald-400" : "text-rose-400"
+                    }`}
+                  >
+                    {portfolioSummary.totalPnl >= 0 ? "+" : ""}$
+                    {portfolioSummary.totalPnl.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/20">
+                <span className="text-[11px] text-cyan-400/80 uppercase font-mono block">
+                  TOTAL RETURN
+                </span>
+                <div className="flex items-center gap-1 mt-1">
+                  {portfolioSummary.totalPnlPercent >= 0 ? (
+                    <ArrowUpRight className="w-5 h-5 text-emerald-400" />
+                  ) : (
+                    <ArrowDownRight className="w-5 h-5 text-rose-400" />
+                  )}
+                  <span
+                    className={`text-xl sm:text-2xl font-black font-mono ${
+                      portfolioSummary.totalPnlPercent >= 0 ? "text-emerald-400" : "text-rose-400"
+                    }`}
+                  >
+                    {portfolioSummary.totalPnlPercent >= 0 ? "+" : ""}
+                    {portfolioSummary.totalPnlPercent.toFixed(2)}%
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
 
       {/* Manual Portfolio Holdings Table */}
       <div className="bg-black/80 rounded-2xl p-6 border border-cyan-500/30 space-y-4">
@@ -683,11 +695,46 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
             </h2>
           </div>
           <span className="text-xs text-neutral-400 font-mono">
-            {positions.length} Active Positions
+            {currentUser ? `${positions.length} Active Positions` : "Auth Required"}
           </span>
         </div>
 
-        {positions.length === 0 ? (
+        {!currentUser ? (
+          <div className="p-8 text-center bg-black/60 rounded-xl border border-dashed border-cyan-500/40 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-400">
+              <Lock className="w-6 h-6" />
+            </div>
+            <div className="space-y-1.5 max-w-md mx-auto">
+              <h3 className="text-sm font-bold font-mono text-white uppercase tracking-wider">
+                PORTFOLIO HOLDINGS ENCLAVE LOCKED
+              </h3>
+              <p className="text-xs text-neutral-400 font-sans leading-relaxed">
+                Sign in to Stock Bloc to view and manage your sovereign portfolio holdings, price targets, notes, and live profit-loss metrics.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                onClick={() => {
+                  triggerHaptic("selection");
+                  onOpenAuth();
+                }}
+                className="px-4 py-2.5 rounded-xl bg-cyan-500 text-black font-extrabold text-xs uppercase hover:bg-cyan-400 transition-all cursor-pointer shadow-lg shadow-cyan-500/20"
+              >
+                Sign In / Join the Bloc
+              </button>
+              <button
+                onClick={() => {
+                  triggerHaptic("selection");
+                  onSelectTab("investopedia");
+                }}
+                className="px-4 py-2.5 rounded-xl bg-neutral-900 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40 text-xs font-bold uppercase transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Investopedia Strategy Glossary</span>
+              </button>
+            </div>
+          </div>
+        ) : positions.length === 0 ? (
           <div className="p-6 sm:p-8 bg-black/60 rounded-xl border border-cyan-500/40 space-y-6">
             {/* Cold-Start Architecture Guide */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-b border-cyan-500/20 pb-6">
@@ -714,14 +761,23 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
               </div>
 
               <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/30">
-                <span className="text-[10px] font-mono font-bold uppercase text-amber-400 block mb-1">DEFAULT QUANT ENGINE</span>
+                <span className="text-[10px] font-mono font-bold uppercase text-amber-400 block mb-1">FINANCIAL GLOSSARY</span>
                 <h3 className="text-sm font-bold text-white mb-1.5 flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-amber-400 shrink-0" />
-                  Why Tsunami is Default?
+                  <BookOpen className="w-4 h-4 text-amber-400 shrink-0" />
+                  Strategy & Education
                 </h3>
                 <p className="text-xs text-neutral-300 font-sans leading-relaxed">
-                  The Super Sonic Tsunami represents the critical physical AI infrastructure buildout — power generation, optical interconnects, and data center compute — driving non-cyclical multi-year enterprise demand.
+                  Master technical momentum indicators (RSI, MACD, 52W corridors) and institutional whale mechanics in our integrated financial dictionary.
                 </p>
+                <button
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    onSelectTab("investopedia");
+                  }}
+                  className="mt-2 text-[11px] font-mono text-amber-300 hover:text-amber-200 underline flex items-center gap-1 cursor-pointer"
+                >
+                  <span>Open Investopedia Dictionary &rarr;</span>
+                </button>
               </div>
             </div>
 
@@ -730,7 +786,7 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
               <div className="space-y-1 text-center sm:text-left">
                 <h4 className="text-sm font-bold text-cyan-200">Start Building Your Sovereign Bloc</h4>
                 <p className="text-xs text-neutral-400 font-sans">
-                  Seed high-conviction Tsunami infrastructure leaders or add individual tickers to track P&L and quantitative signals.
+                  Seed high-conviction Tsunami infrastructure leaders, add individual tickers, or explore the financial glossary.
                 </p>
               </div>
 
@@ -766,12 +822,12 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
                 <button
                   onClick={() => {
                     triggerHaptic("selection");
-                    onSelectTab("watchlist");
+                    onSelectTab("investopedia");
                   }}
                   className="px-3.5 py-2 rounded-lg bg-neutral-900 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40 text-xs font-bold uppercase flex items-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <Eye className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Browse Watchlist</span>
+                  <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Investopedia Glossary</span>
                 </button>
               </div>
             </div>
@@ -1044,6 +1100,28 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
                     Revoke Key
                   </button>
                 </div>
+              </div>
+            ) : !currentUser ? (
+              <div className="text-center py-4 space-y-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400">
+                  <Lock className="w-4 h-4" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-bold font-mono text-white uppercase">Authentication Required</h4>
+                  <p className="text-xs text-neutral-400 font-sans">
+                    Sign in to generate and manage production API keys (<code className="text-emerald-300 font-mono">sb_live_...</code>) for autonomous LLM agents.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    onOpenAuth();
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black font-tech text-xs uppercase flex items-center justify-center gap-2 mx-auto cursor-pointer shadow-lg shadow-emerald-400/20"
+                >
+                  <Key className="w-4 h-4" />
+                  <span>SIGN IN TO ACCESS API KEYS</span>
+                </button>
               </div>
             ) : (
               <div className="text-center py-4 space-y-3">

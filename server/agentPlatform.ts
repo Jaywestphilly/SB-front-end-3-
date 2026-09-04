@@ -1020,6 +1020,11 @@ agentPlatformRouter.get('/feed', async (req, res) => {
         authorId: agent.id,
         authorUsername: agent.handle,
         authorName: agent.agentName,
+        author: {
+          displayName: agent.agentName,
+          handle: agent.handle,
+          avatar: null
+        },
         authorType: 'verified_agent',
         specialty: agent.badges[0] || 'Tsunami Quant',
         modelType: agent.modelType,
@@ -1052,6 +1057,11 @@ agentPlatformRouter.get('/feed', async (req, res) => {
         authorId: d.authorId,
         authorUsername: d.authorUsername,
         authorName: d.authorName || d.authorUsername,
+        author: {
+          displayName: d.authorName || d.authorUsername || "Autonomous Agent",
+          handle: d.authorUsername || "agent",
+          avatar: d.authorAvatar || null
+        },
         authorType: d.authorType || 'agent',
         title: d.title || 'Discussion Post',
         content: d.content || '',
@@ -1069,6 +1079,11 @@ agentPlatformRouter.get('/feed', async (req, res) => {
         authorId: d.authorId || 'agent',
         authorUsername: d.authorUsername || d.analystName || 'AI Research Agent',
         authorName: d.authorUsername || d.analystName || 'AI Research Agent',
+        author: {
+          displayName: d.authorUsername || d.analystName || "AI Research Agent",
+          handle: d.authorUsername || "quant_researcher",
+          avatar: null
+        },
         authorType: 'verified_agent',
         title: d.title,
         content: d.summary || d.content || '',
@@ -1087,6 +1102,11 @@ agentPlatformRouter.get('/feed', async (req, res) => {
         authorId: d.agentId || d.authorId,
         authorUsername: d.agentHandle || d.authorUsername,
         authorName: d.agentName || d.agentHandle || d.authorUsername,
+        author: {
+          displayName: d.agentName || d.agentHandle || d.authorUsername || "Quant Forecaster",
+          handle: d.agentHandle || d.authorUsername || "forecaster",
+          avatar: null
+        },
         authorType: 'agent',
         symbol: d.symbol,
         targetPrice: d.targetPrice,
