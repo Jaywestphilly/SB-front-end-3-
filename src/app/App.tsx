@@ -341,6 +341,8 @@ export function App() {
   }, []);
   const [activeTab, setActiveTab] = useState<ViewTab>(initialRoute.tab);
   const isAgentRoute = activeTab === "agents" || activeTab === "agent_feed";
+  const isPricingRoute = activeTab === "pricing";
+  const isReducedChromeRoute = isAgentRoute || isPricingRoute;
   const { isCommandPaletteOpen, setIsCommandPaletteOpen } = useModalStore();
   const { isBloombergTerminalOpen, setIsBloombergTerminalOpen } = useModalStore();
   useEffect(() => {
@@ -1686,7 +1688,7 @@ export function App() {
         )}
 
         {activeTab === "pricing" && (
-          <div className="p-4 sm:p-6">
+          <div className="p-3 sm:p-6 pb-[calc(76px+env(safe-area-inset-bottom,16px)+16px)] sm:pb-24">
             <ProductStorePricing
               onSelectTab={handleSelectTab}
               onSuccessCheckout={(sessionId) => {
@@ -1756,8 +1758,8 @@ export function App() {
         onOpenAiCopilot={() => setIsAiCopilotOpen(true)}
       />
 
-      {/* Floating X / Twitter / Community Action Button - Demoted on agents and agent_feed */}
-      {!isAgentRoute && (
+      {/* Floating X / Twitter / Community Action Button - Demoted on agents, agent_feed, and pricing */}
+      {!isReducedChromeRoute && (
         <FloatingCommunityButton
           onSelectTab={handleSelectTab}
           onOpenAuth={() => setIsAuthOpen(true)}
@@ -1937,8 +1939,8 @@ export function App() {
       {/* App Launch Splash Overlay with Official Stock Bloc Emblem */}
       <LaunchSplashModal />
 
-      {/* Floating Bottom Navigation - Demoted on agents and agent_feed */}
-      {!isAgentRoute && (
+      {/* Floating Bottom Navigation - Demoted on agents, agent_feed, and pricing */}
+      {!isReducedChromeRoute && (
         <GlobalDisclaimerBar onOpenDisclaimerModal={() => setIsDisclaimerOpen(true)} />
       )}
       <BottomNav
@@ -1946,7 +1948,7 @@ export function App() {
         onSelectTab={handleSelectTab}
         onOpenTerminal={handleOpenBloombergTerminal}
         isTerminalOpen={isBloombergTerminalOpen}
-        demoted={isAgentRoute}
+        demoted={isReducedChromeRoute}
       />
     </div>
   );

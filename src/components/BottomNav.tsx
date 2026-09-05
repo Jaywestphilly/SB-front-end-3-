@@ -70,16 +70,16 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   return (
     <>
-      {/* 5 Core Streamlined Floating Bottom Navigation Bar */}
+      {/* 5-6 Core Streamlined Floating Bottom Navigation Bar */}
       <nav
         aria-label="Mobile Bottom Navigation"
         className={
           demoted
-            ? "fixed bottom-2 left-1/2 -translate-x-1/2 z-20 w-[98%] max-w-xl font-mono select-none md:hidden opacity-90 hover:opacity-100 transition-all"
-            : "fixed bottom-2 left-1/2 -translate-x-1/2 z-40 w-[98%] max-w-xl font-mono select-none"
+            ? "fixed bottom-2 left-1/2 -translate-x-1/2 z-20 w-[96%] max-w-xl font-mono select-none md:hidden opacity-90 hover:opacity-100 transition-all overflow-hidden"
+            : "fixed bottom-2 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-xl font-mono select-none overflow-hidden"
         }
       >
-        <div className="bg-[#020b14]/95 backdrop-blur-2xl border-2 border-cyan-500/50 alien-block-cut p-1.5 shadow-2xl shadow-cyan-500/20 grid grid-cols-6 gap-1 relative">
+        <div className="bg-[#020b14]/95 backdrop-blur-2xl border-2 border-cyan-500/50 alien-block-cut p-1 shadow-2xl shadow-cyan-500/20 flex items-center gap-1 overflow-x-auto no-scrollbar overscroll-contain relative sm:grid sm:grid-cols-6 sm:p-1.5">
           {/* Corner Ticks */}
           <div className="hud-corner-tl" />
           <div className="hud-corner-tr" />
@@ -89,7 +89,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* TAB 1: YOUTUBE & INTEL FEED (FIRST TAB) */}
           <button
             onClick={() => handleNavigate("news")}
-            className={`min-h-[48px] py-1.5 px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer w-full focus-visible:outline-none ${
+            className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[54px] sm:min-w-0 focus-visible:outline-none ${
               !isTerminalOpen && activeTab === "news"
                 ? "bg-cyan-400 text-black font-black shadow-lg shadow-cyan-400/40 border border-cyan-200"
                 : "text-cyan-300/80 hover:text-white hover:bg-cyan-950/40 border border-cyan-500/20"
@@ -98,7 +98,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <div className="flex items-center justify-center">
               <Globe className="w-4 h-4 shrink-0 text-cyan-400" />
             </div>
-            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider whitespace-nowrap leading-none">
+            <span className="text-[8.5px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none">
               INTEL
             </span>
           </button>
@@ -106,14 +106,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* TAB 2: MARKETS */}
           <button
             onClick={() => handleOpenSheet("markets")}
-            className={`min-h-[48px] py-1.5 px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer w-full focus-visible:outline-none ${
+            className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[56px] sm:min-w-0 focus-visible:outline-none ${
               isMarketsActive || activeSheet === "markets"
                 ? "bg-cyan-400 text-black font-black shadow-lg shadow-cyan-400/40 border border-cyan-200"
                 : "text-cyan-300/80 hover:text-white hover:bg-cyan-950/40 border border-cyan-500/20"
             }`}
           >
             <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider whitespace-nowrap leading-none">
+            <span className="text-[8.5px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none">
               MARKETS
             </span>
           </button>
@@ -121,14 +121,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* TAB 3: AI */}
           <button
             onClick={() => handleOpenSheet("ai")}
-            className={`min-h-[48px] py-1.5 px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer w-full focus-visible:outline-none ${
+            className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[48px] sm:min-w-0 focus-visible:outline-none ${
               isAiActive || activeSheet === "ai"
                 ? "bg-purple-400 text-black font-black shadow-lg shadow-purple-400/40 border border-purple-200"
                 : "text-purple-300/80 hover:text-white hover:bg-purple-950/40 border border-purple-500/20"
             }`}
           >
             <Cpu className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider whitespace-nowrap leading-none">
+            <span className="text-[8.5px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none">
               AI
             </span>
           </button>
@@ -136,14 +136,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* TAB 4: REAL ESTATE */}
           <button
             onClick={() => handleNavigate("real_estate")}
-            className={`min-h-[48px] py-1 px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 transition-all active:scale-95 cursor-pointer w-full focus-visible:outline-none ${
+            className={`min-h-[48px] py-1 px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[54px] sm:min-w-0 focus-visible:outline-none ${
               isRealEstateActive
                 ? "bg-amber-400 text-black font-black shadow-lg shadow-amber-400/40 border border-amber-200"
                 : "text-amber-300/80 hover:text-white hover:bg-amber-950/40 border border-amber-500/20"
             }`}
           >
             <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-            <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-tight text-center leading-[1.05] flex flex-col items-center">
+            <span className="text-[7.5px] sm:text-[9px] font-black uppercase tracking-tight text-center leading-[1.05] flex flex-col items-center">
               <span>REAL</span>
               <span>ESTATE</span>
             </span>
@@ -152,14 +152,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* TAB 5: CREDIT */}
           <button
             onClick={() => handleNavigate("credit")}
-            className={`min-h-[48px] py-1.5 px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer w-full focus-visible:outline-none ${
+            className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[54px] sm:min-w-0 focus-visible:outline-none ${
               isCreditActive
                 ? "bg-emerald-400 text-black font-black shadow-lg shadow-emerald-400/40 border border-emerald-200"
                 : "text-emerald-300/80 hover:text-white hover:bg-emerald-950/40 border border-emerald-500/20"
             }`}
           >
             <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider whitespace-nowrap leading-none">
+            <span className="text-[8.5px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none">
               CREDIT
             </span>
           </button>
@@ -167,14 +167,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* TAB 6: EDUCATION */}
           <button
             onClick={() => handleOpenSheet("education")}
-            className={`min-h-[48px] py-1.5 px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer w-full focus-visible:outline-none ${
+            className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[58px] sm:min-w-0 focus-visible:outline-none ${
               isEducationActive || activeSheet === "education"
                 ? "bg-rose-400 text-black font-black shadow-lg shadow-rose-400/40 border border-rose-200"
                 : "text-rose-300/80 hover:text-white hover:bg-rose-950/40 border border-rose-500/20"
             }`}
           >
             <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider whitespace-nowrap leading-none">
+            <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none">
               EDUCATION
             </span>
           </button>

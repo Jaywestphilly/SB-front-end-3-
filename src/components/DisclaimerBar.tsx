@@ -28,7 +28,14 @@ export const DisclaimerBar: React.FC<Props> = ({ onOpenDisclaimerModal }) => {
     setIsDismissed(true);
   };
 
-  if (isDismissed) return null;
+  const isHiddenRoute =
+    typeof window !== "undefined" &&
+    (window.location.pathname.includes("/pricing") ||
+      window.location.pathname.includes("/store") ||
+      window.location.search.includes("tab=pricing") ||
+      window.location.search.includes("tab=store"));
+
+  if (isDismissed || isHiddenRoute) return null;
 
   return (
     <div className="fixed bottom-16 sm:bottom-14 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-4xl animate-fadeIn">

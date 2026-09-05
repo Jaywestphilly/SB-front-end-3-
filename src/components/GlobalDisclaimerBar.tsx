@@ -21,7 +21,14 @@ export const GlobalDisclaimerBar: React.FC<GlobalDisclaimerBarProps> = ({ onOpen
     }
   }, []);
 
-  if (!isVisible) return null;
+  const isHiddenRoute =
+    typeof window !== "undefined" &&
+    (window.location.pathname.includes("/pricing") ||
+      window.location.pathname.includes("/store") ||
+      window.location.search.includes("tab=pricing") ||
+      window.location.search.includes("tab=store"));
+
+  if (!isVisible || isHiddenRoute) return null;
 
   const handleDismiss = () => {
     triggerHaptic("light");

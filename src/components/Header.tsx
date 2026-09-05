@@ -22,6 +22,8 @@ import {
   Database,
   Watch,
   Users,
+  Menu,
+  X,
 } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics";
 import { useMarketStore } from "../stores/marketStore";
@@ -70,6 +72,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { marketDataUpdatedAt, marketDataIsStale } = useMarketStore();
   const [timeStr, setTimeStr] = useState("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const dataStale = marketDataIsStale || isDataStale(marketDataUpdatedAt);
   const dataAge = getDataAgeText(marketDataUpdatedAt);
@@ -128,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Main Brand & Actions Header */}
-      <div className="px-4 py-2 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar relative">
+      <div className="px-3 sm:px-4 py-2 flex items-center justify-between gap-2 relative">
         {/* Brand Logo */}
         <div
           className="flex items-center gap-2.5 shrink-0 group cursor-pointer"
@@ -155,8 +158,27 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Action Toolbar with Blocky Alien Buttons */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* Mobile Hamburger Button (< 640px) */}
+        <div className="flex sm:hidden items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("selection");
+              setIsMobileMenuOpen((prev) => !prev);
+            }}
+            className="p-2 bg-neutral-900 border border-cyan-400/60 alien-block-cut-sm text-cyan-300 hover:bg-cyan-950/40 transition-all active:scale-95 flex items-center justify-center cursor-pointer shadow-sm glow-cyan"
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open navigation menu"}
+          >
+            {isMobileMenuOpen ? (
+              <X className="w-5 h-5 text-cyan-400" />
+            ) : (
+              <Menu className="w-5 h-5 text-cyan-400" />
+            )}
+          </button>
+        </div>
+
+        {/* Desktop Action Toolbar (>= 640px) */}
+        <div className="hidden sm:flex items-center gap-1.5 shrink-0 overflow-x-auto no-scrollbar">
           <button
             onClick={() => {
               triggerHaptic("selection");
@@ -296,6 +318,171 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Mobile Overflow Menu (< 640px) */}
+      {isMobileMenuOpen && (
+        <div className="sm:hidden bg-[#020b17]/98 border-t border-cyan-500/40 p-3 shadow-2xl space-y-2 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="text-[10px] font-martian text-cyan-400 uppercase tracking-widest px-1 pb-1 border-b border-cyan-500/20 flex items-center justify-between">
+            <span>COMMAND & NAVIGATION MATRIX</span>
+            <span className="text-cyan-600">// MOBILE</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsMobileMenuOpen(false);
+                if (onOpenAiAssistant) onOpenAiAssistant();
+              }}
+              className="p-2.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-200 border border-cyan-400/60 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-cyan-950/40"
+            >
+              <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
+              <span>COPILOT CHAT</span>
+            </button>
+
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsMobileMenuOpen(false);
+                if (onSelectTab) onSelectTab("web3_dot_btc");
+              }}
+              className="p-2.5 bg-neutral-900 text-cyan-200 border border-cyan-400/50 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-neutral-800"
+            >
+              <ShieldCheck className="w-4 h-4 text-orange-400" />
+              <span>WEB3 (DOT/BTC)</span>
+            </button>
+
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsMobileMenuOpen(false);
+                if (onSelectTab) onSelectTab("community");
+              }}
+              className="p-2.5 bg-neutral-900 text-cyan-300 border border-cyan-400/60 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-neutral-800"
+            >
+              <Users className="w-4 h-4 text-cyan-400" />
+              <span>COMMUNITY</span>
+            </button>
+
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsMobileMenuOpen(false);
+                if (onSelectTab) onSelectTab("my_bloc");
+              }}
+              className="p-2.5 bg-neutral-900 text-amber-300 border border-amber-500/40 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-neutral-800"
+            >
+              <UserCheck className="w-4 h-4 text-amber-400" />
+              <span>MY BLOC</span>
+            </button>
+
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsMobileMenuOpen(false);
+                if (onSelectTab) onSelectTab("pricing");
+              }}
+              className="p-2.5 bg-purple-500/20 text-purple-300 border border-purple-400/50 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-purple-950/40"
+            >
+              <BookOpen className="w-4 h-4 text-purple-400" />
+              <span>BOOKS & STORE</span>
+            </button>
+
+            {onOpenBloombergTerminal && (
+              <button
+                onClick={() => {
+                  triggerHaptic("selection");
+                  setIsMobileMenuOpen(false);
+                  onOpenBloombergTerminal();
+                }}
+                className="p-2.5 bg-amber-400 text-black border border-amber-300 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-amber-300"
+              >
+                <Terminal className="w-4 h-4 text-black" />
+                <span>TERMINAL</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsMobileMenuOpen(false);
+                if (onSelectTab) onSelectTab("youtube");
+              }}
+              className="p-2.5 bg-red-600/20 text-red-300 border border-red-500/50 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-red-950/40"
+            >
+              <Youtube className="w-4 h-4 text-red-400" />
+              <span>YOUTUBE</span>
+            </button>
+
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsMobileMenuOpen(false);
+                if (onSelectTab) onSelectTab("apple_watch");
+              }}
+              className="p-2.5 bg-neutral-900 text-emerald-300 border border-emerald-500/40 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-neutral-800"
+            >
+              <Watch className="w-4 h-4 text-emerald-400" />
+              <span>WATCH MODE</span>
+            </button>
+
+            <button
+              onClick={() => {
+                triggerHaptic("light");
+                setIsMobileMenuOpen(false);
+                onOpenSearch();
+              }}
+              className="p-2.5 bg-neutral-900 text-cyan-300 border border-cyan-500/40 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-neutral-800"
+            >
+              <Search className="w-4 h-4 text-cyan-400" />
+              <span>SEARCH</span>
+            </button>
+
+            <button
+              onClick={() => {
+                triggerHaptic("light");
+                setIsMobileMenuOpen(false);
+                onOpenShare();
+              }}
+              className="p-2.5 bg-neutral-900 text-cyan-300 border border-cyan-500/40 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-neutral-800"
+            >
+              <Share2 className="w-4 h-4 text-cyan-400" />
+              <span>SHARE</span>
+            </button>
+          </div>
+
+          {onOpenMissionHub && (
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsMobileMenuOpen(false);
+                onOpenMissionHub();
+              }}
+              className="w-full p-2.5 bg-neutral-900 text-cyan-300 border border-cyan-400/40 alien-block-cut-sm text-xs font-mono font-bold flex items-center justify-center gap-2 cursor-pointer hover:bg-neutral-800"
+            >
+              <Zap className="w-4 h-4 text-amber-400" />
+              <span>OPEN MISSION HUB & SPECS</span>
+            </button>
+          )}
+
+          {onToggleDayMode && (
+            <button
+              onClick={() => {
+                triggerHaptic("medium");
+                onToggleDayMode();
+              }}
+              className={`w-full p-2 border alien-block-cut-sm text-xs font-mono font-bold flex items-center justify-center gap-2 cursor-pointer ${
+                isDayMode
+                  ? "bg-slate-200 text-slate-800 border-slate-400"
+                  : "bg-neutral-900 text-slate-300 border-slate-500/40"
+              }`}
+            >
+              <Contrast className="w-4 h-4" />
+              <span>TOGGLE THEME ({isDayMode ? "DAY MODE" : "DARK MODE"})</span>
+            </button>
+          )}
+        </div>
+      )}
     </header>
   );
 };

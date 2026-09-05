@@ -25,12 +25,14 @@ interface FloatingCommunityButtonProps {
   onSelectTab?: (tab: ViewTab) => void;
   onOpenUpgradesModal?: () => void;
   onOpenAuth?: () => void;
+  activeTab?: ViewTab;
 }
 
 export const FloatingCommunityButton: React.FC<FloatingCommunityButtonProps> = ({
   onSelectTab,
   onOpenUpgradesModal,
-  onOpenAuth
+  onOpenAuth,
+  activeTab,
 }) => {
   const { user } = useAuth();
   const [isVisible, setIsVisible] = useState(false);
@@ -38,6 +40,19 @@ export const FloatingCommunityButton: React.FC<FloatingCommunityButtonProps> = (
   const [isDismissed, setIsDismissed] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isUpgradesModalOpen, setIsUpgradesModalOpen] = useState(false);
+
+  // Check if current route is pricing, store, or agents
+  const isHiddenRoute =
+    activeTab === "pricing" ||
+    activeTab === "agents" ||
+    activeTab === "agent_feed" ||
+    (typeof window !== "undefined" &&
+      (window.location.pathname.includes("/pricing") ||
+        window.location.pathname.includes("/store") ||
+        window.location.pathname.includes("/agents") ||
+        window.location.search.includes("tab=pricing") ||
+        window.location.search.includes("tab=store") ||
+        window.location.search.includes("tab=agents")));
 
   useEffect(() => {
     try {
@@ -129,7 +144,7 @@ export const FloatingCommunityButton: React.FC<FloatingCommunityButtonProps> = (
     }
   };
 
-  if (isDismissed || !isVisible) return null;
+  if (isDismissed || !isVisible || isHiddenRoute) return null;
 
   return (
     <>

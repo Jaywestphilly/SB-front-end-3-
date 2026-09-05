@@ -18,7 +18,6 @@ import {
 import { triggerHaptic } from "../utils/haptics";
 import { StoreProduct, ViewTab } from "../types";
 import { StripeCheckoutModal, CheckoutItem } from "./StripeCheckoutModal";
-import { NotFinancialAdviceTag } from "./NotFinancialAdviceTag";
 
 interface Props {
   onSelectTab?: (tab: ViewTab) => void;
@@ -209,7 +208,7 @@ export const ProductStorePricing: React.FC<Props> = ({
   ];
 
   return (
-    <div className="space-y-10 pb-12 font-mono">
+    <div className="space-y-10 pb-28 sm:pb-20 font-mono">
       {/* Top Banner Header */}
       <div className="bg-[#020a16] border-2 border-emerald-500/50 alien-block-cut p-6 sm:p-8 shadow-2xl relative overflow-hidden">
         <div className="hud-corner-tl border-emerald-400" />
@@ -224,7 +223,6 @@ export const ProductStorePricing: React.FC<Props> = ({
               <span className="text-[10px] font-bold text-cyan-300 uppercase tracking-widest bg-cyan-950/60 border border-cyan-500/40 px-2.5 py-1 rounded alien-block-cut-sm">
                 Stripe Payments Live
               </span>
-              <NotFinancialAdviceTag />
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black font-tech text-white uppercase tracking-wide">
