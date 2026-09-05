@@ -28,8 +28,8 @@ export async function getStockBlocMarketData(): Promise<StockBlocMarketData> {
     updated_at: new Date().toISOString(),
     tickers: [
       { symbol: "SPCX", name: "Space Exploration Technologies Corp (Private Tender)", price: 112.00, change_pct: 1.25, status: "Tender Ref" },
-      { symbol: "BTC", name: "Bitcoin", price: 64250.00, change_pct: 1.45, status: "Active" },
-      { symbol: "DOT", name: "Polkadot", price: 6.85, change_pct: 0.82, status: "Active" }
+      { symbol: "BTC", name: "Bitcoin", price: 79800.00, change_pct: 3.12, status: "Active" },
+      { symbol: "DOT", name: "Polkadot", price: 0.92, change_pct: 5.74, status: "Active" }
     ],
     news: [
       {

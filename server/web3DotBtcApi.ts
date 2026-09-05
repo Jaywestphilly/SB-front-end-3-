@@ -110,7 +110,7 @@ function buildDailyAlphaProof(): AlphaPredictionProof {
     const stock = INITIAL_STOCKS.find((s) => s.symbol.toUpperCase() === sym) || {
       symbol: sym,
       name: sym === "DOT-USD" ? "Polkadot Native Staking" : sym === "BTC-USD" ? "Bitcoin Sovereign Benchmark" : sym,
-      price: sym === "BTC-USD" ? 73800 : sym === "DOT-USD" ? 7.85 : 150,
+      price: sym === "BTC-USD" ? 79800 : sym === "DOT-USD" ? 0.92 : 150,
       changePercent: 2.5,
       sparkline: [100, 105, 108],
     };
@@ -202,7 +202,7 @@ const BTC_DOT_VAULTS: NonCustodialVault[] = [
     strategy: "Automated macro swing arbitrage utilizing StockBloc SB-88 algorithmic trend breakouts, sub-second funding rate rebalancing, and on-chain BTC settlement.",
     chain: "Bitcoin (Rootstock/RGB/Lightning)",
     contractAddress: "bc1q9v8t3z7k840wly04764mrl2yq3dxz4x4z0y9tq",
-    totalValueLocked: "142.85 BTC (~$10.54M USD)",
+    totalValueLocked: "142.85 BTC (~$11.40M USD)",
     apy30d: "+34.6% APY",
     sharpeRatio: 2.84,
     maxDrawdown: "-4.2%",
@@ -223,7 +223,7 @@ const BTC_DOT_VAULTS: NonCustodialVault[] = [
     strategy: "Algorithmic yield and momentum execution on Substrate JAM state, staking reward auto-compounding, and cross-consensus XCM liquidity rebalancing across Polkadot parachains.",
     chain: "Polkadot (Asset Hub / JAM)",
     contractAddress: "13UVJyLnbVp9RBZYFwFG8EHFi5aHeC6WzGg5rU7z2Uf7VzQ4",
-    totalValueLocked: "485,200 DOT (~$3.81M USD)",
+    totalValueLocked: "485,200 DOT (~$446.4K USD)",
     apy30d: "+28.2% APY",
     sharpeRatio: 2.41,
     maxDrawdown: "-6.1%",

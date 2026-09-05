@@ -12679,21 +12679,21 @@ export const INITIAL_STOCKS: StockTicker[] = [
   {
     "symbol": "BTC-USD",
     "name": "Bitcoin Benchmark",
-    "price": 64250,
-    "change": 1450,
-    "changePercent": 2.31,
+    "price": 79800,
+    "change": 2420,
+    "changePercent": 3.13,
     "category": "indexes",
     "theme": "orange",
     "cardColor": "orange",
     "color": "orange",
     "sparkline": [
-      60288,
-      61544,
-      60916,
-      63428,
-      64056,
-      63607.5,
-      64250
+      76500,
+      77200,
+      78400,
+      77900,
+      78900,
+      79200,
+      79800
     ],
     "history": {
       "1D": [
@@ -12862,21 +12862,21 @@ export const INITIAL_STOCKS: StockTicker[] = [
   {
     "symbol": "DOT-USD",
     "name": "Polkadot Multi-Chain Protocol",
-    "price": 0.82,
-    "change": 0.03,
-    "changePercent": 3.80,
+    "price": 0.92,
+    "change": 0.05,
+    "changePercent": 5.74,
     "category": "indexes",
     "theme": "purple",
     "cardColor": "purple",
     "color": "purple",
     "sparkline": [
-      0.78,
-      0.79,
-      0.77,
-      0.80,
-      0.81,
-      0.79,
-      0.82
+      0.86,
+      0.88,
+      0.87,
+      0.89,
+      0.90,
+      0.91,
+      0.92
     ],
     "history": {
       "1D": [

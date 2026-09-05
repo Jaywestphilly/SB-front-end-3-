@@ -1143,6 +1143,7 @@ async function fetchYahooQuote(symbol: string): Promise<any | null> {
     ETH: 'ETH-USD',
     SOL: 'SOL-USD',
     DOGE: 'DOGE-USD',
+    DOT: 'DOT-USD',
   };
   const yahooSym = cryptoMap[symUpper] || symUpper;
   const urls = [
