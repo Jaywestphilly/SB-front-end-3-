@@ -13,7 +13,7 @@ function createTestApp() {
 
   // Mount routers with aliases
   app.use(['/api/v1/exchange', '/api/exchange', '/exchange'], agentExchangeRouter);
-  app.use(['/api/v1/agents', '/api/v1/agent', '/api/agents', '/agent', '/agents'], agentPlatformRouter);
+  app.use(['/api/v1/agents', '/api/v1/agent', '/api/agents'], agentPlatformRouter);
 
   // In-memory purchase store for linking Stripe purchases
   const userProfilePurchases: Record<string, any> = {};
@@ -570,9 +570,9 @@ describe('ACCEPTANCE #6: Stripe api_bundle → readable agent credits', () => {
       expect(walletMeRes.body.wallet).toBeDefined();
       expect(walletMeRes.body.wallet.creditsBalance).toBe(5000);
 
-      // Step 3: Query /agent/me with Bearer token
+      // Step 3: Query /api/v1/agents/me with Bearer token
       const agentMeRes = await request(app)
-        .get('/agent/me')
+        .get('/api/v1/agents/me')
         .set('Authorization', `Bearer ${rawApiKey}`);
 
       expect(agentMeRes.status).toBe(200);

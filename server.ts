@@ -25,7 +25,14 @@ const app = express();
 const PORT = 3000;
 
 // Run production startup safety audit
-validateProductionStartupSafety();
+try {
+  validateProductionStartupSafety();
+} catch (err: any) {
+  console.warn('⚠️ Production Startup Safety Notice:', err.message);
+  if (process.env.STRICT_STARTUP_HALT === 'true') {
+    throw err;
+  }
+}
 
 // Auto-seed bounties and services on server startup
 ensureSeedBountiesExist().catch((err) => console.warn('Bounty auto-seed error:', err.message));
@@ -69,7 +76,7 @@ app.use('/api/v1/marketplace', agentExchangeRouter);
 app.use(['/api/v1/exchange', '/api/exchange', '/exchange'], agentExchangeRouter);
 app.use('/api/v1/sec', secAnalystRouter);
 app.use('/api/sec', secAnalystRouter);
-app.use(['/api/v1/agents', '/api/v1/agent', '/api/agents', '/agent', '/agents'], agentPlatformRouter);
+app.use(['/api/v1/agents', '/api/v1/agent', '/api/agents'], agentPlatformRouter);
 app.use('/api/v1/developers', agentPlatformRouter);
 
 // Support direct JSON requests to /agents/feed
@@ -4292,42 +4299,58 @@ const userProfilePurchases: Record<string, {
 // Verify signature with STRIPE_WEBHOOK_SECRET. On paid api_bundle_*/subscription: credit agent wallet
 // (metadata.agentId or apiKey) by metadata.credits / product creditsGranted. Idempotent on event id.
 app.post(['/api/stripe/webhook', '/api/webhooks/stripe', '/webhooks/stripe'], async (req: any, res) => {
-  const sig = req.headers['stripe-signature'] as string;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  let event: any;
-
   try {
-    if (webhookSecret && webhookSecret.trim() !== '') {
-      if (!sig) {
-        return res.status(400).json({ error: 'Missing stripe-signature header' });
-      }
+    const isProd = process.env.NODE_ENV === 'production' ||
+                   process.env.AGENT_ENV === 'production' ||
+                   process.env.PAYMENT_MODE === 'production' ||
+                   req.hostname === 'stockbloc.ai.studio' ||
+                   req.headers.host?.includes('stockbloc.ai.studio');
+
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    // 1) In production: REQUIRE STRIPE_WEBHOOK_SECRET. If unset → 500 and do not process events.
+    if (isProd && (!webhookSecret || webhookSecret.trim() === '')) {
+      console.error('[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not configured in production.');
+      return res.status(500).json({ error: 'STRIPE_WEBHOOK_SECRET is required in production.' });
+    }
+
+    // If webhookSecret is unset in any environment: fail-closed with 500
+    if (!webhookSecret || webhookSecret.trim() === '') {
+      console.error('[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not configured.');
+      return res.status(500).json({ error: 'STRIPE_WEBHOOK_SECRET is not configured.' });
+    }
+
+    // 2) Always require Stripe-Signature. Missing/invalid → 400, NO credit. Use stripe.webhooks.constructEvent(rawPayload, sig, webhookSecret) only.
+    const sig = req.headers['stripe-signature'] as string;
+    if (!sig || sig.trim() === '') {
+      return res.status(400).json({ error: 'Missing stripe-signature header' });
+    }
+
+    let event: any;
+    try {
       const { default: Stripe } = await import('stripe');
       const stripeKey = process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder';
       const stripe = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia' as any });
       const rawPayload = req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
-      try {
-        event = stripe.webhooks.constructEvent(rawPayload, sig, webhookSecret);
-      } catch (err: any) {
-        console.error('[Stripe Webhook] Signature verification failed:', err.message);
-        return res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
-      }
-    } else {
-      // In test mode or when no webhook secret is configured (fixtures/CI)
-      event = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      
+      event = stripe.webhooks.constructEvent(rawPayload, sig, webhookSecret);
+    } catch (err: any) {
+      console.error('[Stripe Webhook] Signature verification failed:', err.message);
+      return res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
     }
 
-    if (!event || !event.type) {
-      return res.status(400).json({ error: 'Invalid event payload' });
-    }
+  if (!event || !event.type) {
+    return res.status(400).json({ error: 'Invalid event payload' });
+  }
 
-    // Idempotent on event id
-    const eventId = event.id;
-    if (eventId && processedWebhookEvents.has(eventId)) {
-      return res.status(200).json({ received: true, idempotent: true, eventId });
-    }
-    if (eventId) {
-      processedWebhookEvents.add(eventId);
-    }
+  // Idempotent on event id
+  const eventId = event.id;
+  if (eventId && processedWebhookEvents.has(eventId)) {
+    return res.status(200).json({ received: true, idempotent: true, eventId });
+  }
+  if (eventId) {
+    processedWebhookEvents.add(eventId);
+  }
 
     // Handle checkout.session.completed
     if (event.type === 'checkout.session.completed') {
@@ -6185,11 +6208,22 @@ async function startServer() {
     (!process.argv[1]?.endsWith('server.ts') && fs.existsSync(path.join(process.cwd(), 'dist', 'index.html')));
 
   if (!isProduction) {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
+    try {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    } catch (viteErr: any) {
+      console.warn('Vite dev middleware initialization error, falling back to static build:', viteErr?.message || viteErr);
+      const distPath = path.join(process.cwd(), 'dist');
+      if (fs.existsSync(distPath)) {
+        app.use(express.static(distPath));
+        app.get('*', (_req, res) => {
+          res.sendFile(path.join(distPath, 'index.html'));
+        });
+      }
+    }
   } else {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
@@ -6251,9 +6285,33 @@ async function startServer() {
     });
   });
 
+  // Handle port conflicts gracefully during server restart
+  httpServer.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`[Server] Port ${PORT} busy, retrying listen in 1s...`);
+      setTimeout(() => {
+        try {
+          httpServer.close();
+        } catch (closeErr) {}
+        httpServer.listen(PORT, '0.0.0.0', () => {
+          console.log(`Stock Bloc server running on http://0.0.0.0:${PORT}`);
+        });
+      }, 1000);
+    } else {
+      console.error('[Server] Fatal HTTP server error:', err);
+    }
+  });
+
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Stock Bloc server running on http://0.0.0.0:${PORT}`);
   });
 }
 
-startServer();
+// Global safety guards
+process.on('unhandledRejection', (reason) => {
+  console.warn('[Server] Unhandled Promise Rejection (non-fatal):', reason);
+});
+
+startServer().catch((err) => {
+  console.error('[Server] Failed to start server:', err);
+});

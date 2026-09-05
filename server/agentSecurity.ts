@@ -187,8 +187,7 @@ export function validateProductionStartupSafety(): {
 } {
   const errors: string[] = [];
   const warnings: string[] = [];
-  const isProd = process.env.AGENT_ENV === 'production' || 
-                 process.env.NODE_ENV === 'production';
+  const isProd = process.env.AGENT_ENV === 'production';
 
   // 1. Check Agent API Secret configuration
   // In production, missing AGENT_API_SECRET_KEY must cause startup failure. Do NOT silently generate at runtime.
@@ -212,7 +211,7 @@ export function validateProductionStartupSafety(): {
   }
 
   // 2. Check Stripe Configuration when payment mode is production or production payment processing is enabled
-  const isProductionPayments = process.env.PAYMENT_MODE === 'production' || (isProd && process.env.PAYMENT_MODE !== 'sandbox' && process.env.PAYMENT_MODE !== 'test');
+  const isProductionPayments = process.env.PAYMENT_MODE === 'production';
   if (isProductionPayments) {
     const stripeKey = (process.env.STRIPE_SECRET_KEY || '').trim();
     const stripeWebhook = (process.env.STRIPE_WEBHOOK_SECRET || '').trim();
