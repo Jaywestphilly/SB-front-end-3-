@@ -31,6 +31,7 @@ interface BottomNavProps {
   onSelectTab: (tab: ViewTab) => void;
   onOpenTerminal?: () => void;
   isTerminalOpen?: boolean;
+  demoted?: boolean;
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({
@@ -38,6 +39,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   onSelectTab,
   onOpenTerminal,
   isTerminalOpen = false,
+  demoted = false,
 }) => {
   const [activeSheet, setActiveSheet] = useState<
     "markets" | "ai" | "education" | null
@@ -71,7 +73,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       {/* 5 Core Streamlined Floating Bottom Navigation Bar */}
       <nav
         aria-label="Mobile Bottom Navigation"
-        className="fixed bottom-2 left-1/2 -translate-x-1/2 z-40 w-[98%] max-w-xl font-mono select-none"
+        className={
+          demoted
+            ? "fixed bottom-2 left-1/2 -translate-x-1/2 z-20 w-[98%] max-w-xl font-mono select-none md:hidden opacity-90 hover:opacity-100 transition-all"
+            : "fixed bottom-2 left-1/2 -translate-x-1/2 z-40 w-[98%] max-w-xl font-mono select-none"
+        }
       >
         <div className="bg-[#020b14]/95 backdrop-blur-2xl border-2 border-cyan-500/50 alien-block-cut p-1.5 shadow-2xl shadow-cyan-500/20 grid grid-cols-6 gap-1 relative">
           {/* Corner Ticks */}

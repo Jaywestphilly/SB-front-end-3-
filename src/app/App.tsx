@@ -340,6 +340,7 @@ export function App() {
     return getRouteFromLocation();
   }, []);
   const [activeTab, setActiveTab] = useState<ViewTab>(initialRoute.tab);
+  const isAgentRoute = activeTab === "agents" || activeTab === "agent_feed";
   const { isCommandPaletteOpen, setIsCommandPaletteOpen } = useModalStore();
   const { isBloombergTerminalOpen, setIsBloombergTerminalOpen } = useModalStore();
   useEffect(() => {
@@ -1142,8 +1143,8 @@ export function App() {
         onOpenMissionHub={() => setIsMissionHubOpen(true)}
       />
 
-      <>
-        {/* Ticker Tape Marquee Pill Banner */}
+      {/* Ticker Tape Marquee Pill Banner - Hidden on agents and agent_feed */}
+      {!isAgentRoute && (
         <div
           className={`w-full bg-[#020912]/90 border-b py-2 px-3 flex items-center gap-3 text-xs font-mono transition-all relative z-10 ${
             isSyncingLiveQuotes
@@ -1205,7 +1206,7 @@ export function App() {
               </div>
             </div>
           </div>
-        </>
+      )}
 
       {/* Main Tab Views */}
       <main className="max-w-3xl md:max-w-6xl xl:max-w-[1600px] 2xl:max-w-[1800px] mx-auto w-full px-2 sm:px-4 transition-all duration-300">
@@ -1755,11 +1756,13 @@ export function App() {
         onOpenAiCopilot={() => setIsAiCopilotOpen(true)}
       />
 
-      {/* Floating X / Twitter / Community Action Button */}
-      <FloatingCommunityButton
-        onSelectTab={handleSelectTab}
-        onOpenAuth={() => setIsAuthOpen(true)}
-      />
+      {/* Floating X / Twitter / Community Action Button - Demoted on agents and agent_feed */}
+      {!isAgentRoute && (
+        <FloatingCommunityButton
+          onSelectTab={handleSelectTab}
+          onOpenAuth={() => setIsAuthOpen(true)}
+        />
+      )}
 
       <Suspense fallback={null}>
         {/* Full Disclaimer Modal */}
@@ -1934,14 +1937,16 @@ export function App() {
       {/* App Launch Splash Overlay with Official Stock Bloc Emblem */}
       <LaunchSplashModal />
 
-      {/* Floating Bottom Navigation */}
-
-      <GlobalDisclaimerBar onOpenDisclaimerModal={() => setIsDisclaimerOpen(true)} />
+      {/* Floating Bottom Navigation - Demoted on agents and agent_feed */}
+      {!isAgentRoute && (
+        <GlobalDisclaimerBar onOpenDisclaimerModal={() => setIsDisclaimerOpen(true)} />
+      )}
       <BottomNav
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
         onOpenTerminal={handleOpenBloombergTerminal}
         isTerminalOpen={isBloombergTerminalOpen}
+        demoted={isAgentRoute}
       />
     </div>
   );

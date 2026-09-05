@@ -30,7 +30,28 @@ export const AgentFeed: React.FC<AgentFeedProps> = ({ onNavigateTab }) => {
       const res = await fetch("/api/v1/agents/feed?limit=40");
       if (res.ok) {
         const data = await res.json();
-        setFeedItems(data.items || []);
+        const rawItems: any[] = data.items || [];
+        // Dedupe by author|symbol|target; prefer trade_idea_* over leaderboard_trade_*
+        const dedupeMap = new Map<string, any>();
+        rawItems.forEach((item) => {
+          const author = (item.author?.handle || item.authorUsername || item.authorId || item.authorName || "").toLowerCase();
+          const symbol = (item.symbol || item.asset || "").toUpperCase();
+          const target = item.targetPrice !== undefined && item.targetPrice !== null ? String(item.targetPrice) : "";
+          if (author && symbol) {
+            const key = `${author}|${symbol}|${target}`;
+            if (!dedupeMap.has(key)) {
+              dedupeMap.set(key, item);
+            } else {
+              const existing = dedupeMap.get(key);
+              if (String(item.id).startsWith("trade_idea_") && !String(existing.id).startsWith("trade_idea_")) {
+                dedupeMap.set(key, item);
+              }
+            }
+          } else {
+            dedupeMap.set(item.id || Math.random().toString(), item);
+          }
+        });
+        setFeedItems(Array.from(dedupeMap.values()));
       }
     } catch (err) {
       console.error("Failed to load agent feed:", err);

@@ -79,28 +79,32 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
     const fetchAgents = async () => {
       try {
         setLoading(true);
-        // Fetch agents from API endpoint first (which supports computed stats)
-        const res = await fetch("/api/v1/agent/leaderboard");
+        // Fetch /api/v1/agents for Directory (not leaderboard-only)
+        const res = await fetch("/api/v1/agents");
         if (res.ok) {
           const data = await res.json();
-          const list = data.leaderboard || data.agents || [];
-          if (list.length > 0) {
-            setAgents(list.map((a: any) => ({
-              id: a.id,
-              handle: a.handle,
-              displayName: a.agentName || a.displayName || a.handle,
-              description: a.modelType || a.description || "Autonomous quant market intelligence agent.",
-              verificationStatus: a.verifiedStatus === 'VERIFIED SIMULATION' || a.verifiedSimulation ? 'verified' : (a.verificationStatus?.toLowerCase() || 'active'),
-              specialties: a.specialties || (a.badges ? a.badges.map((b: any) => typeof b === 'string' ? b : b.name) : ["Super Sonic Tsunami"]),
-              metrics: {
-                winRatePercent: a.winRatePercent || a.winRate,
-                monthlyAlphaPercent: a.monthlyAlphaPercent || a.monthlyAlpha,
-                sharpeRatio: a.sharpeRatio,
-                badges: a.badges
-              },
-              followersCount: Math.floor(250 + (a.monthlyAlphaPercent || 20) * 18),
-              avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${a.handle || a.id}`
-            })));
+          const list = data.agents || [];
+          if (Array.isArray(list) && list.length > 0) {
+            setAgents(list.map((a: any) => {
+              const isVerified = a.verificationStatus === 'verified_agent' || a.verificationStatus === 'verified' || a.verifiedStatus === 'VERIFIED SIMULATION' || a.verifiedSimulation;
+              return {
+                id: a.id || a.agentId,
+                handle: a.handle,
+                displayName: a.displayName || a.agentName || a.handle,
+                description: a.description || a.modelType || "Autonomous quant market intelligence agent.",
+                verificationStatus: isVerified ? 'verified_agent' : 'arena_candidate',
+                isTestAgent: Boolean(a.isTestAgent),
+                specialties: a.specialties || (a.badges ? a.badges.map((b: any) => typeof b === 'string' ? b : b.name) : ["Super Sonic Tsunami"]),
+                metrics: {
+                  winRatePercent: a.metrics?.winRatePercent ?? a.metrics?.winRate ?? a.winRatePercent ?? a.winRate ?? null,
+                  monthlyAlphaPercent: a.metrics?.monthlyAlphaPercent ?? a.metrics?.monthlyAlpha ?? a.monthlyAlphaPercent ?? a.monthlyAlpha ?? null,
+                  sharpeRatio: a.metrics?.sharpeRatio ?? a.sharpeRatio ?? null,
+                  badges: a.badges || a.metrics?.badges || []
+                },
+                followersCount: a.followersCount || 0,
+                avatar: a.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${a.handle || a.id}`
+              };
+            }));
             setLoading(false);
             return;
           }
@@ -158,8 +162,43 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
   };
 
   const filteredAgents = agents.filter(a => {
+    // 1. Drop test agents and probe handles
+    if (a.isTestAgent) return false;
+
+    const handle = (a.handle || "").toLowerCase();
+    if (
+      handle.startsWith("tictac_") ||
+      handle.startsWith("trb_verify_") ||
+      handle.startsWith("test_") ||
+      handle.startsWith("probe_") ||
+      handle.includes("tictac_") ||
+      handle.includes("trb_verify_") ||
+      handle.includes("test_") ||
+      handle.includes("probe_") ||
+      handle.includes("ephemeral") ||
+      handle.includes("probe")
+    ) {
+      return false;
+    }
+
+    // Drop ephemeral/probe/QA descriptions
+    const desc = (a.description || "").toLowerCase();
+    const name = (a.displayName || a.agentName || "").toLowerCase();
+    const probeKeywords = [
+      "probe",
+      "ephemeral",
+      "qa",
+      "test agent",
+      "verification test",
+      "automated test",
+      "synthetic probe"
+    ];
+    if (probeKeywords.some(keyword => desc.includes(keyword) || name.includes(keyword))) {
+      return false;
+    }
+
     // Status filter
-    if (filter === "verified" && a.verificationStatus !== "verified") return false;
+    if (filter === "verified" && a.verificationStatus !== "verified_agent" && a.verificationStatus !== "verified") return false;
     if (filter === "active" && a.status !== "active") return false;
     if (filter === "emerging") {
       const resolved = (a.metrics?.resolvedForecastsCount || 0);
@@ -185,8 +224,10 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
     
     return true;
   }).sort((a, b) => {
-    if (a.verificationStatus === 'verified' && b.verificationStatus !== 'verified') return -1;
-    if (a.verificationStatus !== 'verified' && b.verificationStatus === 'verified') return 1;
+    const aVer = a.verificationStatus === 'verified_agent' || a.verificationStatus === 'verified';
+    const bVer = b.verificationStatus === 'verified_agent' || b.verificationStatus === 'verified';
+    if (aVer && !bVer) return -1;
+    if (!aVer && bVer) return 1;
     return (b.followersCount || 0) - (a.followersCount || 0);
   });
 
@@ -410,9 +451,13 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
                         <div className="flex items-center gap-1">
                           <AgentBadge size="xs" />
                         </div>
-                        {agent.verificationStatus === 'verified' && (
-                          <VerifiedOperatorBadge username="verified" className="scale-75 origin-right" />
-                        )}
+                        <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded border font-bold ${
+                          agent.verificationStatus === 'verified_agent' || agent.verificationStatus === 'verified'
+                            ? "text-emerald-300 bg-emerald-950/80 border-emerald-500/40"
+                            : "text-cyan-300 bg-cyan-950/80 border-cyan-500/40"
+                        }`}>
+                          {agent.verificationStatus === 'verified_agent' || agent.verificationStatus === 'verified' ? "verified_agent" : "arena_candidate"}
+                        </span>
                       </div>
                     </div>
 
@@ -430,15 +475,27 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
                   <div className="my-2 p-2.5 rounded-lg bg-[#040812] border border-cyan-500/20 grid grid-cols-3 gap-2 text-center font-mono">
                     <div>
                       <span className="text-[10px] text-neutral-400 block">ALPHA</span>
-                      <span className="text-xs font-bold text-cyan-300">+{agent.metrics?.monthlyAlphaPercent || 22}%</span>
+                      <span className="text-xs font-bold text-cyan-300">
+                        {agent.metrics?.monthlyAlphaPercent !== null && agent.metrics?.monthlyAlphaPercent !== undefined && !isNaN(Number(agent.metrics?.monthlyAlphaPercent))
+                          ? `+${agent.metrics?.monthlyAlphaPercent}%`
+                          : "—"}
+                      </span>
                     </div>
                     <div>
                       <span className="text-[10px] text-neutral-400 block">WIN RATE</span>
-                      <span className="text-xs font-bold text-emerald-400">{agent.metrics?.winRatePercent || 78}%</span>
+                      <span className="text-xs font-bold text-emerald-400">
+                        {agent.metrics?.winRatePercent !== null && agent.metrics?.winRatePercent !== undefined && !isNaN(Number(agent.metrics?.winRatePercent))
+                          ? `${agent.metrics?.winRatePercent}%`
+                          : "—"}
+                      </span>
                     </div>
                     <div>
                       <span className="text-[10px] text-neutral-400 block">SHARPE</span>
-                      <span className="text-xs font-bold text-purple-300">{agent.metrics?.sharpeRatio || 2.1}</span>
+                      <span className="text-xs font-bold text-purple-300">
+                        {agent.metrics?.sharpeRatio !== null && agent.metrics?.sharpeRatio !== undefined && !isNaN(Number(agent.metrics?.sharpeRatio))
+                          ? agent.metrics?.sharpeRatio
+                          : "—"}
+                      </span>
                     </div>
                   </div>
 

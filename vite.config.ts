@@ -10,8 +10,10 @@ export default defineConfig(() => {
       alias: {
         '@': path.resolve(__dirname, '.'),
         'src': path.resolve(__dirname, 'src'),
+        'react': path.resolve(__dirname, 'node_modules/react'),
+        'react-dom': path.resolve(__dirname, 'node_modules/react-dom'),
       },
-      dedupe: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime', 'react/jsx-dev-runtime']
+      dedupe: ['react', 'react-dom']
     },
     optimizeDeps: {
       include: [
@@ -28,6 +30,10 @@ export default defineConfig(() => {
         'firebase/app',
         'firebase/auth',
         'firebase/firestore',
+        'react-globe.gl',
+        'react-markdown',
+        'three',
+        'web-vitals',
       ],
       exclude: ['@playwright/test', 'playwright', 'playwright-core'],
     },

@@ -10,7 +10,7 @@ import { createEbookPdf } from './server/pdfGenerator.js';
 import { MarketDataService, computeQuantMetrics, calculateStockBlocSignal } from './src/services/marketDataService.js';
 import { computeDeterministicSignal, getSBScoreColor } from './src/utils/signalCalculator.js';
 import { SecIntelService } from './src/services/secIntelService.js';
-import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit, handleGetLeaderboard, handleGetTradeIdeas, globalActiveTradeIdeas, AgentTradeIdea, addCreditsToAgentWallet, resolveAgentIdFromKey } from './server/agentPlatform.js';
+import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit, handleGetLeaderboard, handleGetTradeIdeas, globalActiveTradeIdeas, AgentTradeIdea, addCreditsToAgentWallet, resolveAgentIdFromKey, handleGetAgentMe } from './server/agentPlatform.js';
 import { recordedStripeSessions, fulfilledStripeSessions, processedWebhookEvents } from './server/stripePaymentProvider.js';
 import { communityApiRouter } from './server/communityApi.js';
 import { agentIntelligenceRouter } from './server/agentIntelligenceApi.js';
@@ -78,6 +78,9 @@ app.use('/api/v1/sec', secAnalystRouter);
 app.use('/api/sec', secAnalystRouter);
 app.use(['/api/v1/agents', '/api/v1/agent', '/api/agents'], agentPlatformRouter);
 app.use('/api/v1/developers', agentPlatformRouter);
+
+// Explicit authenticated endpoint for /agent/me and /agents/me so issued Bearer keys resolve without mount collision
+app.get(['/agent/me', '/agents/me'], authenticateAgent, handleGetAgentMe);
 
 // Support direct JSON requests to /agents/feed
 app.get('/agents/feed', (req, res, next) => {
@@ -4372,6 +4375,21 @@ app.post(['/api/stripe/webhook', '/api/webhooks/stripe', '/webhooks/stripe'], as
         });
       }
 
+      // 1) Session idempotency — before addCreditsToAgentWallet, if fulfilledStripeSessions.has(session.id)
+      // return 200 idempotent with prior agentId/creditsGranted/creditsBalance.
+      // Do NOT add credits again when event.id is new but session.id already fulfilled.
+      if (fulfilledStripeSessions.has(session.id)) {
+        const priorFulfillment = fulfilledStripeSessions.get(session.id)!;
+        return res.status(200).json({
+          received: true,
+          idempotent: true,
+          sessionId: session.id,
+          agentId: priorFulfillment.agentId,
+          creditsGranted: priorFulfillment.creditsGranted,
+          creditsBalance: priorFulfillment.creditsBalance
+        });
+      }
+
       const metadata = session.metadata || {};
       const productId = metadata.productId || '';
       const productType = metadata.productType || '';
@@ -4445,7 +4463,7 @@ app.post(['/api/stripe/webhook', '/api/webhooks/stripe', '/webhooks/stripe'], as
 
 // 19e. Post-Checkout Session Verification & Provisioning Endpoint
 // Must retrieve real Stripe session; reject unpaid/fake ids. Stop fabricating sb_live_* keys and apiCreditsRemaining:3000.
-app.get('/api/checkout/verify-session', async (req, res) => {
+app.get(['/api/checkout/verify-session', '/api/stripe/verify-session'], async (req, res) => {
   const sessionId = req.query.session_id as string;
   if (!sessionId || typeof sessionId !== 'string' || !sessionId.trim()) {
     return res.status(400).json({
@@ -4508,6 +4526,22 @@ app.get('/api/checkout/verify-session', async (req, res) => {
   const userEmail = (req.query.email as string) || metadata.email || session.customer_details?.email || session.customer_email || 'customer@stockbloc.ai';
   const targetAgentId = metadata.agentId || (metadata.apiKey ? resolveAgentIdFromKey(metadata.apiKey) : null) || `agent_${userEmail.toLowerCase().replace(/[^a-z0-9]/gi, '_')}`;
 
+  // Ensure agent exists in inMemoryAgentRegistry
+  if (!inMemoryAgentRegistry.has(targetAgentId)) {
+    const agentRecord = {
+      agentId: targetAgentId,
+      handle: targetAgentId.replace(/^agent_/, ''),
+      displayName: userEmail.split('@')[0] || 'Autonomous Agent',
+      status: 'active' as const,
+      createdAt: new Date().toISOString()
+    };
+    inMemoryAgentRegistry.set(targetAgentId, agentRecord);
+    try {
+      await db.collection('users').doc(targetAgentId).set(agentRecord, { merge: true });
+      await db.collection('agents').doc(targetAgentId).set(agentRecord, { merge: true });
+    } catch (_) {}
+  }
+
   // Check if fulfillment was already done (e.g. by webhook or previous verify call)
   let fulfillment = fulfilledStripeSessions.get(sessionId);
   if (!fulfillment) {
@@ -4550,7 +4584,19 @@ app.get('/api/checkout/verify-session', async (req, res) => {
   }
 
   // Get current real wallet balance
-  const liveWallet = inMemoryWalletRegistry.get(targetAgentId);
+  let liveWallet = inMemoryWalletRegistry.get(targetAgentId);
+  if (!liveWallet) {
+    liveWallet = {
+      agentId: targetAgentId,
+      creditsBalance: fulfillment.creditsBalance,
+      availableBalance: fulfillment.creditsBalance,
+      lifetimeSpent: 0,
+      lifetimeGrossEarnings: 0,
+      simulationRuns: 0,
+      updatedAt: new Date().toISOString()
+    };
+    inMemoryWalletRegistry.set(targetAgentId, liveWallet);
+  }
   const creditsBalance = liveWallet ? liveWallet.creditsBalance : fulfillment.creditsBalance;
 
   // Real items based on product or standard items
@@ -4593,15 +4639,16 @@ app.get('/api/checkout/verify-session', async (req, res) => {
     const publicId = crypto.randomBytes(6).toString('hex');
     const secret = crypto.randomBytes(12).toString('hex');
     activeApiKey = `sb_live_${publicId}_${secret}`;
-    const keyHash = crypto.createHash('sha256').update(activeApiKey).digest('hex');
+    const secretHash = crypto.createHash('sha256').update(secret).digest('hex');
 
     const keyRecord = {
       keyId: publicId,
       agentId: targetAgentId,
+      handle: targetAgentId.replace(/^agent_/, ''),
       ownerUid: 'stripe_customer',
       keyPrefix: `sb_live_${publicId}`,
-      keyHash,
-      secretHash: keyHash,
+      keyHash: secretHash,
+      secretHash: secretHash,
       scopes: ['services:read', 'services:write', 'jobs:read', 'jobs:execute', 'requests:read', 'requests:write', 'payments:transact'] as any,
       createdAt: new Date().toISOString(),
       lastUsedAt: null,
@@ -4612,6 +4659,10 @@ app.get('/api/checkout/verify-session', async (req, res) => {
 
     inMemoryKeyRegistry.set(publicId, keyRecord);
     inMemoryKeyRegistry.set(activeApiKey, keyRecord);
+    try {
+      await db.collection('api_keys').doc(publicId).set(keyRecord, { merge: true });
+      await db.collection('agent_api_keys').doc(publicId).set(keyRecord, { merge: true });
+    } catch (_) {}
   }
 
   // Auto-link purchase to user profile
@@ -5025,7 +5076,7 @@ Allow: /
 });
 
 // 22. Community & Arena Leaderboard REST API Endpoint: /api/v1/agent/leaderboard
-app.get(['/api/v1/agent/leaderboard', '/api/v1/agents/leaderboard'], handleGetLeaderboard);
+app.get(['/api/v1/agent/leaderboard', '/api/v1/agents/leaderboard', '/api/v1/leaderboards'], handleGetLeaderboard);
 
 // 22b. Live X.com Feed Endpoint for @thestockbloc and Financial Market News
 let cachedXFeedData: any = null;

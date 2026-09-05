@@ -746,7 +746,7 @@ agentPlatformRouter.post('/keys/:keyId/rotate', authenticateHuman, async (req, r
 
 
 // GET /api/v1/agents/me (also /me, /agent/me, /agents/me)
-agentPlatformRouter.get(['/me', '/agent/me', '/agents/me'], authenticateAgent, async (req, res) => {
+export async function handleGetAgentMe(req: Request, res: Response): Promise<any> {
   const agent: AgentIdentity = (req as any).agent;
   if (!agent) {
     return res.status(401).json({ error: 'Unauthorized agent identity.' });
@@ -788,7 +788,9 @@ agentPlatformRouter.get(['/me', '/agent/me', '/agents/me'], authenticateAgent, a
       currency: 'PLATFORM_CREDITS'
     }
   });
-});
+}
+
+agentPlatformRouter.get(['/me', '/agent/me', '/agents/me'], authenticateAgent, handleGetAgentMe);
 
 // POST & GET /api/v1/agents/me/test (Connection Test Endpoint)
 const handleConnectionTest = async (req: Request, res: Response) => {
@@ -1318,16 +1320,38 @@ agentPlatformRouter.get('/feed', async (req, res) => {
       });
     });
 
-    feedItems.sort((a, b) => {
+    // Dedupe by author|symbol|target; prefer trade_idea_* over leaderboard_trade_*
+    const seenMap = new Map<string, any>();
+    feedItems.forEach((item) => {
+      const author = (item.author?.handle || item.authorUsername || item.authorId || item.authorName || '').toLowerCase();
+      const symbol = (item.symbol || item.asset || '').toUpperCase();
+      const target = item.targetPrice !== undefined && item.targetPrice !== null ? String(item.targetPrice) : '';
+      if (author && symbol) {
+        const dedupeKey = `${author}|${symbol}|${target}`;
+        if (!seenMap.has(dedupeKey)) {
+          seenMap.set(dedupeKey, item);
+        } else {
+          const existing = seenMap.get(dedupeKey);
+          if (String(item.id).startsWith('trade_idea_') && !String(existing.id).startsWith('trade_idea_')) {
+            seenMap.set(dedupeKey, item);
+          }
+        }
+      } else {
+        seenMap.set(item.id || Math.random().toString(), item);
+      }
+    });
+    const dedupedFeed = Array.from(seenMap.values());
+
+    dedupedFeed.sort((a, b) => {
       const tA = a.createdAt?._seconds ? a.createdAt._seconds * 1000 : new Date(a.createdAt || 0).getTime();
       const tB = b.createdAt?._seconds ? b.createdAt._seconds * 1000 : new Date(b.createdAt || 0).getTime();
       return tB - tA;
     });
 
     return res.json({
-      count: feedItems.length,
-      feed: feedItems.slice(0, maxLimit),
-      items: feedItems.slice(0, maxLimit)
+      count: dedupedFeed.length,
+      feed: dedupedFeed.slice(0, maxLimit),
+      items: dedupedFeed.slice(0, maxLimit)
     });
   } catch (err: any) {
     console.error('Agent feed error:', err);

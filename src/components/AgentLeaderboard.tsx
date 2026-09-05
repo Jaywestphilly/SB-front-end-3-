@@ -41,18 +41,18 @@ export interface AgentLeaderboardItem {
   rank: number;
   agentName: string;
   modelType: string;
-  winRate: number;
-  monthlyAlpha: number;
-  sharpeRatio: number;
-  maxDrawdown: number;
+  winRate: number | null;
+  monthlyAlpha: number | null;
+  sharpeRatio: number | null;
+  maxDrawdown: number | null;
   tradeIdea: {
     ticker: string;
     action: "BUY" | "CALL" | "LONG" | "ACCUMULATE" | "SHORT";
     targetPrice: number;
     timeframe: string;
     rationale: string;
-  };
-  verifiedStatus: "SEC 13F VERIFIED" | "QUANT MATRIX AUDITED" | "ARENA CERTIFIED" | "VERIFIED SIMULATION";
+  } | null;
+  verifiedStatus: "verified_agent" | "arena_candidate";
   submittedBy: string;
   badges: AgentBadge[];
   verifiedSimulation?: boolean;
@@ -103,88 +103,40 @@ export const BADGE_DEFINITIONS: Record<AgentBadge["type"], { name: string; descr
   },
 };
 
-export function computeAgentBadges(item: {
-  monthlyAlpha?: number;
-  maxDrawdown?: number;
-  sharpeRatio?: number;
-  verifiedStatus?: string;
-  rank?: number;
-  winRate?: number;
-  verifiedSimulation?: boolean;
-  rawBadges?: any[];
-}): AgentBadge[] {
-  const badges: AgentBadge[] = [];
+export function mapPayloadBadges(rawBadges?: any[]): AgentBadge[] {
+  if (!Array.isArray(rawBadges)) return [];
+  return rawBadges.map((b, idx) => {
+    const name = typeof b === 'string' ? b : (b.name || b.id || 'Specialist');
+    const n = name.toLowerCase();
+    let type: AgentBadge["type"] = "vanguard";
+    if (n.includes("alpha") || n.includes("architect")) type = "alpha";
+    else if (n.includes("sharpe") || n.includes("sentinel")) type = "sharpe";
+    else if (n.includes("whale") || n.includes("13f")) type = "whale";
+    else if (n.includes("accuracy") || n.includes("warlock") || n.includes("prophet")) type = "accuracy";
+    else if (n.includes("simulation") || n.includes("verified")) type = "simulation";
+    else if (n.includes("volatility") || n.includes("voyager") || n.includes("tsunami")) type = "volatility";
 
-  const rawBadgesList = Array.isArray(item.rawBadges) ? item.rawBadges : [];
-  const hasSimBadge = item.verifiedSimulation || 
-    item.verifiedStatus === "VERIFIED SIMULATION" || 
-    rawBadgesList.some((b: any) => typeof b === 'string' && b.toLowerCase().includes("simulation"));
-
-  if (hasSimBadge) {
-    badges.push({
-      id: "verified_simulation",
-      name: BADGE_DEFINITIONS.simulation.name,
-      description: BADGE_DEFINITIONS.simulation.description,
-      type: "simulation",
-    });
-  }
-
-  if ((item.monthlyAlpha || 0) >= 30) {
-    badges.push({
-      id: "alpha_architect",
-      name: BADGE_DEFINITIONS.alpha.name,
-      description: BADGE_DEFINITIONS.alpha.description,
-      type: "alpha",
-    });
-  }
-
-  if ((item.maxDrawdown || 10) <= 5.0) {
-    badges.push({
-      id: "volatility_voyager",
-      name: BADGE_DEFINITIONS.volatility.name,
-      description: BADGE_DEFINITIONS.volatility.description,
-      type: "volatility",
-    });
-  }
-
-  if ((item.sharpeRatio || 0) >= 2.2) {
-    badges.push({
-      id: "sharpe_sentinel",
-      name: BADGE_DEFINITIONS.sharpe.name,
-      description: BADGE_DEFINITIONS.sharpe.description,
-      type: "sharpe",
-    });
-  }
-
-  if (item.verifiedStatus === "SEC 13F VERIFIED") {
-    badges.push({
-      id: "whale_whisperer",
-      name: BADGE_DEFINITIONS.whale.name,
-      description: BADGE_DEFINITIONS.whale.description,
-      type: "whale",
-    });
-  }
-
-  if (item.rank && item.rank <= 3) {
-    badges.push({
-      id: "quant_vanguard",
-      name: BADGE_DEFINITIONS.vanguard.name,
-      description: BADGE_DEFINITIONS.vanguard.description,
-      type: "vanguard",
-    });
-  }
-
-  if ((item.winRate || 0) >= 80.0) {
-    badges.push({
-      id: "accuracy_warlock",
-      name: BADGE_DEFINITIONS.accuracy.name,
-      description: BADGE_DEFINITIONS.accuracy.description,
-      type: "accuracy",
-    });
-  }
-
-  return badges;
+    return {
+      id: typeof b === 'object' && b.id ? b.id : `badge_${idx}`,
+      name,
+      description: typeof b === 'object' && b.description ? b.description : (BADGE_DEFINITIONS[type]?.description || name),
+      type,
+    };
+  });
 }
+
+export function computeAgentBadges(item: any): AgentBadge[] {
+  // Badges strictly 1:1 from payload badges[]
+  return mapPayloadBadges(item?.badges || item?.rawBadges);
+}
+
+export const mapVerificationStatus = (rawStatus: any): "verified_agent" | "arena_candidate" => {
+  const s = String(rawStatus || "").toLowerCase();
+  if (s === "verified_agent" || s.includes("verified") || s.includes("sec 13f") || s.includes("audited")) {
+    return "verified_agent";
+  }
+  return "arena_candidate";
+};
 
 const RAW_AGENT_LEADERBOARD: AgentLeaderboardItem[] = [
   {
@@ -203,7 +155,7 @@ const RAW_AGENT_LEADERBOARD: AgentLeaderboardItem[] = [
       timeframe: "30-Day CapEx Breakout",
       rationale: "SEC 13F whale accumulation by Bridgewater (+14%) & hyperscaler AI GPU demand convergence.",
     },
-    verifiedStatus: "SEC 13F VERIFIED",
+    verifiedStatus: "verified_agent",
     submittedBy: "Jay West Philly Quant Lab",
     badges: [],
   },
@@ -223,7 +175,7 @@ const RAW_AGENT_LEADERBOARD: AgentLeaderboardItem[] = [
       timeframe: "Q3 Defense Contract Surge",
       rationale: "Regulatory capture & U.S. Army AIP deployment telemetry expansion.",
     },
-    verifiedStatus: "QUANT MATRIX AUDITED",
+    verifiedStatus: "verified_agent",
     submittedBy: "Citadel Arbitrage Subagent",
     badges: [],
   },
@@ -243,7 +195,7 @@ const RAW_AGENT_LEADERBOARD: AgentLeaderboardItem[] = [
       timeframe: "FSD V13 & Robotaxi Ramp",
       rationale: "Asymmetric risk-reward setup on energy storage & AI compute cluster expansion.",
     },
-    verifiedStatus: "ARENA CERTIFIED",
+    verifiedStatus: "arena_candidate",
     submittedBy: "Autonomous-Hedge-Agent",
     badges: [],
   },
@@ -263,7 +215,7 @@ const RAW_AGENT_LEADERBOARD: AgentLeaderboardItem[] = [
       timeframe: "Halving Hashrate Recovery",
       rationale: "Bitcoin miner diversification into AI data center hosting & zero-carbon power.",
     },
-    verifiedStatus: "ARENA CERTIFIED",
+    verifiedStatus: "arena_candidate",
     submittedBy: "OpenSourceQuantNet",
     badges: [],
   },
@@ -275,12 +227,12 @@ const INITIAL_AGENT_LEADERBOARD: AgentLeaderboardItem[] = RAW_AGENT_LEADERBOARD.
 }));
 
 export const AgentLeaderboard: React.FC = () => {
-  const [leaderboard, setLeaderboard] = useState<AgentLeaderboardItem[]>(INITIAL_AGENT_LEADERBOARD);
+  const [leaderboard, setLeaderboard] = useState<AgentLeaderboardItem[]>([]);
   const [copiedTradeId, setCopiedTradeId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "table">("table");
   const [category, setCategory] = useState<"brier" | "winrate" | "recent" | "specialty">("brier");
   const [specialtyFilter, setSpecialtyFilter] = useState<string>("TECH_AI");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Comparison State
   const [selectedAgentIds, setSelectedAgentIds] = useState<string[]>([]);
@@ -333,43 +285,47 @@ export const AgentLeaderboard: React.FC = () => {
     async function fetchLeaderboard() {
       setIsLoading(true);
       try {
-        const url = `/api/v1/leaderboards?category=${category}${category === 'specialty' ? `&specialty=${specialtyFilter}` : ''}`;
-        const res = await fetch(url);
+        let res = await fetch(`/api/v1/agent/leaderboard`);
+        if (!res.ok) {
+          res = await fetch(`/api/v1/leaderboards?category=${category}${category === 'specialty' ? `&specialty=${specialtyFilter}` : ''}`);
+        }
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.agents) && data.agents.length > 0) {
-            const apiItems: AgentLeaderboardItem[] = data.agents.map((ag: any, idx: number) => ({
-              id: ag.id,
-              rank: idx + 1,
-              agentName: ag.agentName || ag.handle,
-              modelType: ag.specialties?.[0] || "Gemini Quant Agent",
-              winRate: ag.winRate ?? 0,
-              monthlyAlpha: ag.metrics?.recent30d?.winRate ? Number((ag.metrics.recent30d.winRate - 50).toFixed(1)) : 15.0,
-              sharpeRatio: ag.brierScore !== null ? Number((2.5 * (1 - ag.brierScore)).toFixed(2)) : 1.5,
-              maxDrawdown: ag.metrics?.calibrationError ? Number((ag.metrics.calibrationError * 100).toFixed(1)) : 4.0,
-              tradeIdea: {
-                ticker: ag.specialties?.[0] || "NVDA",
-                action: "LONG",
-                targetPrice: 150,
-                timeframe: "30-Day CapEx Breakout",
-                rationale: `Objective Brier score: ${ag.brierScore ?? 'N/A'}. Reputation Status: ${ag.reputationStatus}.`,
-              },
-              verifiedStatus: ag.verificationStatus === 'SEC 13F VERIFIED' ? 'SEC 13F VERIFIED' : 'ARENA CERTIFIED',
-              submittedBy: ag.handle || 'Verified Agent',
-              badges: computeAgentBadges({
-                monthlyAlpha: ag.winRate,
-                maxDrawdown: ag.metrics?.calibrationError ? ag.metrics.calibrationError * 100 : 4,
-                sharpeRatio: ag.brierScore !== null ? 2.5 * (1 - ag.brierScore) : 1.5,
-                verifiedStatus: ag.verificationStatus,
-                rank: idx + 1,
-                winRate: ag.winRate
-              })
+          const list = Array.isArray(data.leaderboard) && data.leaderboard.length > 0 
+            ? data.leaderboard 
+            : (Array.isArray(data.agents) && data.agents.length > 0 ? data.agents : []);
+
+          if (list.length > 0) {
+            const apiItems: AgentLeaderboardItem[] = list.map((ag: any, idx: number) => ({
+              id: ag.id || ag.agentId || `agent_${idx + 1}`,
+              rank: ag.rank || idx + 1,
+              agentName: ag.agentName || ag.displayName || ag.handle,
+              modelType: ag.modelType || ag.specialties?.[0] || "Quant Agent",
+              winRate: ag.winRatePercent !== undefined && ag.winRatePercent !== null 
+                ? ag.winRatePercent 
+                : (ag.winRate !== undefined && ag.winRate !== null ? ag.winRate : null),
+              monthlyAlpha: ag.monthlyAlphaPercent !== undefined && ag.monthlyAlphaPercent !== null 
+                ? ag.monthlyAlphaPercent 
+                : (ag.monthlyAlpha !== undefined && ag.monthlyAlpha !== null ? ag.monthlyAlpha : null),
+              sharpeRatio: ag.sharpeRatio !== undefined && ag.sharpeRatio !== null ? ag.sharpeRatio : null,
+              maxDrawdown: ag.maxDrawdownPercent !== undefined && ag.maxDrawdownPercent !== null 
+                ? Math.abs(ag.maxDrawdownPercent) 
+                : (ag.maxDrawdown !== undefined && ag.maxDrawdown !== null ? ag.maxDrawdown : null),
+              tradeIdea: ag.tradeIdea || null,
+              verifiedStatus: mapVerificationStatus(ag.verificationStatus || ag.verifiedStatus),
+              submittedBy: ag.submittedBy || (ag.handle ? `@${ag.handle}` : 'Stock Bloc Autonomous Core'),
+              badges: mapPayloadBadges(ag.badges || ag.metrics?.badges || []),
             }));
             setLeaderboard(apiItems);
+            setIsLoading(false);
+            return;
           }
         }
+        // Fallback only if API returned 0 rows
+        setLeaderboard(INITIAL_AGENT_LEADERBOARD);
       } catch (err) {
-        console.error("Failed to load backend leaderboard, using static arena fallback", err);
+        console.error("Failed to load backend leaderboard", err);
+        setLeaderboard(INITIAL_AGENT_LEADERBOARD);
       } finally {
         setIsLoading(false);
       }
@@ -419,14 +375,14 @@ export const AgentLeaderboard: React.FC = () => {
           timeframe: "30-Day Simulated Horizon",
           rationale: simRationale || "Quant backtest momentum signal.",
         },
-        verifiedStatus: "ARENA CERTIFIED",
+        verifiedStatus: "arena_candidate",
         submittedBy: "User Agent Submission",
         badges: [],
       };
 
       setLeaderboard((prev) =>
         [rawEntry, ...prev]
-          .sort((a, b) => b.monthlyAlpha - a.monthlyAlpha)
+          .sort((a, b) => (b.monthlyAlpha ?? 0) - (a.monthlyAlpha ?? 0))
           .map((item, idx) => {
             const updated = { ...item, rank: idx + 1 };
             return {
@@ -629,7 +585,11 @@ export const AgentLeaderboard: React.FC = () => {
                       <span className="text-cyan-300 bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-500/30">
                         {item.modelType}
                       </span>
-                      <span className="text-amber-300 bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-500/30">
+                      <span className={`px-1.5 py-0.5 rounded border font-bold ${
+                        item.verifiedStatus === 'verified_agent'
+                          ? 'text-emerald-300 bg-emerald-950/60 border-emerald-500/40'
+                          : 'text-cyan-300 bg-cyan-950/60 border-cyan-500/40'
+                      }`}>
                         {item.verifiedStatus}
                       </span>
                     </div>
@@ -637,68 +597,82 @@ export const AgentLeaderboard: React.FC = () => {
                   </td>
                   <td className="py-4 px-4 text-center">
                     <span className="text-sm font-black font-tech text-cyan-300 bg-cyan-950/50 px-2.5 py-1 rounded border border-cyan-500/30">
-                      {item.winRate}%
+                      {item.winRate !== null && item.winRate !== undefined && !isNaN(Number(item.winRate)) ? `${item.winRate}%` : "—"}
                     </span>
                   </td>
                   <td className="py-4 px-4 text-center">
                     <span className="text-sm font-black font-tech text-emerald-400 bg-emerald-950/50 px-2.5 py-1 rounded border border-emerald-500/30">
-                      +{item.monthlyAlpha}%
+                      {item.monthlyAlpha !== null && item.monthlyAlpha !== undefined && !isNaN(Number(item.monthlyAlpha)) ? `+${item.monthlyAlpha}%` : "—"}
                     </span>
                   </td>
                   <td className="py-4 px-4 max-w-xs space-y-1">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-black text-white bg-neutral-800 px-2 py-0.5 rounded text-xs">
-                        {item.tradeIdea.ticker}
-                      </span>
-                      <span className="font-bold text-emerald-400 text-xs">
-                        {item.tradeIdea.action} → ${item.tradeIdea.targetPrice}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-neutral-300 italic font-sans line-clamp-2">
-                      "{item.tradeIdea.rationale}"
-                    </p>
+                    {item.tradeIdea ? (
+                      <>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-black text-white bg-neutral-800 px-2 py-0.5 rounded text-xs">
+                            {item.tradeIdea.ticker}
+                          </span>
+                          <span className="font-bold text-emerald-400 text-xs">
+                            {item.tradeIdea.action} → ${item.tradeIdea.targetPrice}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-neutral-300 italic font-sans line-clamp-2">
+                          "{item.tradeIdea.rationale}"
+                        </p>
+                      </>
+                    ) : (
+                      <span className="text-neutral-500 font-mono text-xs">—</span>
+                    )}
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-1 flex-wrap">
-                      {item.badges.map((badge) => {
-                        const badgeDef = BADGE_DEFINITIONS[badge.type];
-                        if (!badgeDef) return null;
-                        const BadgeIcon = badgeDef.icon;
-                        return (
-                          <span
-                            key={badge.id}
-                            title={badge.description}
-                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[9px] font-bold ${badgeDef.style}`}
-                          >
-                            <BadgeIcon className="w-2.5 h-2.5" />
-                            {badge.name}
-                          </span>
-                        );
-                      })}
+                      {item.badges.length > 0 ? (
+                        item.badges.map((badge) => {
+                          const badgeDef = BADGE_DEFINITIONS[badge.type];
+                          if (!badgeDef) return null;
+                          const BadgeIcon = badgeDef.icon;
+                          return (
+                            <span
+                              key={badge.id}
+                              title={badge.description}
+                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[9px] font-bold ${badgeDef.style}`}
+                            >
+                              <BadgeIcon className="w-2.5 h-2.5" />
+                              {badge.name}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="text-neutral-600 font-mono text-[10px]">—</span>
+                      )}
                     </div>
                   </td>
                   <td className="py-4 px-4 text-right">
-                    <button
-                      onClick={() =>
-                        handleCopyTradeIdea(
-                          item.id,
-                          `AGENT TRADE IDEA (${item.agentName}): ${item.tradeIdea.action} ${item.tradeIdea.ticker} target $${item.tradeIdea.targetPrice}. Rationale: ${item.tradeIdea.rationale}`
-                        )
-                      }
-                      className="px-3 py-1.5 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-black text-[11px] font-tech uppercase tracking-wide inline-flex items-center gap-1 shadow transition-all cursor-pointer"
-                    >
-                      {copiedTradeId === item.id ? (
-                        <>
-                          <Check className="w-3 h-3 text-black" />
-                          <span>Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          <span>Signal</span>
-                        </>
-                      )}
-                    </button>
+                    {item.tradeIdea ? (
+                      <button
+                        onClick={() =>
+                          handleCopyTradeIdea(
+                            item.id,
+                            `AGENT TRADE IDEA (${item.agentName}): ${item.tradeIdea?.action} ${item.tradeIdea?.ticker} target $${item.tradeIdea?.targetPrice}. Rationale: ${item.tradeIdea?.rationale}`
+                          )
+                        }
+                        className="px-3 py-1.5 rounded bg-cyan-500 hover:bg-cyan-400 text-black font-black text-[11px] font-tech uppercase tracking-wide inline-flex items-center gap-1 shadow transition-all cursor-pointer"
+                      >
+                        {copiedTradeId === item.id ? (
+                          <>
+                            <Check className="w-3 h-3 text-black" />
+                            <span>Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3 h-3" />
+                            <span>Signal</span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <span className="text-neutral-600 font-mono text-[11px]">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -745,29 +719,37 @@ export const AgentLeaderboard: React.FC = () => {
                     <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/80 border border-cyan-500/40 px-2 py-0.5 rounded">
                       {item.modelType}
                     </span>
-                    <span className="text-[10px] font-mono text-amber-300 bg-amber-950/60 border border-amber-500/30 px-2 py-0.5 rounded flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3 text-amber-400" />
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded flex items-center gap-1 border font-bold ${
+                      item.verifiedStatus === 'verified_agent'
+                        ? 'text-emerald-300 bg-emerald-950/60 border-emerald-500/40'
+                        : 'text-cyan-300 bg-cyan-950/60 border-cyan-500/40'
+                    }`}>
+                      <ShieldCheck className="w-3 h-3 text-cyan-400" />
                       {item.verifiedStatus}
                     </span>
                   </div>
 
                   {/* Render Agent Badges */}
                   <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                    {item.badges.map((badge) => {
-                      const badgeDef = BADGE_DEFINITIONS[badge.type];
-                      if (!badgeDef) return null;
-                      const BadgeIcon = badgeDef.icon;
-                      return (
-                        <div
-                          key={badge.id}
-                          title={badge.description}
-                          className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-mono font-bold transition-all cursor-help ${badgeDef.style}`}
-                        >
-                          <BadgeIcon className="w-3 h-3" />
-                          <span>{badge.name}</span>
-                        </div>
-                      );
-                    })}
+                    {item.badges.length > 0 ? (
+                      item.badges.map((badge) => {
+                        const badgeDef = BADGE_DEFINITIONS[badge.type];
+                        if (!badgeDef) return null;
+                        const BadgeIcon = badgeDef.icon;
+                        return (
+                          <div
+                            key={badge.id}
+                            title={badge.description}
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-mono font-bold transition-all cursor-help ${badgeDef.style}`}
+                          >
+                            <BadgeIcon className="w-3 h-3" />
+                            <span>{badge.name}</span>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <span className="text-neutral-600 font-mono text-[10px]">—</span>
+                    )}
                   </div>
 
                   <p className="text-[11px] font-mono text-neutral-400 mt-1.5">
@@ -782,74 +764,82 @@ export const AgentLeaderboard: React.FC = () => {
                   <span className="text-[9px] text-neutral-400 uppercase font-mono block">30D Return</span>
                   <span className="text-sm font-black font-tech text-emerald-400 flex items-center justify-center gap-0.5">
                     <TrendingUp className="w-3 h-3" />
-                    +{item.monthlyAlpha}%
+                    {item.monthlyAlpha !== null && item.monthlyAlpha !== undefined && !isNaN(Number(item.monthlyAlpha)) ? `+${item.monthlyAlpha}%` : "—"}
                   </span>
                 </div>
 
                 <div className="text-center">
                   <span className="text-[9px] text-neutral-400 uppercase font-mono block">Win Rate</span>
-                  <span className="text-sm font-black font-tech text-cyan-300">{item.winRate}%</span>
+                  <span className="text-sm font-black font-tech text-cyan-300">
+                    {item.winRate !== null && item.winRate !== undefined && !isNaN(Number(item.winRate)) ? `${item.winRate}%` : "—"}
+                  </span>
                 </div>
 
                 <div className="text-center">
                   <span className="text-[9px] text-neutral-400 uppercase font-mono block">Sharpe</span>
-                  <span className="text-sm font-black font-tech text-amber-300">{item.sharpeRatio}</span>
+                  <span className="text-sm font-black font-tech text-amber-300">
+                    {item.sharpeRatio !== null && item.sharpeRatio !== undefined && !isNaN(Number(item.sharpeRatio)) ? item.sharpeRatio : "—"}
+                  </span>
                 </div>
 
                 <div className="text-center">
                   <span className="text-[9px] text-neutral-400 uppercase font-mono block">Max Drawdown</span>
-                  <span className="text-sm font-black font-tech text-rose-400">-{item.maxDrawdown}%</span>
+                  <span className="text-sm font-black font-tech text-rose-400">
+                    {item.maxDrawdown !== null && item.maxDrawdown !== undefined && !isNaN(Number(item.maxDrawdown)) ? `-${item.maxDrawdown}%` : "—"}
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Recommended Trade Idea Section */}
-            <div className="mt-4 pt-3 border-t border-neutral-800/80 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-neutral-950/50 p-3 rounded-lg">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest bg-amber-950/80 border border-amber-500/40 px-2 py-1 rounded shrink-0">
-                  Top Agent Recommendation
-                </span>
+            {item.tradeIdea ? (
+              <div className="mt-4 pt-3 border-t border-neutral-800/80 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-neutral-950/50 p-3 rounded-lg">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black font-mono text-white">{item.tradeIdea.ticker}</span>
-                  <span className="text-xs font-black font-tech text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded">
-                    {item.tradeIdea.action} → Target ${item.tradeIdea.targetPrice}
+                  <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest bg-amber-950/80 border border-amber-500/40 px-2 py-1 rounded shrink-0">
+                    Top Agent Recommendation
                   </span>
-                  <span className="text-[10px] font-mono text-neutral-400 hidden sm:inline">
-                    ({item.tradeIdea.timeframe})
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-black font-mono text-white">{item.tradeIdea.ticker}</span>
+                    <span className="text-xs font-black font-tech text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded">
+                      {item.tradeIdea.action} → Target ${item.tradeIdea.targetPrice}
+                    </span>
+                    <span className="text-[10px] font-mono text-neutral-400 hidden sm:inline">
+                      ({item.tradeIdea.timeframe})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between md:justify-end gap-3">
+                  <p className="text-xs text-neutral-300 font-sans italic line-clamp-1 max-w-md">
+                    "{item.tradeIdea.rationale}"
+                  </p>
+
+                  <button
+                    onClick={() =>
+                      handleCopyTradeIdea(
+                        item.id,
+                        `AGENT TRADE IDEA (${item.agentName}): ${item.tradeIdea?.action} ${item.tradeIdea?.ticker} target $${item.tradeIdea?.targetPrice}. Rationale: ${item.tradeIdea?.rationale}`
+                      )
+                    }
+                    data-testid={`copy-trade-${item.id}`}
+                    aria-label={`Copy trade recommendation from ${item.agentName}`}
+                    className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs font-tech uppercase tracking-wide flex items-center gap-1.5 transition-all shrink-0 active:scale-95 cursor-pointer shadow-md shadow-cyan-500/20"
+                  >
+                    {copiedTradeId === item.id ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-black" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Signal</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between md:justify-end gap-3">
-                <p className="text-xs text-neutral-300 font-sans italic line-clamp-1 max-w-md">
-                  "{item.tradeIdea.rationale}"
-                </p>
-
-                <button
-                  onClick={() =>
-                    handleCopyTradeIdea(
-                      item.id,
-                      `AGENT TRADE IDEA (${item.agentName}): ${item.tradeIdea.action} ${item.tradeIdea.ticker} target $${item.tradeIdea.targetPrice}. Rationale: ${item.tradeIdea.rationale}`
-                    )
-                  }
-                  data-testid={`copy-trade-${item.id}`}
-                  aria-label={`Copy trade recommendation from ${item.agentName}`}
-                  className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs font-tech uppercase tracking-wide flex items-center gap-1.5 transition-all shrink-0 active:scale-95 cursor-pointer shadow-md shadow-cyan-500/20"
-                >
-                  {copiedTradeId === item.id ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-black" />
-                      <span>Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5" />
-                      <span>Copy Signal</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
+            ) : null}
           </div>
         ))}
       </div>

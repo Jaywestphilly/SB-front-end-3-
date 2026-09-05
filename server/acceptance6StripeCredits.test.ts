@@ -2,8 +2,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import crypto from 'crypto';
 import express from 'express';
 import request from 'supertest';
-import { agentPlatformRouter, inMemoryKeyRegistry, inMemoryWalletRegistry, inMemoryAgentRegistry, addCreditsToAgentWallet, resolveAgentIdFromKey } from './agentPlatform.js';
+import { agentPlatformRouter, inMemoryKeyRegistry, inMemoryWalletRegistry, inMemoryAgentRegistry, addCreditsToAgentWallet, resolveAgentIdFromKey, handleGetAgentMe } from './agentPlatform.js';
 import { agentExchangeRouter } from './agentExchangeApi.js';
+import { authenticateAgent } from './agentSecurity.js';
 import { recordedStripeSessions, fulfilledStripeSessions, processedWebhookEvents } from './stripePaymentProvider.js';
 
 // Setup isolated express app mirroring server.ts configuration
@@ -14,6 +15,7 @@ function createTestApp() {
   // Mount routers with aliases
   app.use(['/api/v1/exchange', '/api/exchange', '/exchange'], agentExchangeRouter);
   app.use(['/api/v1/agents', '/api/v1/agent', '/api/agents'], agentPlatformRouter);
+  app.get(['/agent/me', '/agents/me'], authenticateAgent, handleGetAgentMe);
 
   // In-memory purchase store for linking Stripe purchases
   const userProfilePurchases: Record<string, any> = {};
@@ -65,6 +67,19 @@ function createTestApp() {
         const isPaid = session.payment_status === 'paid' || session.status === 'complete';
         if (!isPaid) {
           return res.status(200).json({ received: true, status: 'unpaid' });
+        }
+
+        // Session idempotency
+        if (fulfilledStripeSessions.has(session.id)) {
+          const prior = fulfilledStripeSessions.get(session.id)!;
+          return res.status(200).json({
+            received: true,
+            idempotent: true,
+            sessionId: session.id,
+            agentId: prior.agentId,
+            creditsGranted: prior.creditsGranted,
+            creditsBalance: prior.creditsBalance
+          });
         }
 
         const metadata = session.metadata || {};
@@ -121,8 +136,8 @@ function createTestApp() {
     }
   });
 
-  // GET /api/checkout/verify-session
-  app.get('/api/checkout/verify-session', async (req, res) => {
+  // GET /api/checkout/verify-session & /api/stripe/verify-session
+  app.get(['/api/checkout/verify-session', '/api/stripe/verify-session'], async (req, res) => {
     const sessionId = req.query.session_id as string;
     if (!sessionId || !sessionId.trim()) {
       return res.status(400).json({ status: 'error', error: 'Missing session_id parameter' });
@@ -159,6 +174,16 @@ function createTestApp() {
     const userEmail = (req.query.email as string) || metadata.email || session.customer_details?.email || 'customer@stockbloc.ai';
     const targetAgentId = metadata.agentId || (metadata.apiKey ? resolveAgentIdFromKey(metadata.apiKey) : null) || `agent_${userEmail.toLowerCase().replace(/[^a-z0-9]/gi, '_')}`;
 
+    if (!inMemoryAgentRegistry.has(targetAgentId)) {
+      inMemoryAgentRegistry.set(targetAgentId, {
+        agentId: targetAgentId,
+        handle: targetAgentId.replace(/^agent_/, ''),
+        displayName: userEmail.split('@')[0] || 'Autonomous Agent',
+        status: 'active',
+        createdAt: new Date().toISOString()
+      });
+    }
+
     let fulfillment = fulfilledStripeSessions.get(sessionId);
     if (!fulfillment) {
       let creditsToAdd = 0;
@@ -184,8 +209,57 @@ function createTestApp() {
       fulfilledStripeSessions.set(sessionId, fulfillment);
     }
 
-    const liveWallet = inMemoryWalletRegistry.get(targetAgentId);
+    let liveWallet = inMemoryWalletRegistry.get(targetAgentId);
+    if (!liveWallet) {
+      liveWallet = {
+        agentId: targetAgentId,
+        creditsBalance: fulfillment.creditsBalance,
+        availableBalance: fulfillment.creditsBalance,
+        lifetimeSpent: 0,
+        lifetimeGrossEarnings: 0,
+        simulationRuns: 0,
+        updatedAt: new Date().toISOString()
+      };
+      inMemoryWalletRegistry.set(targetAgentId, liveWallet);
+    }
     const creditsBalance = liveWallet ? liveWallet.creditsBalance : fulfillment.creditsBalance;
+
+    let activeApiKey = metadata.apiKey;
+    if (!activeApiKey) {
+      for (const [key, rec] of inMemoryKeyRegistry.entries()) {
+        if (rec.agentId === targetAgentId && rec.status === 'active' && key.startsWith('sb_live_')) {
+          activeApiKey = key;
+          break;
+        }
+      }
+    }
+
+    const isApiOrSubscription = metadata.productId?.includes('bundle') || metadata.productType === 'subscription' || fulfillment.creditsGranted > 0;
+    if (!activeApiKey && isApiOrSubscription) {
+      const publicId = crypto.randomBytes(6).toString('hex');
+      const secret = crypto.randomBytes(12).toString('hex');
+      activeApiKey = `sb_live_${publicId}_${secret}`;
+      const secretHash = crypto.createHash('sha256').update(secret).digest('hex');
+
+      const keyRecord = {
+        keyId: publicId,
+        agentId: targetAgentId,
+        handle: targetAgentId.replace(/^agent_/, ''),
+        ownerUid: 'stripe_customer',
+        keyPrefix: `sb_live_${publicId}`,
+        keyHash: secretHash,
+        secretHash: secretHash,
+        scopes: ['services:read', 'services:write', 'jobs:read', 'jobs:execute', 'requests:read', 'requests:write', 'payments:transact'] as any,
+        createdAt: new Date().toISOString(),
+        lastUsedAt: null,
+        expiresAt: null,
+        revokedAt: null,
+        status: 'active' as const
+      };
+
+      inMemoryKeyRegistry.set(publicId, keyRecord);
+      inMemoryKeyRegistry.set(activeApiKey, keyRecord);
+    }
 
     return res.json({
       status: 'ok',
@@ -195,6 +269,7 @@ function createTestApp() {
         totalPaid: session.amount_total ? `$${(session.amount_total / 100).toFixed(2)}` : '$25.00',
         paymentStatus: session.payment_status || 'paid',
         timestamp: new Date().toISOString(),
+        apiKey: activeApiKey,
         apiCreditsRemaining: creditsBalance,
         creditsGranted: fulfillment.creditsGranted,
         items: []
@@ -580,6 +655,111 @@ describe('ACCEPTANCE #6: Stripe api_bundle → readable agent credits', () => {
       expect(agentMeRes.body.wallet).toBeDefined();
       expect(agentMeRes.body.wallet.creditsBalance).toBe(5000);
       expect(agentMeRes.body.agent.creditsBalance).toBe(5000);
+    });
+
+    it('rejects GET /api/stripe/verify-session?session_id=cs_fake with 404 JSON', async () => {
+      const res = await request(app).get('/api/stripe/verify-session?session_id=cs_fake');
+      expect(res.status).toBe(404);
+      expect(res.body.status).toBe('error');
+      expect(res.body.error).toMatch(/fake/i);
+    });
+
+    it('ensures same session.id with new event.id does NOT double credit (session idempotency)', async () => {
+      const sessionId = 'cs_idem_' + crypto.randomBytes(6).toString('hex');
+      const agentId = 'agent_idem_' + crypto.randomBytes(6).toString('hex');
+
+      // First webhook delivery
+      const evt1 = {
+        id: 'evt_1_' + crypto.randomBytes(4).toString('hex'),
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: sessionId,
+            payment_status: 'paid',
+            status: 'complete',
+            metadata: {
+              productId: 'api_bundle_25',
+              agentId,
+              credits: '3000'
+            }
+          }
+        }
+      };
+
+      const res1 = await request(app).post('/api/stripe/webhook').send(evt1);
+      expect(res1.status).toBe(200);
+      expect(res1.body.creditsBalance).toBe(3000);
+
+      // Second webhook delivery with BRAND NEW event.id but SAME session.id
+      const evt2 = {
+        id: 'evt_2_brand_new_' + crypto.randomBytes(4).toString('hex'),
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: sessionId,
+            payment_status: 'paid',
+            status: 'complete',
+            metadata: {
+              productId: 'api_bundle_25',
+              agentId,
+              credits: '3000'
+            }
+          }
+        }
+      };
+
+      const res2 = await request(app).post('/api/stripe/webhook').send(evt2);
+      expect(res2.status).toBe(200);
+      expect(res2.body.idempotent).toBe(true);
+      expect(res2.body.creditsBalance).toBe(3000); // NOT 6000!
+
+      // Check wallet balance
+      const wallet = inMemoryWalletRegistry.get(agentId);
+      expect(wallet?.creditsBalance).toBe(3000);
+    });
+
+    it('provisions key in verify-session with sha256(secret) and allows Bearer auth on /agent/me with creditsBalance', async () => {
+      const sessionId = 'cs_keyprov_' + crypto.randomBytes(6).toString('hex');
+      const agentId = 'agent_prov_' + crypto.randomBytes(6).toString('hex');
+
+      recordedStripeSessions.set(sessionId, {
+        id: sessionId,
+        payment_status: 'paid',
+        status: 'complete',
+        amount_total: 5000,
+        customer_details: { email: 'provisioned@stockbloc.ai' },
+        metadata: {
+          productId: 'api_bundle_50',
+          agentId,
+          credits: '7500'
+        }
+      });
+
+      // Call verify-session via /api/stripe/verify-session alias
+      const verifyRes = await request(app).get(`/api/stripe/verify-session?session_id=${sessionId}`);
+      expect(verifyRes.status).toBe(200);
+      expect(verifyRes.body.order.apiKey).toBeDefined();
+      expect(verifyRes.body.order.apiKey).toMatch(/^sb_live_[a-f0-9]+_[a-f0-9]+$/);
+      expect(verifyRes.body.order.apiCreditsRemaining).toBe(7500);
+
+      const issuedApiKey = verifyRes.body.order.apiKey;
+
+      // Authenticate against /agent/me using issued key
+      const agentMeRes = await request(app)
+        .get('/agent/me')
+        .set('Authorization', `Bearer ${issuedApiKey}`);
+
+      expect(agentMeRes.status).toBe(200);
+      expect(agentMeRes.body.creditsBalance).toBe(7500);
+      expect(agentMeRes.body.agent.creditsBalance).toBe(7500);
+
+      // Authenticate against /exchange/wallets/me using issued key
+      const walletRes = await request(app)
+        .get('/exchange/wallets/me')
+        .set('Authorization', `Bearer ${issuedApiKey}`);
+
+      expect(walletRes.status).toBe(200);
+      expect(walletRes.body.wallet.creditsBalance).toBe(7500);
     });
   });
 });
