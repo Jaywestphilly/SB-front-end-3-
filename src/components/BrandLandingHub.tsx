@@ -93,22 +93,37 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
             </div>
           </div>
 
-          {/* Subtitle */}
-          <div className="space-y-2 max-w-2xl">
-            <p className="text-xs sm:text-sm text-cyan-300 font-mono font-bold uppercase tracking-widest">
-              QUANT WEALTH MATRIX & 13F HEDGE FUND INTELLIGENCE ENGINE
+          {/* Subtitle & High-Energy Game Banner */}
+          <div className="space-y-3 max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-amber-400/10 border border-amber-400/50 rounded-full text-amber-300 text-xs sm:text-sm font-mono font-black uppercase tracking-wider animate-pulse">
+              <Flame className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <span>STOP PLAYIN' WITH YOUR LIFE! WE GIVIN' YOU THE WHOLE BOARD.</span>
+            </div>
+
+            <h1 className="text-xl sm:text-3xl md:text-4xl font-black font-tech text-white uppercase tracking-tight leading-tight">
+              FROM THE BLOCK TO THE BLOC: <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-200 to-amber-300">
+                INSTITUTIONAL QUANT WEALTH & 13F RADAR
+              </span>
+            </h1>
+
+            <p className="text-xs sm:text-sm text-cyan-200/90 font-sans leading-relaxed max-w-2xl mx-auto">
+              Hedge funds, family offices, and Wall Street institutions been runnin' multi-billion dollar wealth plays behind closed doors. <strong>Stock Bloc cracked the terminal wide open.</strong> We combined real-time market data, 13F whale tracking, 800+ business credit stacking, cash-flowing real estate underwriting, and sci-fi aerospace tech into one unstoppable engine.
             </p>
           </div>
 
           {/* Social Proof Stats Bar */}
-          <div className="w-full pt-2 border-t border-cyan-500/20 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-cyan-300 font-bold uppercase tracking-widest font-mono">
-            <span>1,842 DECLASSIFIED RECORDS</span>
+          <div className="w-full pt-3 border-t border-cyan-500/30 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-cyan-300 font-bold uppercase tracking-widest font-mono">
+            <span className="flex items-center gap-1.5 text-emerald-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              REAL-TIME MARKET TELEMETRY
+            </span>
             <span className="text-cyan-500/50">|</span>
-            <span>18+ LIVE TICKERS</span>
+            <span>1,842+ DECLASSIFIED 13F RECORDS</span>
             <span className="text-cyan-500/50">|</span>
-            <span>6 INTELLIGENCE MODULES</span>
+            <span>800+ CREDIT ENGINE</span>
             <span className="text-cyan-500/50">|</span>
-            <span>REAL-TIME MARKET DATA</span>
+            <span>DSCR REAL ESTATE UNDERWRITING</span>
           </div>
 
           {/* Community Buttons (X / Twitter & YouTube) */}
@@ -366,37 +381,104 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
         </div>
       </div>
 
-      {/* Refined Mission Statement Card */}
-      <div className="relative bg-gradient-to-b from-black to-neutral-950 border-2 border-cyan-500/40 rounded-3xl p-6 sm:p-10 text-white space-y-6 shadow-2xl overflow-hidden">
+      {/* WALLO WEALTH CODE & DECLASSIFIED GAME SECTION */}
+      <div className="relative bg-gradient-to-b from-[#020d18] via-black to-[#050b14] border-2 border-amber-400/60 rounded-3xl p-6 sm:p-10 text-white space-y-6 shadow-2xl shadow-amber-500/10 overflow-hidden">
+        {/* Glowing cyber accents */}
+        <div className="absolute top-0 right-0 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-cyan-500/30 pb-4">
-          <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 font-black text-2xl shadow-inner shrink-0">
-            <Sparkles className="w-6 h-6 text-cyan-400 animate-pulse" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-amber-500/30 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-400/60 flex items-center justify-center text-amber-300 font-black text-2xl shadow-inner shrink-0">
+              <Flame className="w-6 h-6 text-amber-400 animate-bounce" />
+            </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-400/20 border border-amber-400/40 text-[10px] font-mono font-black text-amber-300 uppercase mb-1">
+                <span>WALLO'S WEALTH MANIFESTO // GIVE 'EM THE WHOLE GAME</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-black font-mono text-white uppercase tracking-wider alien-text-glow">
+                STOP WAITING ON A RESCUE. BUILD YOUR EMPIRE.
+              </h2>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black font-mono text-cyan-200 uppercase tracking-wider alien-text-glow">
-              STOCK BLOC BRAND POSITIONING & MISSION
-            </h2>
-            <p className="text-xs sm:text-sm text-cyan-400/90 font-mono tracking-wider uppercase mt-0.5">
-              CORE PLATFORM: Market intelligence, hedge fund tracking, credit building, and real estate analysis.
+
+          <div className="flex items-center gap-2 text-xs font-mono text-amber-300 bg-amber-950/60 border border-amber-500/40 px-3 py-1.5 rounded-xl w-fit">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+            <span>THE 4 PILLARS OF OWNERSHIP</span>
+          </div>
+        </div>
+
+        {/* Wallo's Core 4 Game Breakdown Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Card 1: 13F Whale Tracking */}
+          <div className="p-4 bg-black/80 border border-cyan-500/30 rounded-2xl space-y-2 relative overflow-hidden group hover:border-cyan-400 transition-all">
+            <div className="flex items-center gap-2 text-cyan-300 font-mono font-black text-xs uppercase">
+              <span className="px-2 py-0.5 rounded bg-cyan-500/20 border border-cyan-400/40 text-[10px]">RULE 01</span>
+              <span>WATCH THE WHALES, DON'T GUESS</span>
+            </div>
+            <p className="text-xs text-neutral-300 font-sans leading-relaxed">
+              Billionaires don't trade on gut feelings. They accumulate assets through SEC 13F filings. We give you their exact holdings—Warren Buffett, Ray Dalio, Citadel, and Renaissance Tech—so you see where trillions are moving before the herd.
             </p>
-            <p className="text-xs text-amber-400/90 font-mono tracking-wider uppercase mt-0.5">
-              STOCK BLOC LABS: Exploring the frontiers of energy, defense, and emerging opportunity.
+          </div>
+
+          {/* Card 2: 800+ Credit Matrix */}
+          <div className="p-4 bg-black/80 border border-emerald-500/30 rounded-2xl space-y-2 relative overflow-hidden group hover:border-emerald-400 transition-all">
+            <div className="flex items-center gap-2 text-emerald-300 font-mono font-black text-xs uppercase">
+              <span className="px-2 py-0.5 rounded bg-emerald-500/20 border border-emerald-400/40 text-[10px]">RULE 02</span>
+              <span>CREDIT IS CAPITAL, CAPITAL IS LEVERAGE</span>
+            </div>
+            <p className="text-xs text-neutral-300 font-sans leading-relaxed">
+              Credit isn't for consumer debt or luxury clothes—it's the cheat code to buy businesses and cash-flowing real estate without using your own cash. Learn Tier 1–3 business tradelines, LLC structuring, and 800+ scoring.
+            </p>
+          </div>
+
+          {/* Card 3: Real Estate & DSCR Cash Flow */}
+          <div className="p-4 bg-black/80 border border-amber-500/30 rounded-2xl space-y-2 relative overflow-hidden group hover:border-amber-400 transition-all">
+            <div className="flex items-center gap-2 text-amber-300 font-mono font-black text-xs uppercase">
+              <span className="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400/40 text-[10px]">RULE 03</span>
+              <span>BRICKS OVER CLICKS (OWN REAL ASSETS)</span>
+            </div>
+            <p className="text-xs text-neutral-300 font-sans leading-relaxed">
+              Real estate is how generational wealth survives inflation. Use our built-in DSCR underwriters, BRRRR equity calculators, and liquid REIT dividend screeners to lock in cash flow that pays you 24/7/365.
+            </p>
+          </div>
+
+          {/* Card 4: Frontier Tech & Space */}
+          <div className="p-4 bg-black/80 border border-purple-500/30 rounded-2xl space-y-2 relative overflow-hidden group hover:border-purple-400 transition-all">
+            <div className="flex items-center gap-2 text-purple-300 font-mono font-black text-xs uppercase">
+              <span className="px-2 py-0.5 rounded bg-purple-500/20 border border-purple-400/40 text-[10px]">RULE 04</span>
+              <span>EARLY TO THE FUTURE = GENERATIONAL ALPHA</span>
+            </div>
+            <p className="text-xs text-neutral-300 font-sans leading-relaxed">
+              Defense aerospace (WAR.GOV), nuclear power grids, Dyson Swarm orbital solar arrays, and sovereign AI compute. Study the critical infrastructure of tomorrow before Wall Street inflates the price.
             </p>
           </div>
         </div>
 
-        {/* Mission Body */}
-        <div className="space-y-4 text-sm sm:text-base leading-relaxed text-neutral-300 font-sans">
-          <p>
-            STOCK BLOC provides algorithmic market intelligence, institutional filing synthesis, and financial education frameworks. Our core modules are engineered to help independent investors research high-conviction market signals with clarity and confidence.
-          </p>
-          <div className="p-4 bg-black/80 border border-cyan-500/30 rounded-2xl font-mono text-xs text-cyan-200 space-y-1">
-            <span className="text-amber-400 font-bold block">[ EDUCATIONAL PLATFORM PRINCIPLE ]</span>
-            <p>
-              Stock Bloc Labs archives declassified military documents, aerial records, and energy grid models purely for informational and research purposes. Nothing on Stock Bloc constitutes financial, investment, legal, or credit repair advice.
+        {/* Motivational Call to Action Banner */}
+        <div className="p-4 sm:p-5 bg-gradient-to-r from-amber-950/60 via-black to-cyan-950/60 border border-amber-400/50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="space-y-1 text-center sm:text-left">
+            <span className="text-[10px] font-mono font-black text-amber-400 uppercase tracking-widest block">
+              // NO MORE EXCUSES // REAL DATA // REAL OWNERSHIP
+            </span>
+            <p className="text-sm font-bold text-white font-tech">
+              EVERY TOOL ON THIS TERMINAL IS LIVE. CHOOSE YOUR ENTRY POINT BELOW:
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("selection");
+              trackEvent("module_opened", { section: "watchlist" });
+              onSelectTab("watchlist");
+            }}
+            className="w-full sm:w-auto px-6 py-3 bg-amber-400 hover:bg-amber-300 text-black font-black font-mono text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-amber-400/30 flex items-center justify-center gap-2 cursor-pointer transition-all shrink-0"
+          >
+            <Zap className="w-4 h-4 text-black fill-black" />
+            <span>ENTER LIVE MARKET TERMINAL</span>
+            <ArrowRight className="w-4 h-4 text-black" />
+          </button>
         </div>
       </div>
 

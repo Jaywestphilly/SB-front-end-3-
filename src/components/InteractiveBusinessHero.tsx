@@ -185,20 +185,20 @@ export const InteractiveBusinessHero: React.FC<InteractiveBusinessHeroProps> = (
                 {/* Hero Headline & Value Proposition */}
                 <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                   <div className="space-y-2 max-w-2xl">
-                    <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-amber-400/10 border border-amber-400/40 rounded alien-block-cut-sm text-amber-300 text-[10px] font-black tracking-widest uppercase font-martian">
-                      <Zap className="w-3 h-3 text-amber-400" />
-                      <span>THE SYMBIOTIC FINANCIAL FUTURE</span>
+                    <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-amber-400/10 border border-amber-400/50 rounded alien-block-cut-sm text-amber-300 text-[10px] font-black tracking-widest uppercase font-martian">
+                      <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                      <span>THE QUANT WEALTH ENGINE // STOP PLAYIN' WITH IT</span>
                     </div>
 
                     <h1 className="text-xl sm:text-2xl md:text-3xl font-black font-zen text-white tracking-tight uppercase leading-tight">
-                      Where Human Intuition Meets{" "}
+                      HUMAN INTUITION MEETS{" "}
                       <span className="text-cyan-400 underline decoration-cyan-500/50 underline-offset-4">
-                        Autonomous Agent Intelligence
+                        INSTITUTIONAL QUANT INTELLIGENCE
                       </span>
                     </h1>
 
-                    <p className="text-xs sm:text-sm text-neutral-300 font-sans leading-relaxed">
-                      Stock Bloc democratizes institutional-grade market intelligence. Human traders and autonomous AI quant agents research, calibrate, and execute alpha together on an open, transparent financial ledger.
+                    <p className="text-xs sm:text-sm text-neutral-200 font-sans leading-relaxed">
+                      Stock Bloc levels the playing field. Get the exact institutional tools top hedge funds use: real-time market candlesticks, SEC 13F whale portfolios, 800+ business credit stacking, and cash-flowing real estate models—all on an open, futuristic trading desk.
                     </p>
                   </div>
 
@@ -219,23 +219,23 @@ export const InteractiveBusinessHero: React.FC<InteractiveBusinessHeroProps> = (
                       <button
                         onClick={() => {
                           triggerHaptic("selection");
-                          onSelectTab("community");
+                          onSelectTab("watchlist");
                         }}
                         className="flex-1 px-3.5 py-2 alien-block-cut-sm bg-neutral-900 border border-cyan-500/40 hover:bg-cyan-950/40 text-cyan-300 font-alien-hud text-[11px] font-bold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <Users className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>COMMUNITY CHAT</span>
+                        <TrendingUp className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>LIVE TICKERS</span>
                       </button>
 
                       <button
                         onClick={() => {
                           triggerHaptic("selection");
-                          onSelectTab("developers");
+                          onSelectTab("community");
                         }}
                         className="flex-1 px-3.5 py-2 alien-block-cut-sm bg-neutral-900 border border-amber-500/40 hover:bg-amber-950/40 text-amber-300 font-alien-hud text-[11px] font-bold uppercase transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <Bot className="w-3.5 h-3.5 text-amber-400" />
-                        <span>CONNECT AGENT</span>
+                        <Users className="w-3.5 h-3.5 text-amber-400" />
+                        <span>COMMUNITY</span>
                       </button>
                     </div>
                   </div>
