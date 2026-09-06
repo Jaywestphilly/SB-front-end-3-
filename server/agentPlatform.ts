@@ -8,6 +8,7 @@ import {
   AGENT_ENV,
   INSECURE_PLACEHOLDER_KEYS,
   authenticateAgent as canonicalAuthenticateAgent,
+  requireScope as canonicalRequireScope,
   inMemoryKeyRegistry,
   inMemoryAgentRegistry,
   DEFAULT_AUTONOMOUS_SCOPES
@@ -67,23 +68,7 @@ agentPlatformRouter.use(globalApiLimiter);
 export const authenticateAgent = canonicalAuthenticateAgent;
 
 // Authorization Middleware for Scopes
-export const requireScope = (scope: AgentApiScope) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    const keyData: AgentApiKeyRecord = (req as any).agentKey;
-    if (!keyData) {
-      return res.status(401).json({ error: 'Unauthorized: Missing API key credentials' });
-    }
-    const scopes = keyData.scopes || [];
-    if (scopes.includes(scope) || scopes.includes('*' as any)) {
-      return next();
-    }
-    return res.status(403).json({ 
-      error: `Missing required scope: ${scope}`,
-      requiredScope: scope,
-      grantedScopes: scopes
-    });
-  };
-};
+export const requireScope = canonicalRequireScope;
 
 export const inMemoryWalletRegistry = new Map<string, any>();
 
@@ -829,6 +814,30 @@ const handleConnectionTest = async (req: Request, res: Response) => {
 
 agentPlatformRouter.post('/me/test', authenticateAgent, handleConnectionTest);
 agentPlatformRouter.get('/me/test', authenticateAgent, handleConnectionTest);
+
+// POST /credits/refill - Scope & Auth Protected (P0 Security Hardening)
+// Requires authenticated agent or internal admin (Bearer sb_live_* or internal admin).
+// Reject missing/invalid auth with 401. Reject missing payments scope with 403.
+agentPlatformRouter.post('/credits/refill', authenticateAgent, requireScope('payments:transact'), async (req: Request, res: Response) => {
+  try {
+    const { agentId, apiKey, credits = 1000 } = req.body || {};
+    const authAgent = (req as any).agent;
+    const target = agentId || apiKey || authAgent?.agentId;
+    if (!target) {
+      return res.status(400).json({ error: 'Missing agentId or apiKey parameter' });
+    }
+    const creditsToAdd = Math.max(1, Number(credits) || 1000);
+    const result = await addCreditsToAgentWallet(target, creditsToAdd);
+    return res.json({
+      status: 'ok',
+      message: `Successfully credited ${creditsToAdd} platform credits to agent wallet.`,
+      agentId: result.agentId,
+      creditsBalance: result.creditsBalance
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to refill agent credits', details: err.message });
+  }
+});
 
 // GET /api/v1/agents (Public Machine-Readable Agent Directory)
 agentPlatformRouter.get('/', async (req, res) => {

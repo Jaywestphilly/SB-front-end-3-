@@ -392,6 +392,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
   const { marketDataUpdatedAt, marketDataIsStale, watchlistChartStyle } = useMarketStore();
   const [dragOffset, setDragOffset] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
+  const [hoveredCandleIdx, setHoveredCandleIdx] = useState<number | null>(null);
   const [priceFlashState, setPriceFlashState] = useState<"up" | "down" | null>(
     null,
   );
@@ -791,15 +792,76 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                 ? "#00ff88"
                 : "#ff3b3b";
 
-    // HEIKIN-ASHI JAPANESE CANDLESTICK MODE (Selectable Option)
+    // HEIKIN-ASHI & TRADINGVIEW JAPANESE CANDLESTICK MODE (Matching Deeper Analysis Detail Chart)
     if (watchlistChartStyle === "candlestick") {
-      const candles = generateHeikinAshiCandlesticks(stock, 14);
+      const candles = generateHeikinAshiCandlesticks(stock, 16);
+      if (!candles || candles.length === 0) return null;
+
+      const candleSvgWidth = 100;
+      const candleSvgHeight = 32;
+      const cPadX = 2;
+      const plotTop = 2;
+      const plotBottom = 25;
+      const plotHeight = plotBottom - plotTop;
+
       const minCandle = Math.min(...candles.map((c) => c.low));
       const maxCandle = Math.max(...candles.map((c) => c.high));
-      const candleRange = maxCandle - minCandle || 1;
-      const candlePadY = 2.5;
-      const slotWidth = (chartWidth - 2 * padX) / Math.max(1, candles.length);
-      const barWidth = 4.2;
+      const priceSpan = maxCandle - minCandle || 1;
+      const padMin = minCandle - priceSpan * 0.04;
+      const padMax = maxCandle + priceSpan * 0.04;
+      const totalSpan = padMax - padMin || 1;
+
+      const getCandleY = (p: number) =>
+        plotBottom - ((p - padMin) / totalSpan) * plotHeight;
+
+      const slotWidth = (candleSvgWidth - 2 * cPadX) / Math.max(1, candles.length);
+      const barWidth = Math.max(2.4, Math.min(3.8, slotWidth * 0.65));
+
+      // Compute 5-period Simple Moving Average (SMA - Gold/Amber)
+      const smaValues = candles.map((_, i) => {
+        const start = Math.max(0, i - 4);
+        const sub = candles.slice(start, i + 1);
+        const sum = sub.reduce((acc, c) => acc + c.close, 0);
+        return sum / sub.length;
+      });
+      const smaPathD = smaValues
+        .map((val, i) => {
+          const x = cPadX + i * slotWidth + slotWidth / 2;
+          const y = getCandleY(val);
+          return `${i === 0 ? "M" : "L"} ${x.toFixed(1)},${y.toFixed(1)}`;
+        })
+        .join(" ");
+
+      // Compute Volume-Weighted Average Price (VWAP - Purple dashed)
+      let cTPV = 0;
+      let cVol = 0;
+      const vwapValues = candles.map((c) => {
+        const tp = (c.high + c.low + c.close) / 3;
+        const vol = (c as { volume?: number }).volume || 1200;
+        cTPV += tp * vol;
+        cVol += vol;
+        return cTPV / (cVol || 1);
+      });
+      const vwapPathD = vwapValues
+        .map((val, i) => {
+          const x = cPadX + i * slotWidth + slotWidth / 2;
+          const y = getCandleY(val);
+          return `${i === 0 ? "M" : "L"} ${x.toFixed(1)},${y.toFixed(1)}`;
+        })
+        .join(" ");
+
+      // Volume scaling
+      const maxVol = Math.max(
+        ...candles.map((c) => (c as { volume?: number }).volume || 1200),
+        1000,
+      );
+
+      const latestCandle = candles[candles.length - 1];
+      const livePriceY = getCandleY(latestCandle.close);
+      const activeHoverCandle =
+        hoveredCandleIdx !== null && candles[hoveredCandleIdx]
+          ? candles[hoveredCandleIdx]
+          : null;
 
       return (
         <div
@@ -809,70 +871,167 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
             triggerHaptic("selection");
             onSelect(stock);
           }}
-          title={`24H Heikin-Ashi (平均足) Candlesticks • ${candles.length} Bars (H: $${maxCandle.toFixed(2)} L: $${minCandle.toFixed(2)}) • Tap to view chart`}
+          onMouseLeave={() => setHoveredCandleIdx(null)}
+          title={`24H Candlesticks (SMA #f59e0b • VWAP #c084fc) • O: $${latestCandle.open.toFixed(2)} H: $${maxCandle.toFixed(2)} L: $${minCandle.toFixed(2)} C: $${latestCandle.close.toFixed(2)} • Tap for Deeper Analysis`}
         >
-          {/* Dotted 24h Price Baseline */}
+          {/* Subtle Dotted 24h Baseline (Blends with Card Style) */}
           <div className="absolute w-full border-t border-dashed border-cyan-900/40 top-1/2 pointer-events-none z-0" />
 
+          {/* Floating Hover Candlestick HUD Tooltip */}
+          {activeHoverCandle && (
+            <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-30 px-2 py-0.5 rounded bg-[#031322]/95 border border-cyan-400/50 shadow-xl backdrop-blur-md text-[8.5px] font-mono whitespace-nowrap pointer-events-none flex items-center gap-1.5 text-white">
+              <span className={activeHoverCandle.isUp ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+                {activeHoverCandle.isUp ? "▲" : "▼"} ${activeHoverCandle.close.toFixed(2)}
+              </span>
+              <span className="text-white/60 text-[7.5px]">
+                O:${activeHoverCandle.open.toFixed(1)} H:${activeHoverCandle.high.toFixed(1)} L:${activeHoverCandle.low.toFixed(1)}
+              </span>
+            </div>
+          )}
+
           <svg
-            viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+            viewBox={`0 0 ${candleSvgWidth} ${candleSvgHeight}`}
             className="w-full h-full overflow-visible z-10"
           >
             <defs>
               <linearGradient id={`ha-up-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#00e676" stopOpacity="1" />
-                <stop offset="100%" stopColor="#00b862" stopOpacity="0.9" />
+                <stop offset="0%" stopColor="#10b981" stopOpacity="1" />
+                <stop offset="100%" stopColor="#059669" stopOpacity="0.9" />
               </linearGradient>
               <linearGradient id={`ha-dn-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ff4d4d" stopOpacity="1" />
-                <stop offset="100%" stopColor="#d32f2f" stopOpacity="0.9" />
+                <stop offset="0%" stopColor="#ef4444" stopOpacity="1" />
+                <stop offset="100%" stopColor="#dc2626" stopOpacity="0.9" />
               </linearGradient>
             </defs>
 
+            {/* Bottom Volume Histogram Bars (Matching Deeper Analysis) */}
+            <g>
+              {candles.map((c, idx) => {
+                const xCenter = cPadX + idx * slotWidth + slotWidth / 2;
+                const vol = (c as { volume?: number }).volume || 1200;
+                const volH = Math.max(1.2, (vol / maxVol) * 5.5);
+                const volY = candleSvgHeight - 0.5 - volH;
+                const volColor = c.isUp
+                  ? "rgba(16, 185, 129, 0.35)"
+                  : "rgba(239, 68, 68, 0.35)";
+                return (
+                  <rect
+                    key={`vol-${idx}`}
+                    x={xCenter - barWidth / 2}
+                    y={volY}
+                    width={barWidth}
+                    height={volH}
+                    fill={volColor}
+                    rx="0.3"
+                  />
+                );
+              })}
+            </g>
+
+            {/* 50-period Simple Moving Average (SMA) Line - Amber #f59e0b */}
+            {smaPathD && (
+              <path
+                d={smaPathD}
+                fill="none"
+                stroke="#f59e0b"
+                strokeWidth="1.1"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity="0.8"
+                className="drop-shadow-[0_0_3px_rgba(245,158,11,0.5)]"
+              />
+            )}
+
+            {/* Volume-Weighted Average Price (VWAP) Line - Purple #c084fc Dashed */}
+            {vwapPathD && (
+              <path
+                d={vwapPathD}
+                fill="none"
+                stroke="#c084fc"
+                strokeWidth="1.0"
+                strokeDasharray="2.5 1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                opacity="0.75"
+                className="drop-shadow-[0_0_3px_rgba(192,132,252,0.5)]"
+              />
+            )}
+
+            {/* Real Japanese Candlesticks with Wicks and Bodies */}
             {candles.map((c, idx) => {
-              const xCenter = padX + idx * slotWidth + slotWidth / 2;
-              const yHigh =
-                chartHeight - candlePadY - ((c.high - minCandle) / candleRange) * (chartHeight - 2 * candlePadY);
-              const yLow =
-                chartHeight - candlePadY - ((c.low - minCandle) / candleRange) * (chartHeight - 2 * candlePadY);
-              const yOpen =
-                chartHeight - candlePadY - ((c.open - minCandle) / candleRange) * (chartHeight - 2 * candlePadY);
-              const yClose =
-                chartHeight - candlePadY - ((c.close - minCandle) / candleRange) * (chartHeight - 2 * candlePadY);
+              const xCenter = cPadX + idx * slotWidth + slotWidth / 2;
+              const yHigh = getCandleY(c.high);
+              const yLow = getCandleY(c.low);
+              const yOpen = getCandleY(c.open);
+              const yClose = getCandleY(c.close);
 
               const bodyTop = Math.min(yOpen, yClose);
-              const bodyHeight = Math.max(2.2, Math.abs(yClose - yOpen));
+              const bodyHeight = Math.max(1.6, Math.abs(yClose - yOpen));
+              const candleColor = c.isUp ? "#10b981" : "#ef4444";
               const candleFill = c.isUp ? `url(#ha-up-${stock.symbol})` : `url(#ha-dn-${stock.symbol})`;
-              const wickColor = c.isUp ? "#00e676" : "#ff4d4d";
+              const isHovered = hoveredCandleIdx === idx;
 
               return (
-                <g key={`ha-${idx}`} className="transition-opacity hover:opacity-100 opacity-95">
+                <g
+                  key={`ha-${idx}`}
+                  className="transition-opacity cursor-crosshair"
+                  onMouseEnter={() => setHoveredCandleIdx(idx)}
+                >
                   {/* High/Low Japanese Candlestick Center Wick */}
                   <line
                     x1={xCenter}
                     y1={yHigh}
                     x2={xCenter}
                     y2={yLow}
-                    stroke={wickColor}
-                    strokeWidth="1.0"
+                    stroke={candleColor}
+                    strokeWidth={isHovered ? "1.3" : "0.85"}
                     strokeLinecap="round"
-                    strokeOpacity="0.85"
+                    strokeOpacity={isHovered ? 1 : 0.85}
                   />
-                  {/* Crisp Uniform Candlestick Body */}
+                  {/* Candlestick Body */}
                   <rect
                     x={xCenter - barWidth / 2}
                     y={bodyTop}
                     width={barWidth}
                     height={bodyHeight}
                     fill={candleFill}
-                    stroke={wickColor}
-                    strokeWidth="0.4"
+                    stroke={candleColor}
+                    strokeWidth={isHovered ? "0.6" : "0.4"}
                     strokeOpacity="0.9"
-                    rx="0.5"
+                    rx="0.3"
                   />
                 </g>
               );
             })}
+
+            {/* Live Current Price Horizontal Dotted Line */}
+            <line
+              x1="0"
+              y1={livePriceY}
+              x2={candleSvgWidth}
+              y2={livePriceY}
+              stroke={latestCandle.isUp ? "#10b981" : "#ef4444"}
+              strokeDasharray="2 2"
+              strokeWidth="0.6"
+              strokeOpacity="0.6"
+            />
+
+            {/* Live Price Pulsating Dot at Right Edge */}
+            <circle
+              cx={candleSvgWidth - cPadX}
+              cy={livePriceY}
+              r="1.5"
+              fill={latestCandle.isUp ? "#10b981" : "#ef4444"}
+              className="animate-ping"
+            />
+            <circle
+              cx={candleSvgWidth - cPadX}
+              cy={livePriceY}
+              r="1.8"
+              fill={latestCandle.isUp ? "#10b981" : "#ef4444"}
+              stroke="#ffffff"
+              strokeWidth="0.4"
+            />
           </svg>
         </div>
       );
