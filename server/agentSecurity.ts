@@ -978,6 +978,7 @@ export const requireScope = (scope: AgentApiScope | string) => {
       isMaster ||
       scopes.includes(scope) || 
       scopes.includes('*') ||
+      scopes.includes('admin') ||
       (scope === 'payments:transact' && (scopes.includes('payments') || scopes.includes('payments:write') || scopes.includes('payments:*')));
 
     if (hasScope) {

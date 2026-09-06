@@ -85,7 +85,33 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
           const data = await res.json();
           const list = data.agents || [];
           if (Array.isArray(list) && list.length > 0) {
-            setAgents(list.map((a: any) => {
+            const cleanList = list.filter((a: any) => {
+              if (a.isTestAgent) return false;
+              const handle = (a.handle || '').toLowerCase();
+              if (
+                handle.startsWith('tictac_') ||
+                handle.startsWith('trb_verify_') ||
+                handle.startsWith('test_') ||
+                handle.startsWith('probe_') ||
+                handle.includes('tictac_') ||
+                handle.includes('trb_verify_') ||
+                handle.includes('test_') ||
+                handle.includes('probe_') ||
+                handle.includes('ephemeral') ||
+                handle.includes('probe')
+              ) {
+                return false;
+              }
+              const desc = (a.description || '').toLowerCase();
+              const name = (a.displayName || a.agentName || '').toLowerCase();
+              const probeKeywords = ['probe', 'ephemeral', 'qa', 'test agent', 'verification test', 'automated test', 'synthetic probe'];
+              if (probeKeywords.some(kw => desc.includes(kw) || name.includes(kw))) {
+                return false;
+              }
+              return true;
+            });
+
+            setAgents(cleanList.map((a: any) => {
               const isVerified = a.verificationStatus === 'verified_agent' || a.verificationStatus === 'verified' || a.verifiedStatus === 'VERIFIED SIMULATION' || a.verifiedSimulation;
               return {
                 id: a.id || a.agentId,
@@ -116,7 +142,24 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
           limit(100)
         );
         const snap = await getDocs(q);
-        const agentData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const agentData = snap.docs
+          .map(doc => ({ id: doc.id, ...doc.data() as any }))
+          .filter((a: any) => {
+            if (a.isTestAgent) return false;
+            const handle = (a.handle || '').toLowerCase();
+            if (
+              handle.startsWith('tictac_') ||
+              handle.startsWith('trb_verify_') ||
+              handle.startsWith('test_') ||
+              handle.startsWith('probe_') ||
+              handle.includes('tictac_') ||
+              handle.includes('probe_') ||
+              handle.includes('ephemeral')
+            ) {
+              return false;
+            }
+            return true;
+          });
         setAgents(agentData);
       } catch (err) {
         console.error("Error fetching agents directory:", err);

@@ -30,25 +30,55 @@ export const AgentFeed: React.FC<AgentFeedProps> = ({ onNavigateTab }) => {
       const res = await fetch("/api/v1/agents/feed?limit=40");
       if (res.ok) {
         const data = await res.json();
-        const rawItems: any[] = data.items || [];
-        // Dedupe by author|symbol|target; prefer trade_idea_* over leaderboard_trade_*
+        const rawItems: any[] = data.items || data.feed || [];
+
+        // Filter out probe / test clutter
+        const nonTestItems = rawItems.filter((item) => {
+          if (item.isTestAgent) return false;
+          const aName = (item.author?.handle || item.authorUsername || item.authorId || item.authorName || "").toLowerCase();
+          if (
+            aName.startsWith("tictac_") ||
+            aName.startsWith("trb_verify_") ||
+            aName.startsWith("test_") ||
+            aName.startsWith("probe_") ||
+            aName.includes("tictac_") ||
+            aName.includes("probe_") ||
+            aName.includes("ephemeral")
+          ) {
+            return false;
+          }
+          return true;
+        });
+
+        // Dedupe strictly by author|symbol|targetPrice after fetch
         const dedupeMap = new Map<string, any>();
-        rawItems.forEach((item) => {
-          const author = (item.author?.handle || item.authorUsername || item.authorId || item.authorName || "").toLowerCase();
-          const symbol = (item.symbol || item.asset || "").toUpperCase();
-          const target = item.targetPrice !== undefined && item.targetPrice !== null ? String(item.targetPrice) : "";
+        nonTestItems.forEach((item, idx) => {
+          const author = (item.author?.handle || item.authorUsername || item.authorId || item.authorName || item.author?.displayName || "").toLowerCase().trim();
+          const symbol = (item.symbol || item.asset || item.ticker || item.targetSymbol || "").toUpperCase().trim();
+          const targetPrice = item.targetPrice !== undefined && item.targetPrice !== null 
+            ? String(item.targetPrice).trim() 
+            : (item.forecast?.targetPrice !== undefined && item.forecast?.targetPrice !== null 
+              ? String(item.forecast.targetPrice).trim() 
+              : (item.tradeIdea?.targetPrice !== undefined && item.tradeIdea?.targetPrice !== null 
+                ? String(item.tradeIdea.targetPrice).trim() 
+                : ""));
+
           if (author && symbol) {
-            const key = `${author}|${symbol}|${target}`;
+            const key = `${author}|${symbol}|${targetPrice}`;
             if (!dedupeMap.has(key)) {
               dedupeMap.set(key, item);
             } else {
               const existing = dedupeMap.get(key);
+              // Prefer trade_idea_* over leaderboard_trade_*
               if (String(item.id).startsWith("trade_idea_") && !String(existing.id).startsWith("trade_idea_")) {
                 dedupeMap.set(key, item);
               }
             }
           } else {
-            dedupeMap.set(item.id || Math.random().toString(), item);
+            const fallbackKey = item.id ? String(item.id) : `feed_item_${idx}`;
+            if (!dedupeMap.has(fallbackKey)) {
+              dedupeMap.set(fallbackKey, item);
+            }
           }
         });
         setFeedItems(Array.from(dedupeMap.values()));

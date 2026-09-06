@@ -817,27 +817,72 @@ agentPlatformRouter.get('/me/test', authenticateAgent, handleConnectionTest);
 
 // POST /credits/refill - Scope & Auth Protected (P0 Security Hardening)
 // Requires authenticated agent or internal admin (Bearer sb_live_* or internal admin).
-// Reject missing/invalid auth with 401. Reject missing payments scope with 403.
-agentPlatformRouter.post('/credits/refill', authenticateAgent, requireScope('payments:transact'), async (req: Request, res: Response) => {
+// Reject missing/invalid auth with 401. Reject missing payments/admin scope with 403.
+// Body without credits does not mint 1000 — explicit positive credits amount is strictly required.
+export async function handleCreditsRefill(req: Request, res: Response): Promise<any> {
   try {
-    const { agentId, apiKey, credits = 1000 } = req.body || {};
     const authAgent = (req as any).agent;
-    const target = agentId || apiKey || authAgent?.agentId;
+    const agentKey = (req as any).agentKey;
+
+    // 1. Strict Authentication verification (defense-in-depth)
+    if (!authAgent || !agentKey) {
+      return res.status(401).json({ error: 'Unauthorized: Missing or invalid agent authentication credentials.' });
+    }
+
+    // 2. Strict credits parameter validation — NEVER DEFAULT TO 1000
+    const rawCredits = req.body?.credits;
+    if (rawCredits === undefined || rawCredits === null || rawCredits === '') {
+      return res.status(400).json({
+        error: 'Missing credits parameter: explicit positive credits amount is required. Default credit minting is disabled.'
+      });
+    }
+
+    const numCredits = typeof rawCredits === 'number' ? rawCredits : parseInt(String(rawCredits), 10);
+    if (isNaN(numCredits) || numCredits <= 0 || !Number.isFinite(numCredits)) {
+      return res.status(400).json({
+        error: 'Invalid credits amount: credits must be a positive integer.'
+      });
+    }
+
+    // 3. Scope validation — payments:transact or admin scope required
+    const scopes = Array.isArray(agentKey?.scopes) ? agentKey.scopes : [];
+    const isMaster = authAgent?.isMaster === true || authAgent?.agentId === 'platform_master_admin';
+    const hasAdminScope = isMaster || scopes.includes('admin') || scopes.includes('*');
+    const hasPaymentScope = hasAdminScope ||
+      scopes.includes('payments:transact') ||
+      scopes.includes('payments') ||
+      scopes.includes('payments:write') ||
+      scopes.includes('payments:*');
+
+    if (!hasPaymentScope) {
+      return res.status(403).json({
+        error: "Forbidden: Requires 'payments:transact' or 'admin' scope to mint/refill agent credits.",
+        requiredScope: 'payments:transact',
+        grantedScopes: scopes
+      });
+    }
+
+    // 4. Target resolution
+    const { agentId, apiKey } = req.body || {};
+    const target = (agentId || apiKey || authAgent?.agentId || '').trim();
     if (!target) {
       return res.status(400).json({ error: 'Missing agentId or apiKey parameter' });
     }
-    const creditsToAdd = Math.max(1, Number(credits) || 1000);
-    const result = await addCreditsToAgentWallet(target, creditsToAdd);
+
+    // 5. Mint / add credits to target wallet
+    const result = await addCreditsToAgentWallet(target, numCredits);
     return res.json({
       status: 'ok',
-      message: `Successfully credited ${creditsToAdd} platform credits to agent wallet.`,
+      message: `Successfully credited ${numCredits} platform credits to agent wallet.`,
       agentId: result.agentId,
       creditsBalance: result.creditsBalance
     });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to refill agent credits', details: err.message });
   }
-});
+}
+
+agentPlatformRouter.post('/credits/refill', authenticateAgent, requireScope('payments:transact'), handleCreditsRefill);
 
 // GET /api/v1/agents (Public Machine-Readable Agent Directory)
 agentPlatformRouter.get('/', async (req, res) => {
@@ -891,9 +936,44 @@ agentPlatformRouter.get('/', async (req, res) => {
       agents = agents.filter(a => a.status === status);
     }
 
-    if (isTestAgent !== undefined) {
-      const reqTest = isTestAgent === 'true';
-      agents = agents.filter(a => Boolean(a.isTestAgent) === reqTest);
+    // Filter test agents, tictac_*, probe handles, and ephemeral QA by default (unless explicitly requested via isTestAgent=true)
+    const allowTest = isTestAgent === 'true';
+    if (!allowTest) {
+      agents = agents.filter(a => {
+        if (a.isTestAgent) return false;
+        const handle = (a.handle || '').toLowerCase();
+        if (
+          handle.startsWith('tictac_') ||
+          handle.startsWith('trb_verify_') ||
+          handle.startsWith('test_') ||
+          handle.startsWith('probe_') ||
+          handle.includes('tictac_') ||
+          handle.includes('trb_verify_') ||
+          handle.includes('test_') ||
+          handle.includes('probe_') ||
+          handle.includes('ephemeral') ||
+          handle.includes('probe')
+        ) {
+          return false;
+        }
+        const desc = (a.description || '').toLowerCase();
+        const name = (a.displayName || a.agentName || '').toLowerCase();
+        const probeKeywords = [
+          'probe',
+          'ephemeral',
+          'qa',
+          'test agent',
+          'verification test',
+          'automated test',
+          'synthetic probe'
+        ];
+        if (probeKeywords.some(kw => desc.includes(kw) || name.includes(kw))) {
+          return false;
+        }
+        return true;
+      });
+    } else {
+      agents = agents.filter(a => Boolean(a.isTestAgent));
     }
 
     // Sort order

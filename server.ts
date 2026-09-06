@@ -10,7 +10,7 @@ import { createEbookPdf } from './server/pdfGenerator.js';
 import { MarketDataService, computeQuantMetrics, calculateStockBlocSignal } from './src/services/marketDataService.js';
 import { computeDeterministicSignal, getSBScoreColor } from './src/utils/signalCalculator.js';
 import { SecIntelService } from './src/services/secIntelService.js';
-import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit, handleGetLeaderboard, handleGetTradeIdeas, globalActiveTradeIdeas, AgentTradeIdea, addCreditsToAgentWallet, resolveAgentIdFromKey, handleGetAgentMe, requireScope } from './server/agentPlatform.js';
+import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit, handleGetLeaderboard, handleGetTradeIdeas, globalActiveTradeIdeas, AgentTradeIdea, addCreditsToAgentWallet, resolveAgentIdFromKey, handleGetAgentMe, requireScope, handleCreditsRefill } from './server/agentPlatform.js';
 import { recordedStripeSessions, fulfilledStripeSessions, processedWebhookEvents } from './server/stripePaymentProvider.js';
 import { communityApiRouter } from './server/communityApi.js';
 import { agentIntelligenceRouter } from './server/agentIntelligenceApi.js';
@@ -4692,32 +4692,13 @@ app.get(['/api/checkout/verify-session', '/api/stripe/verify-session'], async (r
 
 // Direct Agent Wallet Credit Refill Endpoint - Authenticated & Scope-Guarded (P0 Hardening)
 // Requires authenticated agent or internal admin (Bearer sb_live_* or internal admin).
-// Reject missing or invalid auth with 401. Reject missing payments scope with 403.
-// Public unauthenticated refill is strictly rejected — credits only via verified Stripe webhook / paid verify-session.
+// Reject missing or invalid auth with 401. Reject missing payments/admin scope with 403.
+// Body without credits does not mint 1000 — explicit positive credits amount is strictly required.
 app.post(
   ['/api/v1/agent/credits/refill', '/api/v1/agents/credits/refill', '/api/agents/credits/refill'],
   authenticateAgent,
   requireScope('payments:transact'),
-  async (req: any, res: any) => {
-    try {
-      const { agentId, apiKey, credits = 1000 } = req.body || {};
-      const authAgent = (req as any).agent;
-      const target = agentId || apiKey || authAgent?.agentId;
-      if (!target) {
-        return res.status(400).json({ error: 'Missing agentId or apiKey parameter' });
-      }
-      const creditsToAdd = Math.max(1, parseInt(String(credits), 10) || 1000);
-      const result = await addCreditsToAgentWallet(target, creditsToAdd);
-      return res.json({
-        status: 'ok',
-        message: `Successfully credited ${creditsToAdd} platform credits to agent wallet.`,
-        agentId: result.agentId,
-        creditsBalance: result.creditsBalance
-      });
-    } catch (err: any) {
-      return res.status(500).json({ error: 'Failed to refill agent credits', details: err.message });
-    }
-  }
+  handleCreditsRefill
 );
 
 // Post-checkout purchase linking endpoint (Success/link-purchases only after verified payment)

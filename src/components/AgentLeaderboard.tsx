@@ -130,6 +130,8 @@ export function computeAgentBadges(item: any): AgentBadge[] {
   return mapPayloadBadges(item?.badges || item?.rawBadges);
 }
 
+const isProd = Boolean(import.meta.env?.PROD);
+
 export const mapVerificationStatus = (rawStatus: any): "verified_agent" | "arena_candidate" => {
   const s = String(rawStatus || "").toLowerCase();
   if (s === "verified_agent" || s.includes("verified") || s.includes("sec 13f") || s.includes("audited")) {
@@ -138,7 +140,8 @@ export const mapVerificationStatus = (rawStatus: any): "verified_agent" | "arena
   return "arena_candidate";
 };
 
-const RAW_AGENT_LEADERBOARD: AgentLeaderboardItem[] = [
+// Mock leaderboard dropped in production; only present as non-prod local mock
+const RAW_AGENT_LEADERBOARD: AgentLeaderboardItem[] = isProd ? [] : [
   {
     id: "agent_1",
     rank: 1,
@@ -221,7 +224,7 @@ const RAW_AGENT_LEADERBOARD: AgentLeaderboardItem[] = [
   },
 ];
 
-const INITIAL_AGENT_LEADERBOARD: AgentLeaderboardItem[] = RAW_AGENT_LEADERBOARD.map((item) => ({
+const INITIAL_AGENT_LEADERBOARD: AgentLeaderboardItem[] = isProd ? [] : RAW_AGENT_LEADERBOARD.map((item) => ({
   ...item,
   badges: computeAgentBadges(item),
 }));
@@ -545,7 +548,14 @@ export const AgentLeaderboard: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-800">
-              {leaderboard.map((item) => (
+              {leaderboard.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-neutral-400 font-mono text-xs">
+                    {isLoading ? "Connecting to Arena leaderboard telemetry..." : "—"}
+                  </td>
+                </tr>
+              ) : (
+                leaderboard.map((item) => (
                 <tr
                   key={item.id}
                   className={`hover:bg-amber-950/20 transition-colors ${
@@ -675,14 +685,19 @@ export const AgentLeaderboard: React.FC = () => {
                     )}
                   </td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>
       ) : (
         /* Leaderboard Cards Grid View */
         <div className="grid grid-cols-1 gap-4">
-        {leaderboard.map((item) => (
+        {leaderboard.length === 0 ? (
+          <div className="py-12 text-center text-neutral-400 font-mono text-xs border border-white/10 rounded-xl bg-black/60">
+            {isLoading ? "Connecting to Arena leaderboard telemetry..." : "—"}
+          </div>
+        ) : (
+          leaderboard.map((item) => (
           <div
             key={item.id}
             className={`bg-black/80 border rounded-xl p-5 transition-all duration-300 hover:shadow-xl ${
@@ -841,7 +856,7 @@ export const AgentLeaderboard: React.FC = () => {
               </div>
             ) : null}
           </div>
-        ))}
+        )))}
       </div>
       )}
 
@@ -1018,7 +1033,7 @@ export const AgentLeaderboard: React.FC = () => {
                         {comparisonData.matrix.map((ag: any) => (
                           <td key={ag.id} className="p-3">
                             <span className="px-2 py-1 bg-purple-950 text-purple-300 border border-purple-800 rounded font-bold">
-                              {ag.reputationStatus}
+                              {ag.reputationStatus || "—"}
                             </span>
                           </td>
                         ))}
@@ -1027,7 +1042,7 @@ export const AgentLeaderboard: React.FC = () => {
                         <td className="p-3 font-bold text-neutral-400">Brier Score (Lower is better)</td>
                         {comparisonData.matrix.map((ag: any) => (
                           <td key={ag.id} className="p-3 text-cyan-400 font-bold text-sm">
-                            {ag.brierScore !== null ? ag.brierScore : 'N/A (N < 5)'}
+                            {ag.brierScore !== null && ag.brierScore !== undefined && !isNaN(Number(ag.brierScore)) ? ag.brierScore : "—"}
                           </td>
                         ))}
                       </tr>
@@ -1035,7 +1050,7 @@ export const AgentLeaderboard: React.FC = () => {
                         <td className="p-3 font-bold text-neutral-400">Calibration Error</td>
                         {comparisonData.matrix.map((ag: any) => (
                           <td key={ag.id} className="p-3 text-amber-400 font-bold">
-                            {ag.calibrationError !== null ? `${(ag.calibrationError * 100).toFixed(1)}%` : 'N/A'}
+                            {ag.calibrationError !== null && ag.calibrationError !== undefined && !isNaN(Number(ag.calibrationError)) ? `${(ag.calibrationError * 100).toFixed(1)}%` : "—"}
                           </td>
                         ))}
                       </tr>
@@ -1043,7 +1058,7 @@ export const AgentLeaderboard: React.FC = () => {
                         <td className="p-3 font-bold text-neutral-400">Win Rate %</td>
                         {comparisonData.matrix.map((ag: any) => (
                           <td key={ag.id} className="p-3 text-emerald-400 font-bold">
-                            {ag.winRate}%
+                            {ag.winRate !== null && ag.winRate !== undefined && !isNaN(Number(ag.winRate)) ? `${ag.winRate}%` : "—"}
                           </td>
                         ))}
                       </tr>

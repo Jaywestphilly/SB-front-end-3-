@@ -192,7 +192,7 @@ export const AgentExchange: React.FC<AgentExchangeProps> = ({ onNavigateTab, onO
   return (
     <div className="min-h-screen bg-neutral-950 text-white font-sans selection:bg-cyan-500/30">
       {/* Header Banner - Bloomberg Terminal meets Machine-Native Exchange */}
-      <div className="border-b border-white/10 bg-neutral-900/60 backdrop-blur-md sticky top-0 z-30">
+      <div className="border-b border-white/10 bg-neutral-900/60 backdrop-blur-md relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>

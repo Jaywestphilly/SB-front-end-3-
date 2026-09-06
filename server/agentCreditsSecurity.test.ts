@@ -9,7 +9,8 @@ import {
   inMemoryWalletRegistry,
   addCreditsToAgentWallet,
   authenticateAgent,
-  requireScope
+  requireScope,
+  handleCreditsRefill
 } from './agentPlatform.js';
 import type { AgentApiKeyRecord, AgentIdentity } from '../src/types.js';
 
@@ -47,26 +48,7 @@ describe('P0 SECURITY FIX: POST /api/v1/agent/credits/refill Authentication & Sc
       ['/api/v1/agent/credits/refill', '/api/v1/agents/credits/refill', '/api/agents/credits/refill'],
       authenticateAgent,
       requireScope('payments:transact'),
-      async (req, res) => {
-        try {
-          const { agentId, apiKey, credits = 1000 } = req.body || {};
-          const authAgent = (req as any).agent;
-          const target = agentId || apiKey || authAgent?.agentId;
-          if (!target) {
-            return res.status(400).json({ error: 'Missing agentId or apiKey parameter' });
-          }
-          const creditsToAdd = Math.max(1, Number(credits) || 1000);
-          const result = await addCreditsToAgentWallet(target, creditsToAdd);
-          return res.json({
-            status: 'ok',
-            message: `Successfully credited ${creditsToAdd} platform credits to agent wallet.`,
-            agentId: result.agentId,
-            creditsBalance: result.creditsBalance
-          });
-        } catch (err: any) {
-          return res.status(500).json({ error: 'Failed to refill agent credits', details: err.message });
-        }
-      }
+      handleCreditsRefill
     );
 
     // Reset registries
@@ -218,5 +200,71 @@ describe('P0 SECURITY FIX: POST /api/v1/agent/credits/refill Authentication & Sc
 
     const wallet = inMemoryWalletRegistry.get(targetAgentId);
     expect(wallet.creditsBalance).toBe(initialCredits + 1000);
+  });
+
+  it('7. Body without credits does NOT mint 1000 (rejects with 400 Bad Request, creditsBalance unchanged)', async () => {
+    // Authenticated agent with payments scope sends body omitting credits
+    const response = await request(app)
+      .post('/api/v1/agent/credits/refill')
+      .set('Authorization', `Bearer ${withPaymentsRawKey}`)
+      .send({ agentId: targetAgentId });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/missing credits parameter/i);
+
+    // Balance must be strictly unchanged! Did NOT mint 1000!
+    const wallet = inMemoryWalletRegistry.get(targetAgentId);
+    expect(wallet.creditsBalance).toBe(initialCredits);
+  });
+
+  it('8. Unauthenticated request omitting credits to /api/v1/agent/credits/refill rejects with 401, creditsBalance unchanged', async () => {
+    const response = await request(app)
+      .post('/api/v1/agent/credits/refill')
+      .send({ agentId: targetAgentId });
+
+    expect(response.status).toBe(401);
+    expect(response.body.error).toMatch(/unauthorized|missing/i);
+
+    const wallet = inMemoryWalletRegistry.get(targetAgentId);
+    expect(wallet.creditsBalance).toBe(initialCredits);
+  });
+
+  it('9. Unauthenticated request omitting credits to /api/v1/agents/credits/refill rejects with 401, creditsBalance unchanged', async () => {
+    const response = await request(app)
+      .post('/api/v1/agents/credits/refill')
+      .send({ agentId: targetAgentId });
+
+    expect(response.status).toBe(401);
+    expect(response.body.error).toMatch(/unauthorized|missing/i);
+
+    const wallet = inMemoryWalletRegistry.get(targetAgentId);
+    expect(wallet.creditsBalance).toBe(initialCredits);
+  });
+
+  it('10. Rejects invalid non-positive or non-numeric credits with 400 and leaves balance unchanged', async () => {
+    const response = await request(app)
+      .post('/api/v1/agent/credits/refill')
+      .set('Authorization', `Bearer ${withPaymentsRawKey}`)
+      .send({ agentId: targetAgentId, credits: -500 });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/invalid credits/i);
+
+    const wallet = inMemoryWalletRegistry.get(targetAgentId);
+    expect(wallet.creditsBalance).toBe(initialCredits);
+  });
+
+  it('11. Authenticated agent without payments/admin scope cannot mint for arbitrary agentId (rejects with 403)', async () => {
+    const response = await request(app)
+      .post('/api/v1/agents/credits/refill')
+      .set('Authorization', `Bearer ${noPaymentsRawKey}`)
+      .send({ agentId: 'arbitrary_victim_agent_999', credits: 5000 });
+
+    expect(response.status).toBe(403);
+    expect(response.body.error).toContain('Missing required scope: payments:transact');
+
+    // Balance of victim must not exist or remain unchanged
+    const wallet = inMemoryWalletRegistry.get('arbitrary_victim_agent_999');
+    expect(wallet).toBeUndefined();
   });
 });
