@@ -769,9 +769,9 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
 
     if (!rawData || rawData.length < 2) return null;
 
-    const chartWidth = 100;
-    const chartHeight = 32;
-    const padY = 3.0;
+    const chartWidth = 220;
+    const chartHeight = 36;
+    const padY = 3.5;
     const padX = 4;
 
     const trendIsPositive = stock.changePercent >= 0;
@@ -794,14 +794,14 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
 
     // HEIKIN-ASHI & TRADINGVIEW JAPANESE CANDLESTICK MODE (Matching Deeper Analysis Detail Chart)
     if (watchlistChartStyle === "candlestick") {
-      const candles = generateHeikinAshiCandlesticks(stock, 16);
+      const candles = generateHeikinAshiCandlesticks(stock, 22);
       if (!candles || candles.length === 0) return null;
 
-      const candleSvgWidth = 100;
-      const candleSvgHeight = 32;
-      const cPadX = 2;
+      const candleSvgWidth = 220;
+      const candleSvgHeight = 36;
+      const cPadX = 3;
       const plotTop = 2;
-      const plotBottom = 25;
+      const plotBottom = 28;
       const plotHeight = plotBottom - plotTop;
 
       const minCandle = Math.min(...candles.map((c) => c.low));
@@ -815,7 +815,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
         plotBottom - ((p - padMin) / totalSpan) * plotHeight;
 
       const slotWidth = (candleSvgWidth - 2 * cPadX) / Math.max(1, candles.length);
-      const barWidth = Math.max(2.4, Math.min(3.8, slotWidth * 0.65));
+      const barWidth = Math.max(2.5, Math.min(5.0, slotWidth * 0.65));
 
       // Compute 5-period Simple Moving Average (SMA - Gold/Amber)
       const smaValues = candles.map((_, i) => {
@@ -865,14 +865,14 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
 
       return (
         <div
-          className="relative w-[100px] h-[32px] flex items-center justify-center overflow-visible shrink-0 group/sparkline cursor-pointer"
+          className="relative w-full max-w-[170px] sm:max-w-[240px] md:max-w-[300px] h-[34px] flex items-center justify-center overflow-visible group/sparkline cursor-pointer"
           onClick={(e) => {
             e.stopPropagation();
             triggerHaptic("selection");
             onSelect(stock);
           }}
           onMouseLeave={() => setHoveredCandleIdx(null)}
-          title={`24H Candlesticks (SMA #f59e0b • VWAP #c084fc) • O: $${latestCandle.open.toFixed(2)} H: $${maxCandle.toFixed(2)} L: $${minCandle.toFixed(2)} C: $${latestCandle.close.toFixed(2)} • Tap for Deeper Analysis`}
+          title={`24H Candlesticks (SMA #f59e0b • VWAP #c084fc) • O: $${latestCandle.open.toFixed(2)} H: $${maxCandle.toFixed(2)} L: $${minCandle.toFixed(2)} C: $${latestCandle.close.toFixed(2)} • RelVol: ${volatilityOverlay.relVolText} • Tap for Deeper Analysis`}
         >
           {/* Subtle Dotted 24h Baseline (Blends with Card Style) */}
           <div className="absolute w-full border-t border-dashed border-cyan-900/40 top-1/2 pointer-events-none z-0" />
@@ -891,6 +891,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
 
           <svg
             viewBox={`0 0 ${candleSvgWidth} ${candleSvgHeight}`}
+            preserveAspectRatio="none"
             className="w-full h-full overflow-visible z-10"
           >
             <defs>
@@ -1056,19 +1057,20 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
 
     return (
       <div
-        className="relative w-[100px] h-[32px] flex items-center justify-center overflow-visible shrink-0 group/sparkline cursor-pointer"
+        className="relative w-full max-w-[170px] sm:max-w-[240px] md:max-w-[300px] h-[34px] flex items-center justify-center overflow-visible group/sparkline cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
           triggerHaptic("selection");
           onSelect(stock);
         }}
-        title="24H Price Trend • Tap to open full chart"
+        title={`24H Price Trend • RelVol: ${volatilityOverlay.relVolText} • Tap to open full chart`}
       >
         {/* Dotted 24h Price Baseline */}
         <div className="absolute w-full border-t border-dashed border-cyan-900/50 top-1/2 pointer-events-none z-0" />
 
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          preserveAspectRatio="none"
           className="w-full h-full overflow-visible z-10"
         >
           <defs>
@@ -1114,82 +1116,6 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
             strokeOpacity="0.5"
           />
         </svg>
-      </div>
-    );
-  };
-
-  // 7-Day Market Variance & Volatility Range Bar Indicator
-  const render7DVariance = () => {
-    const weekPrices = stock.history?.["1W"]?.map((p) => p.price);
-    const prices =
-      weekPrices && weekPrices.length >= 2
-        ? weekPrices
-        : stock.sparkline && stock.sparkline.length >= 2
-          ? stock.sparkline
-          : [stock.price * 0.98, stock.price * 1.02];
-
-    const min7d = Math.min(...prices, stock.price);
-    const max7d = Math.max(...prices, stock.price);
-    const range = max7d - min7d || 1;
-
-    // Position of current price within 7D range (0% to 100%)
-    const currentPosPct = Math.min(
-      100,
-      Math.max(0, ((stock.price - min7d) / range) * 100),
-    );
-
-    // 7-day variance spread %
-    const variancePct = ((max7d - min7d) / min7d) * 100;
-
-    // Color gradient based on volatility severity
-    let barGradient = "from-emerald-500 via-teal-400 to-cyan-400";
-    let badgeColor = "text-emerald-300 border-emerald-500/40 bg-emerald-950/70";
-
-    if (variancePct >= 8) {
-      barGradient = "from-amber-500 via-rose-500 to-red-500";
-      badgeColor = "text-rose-300 border-rose-500/50 bg-rose-950/80";
-    } else if (variancePct >= 4) {
-      barGradient = "from-emerald-400 via-amber-400 to-amber-500";
-      badgeColor = "text-amber-300 border-amber-500/50 bg-amber-950/70";
-    }
-
-    return (
-      <div
-        className="hidden sm:flex flex-col items-center justify-center shrink-0 group/var"
-        title={`7-Day Volatility Range: $${min7d.toFixed(2)} $${max7d.toFixed(2)} (±${variancePct.toFixed(1)}% variance spread)`}
-      >
-        <div className="flex items-center justify-between w-[80px] text-[8px] font-mono font-bold leading-none mb-0.5">
-          <span className="text-cyan-400/80 tracking-tighter">7D VAR</span>
-          <span
-            className={`px-2 py-0.5 border alien-block-cut-sm font-black text-[8px] ${badgeColor}`}
-          >
-            ±{variancePct.toFixed(1)}%
-          </span>
-        </div>
-
-        {/* Color-coded 7-Day Variance Range Bar */}
-        <div className="relative w-[80px] h-1.5 rounded-full bg-neutral-900 border border-neutral-800 overflow-visible my-0.5">
-          <div
-            className={`absolute inset-0 rounded-full bg-gradient-to-r ${barGradient} opacity-85`}
-          />
-
-          {/* Position Indicator Pin for current price */}
-          <div
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-white border border-neutral-900 shadow-md shadow-black transition-all duration-300 z-10"
-            style={{ left: `${currentPosPct}%` }}
-          />
-        </div>
-
-        <div className="flex justify-between w-[80px] text-[7.5px] font-mono text-cyan-500/70 leading-none">
-          <span>${min7d < 100 ? min7d.toFixed(1) : Math.round(min7d)}</span>
-          <span>${max7d < 100 ? max7d.toFixed(1) : Math.round(max7d)}</span>
-        </div>
-        <div
-          className={`mt-1 text-[7px] font-mono font-bold leading-none tracking-tighter ${volatilityOverlay.relVolColor}`}
-          title="Stock volatility multiplier relative to its sector average"
-        >
-          RelVol: {volatilityOverlay.relVolText}
-        </div>
       </div>
     );
   };
@@ -1517,10 +1443,9 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
             </span>
           </div>
 
-          {/* Center Sparkline Chart & 7-Day Variance Bar */}
-          <div className="flex-1 flex items-center justify-center gap-2 sm:gap-3 px-1">
+          {/* Center Expanded Sparkline Chart */}
+          <div className="flex-1 flex items-center justify-center px-1 sm:px-3 min-w-[110px]">
             {renderSparkline()}
-            {render7DVariance()}
           </div>
 
           {/* Right Price, % Pill & Tap-to-Expand Indicator */}
