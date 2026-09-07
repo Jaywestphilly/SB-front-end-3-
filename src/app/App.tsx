@@ -2013,6 +2013,7 @@ export function App() {
         onOpenTerminal={handleOpenBloombergTerminal}
         isTerminalOpen={isBloombergTerminalOpen}
         demoted={isReducedChromeRoute}
+        magmaMode={magmaMode}
       />
     </div>
   );
