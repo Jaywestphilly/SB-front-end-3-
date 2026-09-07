@@ -162,7 +162,7 @@ export const CmbsPrivateCreditRadar: React.FC = () => {
                 <Landmark className="w-3 h-3 text-purple-400" />
                 Shadow Banking & Institutional Credit
               </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 text-[10px] font-black uppercase tracking-wider">
+              <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-black uppercase tracking-wider">
                 CMBS Delinquency Monitor
               </span>
             </div>
@@ -196,15 +196,15 @@ export const CmbsPrivateCreditRadar: React.FC = () => {
         <div className="p-5 rounded-3xl bg-black/60 border border-white/10 space-y-4">
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div>
-              <h3 className="text-sm font-black uppercase tracking-wider text-red-300 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-red-400" />
+              <h3 className="text-sm font-black uppercase tracking-wider text-blue-300 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-blue-400" />
                 CMBS 30+ Day Delinquency Rates by Sector (%)
               </h3>
               <p className="text-xs text-neutral-400 mt-0.5">
                 Office delinquencies surged to historical highs due to remote work & post-2022 rate resets
               </p>
             </div>
-            <span className="text-[10px] font-mono px-2.5 py-1 rounded bg-red-950 text-red-300 border border-red-500/30">
+            <span className="text-[10px] font-mono px-2.5 py-1 rounded bg-blue-950 text-blue-300 border border-blue-500/30">
               Delinquency %
             </span>
           </div>

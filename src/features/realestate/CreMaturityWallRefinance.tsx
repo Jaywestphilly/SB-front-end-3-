@@ -74,10 +74,10 @@ const CRE_MATURITY_DATA = [
 ];
 
 const LENDER_EXPOSURE = [
-  { type: "Regional & Small Banks", sharePercent: 44, riskLevel: "High", riskColor: "text-red-400", desc: "Concentrated CRE debt exposure relative to Tier-1 capital" },
+  { type: "Regional & Small Banks", sharePercent: 44, riskLevel: "High", riskColor: "text-blue-400", desc: "Concentrated CRE debt exposure relative to Tier-1 capital" },
   { type: "GSEs (Fannie/Freddie)", sharePercent: 21, riskLevel: "Low", riskColor: "text-emerald-400", desc: "Multifamily guarantee books with strict underwriting" },
   { type: "Life Insurance Companies", sharePercent: 14, riskLevel: "Moderate", riskColor: "text-amber-400", desc: "Low LTV (<55%) institutional trophy assets" },
-  { type: "CMBS & CRE CLOs", sharePercent: 13, riskLevel: "Critical", riskColor: "text-red-500", desc: "Non-recourse pooled securitizations with high office default rates" },
+  { type: "CMBS & CRE CLOs", sharePercent: 13, riskLevel: "Critical", riskColor: "text-blue-500", desc: "Non-recourse pooled securitizations with high office default rates" },
   { type: "Private Debt & Mezzanine", sharePercent: 8, riskLevel: "Opportunistic", riskColor: "text-purple-400", desc: "Gap financing and distressed rescue capital (11-14% yield)" }
 ];
 
@@ -140,13 +140,13 @@ export const CreMaturityWallRefinance: React.FC = () => {
   return (
     <div className="space-y-6 text-white animate-fadeIn">
       {/* 1. HERO BANNER */}
-      <div className="p-6 rounded-3xl bg-gradient-to-br from-[#120808] via-[#1c0e0e] to-[#0a0505] border border-red-500/30 shadow-2xl relative overflow-hidden">
-        <div className="absolute -right-10 -top-10 w-72 h-72 bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="p-6 rounded-3xl bg-gradient-to-br from-[#080d14] via-[#0e1622] to-[#05080c] border border-blue-500/30 shadow-2xl relative overflow-hidden">
+        <div className="absolute -right-10 -top-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="flex flex-wrap items-center justify-between gap-4 relative z-10">
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3 text-red-400" />
+              <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3 text-blue-400" />
                 Institutional Debt Risk Radar
               </span>
               <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider">
@@ -154,7 +154,7 @@ export const CreMaturityWallRefinance: React.FC = () => {
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
-              <Building2 className="w-6 h-6 text-red-400" />
+              <Building2 className="w-6 h-6 text-blue-400" />
               $1.8T+ Commercial Real Estate Maturity Wall & Debt Stress Engine
             </h2>
             <p className="text-xs sm:text-sm text-neutral-300 max-w-3xl leading-relaxed">
@@ -162,11 +162,11 @@ export const CreMaturityWallRefinance: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-black/60 border border-red-500/30 text-right min-w-[210px]">
+          <div className="p-4 rounded-2xl bg-black/60 border border-blue-500/30 text-right min-w-[210px]">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-400">
               Total CRE Debt Maturing by 2028
             </span>
-            <div className="text-3xl font-black text-red-300 mt-0.5">
+            <div className="text-3xl font-black text-blue-300 mt-0.5">
               $3.72 Trillion
             </div>
             <span className="text-[11px] text-amber-400 font-bold flex items-center justify-end gap-1 mt-1">
@@ -183,15 +183,15 @@ export const CreMaturityWallRefinance: React.FC = () => {
         <div className="lg:col-span-2 p-5 rounded-3xl bg-black/60 border border-white/10 space-y-4">
           <div className="flex items-center justify-between border-b border-white/10 pb-3">
             <div>
-              <h3 className="text-sm font-black uppercase tracking-wider text-red-300 flex items-center gap-2">
-                <Layers className="w-4 h-4 text-red-400" />
+              <h3 className="text-sm font-black uppercase tracking-wider text-blue-300 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-blue-400" />
                 CRE Debt Maturity Schedule by Property Class ($B)
               </h3>
               <p className="text-xs text-neutral-400 mt-0.5">
                 Stacked maturities across Office, Multifamily, Industrial, Retail, and Hospitality
               </p>
             </div>
-            <span className="text-[10px] font-mono px-2.5 py-1 rounded bg-red-950 text-red-300 border border-red-500/30">
+            <span className="text-[10px] font-mono px-2.5 py-1 rounded bg-blue-950 text-blue-300 border border-blue-500/30">
               $ Billions
             </span>
           </div>
@@ -255,11 +255,11 @@ export const CreMaturityWallRefinance: React.FC = () => {
       </div>
 
       {/* 3. INTERACTIVE REFINANCING STRESS SIMULATOR */}
-      <div className="p-6 rounded-3xl bg-black/70 border border-red-500/30 space-y-6">
+      <div className="p-6 rounded-3xl bg-black/70 border border-blue-500/30 space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase text-red-400 font-extrabold bg-red-950/60 px-2 py-0.5 rounded border border-red-500/30">
+              <span className="text-[10px] font-mono uppercase text-blue-400 font-extrabold bg-blue-950/60 px-2 py-0.5 rounded border border-blue-500/30">
                 Loan Underwriting Simulator
               </span>
               <span className="text-xs font-mono text-neutral-400">DSCR & Cash-in Gap Engine</span>
@@ -299,7 +299,7 @@ export const CreMaturityWallRefinance: React.FC = () => {
                   }
                 }}
                 className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
-                  propertyType === type ? "bg-red-500 text-black shadow font-black" : "text-neutral-400 hover:text-white"
+                  propertyType === type ? "bg-blue-500 text-white shadow font-black" : "text-neutral-400 hover:text-white"
                 }`}
               >
                 {type}
@@ -335,7 +335,7 @@ export const CreMaturityWallRefinance: React.FC = () => {
           <div className="p-4 rounded-2xl bg-neutral-900/90 border border-white/10 space-y-2">
             <div className="flex justify-between items-center text-xs">
               <span className="text-neutral-300 font-bold">Asset Value Decline</span>
-              <span className="font-mono font-black text-red-400">-{currentValueDropPct}%</span>
+              <span className="font-mono font-black text-blue-400">-{currentValueDropPct}%</span>
             </div>
             <input
               type="range"
@@ -344,7 +344,7 @@ export const CreMaturityWallRefinance: React.FC = () => {
               step="1"
               value={currentValueDropPct}
               onChange={(e) => setCurrentValueDropPct(Number(e.target.value))}
-              className="w-full accent-red-400 cursor-pointer"
+              className="w-full accent-blue-400 cursor-pointer"
             />
             <div className="text-[10px] text-neutral-400 flex justify-between">
               <span>0% (Stable)</span>
@@ -398,7 +398,7 @@ export const CreMaturityWallRefinance: React.FC = () => {
           <div className="p-4 rounded-2xl bg-neutral-900/90 border border-white/10 space-y-2">
             <div className="flex justify-between items-center text-xs">
               <span className="text-neutral-300 font-bold">New Refi Rate (SOFR + Spread)</span>
-              <span className="font-mono font-black text-red-400">{newRefiRatePct}%</span>
+              <span className="font-mono font-black text-blue-400">{newRefiRatePct}%</span>
             </div>
             <input
               type="range"
@@ -407,7 +407,7 @@ export const CreMaturityWallRefinance: React.FC = () => {
               step="0.1"
               value={newRefiRatePct}
               onChange={(e) => setNewRefiRatePct(Number(e.target.value))}
-              className="w-full accent-red-400 cursor-pointer"
+              className="w-full accent-blue-400 cursor-pointer"
             />
             <div className="text-[10px] text-neutral-400 flex justify-between">
               <span>5.0%</span>
@@ -453,11 +453,11 @@ export const CreMaturityWallRefinance: React.FC = () => {
           </div>
 
           {/* Cash-in Equity Injection Needed */}
-          <div className="p-4 rounded-2xl bg-neutral-900/90 border border-red-500/30 space-y-2">
-            <span className="text-[10px] uppercase font-bold text-red-400">
+          <div className="p-4 rounded-2xl bg-neutral-900/90 border border-blue-500/30 space-y-2">
+            <span className="text-[10px] uppercase font-bold text-blue-400">
               Required "Cash-In" Gap
             </span>
-            <div className="text-2xl font-black text-red-300">
+            <div className="text-2xl font-black text-blue-300">
               ${calculatedMetrics.cashInRequiredM.toFixed(1)}M
             </div>
             <p className="text-[11px] text-neutral-400 leading-snug">
@@ -477,7 +477,7 @@ export const CreMaturityWallRefinance: React.FC = () => {
                 {calculatedMetrics.originalDscr.toFixed(2)}x
               </span>
               <ArrowRight className="w-4 h-4 text-neutral-500" />
-              <span className={`text-xl font-black ${calculatedMetrics.newDscrSizedLoan < 1.0 ? "text-red-400" : calculatedMetrics.newDscrSizedLoan < 1.25 ? "text-amber-400" : "text-emerald-400"}`}>
+              <span className={`text-xl font-black ${calculatedMetrics.newDscrSizedLoan < 1.0 ? "text-blue-400" : calculatedMetrics.newDscrSizedLoan < 1.25 ? "text-amber-400" : "text-emerald-400"}`}>
                 {calculatedMetrics.newDscrSizedLoan.toFixed(2)}x
               </span>
             </div>

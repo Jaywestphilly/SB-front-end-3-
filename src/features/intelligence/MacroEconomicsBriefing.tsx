@@ -531,7 +531,7 @@ Verified by Stock Bloc Macro Intelligence Engine`;
                     <span
                       className={`text-[10px] font-black px-2 py-0.5 alien-block-cut-sm border ${
                         event.impact === "CRITICAL"
-                          ? "bg-red-500/20 text-red-300 border-red-500/40"
+                          ? "bg-blue-500/20 text-blue-300 border-blue-500/40"
                           : "bg-amber-500/20 text-amber-300 border-amber-500/40"
                       }`}
                     >

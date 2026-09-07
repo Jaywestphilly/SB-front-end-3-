@@ -126,18 +126,18 @@ export function getSBScoreColor(score: number): SBScoreColorStyle {
       color: "red",
       tier: "BEARISH",
       tierDescription: "Bearish / Weakness / Caution",
-      badgeClass: "bg-rose-950/85 border-rose-400 text-rose-300 shadow-[0_0_10px_rgba(244,63,94,0.35)]",
+      badgeClass: "bg-red-950/85 border-red-400 text-red-300 shadow-[0_0_10px_rgba(239,68,68,0.35)]",
       badgeStyle: {
-        backgroundColor: "rgba(48, 8, 18, 0.9)",
-        borderColor: "#f43f5e",
-        color: "#fda4af",
-        boxShadow: "0 0 10px rgba(244, 63, 94, 0.35)",
+        backgroundColor: "rgba(50, 10, 10, 0.9)",
+        borderColor: "#ef4444",
+        color: "#fca5a5",
+        boxShadow: "0 0 10px rgba(239, 68, 68, 0.35)",
       },
-      textClass: "text-rose-300",
-      borderClass: "border-rose-400/70",
-      bgClass: "bg-rose-950/85",
-      dotClass: "bg-rose-400 shadow-[0_0_8px_#f43f5e]",
-      glowClass: "glow-rose",
+      textClass: "text-red-300",
+      borderClass: "border-red-400/70",
+      bgClass: "bg-red-950/85",
+      dotClass: "bg-red-400 shadow-[0_0_8px_#ef4444]",
+      glowClass: "glow-red",
       implication: {
         dayTrade: "Favor short setups or avoid; elevated risk of sudden sharp intraday flushes.",
         swingTrade: "High risk for long swings; look for breakdown targets or hedge existing exposure.",
@@ -374,7 +374,7 @@ export function getStockDataFreshness(lastUpdatedIso?: string | null): {
     return {
       status: "STALE",
       label: "STALE",
-      badgeClass: "bg-rose-500/20 text-rose-300 border-rose-500/40",
+      badgeClass: "bg-blue-500/20 text-blue-300 border-blue-500/40",
       ageText: `Stale · ${minutesAgo > 60 ? Math.floor(minutesAgo / 60) + 'h ago' : minutesAgo + ' min ago'}`,
       minutesAgo
     };
@@ -409,7 +409,7 @@ export function getMarketOpenStatus(): {
     return {
       isOpen: false,
       statusText: "MARKET CLOSED (Weekend)",
-      colorClass: "bg-rose-500/20 text-rose-300 border-rose-500/40"
+      colorClass: "bg-blue-500/20 text-blue-300 border-blue-500/40"
     };
   }
 
@@ -435,7 +435,7 @@ export function getMarketOpenStatus(): {
     return {
       isOpen: false,
       statusText: "MARKET CLOSED",
-      colorClass: "bg-rose-500/20 text-rose-300 border-rose-500/40"
+      colorClass: "bg-blue-500/20 text-blue-300 border-blue-500/40"
     };
   }
 }

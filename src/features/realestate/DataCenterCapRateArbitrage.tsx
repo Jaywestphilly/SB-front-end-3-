@@ -276,8 +276,8 @@ export const DataCenterCapRateArbitrage: React.FC = () => {
           </div>
 
           <div className="space-y-3 text-xs">
-            <div className="p-3 rounded-2xl bg-neutral-900/80 border border-red-500/20 space-y-1">
-              <span className="text-[10px] uppercase font-bold text-red-400">Legacy Real Estate Metric</span>
+            <div className="p-3 rounded-2xl bg-neutral-900/80 border border-blue-500/20 space-y-1">
+              <span className="text-[10px] uppercase font-bold text-blue-400">Legacy Real Estate Metric</span>
               <div className="font-bold text-white text-sm">Price per Square Foot ($/sq ft)</div>
               <p className="text-neutral-400 text-[11px] leading-tight">
                 Flawed for data centers: A 200,000 sq ft empty warehouse is worth $20M, but with a 100 MW substation interconnection, it is worth $350M+.

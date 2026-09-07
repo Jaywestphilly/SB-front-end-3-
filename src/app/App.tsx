@@ -1199,7 +1199,7 @@ export function App() {
                         : s.price.toFixed(2)}
                     </span>
                     <span
-                      className={`font-black font-mono text-[10px] ${s.changePercent >= 0 ? "text-emerald-400" : "text-rose-400"}`}
+                      className={`font-black font-mono text-[10px] ${s.changePercent >= 0 ? "text-emerald-400" : "text-blue-400"}`}
                     >
                       {s.changePercent >= 0 ? "+" : ""}
                       {s.changePercent.toFixed(1)}%
@@ -1285,7 +1285,7 @@ export function App() {
 
               <button
                 onClick={() => setActiveTab("war_gov_ufo")}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-rose-500/20 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 text-amber-300 border border-amber-500/40 text-xs font-black shrink-0 flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/10"
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-blue-500/20 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 text-amber-300 border border-amber-500/40 text-xs font-black shrink-0 flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/10"
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
                 <span>WAR.GOV / UFO Matrix</span>
@@ -1399,13 +1399,13 @@ export function App() {
                   }}
                   className={`px-2.5 py-1.5 alien-block-cut-sm font-black text-[11px] font-mono flex items-center gap-1 transition-all active:scale-95 cursor-pointer ${
                     sortField === "changePercent" && sortDirection === "asc"
-                      ? "bg-rose-400 text-black shadow-md shadow-rose-400/30 border border-rose-300 font-bold"
-                      : "bg-neutral-900/90 text-rose-300 hover:bg-neutral-800 border border-rose-500/30"
+                      ? "bg-blue-400 text-black shadow-md shadow-blue-400/30 border border-blue-300 font-bold"
+                      : "bg-neutral-900/90 text-blue-300 hover:bg-neutral-800 border border-blue-500/30"
                   }`}
                   title="Sort by Top Losers (% Change Low to High)"
                 >
                   <TrendingUp
-                    className={`w-3.5 h-3.5 rotate-180 ${sortField === "changePercent" && sortDirection === "asc" ? "text-black" : "text-rose-400"}`}
+                    className={`w-3.5 h-3.5 rotate-180 ${sortField === "changePercent" && sortDirection === "asc" ? "text-black" : "text-blue-400"}`}
                   />
                   <span>Losers</span>
                 </button>

@@ -158,16 +158,16 @@
 
 @keyframes flash-border-red-anim {
   0% {
-    border-color: #ff0055;
+    border-color: #ef4444;
     box-shadow:
-      0 0 35px rgba(255, 0, 85, 0.95),
-      inset 0 0 20px rgba(255, 0, 85, 0.5);
+      0 0 35px rgba(239, 68, 68, 0.95),
+      inset 0 0 20px rgba(239, 68, 68, 0.5);
   }
   50% {
-    border-color: #fb7185;
+    border-color: #f87171;
     box-shadow:
-      0 0 40px rgba(251, 113, 133, 1),
-      inset 0 0 25px rgba(251, 113, 133, 0.6);
+      0 0 40px rgba(248, 113, 113, 1),
+      inset 0 0 25px rgba(248, 113, 113, 0.6);
   }
   100% {
     border-color: rgba(239, 68, 68, 0.45);
@@ -199,7 +199,7 @@
   }
   30% {
     opacity: 0.7;
-    background-color: rgba(255, 0, 85, 0.28);
+    background-color: rgba(220, 38, 38, 0.28);
   }
   100% {
     opacity: 0;
@@ -231,10 +231,10 @@ html.theme-daylight .price-flash-up {
 }
 
 html.theme-daylight .price-flash-down {
-  border-color: #f43f5e !important;
+  border-color: #ef4444 !important;
   box-shadow:
-    0 0 20px rgba(244, 63, 94, 0.5),
-    inset 0 0 10px rgba(244, 63, 94, 0.2) !important;
+    0 0 20px rgba(239, 68, 68, 0.5),
+    inset 0 0 10px rgba(239, 68, 68, 0.2) !important;
 }
 
 /* Subtle Price Pulse Animations for Real-Time Tickers */
@@ -538,13 +538,23 @@ a:hover .font-alien,
   filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.6));
 }
 
+.glow-red,
 .glow-rose {
-  border: 1px solid #ff0055 !important;
+  border: 1px solid #ef4444 !important;
   box-shadow:
-    inset 0 0 10px rgba(255, 0, 85, 0.7),
+    inset 0 0 10px rgba(239, 68, 68, 0.7),
     inset 0 0 2px rgba(255, 255, 255, 0.9),
-    0 0 14px rgba(255, 0, 85, 0.5) !important;
-  filter: drop-shadow(0 0 6px rgba(255, 0, 85, 0.6));
+    0 0 14px rgba(239, 68, 68, 0.5) !important;
+  filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6));
+}
+
+.glow-blue {
+  border: 1px solid #3b82f6 !important;
+  box-shadow:
+    inset 0 0 10px rgba(59, 130, 246, 0.7),
+    inset 0 0 2px rgba(255, 255, 255, 0.9),
+    0 0 14px rgba(59, 130, 246, 0.5) !important;
+  filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.6));
 }
 
 .glow-amber {
@@ -724,18 +734,22 @@ a:hover .font-alien,
 }
 
 /* ==========================================================================
-   DARK MATTER VOLCANIC MAGMA NAVIGATION DOCK & GRAVITY PADS
-   Continuous molten magma substrate under translucent dark-matter glass lenses
+   DARK MATTER VOLCANIC BLUE PLASMA NAVIGATION DOCK & GRAVITY PADS
+   High-transparency dark matter crystal vessel with flowing superheated blue plasma
    ========================================================================== */
 .obsidian-magma-dock {
   position: relative;
-  background: #040206;
-  border: 1px solid rgba(255, 95, 20, 0.38);
+  background: rgba(6, 10, 24, 0.38) !important;
+  backdrop-filter: blur(24px) brightness(1.10) saturate(200%) contrast(125%) !important;
+  -webkit-backdrop-filter: blur(24px) brightness(1.10) saturate(200%) contrast(125%) !important;
+  border: 1px solid rgba(6, 182, 212, 0.55) !important;
   box-shadow:
-    0 16px 48px -4px rgba(0, 0, 0, 0.95),
-    0 0 30px -5px rgba(255, 75, 0, 0.22),
-    inset 0 1px 1.5px 0 rgba(255, 220, 150, 0.35),
-    inset 0 0 32px 10px #020104;
+    0 16px 48px -4px rgba(0, 0, 0, 0.88),
+    0 0 36px -2px rgba(6, 182, 212, 0.45),
+    0 0 14px 1px rgba(59, 130, 246, 0.35),
+    inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.6),
+    inset 0 0 28px rgba(6, 182, 212, 0.22) !important;
   overflow: hidden;
   isolation: isolate;
 }
@@ -745,54 +759,105 @@ a:hover .font-alien,
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  box-shadow: inset 0 0 35px 15px #040206;
+  background: radial-gradient(130% 100% at 50% 120%, rgba(6, 182, 212, 0.22) 0%, transparent 60%);
+  box-shadow: inset 0 0 25px 8px rgba(2, 6, 16, 0.45);
   pointer-events: none;
   z-index: 2;
 }
 
-/* Translucent Dark Matter Optical Lens Pad */
+/* Incandescent Top Blue Plasma Laser Rail along the Dock */
+.obsidian-magma-dock::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 5%;
+  right: 5%;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.95), #ffffff, rgba(59, 130, 246, 0.95), transparent);
+  box-shadow: 0 0 12px 2px rgba(6, 182, 212, 0.85);
+  pointer-events: none;
+  z-index: 12;
+  animation: magma-rail-pulse 3.5s ease-in-out infinite alternate;
+}
+
+@keyframes magma-rail-pulse {
+  0% { opacity: 0.65; transform: scaleX(0.92); }
+  100% { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes magma-flow-drift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Translucent Dark Matter Optical Lens Gravity Pad */
 .dark-matter-pad {
   position: relative;
-  background: rgba(10, 8, 14, 0.62);
-  backdrop-filter: blur(14px) brightness(0.7) contrast(130%) saturate(145%);
-  -webkit-backdrop-filter: blur(14px) brightness(0.7) contrast(130%) saturate(145%);
-  border: 1px solid rgba(255, 110, 30, 0.2);
+  background: rgba(10, 16, 32, 0.24);
+  backdrop-filter: blur(14px) brightness(1.12) contrast(125%) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) brightness(1.12) contrast(125%) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   box-shadow:
-    inset 0 1px 0 rgba(255, 220, 150, 0.22),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.95),
-    inset 0 0 16px rgba(0, 0, 0, 0.82),
-    0 4px 14px rgba(0, 0, 0, 0.65);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    inset 0 1.2px 1.5px rgba(255, 255, 255, 0.45),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.5),
+    inset 0 0 16px rgba(6, 182, 212, 0.20),
+    0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
 
+/* Internal Flowing Superheated Blue Plasma Vein inside each Gravity Pad */
+.dark-matter-pad .magma-conduit-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 115%, rgba(6, 182, 212, 0.48) 0%, rgba(59, 130, 246, 0.22) 45%, transparent 75%);
+  background-size: 200% 200%;
+  animation: magma-flow-drift 5s ease infinite;
+  z-index: 1;
+  opacity: 0.90;
+}
+
 .dark-matter-pad:hover {
-  background: rgba(16, 12, 22, 0.52);
-  backdrop-filter: blur(18px) brightness(0.78) contrast(140%) saturate(160%);
-  -webkit-backdrop-filter: blur(18px) brightness(0.78) contrast(140%) saturate(160%);
-  border-color: rgba(255, 130, 50, 0.45);
+  background: rgba(16, 28, 54, 0.36);
+  backdrop-filter: blur(18px) brightness(1.24) contrast(135%) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) brightness(1.24) contrast(135%) saturate(180%);
+  border-color: rgba(34, 211, 238, 0.70);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.3),
-    inset 0 0 20px rgba(0, 0, 0, 0.9),
-    0 6px 20px rgba(0, 0, 0, 0.75),
-    0 0 14px rgba(255, 95, 0, 0.25);
-  transform: translateY(-1px);
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.70),
+    inset 0 0 20px rgba(6, 182, 212, 0.35),
+    0 8px 24px rgba(0, 0, 0, 0.65),
+    0 0 20px rgba(6, 182, 212, 0.45);
+  transform: translateY(-1.5px) scale(1.02);
+}
+
+.dark-matter-pad:hover .magma-conduit-glow {
+  opacity: 1;
+  background: radial-gradient(circle at 50% 100%, rgba(34, 211, 238, 0.70) 0%, rgba(59, 130, 246, 0.38) 50%, transparent 80%);
 }
 
 .dark-matter-pad:active {
   transform: scale(0.95) translateY(1px);
-  backdrop-filter: blur(22px) brightness(0.55) contrast(150%) saturate(175%);
-  -webkit-backdrop-filter: blur(22px) brightness(0.55) contrast(150%) saturate(175%);
+  backdrop-filter: blur(20px) brightness(0.95) contrast(140%) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) brightness(0.95) contrast(140%) saturate(190%);
   box-shadow:
-    inset 0 2px 6px rgba(0, 0, 0, 0.98),
-    inset 0 0 24px rgba(0, 0, 0, 0.95);
+    inset 0 2px 6px rgba(0, 0, 0, 0.8),
+    inset 0 0 24px rgba(6, 182, 212, 0.50);
 }
 
 /* Gravitational Singularity Core - Active State (Superheated thermal lens) */
 .dark-matter-pad-active {
-  background: rgba(16, 10, 24, 0.45) !important;
-  backdrop-filter: blur(20px) brightness(0.85) contrast(145%) saturate(165%) !important;
-  -webkit-backdrop-filter: blur(20px) brightness(0.85) contrast(145%) saturate(165%) !important;
+  background: rgba(14, 24, 48, 0.42) !important;
+  backdrop-filter: blur(20px) brightness(1.28) contrast(140%) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) brightness(1.28) contrast(140%) saturate(180%) !important;
+  transform: translateY(-1px);
 }
 
 /* Incandescent Top Filament Beam on Active Pad */
@@ -800,61 +865,119 @@ a:hover .font-alien,
   content: "";
   position: absolute;
   top: 0;
-  left: 12%;
-  right: 12%;
+  left: 8%;
+  right: 8%;
   height: 2px;
   background: linear-gradient(90deg, transparent, #ffffff, transparent);
-  box-shadow: 0 0 8px 1px #fff;
+  box-shadow: 0 0 10px 2px #fff, 0 0 18px 3px rgba(6, 182, 212, 0.85);
   z-index: 5;
 }
 
-/* Category Specific Active Event Horizon Rims & Beams */
+/* Category Specific Active Event Horizon Rims & Plasma Beams */
 .dark-matter-pad-active.pad-intel {
-  border-color: rgba(34, 211, 238, 0.9) !important;
+  border-color: rgba(34, 211, 238, 0.95) !important;
   box-shadow:
-    0 0 24px rgba(34, 211, 238, 0.5),
-    inset 0 1.5px 2px rgba(255, 255, 255, 0.5),
-    inset 0 0 18px rgba(34, 211, 238, 0.25) !important;
+    0 0 28px rgba(34, 211, 238, 0.75),
+    0 0 14px rgba(6, 182, 212, 0.45),
+    inset 0 1.8px 2px rgba(255, 255, 255, 0.80),
+    inset 0 0 20px rgba(34, 211, 238, 0.40) !important;
 }
 
 .dark-matter-pad-active.pad-markets {
   border-color: rgba(6, 182, 212, 0.95) !important;
   box-shadow:
-    0 0 24px rgba(6, 182, 212, 0.55),
-    inset 0 1.5px 2px rgba(255, 255, 255, 0.5),
-    inset 0 0 18px rgba(6, 182, 212, 0.3) !important;
+    0 0 28px rgba(6, 182, 212, 0.75),
+    0 0 14px rgba(59, 130, 246, 0.45),
+    inset 0 1.8px 2px rgba(255, 255, 255, 0.80),
+    inset 0 0 20px rgba(6, 182, 212, 0.40) !important;
 }
 
 .dark-matter-pad-active.pad-ai {
   border-color: rgba(168, 85, 247, 0.95) !important;
   box-shadow:
-    0 0 24px rgba(168, 85, 247, 0.55),
-    inset 0 1.5px 2px rgba(255, 255, 255, 0.5),
-    inset 0 0 18px rgba(168, 85, 247, 0.3) !important;
+    0 0 28px rgba(168, 85, 247, 0.75),
+    0 0 14px rgba(6, 182, 212, 0.45),
+    inset 0 1.8px 2px rgba(255, 255, 255, 0.80),
+    inset 0 0 20px rgba(168, 85, 247, 0.40) !important;
 }
 
 .dark-matter-pad-active.pad-realestate {
   border-color: rgba(245, 158, 11, 0.95) !important;
   box-shadow:
-    0 0 24px rgba(245, 158, 11, 0.55),
-    inset 0 1.5px 2px rgba(255, 255, 255, 0.5),
-    inset 0 0 18px rgba(245, 158, 11, 0.3) !important;
+    0 0 28px rgba(245, 158, 11, 0.75),
+    0 0 14px rgba(6, 182, 212, 0.45),
+    inset 0 1.8px 2px rgba(255, 255, 255, 0.80),
+    inset 0 0 20px rgba(245, 158, 11, 0.40) !important;
 }
 
 .dark-matter-pad-active.pad-credit {
   border-color: rgba(16, 185, 129, 0.95) !important;
   box-shadow:
-    0 0 24px rgba(16, 185, 129, 0.55),
-    inset 0 1.5px 2px rgba(255, 255, 255, 0.5),
-    inset 0 0 18px rgba(16, 185, 129, 0.3) !important;
+    0 0 28px rgba(16, 185, 129, 0.75),
+    0 0 14px rgba(6, 182, 212, 0.45),
+    inset 0 1.8px 2px rgba(255, 255, 255, 0.80),
+    inset 0 0 20px rgba(16, 185, 129, 0.40) !important;
 }
 
 .dark-matter-pad-active.pad-education {
-  border-color: rgba(244, 63, 94, 0.95) !important;
+  border-color: rgba(59, 130, 246, 0.95) !important;
   box-shadow:
-    0 0 24px rgba(244, 63, 94, 0.55),
-    inset 0 1.5px 2px rgba(255, 255, 255, 0.5),
-    inset 0 0 18px rgba(244, 63, 94, 0.3) !important;
+    0 0 28px rgba(59, 130, 246, 0.80),
+    0 0 14px rgba(6, 182, 212, 0.45),
+    inset 0 1.8px 2px rgba(255, 255, 255, 0.80),
+    inset 0 0 20px rgba(59, 130, 246, 0.45) !important;
+}
+
+/* Transparent Dark Matter Gravity Button */
+.dark-matter-gravity-btn {
+  position: relative;
+  background: rgba(10, 16, 32, 0.28) !important;
+  backdrop-filter: blur(18px) brightness(1.15) contrast(130%) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(18px) brightness(1.15) contrast(130%) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  box-shadow:
+    inset 0 1.2px 1.5px rgba(255, 255, 255, 0.45),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.5),
+    inset 0 0 18px rgba(6, 182, 212, 0.22),
+    0 6px 18px rgba(0, 0, 0, 0.45) !important;
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  cursor: pointer;
+}
+
+.dark-matter-gravity-btn:hover {
+  background: rgba(18, 28, 54, 0.42) !important;
+  border-color: rgba(34, 211, 238, 0.70) !important;
+  box-shadow:
+    inset 0 1.8px 2px rgba(255, 255, 255, 0.70),
+    inset 0 0 22px rgba(6, 182, 212, 0.35),
+    0 8px 26px rgba(0, 0, 0, 0.65),
+    0 0 20px rgba(6, 182, 212, 0.45) !important;
+  transform: translateY(-1.5px) scale(1.02);
+}
+
+.dark-matter-gravity-btn:active {
+  transform: translateY(1px) scale(0.95) !important;
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.9),
+    inset 0 0 24px rgba(6, 182, 212, 0.50),
+    0 2px 6px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark-matter-gravity-btn-blue {
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  box-shadow:
+    inset 0 1.2px 1.5px rgba(255, 255, 255, 0.5),
+    inset 0 0 18px rgba(59, 130, 246, 0.25),
+    0 0 14px rgba(59, 130, 246, 0.3) !important;
+}
+
+.dark-matter-gravity-btn-blue:hover {
+  border-color: rgba(96, 165, 250, 0.8) !important;
+  box-shadow:
+    inset 0 1.8px 2px rgba(255, 255, 255, 0.7),
+    inset 0 0 22px rgba(59, 130, 246, 0.45),
+    0 8px 26px rgba(0, 0, 0, 0.65),
+    0 0 22px rgba(59, 130, 246, 0.5) !important;
 }
 
 /* Cyber Glitch Effect */

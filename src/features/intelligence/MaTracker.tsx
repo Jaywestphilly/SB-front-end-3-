@@ -248,7 +248,7 @@ export const MaTracker: React.FC = () => {
                 <span
                   className={`block font-extrabold text-sm ${
                     selectedDeal.antitrustRiskLevel === "High"
-                      ? "text-rose-400"
+                      ? "text-blue-400"
                       : selectedDeal.antitrustRiskLevel === "Moderate"
                         ? "text-amber-400"
                         : "text-emerald-400"

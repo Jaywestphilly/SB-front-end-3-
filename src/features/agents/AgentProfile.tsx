@@ -330,7 +330,7 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
                 disabled={followLoading}
                 className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md ${
                   isFollowing
-                    ? "bg-neutral-800 hover:bg-rose-950/40 text-neutral-200 hover:text-rose-300 border border-neutral-700 hover:border-rose-500/40"
+                    ? "bg-neutral-800 hover:bg-blue-950/40 text-neutral-200 hover:text-blue-300 border border-neutral-700 hover:border-blue-500/40"
                     : "bg-cyan-600 hover:bg-cyan-500 text-white shadow-cyan-500/20"
                 }`}
               >
@@ -537,7 +537,7 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
                             <span className="text-white font-bold">{forecast.asset}</span>
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
                               forecast.direction === 'Bullish' ? 'bg-emerald-500/10 text-emerald-400' :
-                              forecast.direction === 'Bearish' ? 'bg-red-500/10 text-red-400' :
+                              forecast.direction === 'Bearish' ? 'bg-blue-500/10 text-blue-400' :
                               'bg-neutral-800 text-neutral-300'
                             }`}>
                               {forecast.direction}
@@ -598,7 +598,7 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
                       <span className="text-white font-bold text-lg">{forecast.asset}</span>
                       <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
                         forecast.direction === 'Bullish' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                        forecast.direction === 'Bearish' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                        forecast.direction === 'Bearish' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
                         'bg-neutral-800 text-neutral-300 border border-neutral-700'
                       }`}>
                         {forecast.direction}
@@ -606,7 +606,7 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
                       <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
                         forecast.status === 'OPEN' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
                         forecast.status === 'RESOLVED_CORRECT' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                        forecast.status === 'RESOLVED_INCORRECT' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                        forecast.status === 'RESOLVED_INCORRECT' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' :
                         'bg-neutral-800 text-neutral-400'
                       }`}>
                         {forecast.status === 'RESOLVED_CORRECT' ? '✓ Correct' : forecast.status === 'RESOLVED_INCORRECT' ? '✗ Incorrect' : forecast.status}
@@ -697,8 +697,8 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
                       </div>
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-red-400 uppercase tracking-wider mb-3">Bear Case</h4>
-                      <div className="p-4 bg-red-500/5 border border-red-500/10 rounded-xl">
+                      <h4 className="text-sm font-bold text-blue-400 uppercase tracking-wider mb-3">Bear Case</h4>
+                      <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl">
                          <div className="prose prose-invert prose-sm max-w-none text-neutral-300">
                           <ReactMarkdown>{res.bearCase || "No bear case provided."}</ReactMarkdown>
                         </div>
@@ -796,7 +796,7 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
                 <div className="grid grid-cols-2 gap-2">
                   {[
                     { id: 'RESOLVED_CORRECT', label: '✓ Correct', color: 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10' },
-                    { id: 'RESOLVED_INCORRECT', label: '✗ Incorrect', color: 'border-red-500/50 text-red-400 bg-red-500/10' },
+                    { id: 'RESOLVED_INCORRECT', label: '✗ Incorrect', color: 'border-blue-500/50 text-blue-400 bg-blue-500/10' },
                     { id: 'INVALID', label: '∅ Invalid', color: 'border-neutral-700 text-neutral-400 bg-neutral-800' },
                     { id: 'CANCELLED', label: '⊘ Cancelled', color: 'border-amber-500/50 text-amber-400 bg-amber-500/10' }
                   ].map(opt => (
@@ -981,7 +981,7 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
               </div>
 
               {feedbackStatus?.error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400 flex items-center gap-2">
+                <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-xl text-xs text-blue-400 flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   {feedbackStatus.error}
                 </div>

@@ -332,7 +332,7 @@ export const HousingAffordabilityMortgageEngine: React.FC = () => {
           <div className="p-4 rounded-2xl bg-neutral-900/90 border border-white/10 space-y-2">
             <div className="flex justify-between items-center text-xs">
               <span className="text-neutral-300 font-bold">Resale Market Rate</span>
-              <span className="font-mono font-black text-red-400">{marketRatePct}%</span>
+              <span className="font-mono font-black text-blue-400">{marketRatePct}%</span>
             </div>
             <input
               type="range"
@@ -341,7 +341,7 @@ export const HousingAffordabilityMortgageEngine: React.FC = () => {
               step="0.05"
               value={marketRatePct}
               onChange={(e) => setMarketRatePct(Number(e.target.value))}
-              className="w-full accent-red-400 cursor-pointer"
+              className="w-full accent-blue-400 cursor-pointer"
             />
             <div className="text-[10px] text-neutral-400 flex justify-between">
               <span>5.5%</span>
@@ -374,12 +374,12 @@ export const HousingAffordabilityMortgageEngine: React.FC = () => {
         {/* 4. COMPARISON SCORECARD */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
           {/* Option A: Resale Home at Market Rate */}
-          <div className="p-5 rounded-2xl bg-neutral-900/80 border border-red-500/20 space-y-3">
+          <div className="p-5 rounded-2xl bg-neutral-900/80 border border-blue-500/20 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-red-400 bg-red-950/50 px-2 py-0.5 rounded border border-red-500/30">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-950/50 px-2 py-0.5 rounded border border-blue-500/30">
                 Existing Resale Home (No Builder Incentive)
               </span>
-              <span className="font-mono text-base font-black text-red-300">
+              <span className="font-mono text-base font-black text-blue-300">
                 ${Math.round(buydownMetrics.marketMonthlyPayment).toLocaleString()} / mo
               </span>
             </div>
@@ -395,7 +395,7 @@ export const HousingAffordabilityMortgageEngine: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-neutral-400">Total 30-Year Interest Paid:</span>
-                <span className="font-mono text-red-400">
+                <span className="font-mono text-blue-400">
                   ${Math.round(buydownMetrics.marketMonthlyPayment * 360 - buydownMetrics.loanAmount).toLocaleString()}
                 </span>
               </div>

@@ -154,7 +154,7 @@ export const YouTubeHub: React.FC = () => {
         <div className="p-6 pt-0 relative z-10 -mt-10 space-y-4">
           <div className="flex items-end justify-between gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="w-20 h-20 rounded-2xl border-2 border-red-500 overflow-hidden shadow-2xl shrink-0 bg-black">
+              <div className="w-20 h-20 rounded-2xl border-2 border-blue-500 overflow-hidden shadow-2xl shrink-0 bg-black">
                 <img
                   src={FEATURED_YOUTUBE_CHANNEL.avatarUrl}
                   alt="Avatar"
@@ -165,7 +165,7 @@ export const YouTubeHub: React.FC = () => {
               <div>
                 <h2 className="text-xl font-black tracking-wider text-white uppercase flex items-center gap-2">
                   {FEATURED_YOUTUBE_CHANNEL.channelName}
-                  <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-ping" />
                 </h2>
                 <p className="text-xs text-neutral-400 font-mono">
                   {FEATURED_YOUTUBE_CHANNEL.handle} •{" "}
@@ -180,7 +180,7 @@ export const YouTubeHub: React.FC = () => {
                 href={FEATURED_YOUTUBE_CHANNEL.channelUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white font-black text-xs flex items-center gap-2 active:scale-95 transition-all shadow-lg shadow-red-600/30 shrink-0"
+                className="px-4 py-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-black text-xs flex items-center gap-2 active:scale-95 transition-all shadow-lg shadow-blue-600/30 shrink-0"
               >
                 <Youtube className="w-4 h-4 text-white" />
                 <span>@StockBloc Channel</span>
@@ -196,7 +196,7 @@ export const YouTubeHub: React.FC = () => {
           <div className="flex flex-col gap-3 pt-3 border-t border-white/10 font-mono">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-400">
               <span className="flex items-center gap-1.5 text-neutral-300 font-semibold">
-                <Tv className="w-3.5 h-3.5 text-red-500" />
+                <Tv className="w-3.5 h-3.5 text-blue-500" />
                 <span>5 Monitored YouTube Channels</span>
               </span>
 
@@ -212,7 +212,7 @@ export const YouTubeHub: React.FC = () => {
                   title="Force refresh feeds now"
                   className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                 >
-                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-red-400" : ""}`} />
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-blue-400" : ""}`} />
                 </button>
               </div>
             </div>
@@ -247,10 +247,10 @@ export const YouTubeHub: React.FC = () => {
 
       {/* Dedicated Featured Real Life Video Shorts Carousel / Section */}
       {realLifeShorts.length > 0 && (
-        <div className="p-5 rounded-3xl bg-gradient-to-br from-red-950/60 via-neutral-900 to-amber-950/40 border border-red-500/30 space-y-4 shadow-xl">
+        <div className="p-5 rounded-3xl bg-gradient-to-br from-blue-950/60 via-neutral-900 to-indigo-950/40 border border-blue-500/30 space-y-4 shadow-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Film className="w-5 h-5 text-red-400 animate-bounce" />
+              <Film className="w-5 h-5 text-blue-400 animate-bounce" />
               <h3 className="text-sm font-black uppercase tracking-wider text-white">
                 Featured Stock Bloc Real Life YouTube Shorts
               </h3>
@@ -259,7 +259,7 @@ export const YouTubeHub: React.FC = () => {
               href="https://youtube.com/@stockbloc/shorts?si=Vw68ofdfkScz1CyD"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[10px] font-extrabold uppercase bg-red-500/20 text-red-300 px-2.5 py-1 rounded-full border border-red-500/30 flex items-center gap-1 hover:bg-red-500/30"
+              className="text-[10px] font-extrabold uppercase bg-blue-500/20 text-blue-300 px-2.5 py-1 rounded-full border border-blue-500/30 flex items-center gap-1 hover:bg-blue-500/30"
             >
               <span>View @StockBloc Shorts</span>
               <ExternalLink className="w-3 h-3" />
@@ -271,7 +271,7 @@ export const YouTubeHub: React.FC = () => {
               <div
                 key={short.id}
                 onClick={() => { trackEvent("video_watched", { videoId: short.youtubeId }); setActiveVideo(short); }}
-                className="group relative rounded-2xl bg-neutral-950 border border-red-500/20 p-3 space-y-2.5 cursor-pointer hover:border-red-500/60 transition-all hover:scale-[1.01]"
+                className="group relative rounded-2xl bg-neutral-950 border border-blue-500/20 p-3 space-y-2.5 cursor-pointer hover:border-blue-500/60 transition-all hover:scale-[1.01]"
               >
                 <div className="relative aspect-[9/16] max-h-64 w-full rounded-xl overflow-hidden bg-black mx-auto">
                   <img
@@ -284,11 +284,11 @@ export const YouTubeHub: React.FC = () => {
                     }}
                   />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+                    <div className="w-12 h-12 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
                       <Play className="w-5 h-5 fill-current ml-0.5" />
                     </div>
                   </div>
-                  <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+                  <span className="absolute top-2 left-2 bg-blue-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full">
                     SHORT
                   </span>
                   <span className="absolute bottom-2 right-2 bg-black/80 text-white text-[9px] font-mono px-2 py-0.5 rounded-md">
@@ -297,12 +297,12 @@ export const YouTubeHub: React.FC = () => {
                 </div>
 
                 <div>
-                  <h4 className="text-xs font-black text-white line-clamp-2 leading-snug group-hover:text-red-400 transition-colors">
+                  <h4 className="text-xs font-black text-white line-clamp-2 leading-snug group-hover:text-blue-400 transition-colors">
                     {short.title}
                   </h4>
                   <div className="flex items-center justify-between text-[10px] text-neutral-400 font-mono mt-1">
                     <span>{short.channelName}</span>
-                    <span className="text-red-400 font-bold flex items-center gap-1">
+                    <span className="text-blue-400 font-bold flex items-center gap-1">
                       <Play className="w-3 h-3 fill-current" /> Watch Short
                     </span>
                   </div>
@@ -317,8 +317,8 @@ export const YouTubeHub: React.FC = () => {
       {videos.length >= 2 && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-red-400 font-extrabold text-sm uppercase tracking-wider">
-              <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+            <div className="flex items-center gap-2 text-blue-400 font-extrabold text-sm uppercase tracking-wider">
+              <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
               <span>Primary Intel Focus: Top Releases #1 & #2</span>
             </div>
             <span className="text-[10px] font-bold text-neutral-400 uppercase bg-white/5 px-2.5 py-1 rounded-full border border-white/10">
@@ -332,7 +332,7 @@ export const YouTubeHub: React.FC = () => {
                 key={`spotlight_${video.id}_${idx}`}
                 className={`relative rounded-3xl p-4 space-y-3 transition-all group border shadow-2xl ${
                   idx === 0
-                    ? "bg-gradient-to-b from-red-950/80 via-neutral-900 to-black border-red-500/50 hover:border-red-400 shadow-red-950/50"
+                    ? "bg-gradient-to-b from-blue-950/80 via-neutral-900 to-black border-blue-500/50 hover:border-blue-400 shadow-blue-950/50"
                     : "bg-gradient-to-b from-neutral-900 via-neutral-900 to-black border-amber-500/40 hover:border-amber-400 shadow-amber-950/40"
                 }`}
               >
@@ -341,7 +341,7 @@ export const YouTubeHub: React.FC = () => {
                   <span
                     className={`px-3 py-1 rounded-full flex items-center gap-1.5 border shadow-sm ${
                       idx === 0
-                        ? "bg-red-600 text-white border-red-400 animate-pulse"
+                        ? "bg-blue-600 text-white border-blue-400 animate-pulse"
                         : "bg-amber-500 text-black border-amber-300 font-bold"
                     }`}
                   >
@@ -365,7 +365,7 @@ export const YouTubeHub: React.FC = () => {
                     }}
                   />
                   <div className="absolute inset-0 bg-black/35 flex items-center justify-center">
-                    <div className="w-14 h-14 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform border border-white/20">
+                    <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform border border-white/20">
                       <Play className="w-6 h-6 fill-current ml-1" />
                     </div>
                   </div>
@@ -378,7 +378,7 @@ export const YouTubeHub: React.FC = () => {
                 <div className="space-y-1.5">
                   <h4
                     onClick={() => { trackEvent("video_watched", { videoId: video.youtubeId }); setActiveVideo(video); }}
-                    className="font-black text-sm text-white leading-snug cursor-pointer group-hover:text-red-400 transition-colors line-clamp-2"
+                    className="font-black text-sm text-white leading-snug cursor-pointer group-hover:text-blue-400 transition-colors line-clamp-2"
                   >
                     {video.title}
                   </h4>
@@ -391,7 +391,7 @@ export const YouTubeHub: React.FC = () => {
                 <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] gap-2">
                   <button
                     onClick={() => { trackEvent("video_watched", { videoId: video.youtubeId }); setActiveVideo(video); }}
-                    className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black flex items-center justify-center gap-1.5 active:scale-95 transition-all text-xs shadow-lg shadow-red-600/30 cursor-pointer"
+                    className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black flex items-center justify-center gap-1.5 active:scale-95 transition-all text-xs shadow-lg shadow-blue-600/30 cursor-pointer"
                   >
                     <Play className="w-3.5 h-3.5 fill-current" />
                     <span>Watch Video #{idx + 1}</span>
@@ -419,7 +419,7 @@ export const YouTubeHub: React.FC = () => {
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Youtube className="w-5 h-5 text-red-500" />
+            <Youtube className="w-5 h-5 text-blue-500" />
             Stock Bloc Channel Video Feed
           </h3>
           <span className="text-xs text-neutral-400">
@@ -434,7 +434,7 @@ export const YouTubeHub: React.FC = () => {
               onClick={() => setSelectedCategory(cat)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 transition-all active:scale-95 cursor-pointer ${
                 selectedCategory === cat
-                  ? "bg-red-600 text-white shadow-lg shadow-red-600/30"
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
                   : "bg-white/10 text-neutral-300 hover:bg-white/20"
               }`}
             >
@@ -449,9 +449,9 @@ export const YouTubeHub: React.FC = () => {
         {filteredVideos.map((video, idx) => (
           <div
             key={video.id}
-            className={`group p-4 rounded-3xl bg-neutral-900/90 border space-y-3 hover:border-red-500/40 transition-all relative ${
+            className={`group p-4 rounded-3xl bg-neutral-900/90 border space-y-3 hover:border-blue-500/40 transition-all relative ${
               idx === 0
-                ? "border-red-500/40 bg-gradient-to-b from-red-950/20 to-neutral-900"
+                ? "border-blue-500/40 bg-gradient-to-b from-blue-950/20 to-neutral-900"
                 : idx === 1
                 ? "border-amber-500/30 bg-gradient-to-b from-amber-950/20 to-neutral-900"
                 : "border-white/10"
@@ -460,7 +460,7 @@ export const YouTubeHub: React.FC = () => {
             {/* Rank badge header for top videos */}
             {idx < 2 && selectedCategory === "LATEST" && (
               <div className="flex items-center justify-between text-[10px] font-mono font-bold uppercase pb-1 border-b border-white/5">
-                <span className={idx === 0 ? "text-red-400 flex items-center gap-1" : "text-amber-400 flex items-center gap-1"}>
+                <span className={idx === 0 ? "text-blue-400 flex items-center gap-1" : "text-amber-400 flex items-center gap-1"}>
                   <Sparkles className="w-3 h-3" />
                   <span>{idx === 0 ? "Video #1: Primary Intel Release" : "Video #2: Featured Intel Release"}</span>
                 </span>
@@ -483,19 +483,19 @@ export const YouTubeHub: React.FC = () => {
                 }}
               />
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                <div className="w-14 h-14 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+                <div className="w-14 h-14 rounded-full bg-blue-600/90 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
                   <Play className="w-6 h-6 fill-current ml-1" />
                 </div>
               </div>
 
               {/* Duration Pill */}
               <span className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold text-white flex items-center gap-1 border border-white/10">
-                <Clock className="w-3 h-3 text-red-400" />
+                <Clock className="w-3 h-3 text-blue-400" />
                 {video.duration}
               </span>
 
               {/* Category Badge */}
-              <span className="absolute top-3 left-3 bg-red-600/90 text-white font-extrabold uppercase text-[9px] px-2.5 py-1 rounded-full shadow-md">
+              <span className="absolute top-3 left-3 bg-blue-600/90 text-white font-extrabold uppercase text-[9px] px-2.5 py-1 rounded-full shadow-md">
                 {video.category}
               </span>
             </div>
@@ -504,13 +504,13 @@ export const YouTubeHub: React.FC = () => {
             <div className="space-y-2">
               <h4
                 onClick={() => { trackEvent("video_watched", { videoId: video.youtubeId }); setActiveVideo(video); }}
-                className="font-extrabold text-base text-white leading-snug cursor-pointer hover:text-red-400 transition-colors"
+                className="font-extrabold text-base text-white leading-snug cursor-pointer hover:text-blue-400 transition-colors"
               >
                 {video.title}
               </h4>
 
               <div className="flex items-center gap-3 text-xs text-neutral-400 font-mono">
-                <span className="text-red-400 font-semibold">
+                <span className="text-blue-400 font-semibold">
                   {video.channelName}
                 </span>
                 <span>•</span>
@@ -531,9 +531,9 @@ export const YouTubeHub: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => { trackEvent("video_watched", { videoId: video.youtubeId }); setActiveVideo(video); }}
-                    className="px-3 py-1.5 rounded-xl bg-red-600/20 text-red-300 hover:bg-red-600/30 border border-red-500/30 font-bold flex items-center gap-1 active:scale-95 cursor-pointer text-xs"
+                    className="px-3 py-1.5 rounded-xl bg-blue-600/20 text-blue-300 hover:bg-blue-600/30 border border-blue-500/30 font-bold flex items-center gap-1 active:scale-95 cursor-pointer text-xs"
                   >
-                    <Play className="w-3.5 h-3.5 fill-current text-red-400" />
+                    <Play className="w-3.5 h-3.5 fill-current text-blue-400" />
                     <span>Play in App</span>
                   </button>
 
@@ -545,7 +545,7 @@ export const YouTubeHub: React.FC = () => {
                     )}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black flex items-center gap-1 active:scale-95 transition-all text-xs shadow-md shadow-red-600/20"
+                    className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black flex items-center gap-1 active:scale-95 transition-all text-xs shadow-md shadow-blue-600/20"
                   >
                     <span>WATCH ON YOUTUBE</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -579,8 +579,8 @@ export const YouTubeHub: React.FC = () => {
 
             {/* Video Player Header */}
             <div className="flex items-center gap-2">
-              <Youtube className="w-5 h-5 text-red-500" />
-              <span className="text-xs font-bold uppercase tracking-wider text-red-400">
+              <Youtube className="w-5 h-5 text-blue-500" />
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-400">
                 Stock Bloc Official Channel (@StockBloc) •{" "}
                 {activeVideo.category}
               </span>
@@ -623,7 +623,7 @@ export const YouTubeHub: React.FC = () => {
               {activeVideo.keyTakeaways &&
                 activeVideo.keyTakeaways.length > 0 && (
                   <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
-                    <span className="text-xs font-bold text-red-400 uppercase tracking-wider block">
+                    <span className="text-xs font-bold text-blue-400 uppercase tracking-wider block">
                       Key Takeaways in this Lesson
                     </span>
                     <ul className="space-y-1.5 text-xs text-neutral-300 list-disc list-inside">
@@ -643,7 +643,7 @@ export const YouTubeHub: React.FC = () => {
                   }
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:flex-1 py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-red-600/30"
+                  className="w-full sm:flex-1 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg shadow-blue-600/30"
                 >
                   <ExternalLink className="w-4 h-4" />
                   <span>Open on YouTube App</span>

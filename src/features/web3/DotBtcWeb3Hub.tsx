@@ -467,7 +467,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                 </div>
                 <button
                   onClick={handleDisconnect}
-                  className="px-2.5 py-1 alien-block-cut-sm bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-500/40 text-[10px] font-bold transition-all cursor-pointer"
+                  className="px-2.5 py-1 alien-block-cut-sm bg-blue-950/60 hover:bg-blue-900/80 text-blue-300 border border-blue-500/40 text-[10px] font-bold transition-all cursor-pointer"
                 >
                   Disconnect
                 </button>
@@ -536,7 +536,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
               btcTicker.pulse === "up"
                 ? "animate-subtle-pulse-up border-emerald-400/90 shadow-[0_0_25px_rgba(16,185,129,0.35)]"
                 : btcTicker.pulse === "down"
-                ? "animate-subtle-pulse-down border-rose-500/90 shadow-[0_0_25px_rgba(244,63,94,0.35)]"
+                ? "animate-subtle-pulse-down border-red-500/90 shadow-[0_0_25px_rgba(239,68,68,0.35)]"
                 : "border-orange-500/40 hover:border-orange-400/70 shadow-lg shadow-orange-950/20 animate-ticker-glow-btc"
             }`}
           >
@@ -546,7 +546,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                 btcTicker.pulse === "up"
                   ? "bg-emerald-500/25 opacity-100"
                   : btcTicker.pulse === "down"
-                  ? "bg-rose-500/25 opacity-100"
+                  ? "bg-red-500/25 opacity-100"
                   : "bg-orange-500/10 opacity-60"
               }`}
             />
@@ -581,13 +581,13 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                   className={`flex items-center gap-1 text-xs font-mono font-black px-2 py-0.5 rounded ${
                     btcTicker.changePercent >= 0
                       ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                      : "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                      : "bg-red-500/20 text-red-300 border border-red-500/40"
                   }`}
                 >
                   {btcTicker.changePercent >= 0 ? (
                     <TrendingUp className="w-3 h-3 text-emerald-400" />
                   ) : (
-                    <TrendingDown className="w-3 h-3 text-rose-400" />
+                    <TrendingDown className="w-3 h-3 text-red-400" />
                   )}
                   <span>
                     {btcTicker.changePercent >= 0 ? "+" : ""}
@@ -605,7 +605,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                     btcTicker.pulse === "up"
                       ? "text-emerald-300"
                       : btcTicker.pulse === "down"
-                      ? "text-rose-400"
+                      ? "text-red-400"
                       : "text-white"
                   }`}
                 >
@@ -618,7 +618,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
 
               {/* Live Mini Sparkline */}
               <div className="flex items-center gap-2">
-                {renderSparkline(btcTicker.history, btcTicker.changePercent >= 0, btcTicker.changePercent >= 0 ? "#10b981" : "#f43f5e")}
+                {renderSparkline(btcTicker.history, btcTicker.changePercent >= 0, btcTicker.changePercent >= 0 ? "#10b981" : "#ef4444")}
               </div>
             </div>
           </div>
@@ -630,7 +630,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
               dotTicker.pulse === "up"
                 ? "animate-subtle-pulse-up border-emerald-400/90 shadow-[0_0_25px_rgba(16,185,129,0.35)]"
                 : dotTicker.pulse === "down"
-                ? "animate-subtle-pulse-down border-rose-500/90 shadow-[0_0_25px_rgba(244,63,94,0.35)]"
+                ? "animate-subtle-pulse-down border-red-500/90 shadow-[0_0_25px_rgba(239,68,68,0.35)]"
                 : "border-purple-500/40 hover:border-purple-400/70 shadow-lg shadow-purple-950/20 animate-ticker-glow-dot"
             }`}
           >
@@ -640,7 +640,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                 dotTicker.pulse === "up"
                   ? "bg-emerald-500/25 opacity-100"
                   : dotTicker.pulse === "down"
-                  ? "bg-rose-500/25 opacity-100"
+                  ? "bg-red-500/25 opacity-100"
                   : "bg-purple-500/10 opacity-60"
               }`}
             />
@@ -675,13 +675,13 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                   className={`flex items-center gap-1 text-xs font-mono font-black px-2 py-0.5 rounded ${
                     dotTicker.changePercent >= 0
                       ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                      : "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                      : "bg-red-500/20 text-red-300 border border-red-500/40"
                   }`}
                 >
                   {dotTicker.changePercent >= 0 ? (
                     <TrendingUp className="w-3 h-3 text-emerald-400" />
                   ) : (
-                    <TrendingDown className="w-3 h-3 text-rose-400" />
+                    <TrendingDown className="w-3 h-3 text-red-400" />
                   )}
                   <span>
                     {dotTicker.changePercent >= 0 ? "+" : ""}
@@ -699,7 +699,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                     dotTicker.pulse === "up"
                       ? "text-emerald-300"
                       : dotTicker.pulse === "down"
-                      ? "text-rose-400"
+                      ? "text-red-400"
                       : "text-white"
                   }`}
                 >
@@ -712,7 +712,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
 
               {/* Live Mini Sparkline */}
               <div className="flex items-center gap-2">
-                {renderSparkline(dotTicker.history, dotTicker.changePercent >= 0, dotTicker.changePercent >= 0 ? "#10b981" : "#f43f5e")}
+                {renderSparkline(dotTicker.history, dotTicker.changePercent >= 0, dotTicker.changePercent >= 0 ? "#10b981" : "#ef4444")}
               </div>
             </div>
           </div>
@@ -1317,7 +1317,7 @@ curl -X POST https://stockbloc.ai/api/v1/intelligence/signal \\
                         <span>${leaf.symbol}</span>
                         <span
                           className={`text-[9px] px-1 rounded ${
-                            leaf.predictedTrend === "BULLISH" ? "text-emerald-400" : "text-rose-400"
+                            leaf.predictedTrend === "BULLISH" ? "text-emerald-400" : "text-blue-400"
                           }`}
                         >
                           {leaf.predictedTrend}
@@ -1331,7 +1331,7 @@ curl -X POST https://stockbloc.ai/api/v1/intelligence/signal \\
                               btcTicker.pulse === "up"
                                 ? "bg-emerald-500/30 text-emerald-300 animate-subtle-pulse-up"
                                 : btcTicker.pulse === "down"
-                                ? "bg-rose-500/30 text-rose-300 animate-subtle-pulse-down"
+                                ? "bg-blue-500/30 text-blue-300 animate-subtle-pulse-down"
                                 : "text-orange-300 bg-orange-500/10"
                             }`}
                           >
@@ -1344,7 +1344,7 @@ curl -X POST https://stockbloc.ai/api/v1/intelligence/signal \\
                               dotTicker.pulse === "up"
                                 ? "bg-emerald-500/30 text-emerald-300 animate-subtle-pulse-up"
                                 : dotTicker.pulse === "down"
-                                ? "bg-rose-500/30 text-rose-300 animate-subtle-pulse-down"
+                                ? "bg-blue-500/30 text-blue-300 animate-subtle-pulse-down"
                                 : "text-purple-300 bg-purple-500/10"
                             }`}
                           >
@@ -1427,7 +1427,7 @@ curl -X POST https://stockbloc.ai/api/v1/intelligence/signal \\
                             btcTicker.pulse === "up"
                               ? "animate-subtle-pulse-up bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
                               : btcTicker.pulse === "down"
-                              ? "animate-subtle-pulse-down bg-rose-500/20 text-rose-300 border-rose-500/40"
+                              ? "animate-subtle-pulse-down bg-blue-500/20 text-blue-300 border-blue-500/40"
                               : "bg-orange-500/10 text-orange-300 border-orange-500/30"
                           }`}
                         >
@@ -1440,7 +1440,7 @@ curl -X POST https://stockbloc.ai/api/v1/intelligence/signal \\
                             dotTicker.pulse === "up"
                               ? "animate-subtle-pulse-up bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
                               : dotTicker.pulse === "down"
-                              ? "animate-subtle-pulse-down bg-rose-500/20 text-rose-300 border-rose-500/40"
+                              ? "animate-subtle-pulse-down bg-blue-500/20 text-blue-300 border-blue-500/40"
                               : "bg-purple-500/10 text-purple-300 border-purple-500/30"
                           }`}
                         >
@@ -1464,7 +1464,7 @@ curl -X POST https://stockbloc.ai/api/v1/intelligence/signal \\
                     </div>
                     <div className="p-2 bg-black/60 border border-neutral-800 rounded">
                       <div className="text-neutral-400 text-[9px] uppercase">Max DD</div>
-                      <div className="text-rose-400 font-bold">{vault.maxDrawdown}</div>
+                      <div className="text-blue-400 font-bold">{vault.maxDrawdown}</div>
                     </div>
                     <div className="p-2 bg-black/60 border border-neutral-800 rounded">
                       <div className="text-neutral-400 text-[9px] uppercase">Status</div>

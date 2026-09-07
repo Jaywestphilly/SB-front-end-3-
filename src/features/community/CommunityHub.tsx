@@ -968,7 +968,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Flame className="w-5 h-5 text-rose-500 animate-pulse" />
+                  <Flame className="w-5 h-5 text-cyan-400 animate-pulse" />
                   <h2 className="text-base sm:text-lg font-zen font-bold text-white tracking-wide">
                     MARKET THESES & INTEL
                   </h2>
@@ -1024,11 +1024,11 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
                         <button 
                           onClick={() => handleUpvote(post.id)}
                           title={isLiked ? "Unlike post" : "Upvote post"}
-                          className={`p-2 alien-block-cut-sm transition-colors cursor-pointer ${isLiked ? "bg-rose-500/20 text-rose-400 border border-rose-500/40" : "hover:bg-cyan-950/40 text-neutral-400 hover:text-rose-400 border border-white/5"}`}
+                          className={`p-2 alien-block-cut-sm transition-colors cursor-pointer ${isLiked ? "bg-blue-500/20 text-blue-400 border border-blue-500/40" : "hover:bg-cyan-950/40 text-neutral-400 hover:text-blue-400 border border-white/5"}`}
                         >
                           <TrendingUp className="w-5 h-5" />
                         </button>
-                        <span className={`text-xs font-martian font-bold ${isLiked ? "text-rose-400" : "text-cyan-300"}`}>{post.upvotes || 0}</span>
+                        <span className={`text-xs font-martian font-bold ${isLiked ? "text-blue-400" : "text-cyan-300"}`}>{post.upvotes || 0}</span>
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -1076,7 +1076,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
                               post.sentiment === "bullish"
                                 ? "bg-emerald-950/80 text-emerald-300 border-emerald-500/50"
                                 : post.sentiment === "bearish"
-                                ? "bg-rose-950/80 text-rose-300 border-rose-500/50"
+                                ? "bg-blue-950/80 text-blue-300 border-blue-500/50"
                                 : "bg-neutral-900 text-neutral-300 border-neutral-700"
                             }`}>
                               {post.sentiment === "bullish" ? "📈 BULLISH" : post.sentiment === "bearish" ? "📉 BEARISH" : "⚖️ NEUTRAL"}
@@ -1097,9 +1097,9 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
                           <div className="flex items-center gap-3">
                             <button 
                               onClick={() => handleUpvote(post.id)}
-                              className={`flex items-center gap-1.5 text-xs font-alien-hud transition-colors cursor-pointer px-3 py-1.5 alien-block-cut-sm ${isLiked ? "bg-rose-500/20 text-rose-400 border border-rose-500/40 glow-rose" : "text-neutral-400 hover:text-white bg-black/60 border border-cyan-500/30 hover:border-cyan-400"}`}
+                              className={`flex items-center gap-1.5 text-xs font-alien-hud transition-colors cursor-pointer px-3 py-1.5 alien-block-cut-sm ${isLiked ? "bg-blue-500/20 text-blue-400 border border-blue-500/40 glow-blue" : "text-neutral-400 hover:text-white bg-black/60 border border-cyan-500/30 hover:border-cyan-400"}`}
                             >
-                              <ThumbsUp className={`w-3.5 h-3.5 ${isLiked ? "fill-rose-400" : ""}`} />
+                              <ThumbsUp className={`w-3.5 h-3.5 ${isLiked ? "fill-blue-400" : ""}`} />
                               {isLiked ? "Liked" : "Like"} ({post.upvotes || 0})
                             </button>
                             <span className="flex items-center gap-1.5 text-xs font-alien-hud text-cyan-400">
@@ -1256,7 +1256,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
                             type="button"
                             onClick={() => setNewPostSentiment("bearish")}
                             className={`px-2 py-0.5 text-[9px] font-alien-hud uppercase alien-block-cut-sm ${
-                              newPostSentiment === "bearish" ? "bg-rose-500 text-white font-bold" : "text-neutral-400"
+                              newPostSentiment === "bearish" ? "bg-blue-600 text-white font-bold" : "text-neutral-400"
                             }`}
                           >
                             Bearish
@@ -1339,11 +1339,11 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
                             handleUpvote(post.id);
                           }}
                           title={isLiked ? "Unlike post" : "Upvote post"}
-                          className={`p-2 alien-block-cut-sm transition-colors cursor-pointer ${isLiked ? "bg-rose-500/20 text-rose-400 border border-rose-500/40" : "hover:bg-cyan-950/40 text-neutral-400 hover:text-rose-400 border border-white/5"}`}
+                          className={`p-2 alien-block-cut-sm transition-colors cursor-pointer ${isLiked ? "bg-blue-500/20 text-blue-400 border border-blue-500/40" : "hover:bg-cyan-950/40 text-neutral-400 hover:text-blue-400 border border-white/5"}`}
                         >
                           <TrendingUp className="w-4 sm:w-5 h-4 sm:h-5" />
                         </button>
-                        <span className={`text-xs font-martian font-bold ${isLiked ? "text-rose-400" : "text-cyan-300"}`}>{post.upvotes || 0}</span>
+                        <span className={`text-xs font-martian font-bold ${isLiked ? "text-blue-400" : "text-cyan-300"}`}>{post.upvotes || 0}</span>
                       </div>
                       
                       <div className="flex-1 min-w-0">
@@ -1394,7 +1394,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
                               post.sentiment === "bullish"
                                 ? "bg-emerald-950/80 text-emerald-300 border-emerald-500/50"
                                 : post.sentiment === "bearish"
-                                ? "bg-rose-950/80 text-rose-300 border-rose-500/50"
+                                ? "bg-blue-950/80 text-blue-300 border-blue-500/50"
                                 : "bg-neutral-900 text-neutral-300 border-neutral-700"
                             }`}>
                               {post.sentiment === "bullish" ? "📈 BULL" : post.sentiment === "bearish" ? "📉 BEAR" : "⚖️ NEUTRAL"}
@@ -1435,9 +1435,9 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
                                 e.stopPropagation();
                                 handleUpvote(post.id);
                               }}
-                              className={`flex items-center gap-1.5 text-xs font-alien-hud transition-colors cursor-pointer px-2 py-1 alien-block-cut-sm border ${isLiked ? "bg-rose-500/20 text-rose-400 border-rose-500/40" : "text-neutral-400 hover:text-white bg-black/40 border-cyan-500/20"}`}
+                              className={`flex items-center gap-1.5 text-xs font-alien-hud transition-colors cursor-pointer px-2 py-1 alien-block-cut-sm border ${isLiked ? "bg-blue-500/20 text-blue-400 border-blue-500/40" : "text-neutral-400 hover:text-white bg-black/40 border-cyan-500/20"}`}
                             >
-                              <ThumbsUp className={`w-3.5 h-3.5 ${isLiked ? "fill-rose-400" : ""}`} />
+                              <ThumbsUp className={`w-3.5 h-3.5 ${isLiked ? "fill-blue-400" : ""}`} />
                               {isLiked ? "Liked" : "Like"}
                             </button>
                           </div>
@@ -1554,7 +1554,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
 
                   {msg.sentiment && msg.sentiment !== "neutral" && (
                     <span className={`text-[8px] font-alien-hud px-1 py-0.2 alien-block-cut-sm ${
-                      msg.sentiment === "bullish" ? "bg-emerald-950 text-emerald-300 border border-emerald-500/40" : "bg-rose-950 text-rose-300 border border-rose-500/40"
+                      msg.sentiment === "bullish" ? "bg-emerald-950 text-emerald-300 border border-emerald-500/40" : "bg-blue-950 text-blue-300 border border-blue-500/40"
                     }`}>
                       {msg.sentiment === "bullish" ? "BULL" : "BEAR"}
                     </span>
@@ -1604,7 +1604,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
                   type="button"
                   onClick={() => setChatSentiment("bearish")}
                   className={`px-2 py-0.5 text-[9px] font-alien-hud uppercase alien-block-cut-sm border ${
-                    chatSentiment === "bearish" ? "bg-rose-500 text-white border-rose-400 font-bold" : "bg-black/50 text-neutral-400 border-neutral-700"
+                    chatSentiment === "bearish" ? "bg-blue-600 text-white border-blue-400 font-bold" : "bg-black/50 text-neutral-400 border-neutral-700"
                   }`}
                 >
                   Bearish

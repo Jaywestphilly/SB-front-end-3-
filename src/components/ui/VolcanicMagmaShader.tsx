@@ -51,12 +51,12 @@ float snoise(in vec2 p) {
 
 float fbm(vec2 uv) {
     float val = 0.0;
-    float amp = 0.5;
-    mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
+    float amp = 0.52;
+    mat2 rot = mat2(cos(0.52), sin(0.52), -sin(0.52), cos(0.52));
     for (int i = 0; i < 5; i++) {
         val += amp * snoise(uv);
-        uv = rot * uv * 2.02;
-        amp *= 0.5;
+        uv = rot * uv * 2.08;
+        amp *= 0.50;
     }
     return val;
 }
@@ -65,30 +65,37 @@ void main() {
     vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
     float t = u_time * u_speed;
 
-    // Dual-stage domain warping simulates dense liquid rolling over itself
-    vec2 q = vec2(fbm(uv + vec2(0.0, 0.0)), fbm(uv + vec2(5.2, 1.3)));
-    vec2 r = vec2(fbm(uv + u_viscosity * q + vec2(1.7 - t * 0.2, 9.2 + t * 0.15)),
-                  fbm(uv + u_viscosity * q + vec2(8.3 + t * 0.1, 2.8 - t * 0.25)));
+    // Multi-directional alien magma current flows
+    vec2 q = vec2(fbm(uv + vec2(t * 0.12, t * 0.05)), fbm(uv + vec2(5.2 - t * 0.08, 1.3 + t * 0.1)));
+    vec2 r = vec2(fbm(uv + u_viscosity * q + vec2(1.7 - t * 0.22, 9.2 + t * 0.18)),
+                  fbm(uv + u_viscosity * q + vec2(8.3 + t * 0.15, 2.8 - t * 0.28)));
 
-    float f = fbm(uv + 4.0 * r);
+    float f = fbm(uv + 3.8 * r + vec2(t * 0.05, -t * 0.08));
 
-    // Color Palette Vectors
-    vec3 obsidian   = vec3(0.03, 0.02, 0.03); // Deep matte substrate
-    vec3 coolEmber  = vec3(0.42, 0.03, 0.01); // Viscous edge crust
-    vec3 hotMagma   = vec3(1.00, 0.32, 0.00); // Core vein orange
-    vec3 whiteHeat  = vec3(1.00, 0.95, 0.70); // Thermal emission center
-
-    // Step-mapping for fracture separation
-    float heatPattern = clamp((f * f * 4.0) + (0.6 * length(q)), 0.0, 1.0);
-
-    vec3 color = obsidian;
-    float fissureMask = smoothstep(u_crust_threshold, 1.0, heatPattern);
+    // Superheated Blue Plasma & Cosmic Ion Palette (Blue burns hotter than red)
+    vec3 deepVoid         = vec3(0.005, 0.012, 0.035); // Transparent Dark Matter Abyss
+    vec3 subRadiation     = vec3(0.04, 0.15, 0.52);    // Sub-surface cobalt radiation
+    vec3 plasmaCurrent    = vec3(0.00, 0.48, 0.98);    // Superheated electric blue plasma
+    vec3 radiantCyan      = vec3(0.06, 0.88, 1.00);    // Luminous hyper-hot cyan ion stream
+    vec3 hyperthermalCore = vec3(0.68, 0.95, 1.00);    // Incandescent white-blue thermal filament
+    vec3 alienLaser       = vec3(0.98, 1.00, 1.00);    // Singularity superheat spark
+ 
+    // Plasma fissure density calculation
+    float heatPattern = clamp((f * f * 3.8) + (0.75 * length(q)) + 0.2 * sin(uv.x * 6.0 + t * 1.5), 0.0, 1.0);
     
-    color = mix(color, coolEmber, smoothstep(u_crust_threshold - 0.15, u_crust_threshold + 0.1, heatPattern));
-    color = mix(color, hotMagma, fissureMask);
-    color = mix(color, whiteHeat, smoothstep(0.82, 1.0, heatPattern) * u_heat_intensity);
+    // Core thermal pulse wave
+    float pulse = 0.5 + 0.5 * sin(t * 2.2 + uv.x * 4.0);
+    
+    vec3 color = deepVoid;
+    color = mix(color, subRadiation, smoothstep(0.08, 0.42, heatPattern));
+    color = mix(color, plasmaCurrent, smoothstep(u_crust_threshold - 0.18, u_crust_threshold + 0.08, heatPattern));
+    color = mix(color, radiantCyan, smoothstep(u_crust_threshold, 0.82, heatPattern));
+    color = mix(color, hyperthermalCore, smoothstep(0.70, 0.90, heatPattern) * (0.8 + 0.3 * pulse));
+    color = mix(color, alienLaser, smoothstep(0.88, 1.0, heatPattern) * u_heat_intensity * 0.9);
 
-    gl_FragColor = vec4(color, 1.0);
+    // Subtle edge luminescence
+    float alpha = clamp(length(color) * 0.95, 0.15, 1.0);
+    gl_FragColor = vec4(color, alpha);
 }
 `;
 
@@ -127,13 +134,13 @@ export const VolcanicMagmaShader: React.FC<VolcanicMagmaShaderProps> = ({
 
     const gl =
       canvas.getContext("webgl", {
-        alpha: false,
+        alpha: true,
         depth: false,
         stencil: false,
-        antialias: false,
+        antialias: true,
         powerPreference: "high-performance",
       }) ||
-      (canvas.getContext("experimental-webgl") as WebGLRenderingContext | null);
+      (canvas.getContext("experimental-webgl", { alpha: true }) as WebGLRenderingContext | null);
 
     if (!gl) {
       console.warn("WebGL not supported for VolcanicMagmaShader.");

@@ -90,20 +90,20 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               <VolcanicMagmaShader
                 speed={magmaMode === "surge" ? 0.28 : magmaMode === "slow" ? 0.10 : 0.18}
                 viscosity={2.6}
-                crustThreshold={0.54}
-                heatIntensity={2.3}
+                crustThreshold={0.52}
+                heatIntensity={2.5}
               />
-              {/* Deep obsidian gravitational absorption vignette */}
+              {/* Crystalline dark matter refractive prism gradient */}
               <div 
                 className="absolute inset-0 pointer-events-none z-[1]"
                 style={{
-                  background: "radial-gradient(140% 120% at 50% 100%, rgba(4, 2, 6, 0.32) 0%, rgba(2, 1, 4, 0.82) 100%)",
+                  background: "radial-gradient(130% 120% at 50% 110%, rgba(6, 4, 12, 0.18) 0%, rgba(2, 1, 6, 0.58) 100%)",
                 }}
               />
             </div>
           )}
 
-          {/* Corner Ticks */}
+          {/* Corner Ticks & Quantum Laser Marks */}
           <div className="hud-corner-tl z-10" />
           <div className="hud-corner-tr z-10" />
           <div className="hud-corner-bl z-10" />
@@ -115,22 +115,24 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[54px] sm:min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
               isIntelActive
                 ? "dark-matter-pad-active pad-intel text-cyan-200 font-black"
-                : "text-cyan-300/80 hover:text-white"
+                : "text-cyan-300/85 hover:text-white"
             }`}
           >
+            {/* Flowing Internal Blue Plasma Conduit */}
+            <div className="magma-conduit-glow" />
             {/* Gravitational Singularity Lens Flare */}
             <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden"
+              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
               style={{
                 background: isIntelActive 
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(34, 211, 238, 0.28) 0%, transparent 75%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(255, 90, 0, 0.08) 0%, transparent 60%)"
+                  ? "radial-gradient(100% 100% at 50% 0%, rgba(34, 211, 238, 0.40) 0%, transparent 80%)"
+                  : "radial-gradient(100% 100% at 50% 100%, rgba(6, 182, 212, 0.18) 0%, transparent 65%)"
               }}
             />
             <div className="relative z-10 flex items-center justify-center">
-              <Globe className={`w-4 h-4 shrink-0 transition-transform ${isIntelActive ? "text-cyan-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.85)] scale-110" : "text-cyan-400 group-hover:scale-105"}`} />
+              <Globe className={`w-4 h-4 shrink-0 transition-transform ${isIntelActive ? "text-cyan-300 drop-shadow-[0_0_10px_rgba(34,211,238,0.9)] scale-110" : "text-cyan-400 group-hover:scale-105"}`} />
             </div>
-            <span className={`relative z-10 text-[8.5px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${isIntelActive ? "text-cyan-100 drop-shadow-[0_0_6px_rgba(34,211,238,0.6)]" : "text-cyan-300/80"}`}>
+            <span className={`relative z-10 text-[8.5px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${isIntelActive ? "text-cyan-100 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" : "text-cyan-300/90"}`}>
               INTEL
             </span>
           </button>
@@ -141,19 +143,20 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[56px] sm:min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
               isMarketsActive || activeSheet === "markets"
                 ? "dark-matter-pad-active pad-markets text-cyan-200 font-black"
-                : "text-cyan-300/80 hover:text-white"
+                : "text-cyan-300/85 hover:text-white"
             }`}
           >
+            <div className="magma-conduit-glow" />
             <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden"
+              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
               style={{
                 background: (isMarketsActive || activeSheet === "markets")
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(6, 182, 212, 0.3) 0%, transparent 75%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(255, 90, 0, 0.08) 0%, transparent 60%)"
+                  ? "radial-gradient(100% 100% at 50% 0%, rgba(6, 182, 212, 0.42) 0%, transparent 80%)"
+                  : "radial-gradient(100% 100% at 50% 100%, rgba(6, 182, 212, 0.18) 0%, transparent 65%)"
               }}
             />
-            <TrendingUp className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${(isMarketsActive || activeSheet === "markets") ? "text-cyan-300 drop-shadow-[0_0_8px_rgba(6,182,212,0.85)] scale-110" : "text-cyan-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[8.5px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isMarketsActive || activeSheet === "markets") ? "text-cyan-100 drop-shadow-[0_0_6px_rgba(6,182,212,0.6)]" : "text-cyan-300/80"}`}>
+            <TrendingUp className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${(isMarketsActive || activeSheet === "markets") ? "text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,0.9)] scale-110" : "text-cyan-400 group-hover:scale-105"}`} />
+            <span className={`relative z-10 text-[8.5px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isMarketsActive || activeSheet === "markets") ? "text-cyan-100 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]" : "text-cyan-300/90"}`}>
               MARKETS
             </span>
           </button>
@@ -164,19 +167,20 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[48px] sm:min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
               isAiActive || activeSheet === "ai"
                 ? "dark-matter-pad-active pad-ai text-purple-200 font-black"
-                : "text-purple-300/80 hover:text-white"
+                : "text-purple-300/85 hover:text-white"
             }`}
           >
+            <div className="magma-conduit-glow" />
             <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden"
+              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
               style={{
                 background: (isAiActive || activeSheet === "ai")
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(168, 85, 247, 0.32) 0%, transparent 75%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(255, 90, 0, 0.08) 0%, transparent 60%)"
+                  ? "radial-gradient(100% 100% at 50% 0%, rgba(168, 85, 247, 0.40) 0%, transparent 80%)"
+                  : "radial-gradient(100% 100% at 50% 100%, rgba(59, 130, 246, 0.18) 0%, transparent 65%)"
               }}
             />
-            <Cpu className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${(isAiActive || activeSheet === "ai") ? "text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.85)] scale-110" : "text-purple-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[8.5px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isAiActive || activeSheet === "ai") ? "text-purple-100 drop-shadow-[0_0_6px_rgba(168,85,247,0.6)]" : "text-purple-300/80"}`}>
+            <Cpu className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${(isAiActive || activeSheet === "ai") ? "text-purple-300 drop-shadow-[0_0_10px_rgba(168,85,247,0.9)] scale-110" : "text-purple-400 group-hover:scale-105"}`} />
+            <span className={`relative z-10 text-[8.5px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isAiActive || activeSheet === "ai") ? "text-purple-100 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" : "text-purple-300/90"}`}>
               AI
             </span>
           </button>
@@ -187,19 +191,20 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             className={`min-h-[48px] py-1 px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[54px] sm:min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
               isRealEstateActive
                 ? "dark-matter-pad-active pad-realestate text-amber-200 font-black"
-                : "text-amber-300/80 hover:text-white"
+                : "text-amber-300/85 hover:text-white"
             }`}
           >
+            <div className="magma-conduit-glow" />
             <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden"
+              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
               style={{
                 background: isRealEstateActive 
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(245, 158, 11, 0.32) 0%, transparent 75%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(255, 90, 0, 0.08) 0%, transparent 60%)"
+                  ? "radial-gradient(100% 100% at 50% 0%, rgba(245, 158, 11, 0.38) 0%, transparent 80%)"
+                  : "radial-gradient(100% 100% at 50% 100%, rgba(6, 182, 212, 0.18) 0%, transparent 65%)"
               }}
             />
-            <Building2 className={`relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform ${isRealEstateActive ? "text-amber-300 drop-shadow-[0_0_8px_rgba(245,158,11,0.85)] scale-110" : "text-amber-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[7.5px] sm:text-[9px] font-black uppercase tracking-tight text-center leading-[1.05] flex flex-col items-center ${isRealEstateActive ? "text-amber-100 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" : "text-amber-300/80"}`}>
+            <Building2 className={`relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform ${isRealEstateActive ? "text-amber-300 drop-shadow-[0_0_10px_rgba(245,158,11,0.9)] scale-110" : "text-amber-400 group-hover:scale-105"}`} />
+            <span className={`relative z-10 text-[7.5px] sm:text-[9px] font-black uppercase tracking-tight text-center leading-[1.05] flex flex-col items-center ${isRealEstateActive ? "text-amber-100 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" : "text-amber-300/90"}`}>
               <span>REAL</span>
               <span>ESTATE</span>
             </span>
@@ -211,19 +216,20 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[54px] sm:min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
               isCreditActive
                 ? "dark-matter-pad-active pad-credit text-emerald-200 font-black"
-                : "text-emerald-300/80 hover:text-white"
+                : "text-emerald-300/85 hover:text-white"
             }`}
           >
+            <div className="magma-conduit-glow" />
             <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden"
+              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
               style={{
                 background: isCreditActive 
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(16, 185, 129, 0.32) 0%, transparent 75%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(255, 90, 0, 0.08) 0%, transparent 60%)"
+                  ? "radial-gradient(100% 100% at 50% 0%, rgba(16, 185, 129, 0.38) 0%, transparent 80%)"
+                  : "radial-gradient(100% 100% at 50% 100%, rgba(6, 182, 212, 0.18) 0%, transparent 65%)"
               }}
             />
-            <ShieldCheck className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${isCreditActive ? "text-emerald-300 drop-shadow-[0_0_8px_rgba(16,185,129,0.85)] scale-110" : "text-emerald-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[8.5px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${isCreditActive ? "text-emerald-100 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" : "text-emerald-300/80"}`}>
+            <ShieldCheck className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${isCreditActive ? "text-emerald-300 drop-shadow-[0_0_10px_rgba(16,185,129,0.9)] scale-110" : "text-emerald-400 group-hover:scale-105"}`} />
+            <span className={`relative z-10 text-[8.5px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${isCreditActive ? "text-emerald-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "text-emerald-300/90"}`}>
               CREDIT
             </span>
           </button>
@@ -233,20 +239,21 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             onClick={() => handleOpenSheet("education")}
             className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[58px] sm:min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
               isEducationActive || activeSheet === "education"
-                ? "dark-matter-pad-active pad-education text-rose-200 font-black"
-                : "text-rose-300/80 hover:text-white"
+                ? "dark-matter-pad-active pad-education text-blue-200 font-black"
+                : "text-blue-300/85 hover:text-white"
             }`}
           >
+            <div className="magma-conduit-glow" />
             <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden"
+              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
               style={{
                 background: (isEducationActive || activeSheet === "education")
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(244, 63, 94, 0.32) 0%, transparent 75%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(255, 90, 0, 0.08) 0%, transparent 60%)"
+                  ? "radial-gradient(100% 100% at 50% 0%, rgba(59, 130, 246, 0.40) 0%, transparent 80%)"
+                  : "radial-gradient(100% 100% at 50% 100%, rgba(59, 130, 246, 0.18) 0%, transparent 65%)"
               }}
             />
-            <GraduationCap className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${(isEducationActive || activeSheet === "education") ? "text-rose-300 drop-shadow-[0_0_8px_rgba(244,63,94,0.85)] scale-110" : "text-rose-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[8px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isEducationActive || activeSheet === "education") ? "text-rose-100 drop-shadow-[0_0_6px_rgba(244,63,94,0.6)]" : "text-rose-300/80"}`}>
+            <GraduationCap className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${(isEducationActive || activeSheet === "education") ? "text-blue-300 drop-shadow-[0_0_10px_rgba(59,130,246,0.9)] scale-110" : "text-blue-400 group-hover:scale-105"}`} />
+            <span className={`relative z-10 text-[8px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isEducationActive || activeSheet === "education") ? "text-blue-100 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]" : "text-blue-300/90"}`}>
               EDUCATION
             </span>
           </button>
@@ -291,12 +298,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 onClick={() => handleNavigate("watchlist")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-cyan-500/30 hover:border-cyan-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-cyan-500/30 hover:border-cyan-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400 shrink-0 relative z-10">
                   <TrendingUp className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="relative z-10">
                   <h4 className="font-bold text-sm text-white group-hover:text-cyan-300 flex items-center justify-between">
                     Live Watchlist Workstation
                     <ChevronRight className="w-4 h-4 text-cyan-400" />
@@ -309,12 +317,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
               <button
                 onClick={() => handleNavigate("intelligence")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-cyan-500/30 hover:border-cyan-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-cyan-500/30 hover:border-cyan-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400 shrink-0 relative z-10">
                   <Layers className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="relative z-10">
                   <h4 className="font-bold text-sm text-white group-hover:text-cyan-300 flex items-center justify-between">
                     13F Hedge Fund Intel
                     <ChevronRight className="w-4 h-4 text-cyan-400" />
@@ -327,12 +336,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
               <button
                 onClick={() => handleNavigate("macro")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-cyan-500/30 hover:border-cyan-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-cyan-500/30 hover:border-cyan-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400 shrink-0 relative z-10">
                   <FileText className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="relative z-10">
                   <h4 className="font-bold text-sm text-white group-hover:text-cyan-300 flex items-center justify-between">
                     Macro Economic Briefings
                     <ChevronRight className="w-4 h-4 text-cyan-400" />
@@ -345,12 +355,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
               <button
                 onClick={() => handleNavigate("brand")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-cyan-500/30 hover:border-cyan-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-cyan-500/30 hover:border-cyan-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400 shrink-0 relative z-10">
                   <Home className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="relative z-10">
                   <h4 className="font-bold text-sm text-white group-hover:text-cyan-300 flex items-center justify-between">
                     Stock Bloc Brand Landing
                     <ChevronRight className="w-4 h-4 text-cyan-400" />
@@ -403,12 +414,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 onClick={() => handleNavigate("ai_revolution")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-amber-500/40 hover:border-amber-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-amber-500/40 hover:border-amber-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400 shrink-0 relative z-10">
                   <BarChart3 className="w-5 h-5 text-amber-400" />
                 </div>
-                <div>
+                <div className="relative z-10">
                   <h4 className="font-bold text-sm text-white group-hover:text-amber-300 flex items-center justify-between">
                     AI Infra & MS Value Chain
                     <ChevronRight className="w-4 h-4 text-amber-400" />
@@ -421,12 +433,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
               <button
                 onClick={() => handleNavigate("dyson_swarm")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/30 hover:border-purple-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/30 hover:border-purple-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0 relative z-10">
                   <Orbit className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="relative z-10">
                   <h4 className="font-bold text-sm text-white group-hover:text-purple-300 flex items-center justify-between">
                     Dyson Swarm & Compute
                     <ChevronRight className="w-4 h-4 text-purple-400" />
@@ -439,12 +452,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
               <button
                 onClick={() => handleNavigate("war_gov_ufo")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/30 hover:border-purple-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/30 hover:border-purple-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0">
-                  <ShieldAlert className="w-5 h-5 text-rose-400" />
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0 relative z-10">
+                  <ShieldAlert className="w-5 h-5 text-blue-400" />
                 </div>
-                <div>
+                <div className="relative z-10">
                   <h4 className="font-bold text-sm text-white group-hover:text-purple-300 flex items-center justify-between">
                     Defense Tech & Aerospace
                     <ChevronRight className="w-4 h-4 text-purple-400" />
@@ -457,12 +471,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
               <button
                 onClick={() => handleNavigate("agents")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/30 hover:border-purple-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/30 hover:border-purple-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0 relative z-10">
                   <Globe className="w-5 h-5 text-cyan-400" />
                 </div>
-                <div>
+                <div className="relative z-10">
                   <h4 className="font-bold text-sm text-white group-hover:text-purple-300 flex items-center justify-between">
                     AI Agent Directory
                     <ChevronRight className="w-4 h-4 text-purple-400" />
@@ -475,12 +490,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
               <button
                 onClick={() => handleNavigate("developers")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/30 hover:border-purple-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/30 hover:border-purple-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0 relative z-10">
                   <Terminal className="w-5 h-5 text-cyan-400" />
                 </div>
-                <div>
+                <div className="relative z-10">
                   <h4 className="font-bold text-sm text-white group-hover:text-purple-300 flex items-center justify-between">
                     Developer Portal
                     <ChevronRight className="w-4 h-4 text-purple-400" />
@@ -502,7 +518,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           onClick={() => setActiveSheet(null)}
         >
           <div
-            className="w-full max-w-lg obsidian-magma-dock border-2 border-rose-500/50 rounded-t-2xl alien-block-cut p-4 sm:p-6 shadow-2xl shadow-rose-500/20 space-y-4 relative text-rose-100 overflow-hidden"
+            className="w-full max-w-lg obsidian-magma-dock border-2 border-blue-500/50 rounded-t-2xl alien-block-cut p-4 sm:p-6 shadow-2xl shadow-blue-500/20 space-y-4 relative text-blue-100 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {magmaMode !== "off" && (
@@ -515,16 +531,16 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 />
               </div>
             )}
-            <div className="relative z-10 flex items-center justify-between border-b border-rose-500/30 pb-3">
+            <div className="relative z-10 flex items-center justify-between border-b border-blue-500/30 pb-3">
               <div className="flex items-center gap-2">
-                <GraduationCap className="w-5 h-5 text-rose-400" />
+                <GraduationCap className="w-5 h-5 text-blue-400" />
                 <h3 className="text-base sm:text-lg font-black uppercase text-white tracking-wider">
                   EDUCATION CATEGORY
                 </h3>
               </div>
               <button
                 onClick={() => setActiveSheet(null)}
-                className="p-1.5 dark-matter-pad rounded-lg text-rose-400 hover:text-white cursor-pointer"
+                className="p-1.5 dark-matter-pad rounded-lg text-blue-400 hover:text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -533,12 +549,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 onClick={() => handleNavigate("mit_courses")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/40 hover:border-purple-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/40 hover:border-purple-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0 relative z-10">
                   <GraduationCap className="w-5 h-5 text-purple-400" />
                 </div>
-                <div>
+                <div className="relative z-10">
                   <h4 className="font-bold text-sm text-white group-hover:text-purple-300 flex items-center justify-between">
                     MIT & University Courses
                     <ChevronRight className="w-4 h-4 text-purple-400" />
@@ -551,12 +568,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
               <button
                 onClick={() => handleNavigate("terminal_guide")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-amber-500/40 hover:border-amber-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-amber-500/40 hover:border-amber-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400 shrink-0 relative z-10">
                   <Terminal className="w-5 h-5 animate-pulse" />
                 </div>
-                <div>
+                <div className="relative z-10">
                   <h4 className="font-bold text-sm text-white group-hover:text-amber-300 flex items-center justify-between">
                     Terminal Guide & Manual
                     <ChevronRight className="w-4 h-4 text-amber-400" />
@@ -569,17 +587,18 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
               <button
                 onClick={() => handleNavigate("investopedia")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-rose-500/30 hover:border-rose-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-blue-500/30 hover:border-blue-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-rose-500/20 rounded-lg text-rose-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400 shrink-0 relative z-10">
                   <Sparkles className="w-5 h-5" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm text-white group-hover:text-rose-300 flex items-center justify-between">
+                <div className="relative z-10">
+                  <h4 className="font-bold text-sm text-white group-hover:text-blue-300 flex items-center justify-between">
                     Investopedia Free Trading Game
-                    <ChevronRight className="w-4 h-4 text-rose-400" />
+                    <ChevronRight className="w-4 h-4 text-blue-400" />
                   </h4>
-                  <p className="text-[11px] text-rose-300/70 mt-0.5">
+                  <p className="text-[11px] text-blue-300/70 mt-0.5">
                     Zero-risk paper trading simulator with live market order books.
                   </p>
                 </div>
@@ -587,17 +606,18 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
               <button
                 onClick={() => handleNavigate("small_business")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-rose-500/30 hover:border-rose-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-blue-500/30 hover:border-blue-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-rose-500/20 rounded-lg text-rose-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400 shrink-0 relative z-10">
                   <Briefcase className="w-5 h-5" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm text-white group-hover:text-rose-300 flex items-center justify-between">
+                <div className="relative z-10">
+                  <h4 className="font-bold text-sm text-white group-hover:text-blue-300 flex items-center justify-between">
                     Small Business & QSBS Tax Hub
-                    <ChevronRight className="w-4 h-4 text-rose-400" />
+                    <ChevronRight className="w-4 h-4 text-blue-400" />
                   </h4>
-                  <p className="text-[11px] text-rose-300/70 mt-0.5">
+                  <p className="text-[11px] text-blue-300/70 mt-0.5">
                     100% tax-free QSBS capital gains frameworks & SAFE term sheets.
                   </p>
                 </div>
@@ -605,17 +625,18 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
               <button
                 onClick={() => handleNavigate("youtube")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-rose-500/30 hover:border-rose-400"
+                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-blue-500/30 hover:border-blue-400 relative overflow-hidden"
               >
-                <div className="p-2 bg-rose-500/20 rounded-lg text-rose-400 shrink-0">
+                <div className="magma-conduit-glow" />
+                <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400 shrink-0 relative z-10">
                   <Radio className="w-5 h-5" />
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm text-white group-hover:text-rose-300 flex items-center justify-between">
+                <div className="relative z-10">
+                  <h4 className="font-bold text-sm text-white group-hover:text-blue-300 flex items-center justify-between">
                     Free Game Educational Videos
-                    <ChevronRight className="w-4 h-4 text-rose-400" />
+                    <ChevronRight className="w-4 h-4 text-blue-400" />
                   </h4>
-                  <p className="text-[11px] text-rose-300/70 mt-0.5">
+                  <p className="text-[11px] text-blue-300/70 mt-0.5">
                     Curated YouTube breakdown videos & quantitative playbooks.
                   </p>
                 </div>

@@ -176,7 +176,7 @@ export const MarketIntelligenceHub: React.FC<MarketIntelligenceHubProps> = ({
       icon: Landmark,
       badge: "Lobbying Intel",
       color:
-        "from-rose-500/20 to-orange-500/20 text-rose-300 border-rose-500/30",
+        "from-blue-500/20 to-indigo-500/20 text-blue-300 border-blue-500/30",
     },
   ];
 

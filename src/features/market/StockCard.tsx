@@ -70,7 +70,7 @@ const CustomCandleTooltip = ({
             className={
               isUp
                 ? "text-emerald-400 font-extrabold"
-                : "text-rose-400 font-extrabold"
+                : "text-red-400 font-extrabold"
             }
           >
             {isUp ? "▲ UP" : "▼ DOWN"}
@@ -98,7 +98,7 @@ const CustomCandleTooltip = ({
           {data.low && (
             <span className="text-neutral-400">
               Low:{" "}
-              <strong className="text-rose-300">${data.low.toFixed(2)}</strong>
+              <strong className="text-red-300">${data.low.toFixed(2)}</strong>
             </span>
           )}
         </div>
@@ -674,28 +674,28 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
         cornerColor: stock.isPinned ? "rgba(0, 255, 136, 0.9)" : "rgba(52, 211, 153, 0.75)",
       };
     } else {
-      // NEGATIVE LOSER (RED / ROSE) - Dark Matter Gravitational Lens
-      const baseRgb = "239, 68, 68"; // rose-500 (#ef4444)
-      const glowRgb = "255, 0, 85"; // rose-neon (#ff0055)
-      const deepRgb = "190, 18, 60"; // rose-700
+      // NEGATIVE LOSER (RED) - Dark Matter Gravitational Lens
+      const baseRgb = "239, 68, 68"; // red-500 (#ef4444)
+      const glowRgb = "255, 68, 68"; // neon red (#ff4444)
+      const deepRgb = "185, 28, 28"; // red-700 (#b91c1c)
       
       return {
         isPositive: false,
         isCustom: false,
         baseRgb,
         glowRgb,
-        background: `linear-gradient(145deg, rgba(14, 3, 7, 0.72) 0%, rgba(4, 1, 2, 0.82) 100%), radial-gradient(120% 120% at 30% -10%, rgba(${baseRgb}, 0.15) 0%, rgba(${deepRgb}, 0.04) 45%, rgba(0, 0, 0, 0.5) 100%)`,
+        background: `linear-gradient(145deg, rgba(22, 4, 4, 0.72) 0%, rgba(12, 1, 1, 0.82) 100%), radial-gradient(120% 120% at 30% -10%, rgba(${baseRgb}, 0.15) 0%, rgba(${deepRgb}, 0.04) 45%, rgba(0, 0, 0, 0.5) 100%)`,
         borderColor: isLiveDownFlash
-          ? "rgba(251, 113, 133, 0.95)"
+          ? "rgba(248, 113, 113, 0.95)"
           : stock.isPinned
-            ? "rgba(255, 0, 85, 0.75)"
+            ? "rgba(255, 68, 68, 0.75)"
             : "rgba(239, 68, 68, 0.3)",
         boxShadow: stock.isPinned
-          ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 1.5px 0 rgba(255, 0, 85, 0.35), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.95), inset 0 0 28px rgba(0, 0, 0, 0.85), 0 0 20px rgba(${glowRgb}, 0.25)`
+          ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 1.5px 0 rgba(255, 68, 68, 0.35), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.95), inset 0 0 28px rgba(0, 0, 0, 0.85), 0 0 20px rgba(${glowRgb}, 0.25)`
           : isLiveDownFlash
-            ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 2px 0 rgba(255, 0, 85, 0.5), inset 0 0 24px rgba(0, 0, 0, 0.85), 0 0 28px rgba(${glowRgb}, 0.45)`
-            : `0 10px 30px -4px rgba(0, 0, 0, 0.75), inset 0 1px 1px 0 rgba(255, 0, 85, 0.16), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.9), inset 0 0 24px rgba(0, 0, 0, 0.8), 0 0 14px rgba(${glowRgb}, 0.08)`,
-        cornerColor: stock.isPinned ? "rgba(255, 0, 85, 0.9)" : "rgba(251, 113, 133, 0.75)",
+            ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 2px 0 rgba(255, 68, 68, 0.5), inset 0 0 24px rgba(0, 0, 0, 0.85), 0 0 28px rgba(${glowRgb}, 0.45)`
+            : `0 10px 30px -4px rgba(0, 0, 0, 0.75), inset 0 1px 1px 0 rgba(255, 68, 68, 0.16), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.9), inset 0 0 24px rgba(0, 0, 0, 0.8), 0 0 14px rgba(${glowRgb}, 0.08)`,
+        cornerColor: stock.isPinned ? "rgba(255, 68, 68, 0.9)" : "rgba(248, 113, 113, 0.75)",
       };
     }
   }, [isPositive, isGold, isSilver, isCopper, isPurple, isOrange, stock.changePercent, stock.isPinned, priceFlashState]);
@@ -712,7 +712,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
 
     if (relVol > 1.3) {
       text = `${relVol.toFixed(1)}x (High)`;
-      textColor = "text-rose-400";
+      textColor = "text-blue-400";
     } else if (relVol > 1.05) {
       text = `${relVol.toFixed(1)}x (Elevated)`;
       textColor = "text-amber-400";
@@ -794,7 +794,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
               ? "#d946ef"
               : trendIsPositive
                 ? "#00ff88"
-                : "#ff3b3b";
+                : "#ef4444";
 
     // HEIKIN-ASHI & TRADINGVIEW JAPANESE CANDLESTICK MODE (Matching Deeper Analysis Detail Chart)
     if (watchlistChartStyle === "candlestick") {
@@ -884,7 +884,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
           {/* Floating Hover Candlestick HUD Tooltip */}
           {activeHoverCandle && (
             <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-30 px-2 py-0.5 rounded bg-[#031322]/95 border border-cyan-400/50 shadow-xl backdrop-blur-md text-[8.5px] font-mono whitespace-nowrap pointer-events-none flex items-center gap-1.5 text-white">
-              <span className={activeHoverCandle.isUp ? "text-emerald-400 font-bold" : "text-rose-400 font-bold"}>
+              <span className={activeHoverCandle.isUp ? "text-emerald-400 font-bold" : "text-red-400 font-bold"}>
                 {activeHoverCandle.isUp ? "▲" : "▼"} ${activeHoverCandle.close.toFixed(2)}
               </span>
               <span className="text-white/60 text-[7.5px]">
@@ -1207,7 +1207,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                     ? "bg-gradient-to-b from-purple-400 via-fuchsia-400 to-purple-600/0 opacity-80 group-hover/card-wrapper:opacity-100"
                     : isPositive
                       ? "bg-gradient-to-b from-emerald-400 via-teal-300 to-emerald-600/0 opacity-60 group-hover/card-wrapper:opacity-100"
-                      : "bg-gradient-to-b from-rose-500 via-red-400 to-rose-600/0 opacity-60 group-hover/card-wrapper:opacity-100"
+                      : "bg-gradient-to-b from-blue-500 via-sky-400 to-blue-600/0 opacity-60 group-hover/card-wrapper:opacity-100"
         }`}
       />
 
@@ -1269,7 +1269,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
               onRemove(stock.symbol);
               setDragOffset(0);
             }}
-            className="h-9 px-3 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-extrabold text-xs border border-rose-400/40 flex items-center gap-1.5 active:scale-95 transition-all shadow-lg shadow-rose-600/30 cursor-pointer"
+            className="h-9 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs border border-blue-400/40 flex items-center gap-1.5 active:scale-95 transition-all shadow-lg shadow-blue-600/30 cursor-pointer dark-matter-gravity-btn dark-matter-gravity-btn-blue"
             title="Remove from Watchlist"
           >
             <Trash2 className="w-3.5 h-3.5 text-white" />
@@ -1357,7 +1357,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                           ? "bg-gradient-to-r from-purple-500/40 via-fuchsia-400/30 to-purple-600/40"
                           : priceFlashState === "up"
                             ? "bg-gradient-to-r from-emerald-500/35 via-emerald-400/25 to-teal-500/35 price-flash-bg-green"
-                            : "bg-gradient-to-r from-rose-500/35 via-red-400/25 to-rose-600/35 price-flash-bg-red"
+                            : "bg-gradient-to-r from-red-500/35 via-rose-400/25 to-red-600/35 price-flash-bg-red"
               }`}
             />
           )}
@@ -1497,7 +1497,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                           ? "bg-purple-950/90 text-purple-200 border-2 border-purple-400 glow-purple shadow-[0_0_12px_rgba(192,38,211,0.45)]"
                           : isPositive
                             ? "bg-emerald-950/90 text-emerald-300 border-2 border-emerald-400 glow-emerald"
-                            : "bg-rose-950/90 text-rose-300 border-2 border-rose-500 glow-rose"
+                            : "bg-red-950/90 text-red-300 border-2 border-red-500 glow-red"
               } ${isSyncing ? "glitch-text-refresh" : ""}`}
             >
               <span className="text-[9px] font-bold text-current/80 mr-0.5">1D</span>

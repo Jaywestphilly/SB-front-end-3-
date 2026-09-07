@@ -355,12 +355,12 @@ export const HedgeFund13F: React.FC<HedgeFund13FProps> = ({ stocks = [] }) => {
             {
               symbol: "OKLO",
               label: "Oklo Reactors (8.5%)",
-              color: "bg-rose-950 text-rose-300 border-rose-400",
+              color: "bg-blue-950 text-blue-300 border-blue-400",
             },
             {
               symbol: "TSM",
               label: "TSMC 2nm (18.2%)",
-              color: "bg-blue-950 text-blue-300 border-blue-400",
+              color: "bg-sky-950 text-sky-300 border-sky-400",
             },
           ].map((b) => (
             <button
@@ -505,7 +505,7 @@ export const HedgeFund13F: React.FC<HedgeFund13FProps> = ({ stocks = [] }) => {
                   "bg-emerald-400 text-black",
                   "bg-purple-400 text-black",
                   "bg-amber-400 text-black",
-                  "bg-rose-400 text-black",
+                  "bg-sky-400 text-black",
                   "bg-blue-400 text-black",
                   "bg-teal-400 text-black",
                 ];
@@ -530,7 +530,7 @@ export const HedgeFund13F: React.FC<HedgeFund13FProps> = ({ stocks = [] }) => {
                   "text-emerald-300 border-emerald-500/40 bg-emerald-950/40",
                   "text-purple-300 border-purple-500/40 bg-purple-950/40",
                   "text-amber-300 border-amber-500/40 bg-amber-950/40",
-                  "text-rose-300 border-rose-500/40 bg-rose-950/40",
+                  "text-sky-300 border-sky-500/40 bg-sky-950/40",
                   "text-blue-300 border-blue-500/40 bg-blue-950/40",
                   "text-teal-300 border-teal-500/40 bg-teal-950/40",
                 ];
@@ -746,7 +746,7 @@ export const HedgeFund13F: React.FC<HedgeFund13FProps> = ({ stocks = [] }) => {
                             ${stockQuote.price.toFixed(2)}
                           </span>
                           <span
-                            className={`text-[9px] font-bold ${stockQuote.changePercent >= 0 ? "text-emerald-400" : "text-rose-400"}`}
+                            className={`text-[9px] font-bold ${stockQuote.changePercent >= 0 ? "text-emerald-400" : "text-blue-400"}`}
                           >
                             {stockQuote.changePercent >= 0 ? "+" : ""}
                             {stockQuote.changePercent.toFixed(1)}%
@@ -880,7 +880,7 @@ export const HedgeFund13F: React.FC<HedgeFund13FProps> = ({ stocks = [] }) => {
                       "bg-emerald-400 text-black",
                       "bg-purple-400 text-black",
                       "bg-amber-400 text-black",
-                      "bg-rose-400 text-black",
+                      "bg-sky-400 text-black",
                       "bg-blue-400 text-black",
                       "bg-teal-400 text-black",
                       "bg-indigo-400 text-black",
@@ -933,7 +933,7 @@ export const HedgeFund13F: React.FC<HedgeFund13FProps> = ({ stocks = [] }) => {
                                 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
                                 : item.quarterlyChangeType === "INCREASED"
                                 ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
-                                : "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                                : "bg-blue-500/20 text-blue-300 border border-blue-500/40"
                             }`}>
                               {item.quarterlyChangeType} ({item.quarterlyChangePercent > 0 ? "+" : ""}{item.quarterlyChangePercent}%)
                             </span>
@@ -968,7 +968,7 @@ export const HedgeFund13F: React.FC<HedgeFund13FProps> = ({ stocks = [] }) => {
                                 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
                                 : item.quarterlyChangeType === "INCREASED"
                                 ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
-                                : "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                                : "bg-blue-500/20 text-blue-300 border border-blue-500/40"
                             }`}>
                               {item.quarterlyChangeType} ({item.quarterlyChangePercent > 0 ? "+" : ""}{item.quarterlyChangePercent}%)
                           </span>

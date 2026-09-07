@@ -1131,7 +1131,7 @@ export const ReportRepository: React.FC = () => {
                       "bg-emerald-400 text-black",
                       "bg-purple-400 text-black",
                       "bg-amber-400 text-black",
-                      "bg-rose-400 text-black",
+                      "bg-sky-400 text-black",
                     ];
                     return (
                       <div

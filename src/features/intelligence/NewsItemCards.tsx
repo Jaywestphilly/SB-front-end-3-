@@ -47,7 +47,7 @@ export const NewsItemWireRow: React.FC<NewsItemCardProps> = ({
       <div className="col-span-3 sm:col-span-2 flex flex-col gap-1">
         <span
           className={`text-[11px] font-black line-clamp-1 ${
-            isStockBloc ? "text-rose-400" : isAlexWg ? "text-amber-400" : "text-cyan-400"
+            isStockBloc ? "text-blue-400" : isAlexWg ? "text-amber-400" : "text-cyan-400"
           }`}
         >
           {item.channelName}
@@ -123,7 +123,7 @@ export const NewsItemWireRow: React.FC<NewsItemCardProps> = ({
             triggerHaptic("medium");
             onOpenModal(item);
           }}
-          className="p-1.5 rounded-lg bg-rose-950/60 border border-rose-500/40 text-rose-300 hover:bg-rose-600 hover:text-white transition-all cursor-pointer"
+          className="p-1.5 rounded-lg bg-blue-950/60 border border-blue-500/40 text-blue-300 hover:bg-blue-600 hover:text-white transition-all cursor-pointer"
           title="Watch Video"
         >
           <Play className="w-3.5 h-3.5 fill-current" />
@@ -164,20 +164,20 @@ export const NewsItemDossierCard: React.FC<NewsItemCardProps> = ({
   const isAlexWg = item.isAlexWg;
 
   const borderColor = isStockBloc
-    ? "border-rose-500/30 hover:border-rose-500/60"
+    ? "border-blue-500/30 hover:border-blue-500/60"
     : isAlexWg
     ? "border-amber-500/30 hover:border-amber-500/60"
     : "border-cyan-500/30 hover:border-cyan-500/60";
-  const bgColor = isStockBloc ? "bg-[#0b0306]/90" : isAlexWg ? "bg-[#0c0902]/90" : "bg-[#050b14]/90";
-  const iconColor = isStockBloc ? "text-rose-500" : isAlexWg ? "text-amber-400" : "text-cyan-400";
+  const bgColor = isStockBloc ? "bg-[#030714]/90" : isAlexWg ? "bg-[#0c0902]/90" : "bg-[#050b14]/90";
+  const iconColor = isStockBloc ? "text-blue-500" : isAlexWg ? "text-amber-400" : "text-cyan-400";
   const shadowColor = isStockBloc
-    ? "shadow-[0_0_20px_rgba(244,63,94,0.08)]"
+    ? "shadow-[0_0_20px_rgba(59,130,246,0.08)]"
     : isAlexWg
     ? "shadow-[0_0_20px_rgba(245,158,11,0.08)]"
     : "shadow-[0_0_20px_rgba(6,182,212,0.08)]";
-  const accentColor = isStockBloc ? "bg-rose-600 hover:bg-rose-500" : isAlexWg ? "bg-amber-600 hover:bg-amber-500" : "bg-cyan-600 hover:bg-cyan-500";
+  const accentColor = isStockBloc ? "bg-blue-600 hover:bg-blue-500" : isAlexWg ? "bg-amber-600 hover:bg-amber-500" : "bg-cyan-600 hover:bg-cyan-500";
   const badgeColors = isStockBloc
-    ? "bg-rose-950/40 border-rose-500/30 text-rose-300"
+    ? "bg-blue-950/40 border-blue-500/30 text-blue-300"
     : isAlexWg
     ? "bg-amber-950/40 border-amber-500/30 text-amber-300"
     : "bg-cyan-950/40 border-cyan-500/30 text-cyan-300";
@@ -189,7 +189,7 @@ export const NewsItemDossierCard: React.FC<NewsItemCardProps> = ({
       {/* Card Header Bar */}
       <div
         className={`flex items-center justify-between gap-2 border-b ${
-          isStockBloc ? "border-rose-500/20" : isAlexWg ? "border-amber-500/20" : "border-cyan-500/20"
+          isStockBloc ? "border-blue-500/20" : isAlexWg ? "border-amber-500/20" : "border-cyan-500/20"
         } pb-2`}
       >
         <div className="flex items-center gap-2 flex-wrap">
@@ -220,8 +220,8 @@ export const NewsItemDossierCard: React.FC<NewsItemCardProps> = ({
           )}
 
           {isStockBloc && (
-            <span className="px-2 py-0.5 bg-rose-950/80 text-rose-300 border border-rose-500/50 text-[9px] font-black rounded uppercase tracking-widest flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-rose-400 rounded-full animate-ping" />
+            <span className="px-2 py-0.5 bg-blue-950/80 text-blue-300 border border-blue-500/50 text-[9px] font-black rounded uppercase tracking-widest flex items-center gap-1">
+              <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-ping" />
               OFFICIAL
             </span>
           )}
@@ -312,7 +312,7 @@ export const NewsItemDossierCard: React.FC<NewsItemCardProps> = ({
               onOpenModal(item);
             }}
             className={`text-sm sm:text-base font-bold text-white ${
-              isStockBloc ? "group-hover:text-rose-300" : isAlexWg ? "group-hover:text-amber-300" : "group-hover:text-cyan-300"
+              isStockBloc ? "group-hover:text-blue-300" : isAlexWg ? "group-hover:text-amber-300" : "group-hover:text-cyan-300"
             } transition-colors cursor-pointer leading-snug`}
           >
             {renderTextWithTickers(item.title, onTickerClick)}
