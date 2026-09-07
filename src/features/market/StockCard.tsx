@@ -35,6 +35,7 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
+import { AlienCornerHieroglyph } from "../../components/ui/AlienCornerHieroglyph";
 
 interface StockCardProps {
   stock: StockTicker;
@@ -508,190 +509,193 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
     stock.symbol.toUpperCase() === "IBIT" ||
     (typeof stock.name === "string" && (stock.name.toLowerCase().includes("bitcoin") || stock.name.toLowerCase().includes("btc")));
 
-  // Determine vibrant, high-contrast Metallic / Purple / Orange (Bitcoin) / Green / Red card styling
+  // Determine vibrant, high-contrast Metallic / Purple / Orange (Bitcoin) / Green / Red card styling with Dark Matter Translucency
   const cardTheme = useMemo(() => {
     const isLiveUpFlash = priceFlashState === "up";
     const isLiveDownFlash = priceFlashState === "down";
 
     if (isOrange) {
-      // CUSTOM BITCOIN ORANGE CARD THEME (e.g. Bitcoin BTC-USD)
+      // CUSTOM BITCOIN ORANGE CARD THEME (e.g. Bitcoin BTC-USD) - Dark Matter Gravitational Lens
       const baseRgb = "247, 147, 26"; // iconic bitcoin orange (#f7931a)
       const glowRgb = "255, 170, 51"; // amber-orange (#ffaa33)
       const deepRgb = "154, 52, 18"; // orange-900 (#9a3412)
       const darkOrangeRgb = "194, 65, 12"; // orange-700 (#c2410c)
 
-      const effectiveOpacity = isLiveUpFlash || isLiveDownFlash ? 0.48 : 0.35;
-
       return {
         isPositive: isPositive,
         isCustom: true,
-        background: `radial-gradient(ellipse at 35% 50%, rgba(${baseRgb}, ${effectiveOpacity * 1.5}) 0%, rgba(${deepRgb}, ${effectiveOpacity * 0.8}) 60%, rgba(26, 12, 2, 0.95) 100%)`,
+        baseRgb,
+        glowRgb,
+        background: `linear-gradient(145deg, rgba(14, 6, 2, 0.74) 0%, rgba(3, 1, 1, 0.82) 100%), radial-gradient(120% 120% at 30% -10%, rgba(${baseRgb}, 0.16) 0%, rgba(${deepRgb}, 0.05) 45%, rgba(0, 0, 0, 0.5) 100%)`,
         borderColor: isLiveUpFlash || isLiveDownFlash
-          ? "rgba(255, 170, 51, 0.98)"
+          ? "rgba(255, 170, 51, 0.95)"
           : stock.isPinned
-            ? "rgba(255, 170, 51, 0.92)"
-            : "rgba(247, 147, 26, 0.75)",
+            ? "rgba(255, 170, 51, 0.75)"
+            : "rgba(247, 147, 26, 0.35)",
         boxShadow: stock.isPinned
-          ? `0 0 28px rgba(${glowRgb}, 0.50), inset 0 0 20px rgba(${darkOrangeRgb}, 0.30)`
+          ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 1.5px 0 rgba(255, 170, 51, 0.35), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.95), inset 0 0 28px rgba(0, 0, 0, 0.85), 0 0 20px rgba(${glowRgb}, 0.25)`
           : isLiveUpFlash || isLiveDownFlash
-            ? `0 0 36px rgba(${glowRgb}, 0.70), inset 0 0 24px rgba(${glowRgb}, 0.40)`
-            : `0 0 24px rgba(${baseRgb}, 0.35), inset 0 0 16px rgba(${baseRgb}, 0.18)`,
+            ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 2px 0 rgba(255, 170, 51, 0.5), inset 0 0 24px rgba(0, 0, 0, 0.85), 0 0 28px rgba(${glowRgb}, 0.45)`
+            : `0 10px 30px -4px rgba(0, 0, 0, 0.75), inset 0 1px 1px 0 rgba(255, 170, 51, 0.18), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.9), inset 0 0 24px rgba(0, 0, 0, 0.8), 0 0 14px rgba(${baseRgb}, 0.08)`,
+        cornerColor: "rgba(255, 170, 51, 0.85)",
       };
     }
 
     if (isGold) {
-      // CUSTOM GOLD / GOLDEN CARD THEME (e.g. SPDR Gold Shares GLD)
+      // CUSTOM GOLD / GOLDEN CARD THEME (e.g. SPDR Gold Shares GLD) - Dark Matter Gravitational Lens
       const baseRgb = "245, 158, 11"; // amber-500 (#f59e0b)
       const glowRgb = "251, 191, 36"; // amber-400 (#fbbf24)
       const deepRgb = "120, 53, 15"; // amber-900 (#78350f)
       const darkGoldRgb = "180, 83, 9"; // amber-700
 
-      const effectiveOpacity = isLiveUpFlash || isLiveDownFlash ? 0.45 : 0.32;
-
       return {
         isPositive: isPositive,
         isCustom: true,
-        background: `radial-gradient(ellipse at 35% 50%, rgba(${baseRgb}, ${effectiveOpacity * 1.5}) 0%, rgba(${deepRgb}, ${effectiveOpacity * 0.8}) 60%, rgba(26, 16, 3, 0.95) 100%)`,
+        baseRgb,
+        glowRgb,
+        background: `linear-gradient(145deg, rgba(14, 10, 2, 0.74) 0%, rgba(3, 2, 1, 0.82) 100%), radial-gradient(120% 120% at 30% -10%, rgba(${baseRgb}, 0.16) 0%, rgba(${deepRgb}, 0.05) 45%, rgba(0, 0, 0, 0.5) 100%)`,
         borderColor: isLiveUpFlash || isLiveDownFlash
           ? "rgba(252, 211, 77, 0.95)"
           : stock.isPinned
-            ? "rgba(251, 191, 36, 0.90)"
-            : "rgba(245, 158, 11, 0.70)",
+            ? "rgba(251, 191, 36, 0.75)"
+            : "rgba(245, 158, 11, 0.35)",
         boxShadow: stock.isPinned
-          ? `0 0 28px rgba(${glowRgb}, 0.50), inset 0 0 20px rgba(${darkGoldRgb}, 0.28)`
+          ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 1.5px 0 rgba(251, 191, 36, 0.35), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.95), inset 0 0 28px rgba(0, 0, 0, 0.85), 0 0 20px rgba(${glowRgb}, 0.25)`
           : isLiveUpFlash || isLiveDownFlash
-            ? `0 0 34px rgba(${glowRgb}, 0.65), inset 0 0 24px rgba(${glowRgb}, 0.35)`
-            : `0 0 24px rgba(${baseRgb}, 0.30), inset 0 0 16px rgba(${baseRgb}, 0.15)`,
+            ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 2px 0 rgba(251, 191, 36, 0.5), inset 0 0 24px rgba(0, 0, 0, 0.85), 0 0 28px rgba(${glowRgb}, 0.45)`
+            : `0 10px 30px -4px rgba(0, 0, 0, 0.75), inset 0 1px 1px 0 rgba(251, 191, 36, 0.18), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.9), inset 0 0 24px rgba(0, 0, 0, 0.8), 0 0 14px rgba(${baseRgb}, 0.08)`,
+        cornerColor: "rgba(251, 191, 36, 0.85)",
       };
     }
 
     if (isSilver) {
-      // CUSTOM SILVER / PLATINUM CARD THEME (e.g. iShares Silver Trust SLV)
+      // CUSTOM SILVER / PLATINUM CARD THEME (e.g. iShares Silver Trust SLV) - Dark Matter Gravitational Lens
       const baseRgb = "203, 213, 225"; // slate-300 (#cbd5e1)
       const glowRgb = "248, 250, 252"; // slate-50 (#f8fafc)
       const deepRgb = "51, 65, 85"; // slate-700 (#334155)
       const darkSilverRgb = "100, 116, 139"; // slate-500
 
-      const effectiveOpacity = isLiveUpFlash || isLiveDownFlash ? 0.45 : 0.32;
-
       return {
         isPositive: isPositive,
         isCustom: true,
-        background: `radial-gradient(ellipse at 35% 50%, rgba(226, 232, 240, ${effectiveOpacity * 1.4}) 0%, rgba(${deepRgb}, ${effectiveOpacity * 0.9}) 60%, rgba(15, 23, 42, 0.95) 100%)`,
+        baseRgb,
+        glowRgb,
+        background: `linear-gradient(145deg, rgba(8, 12, 22, 0.74) 0%, rgba(2, 4, 10, 0.82) 100%), radial-gradient(120% 120% at 30% -10%, rgba(${baseRgb}, 0.14) 0%, rgba(${deepRgb}, 0.05) 45%, rgba(0, 0, 0, 0.5) 100%)`,
         borderColor: isLiveUpFlash || isLiveDownFlash
-          ? "rgba(255, 255, 255, 0.98)"
+          ? "rgba(255, 255, 255, 0.95)"
           : stock.isPinned
-            ? "rgba(248, 250, 252, 0.90)"
-            : "rgba(203, 213, 225, 0.70)",
+            ? "rgba(248, 250, 252, 0.75)"
+            : "rgba(203, 213, 225, 0.32)",
         boxShadow: stock.isPinned
-          ? `0 0 26px rgba(${glowRgb}, 0.45), inset 0 0 20px rgba(${darkSilverRgb}, 0.25)`
+          ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 1.5px 0 rgba(248, 250, 252, 0.32), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.95), inset 0 0 28px rgba(0, 0, 0, 0.85), 0 0 20px rgba(${glowRgb}, 0.22)`
           : isLiveUpFlash || isLiveDownFlash
-            ? `0 0 32px rgba(${glowRgb}, 0.6), inset 0 0 22px rgba(${glowRgb}, 0.3)`
-            : `0 0 22px rgba(${baseRgb}, 0.25), inset 0 0 16px rgba(${baseRgb}, 0.12)`,
+            ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 2px 0 rgba(255, 255, 255, 0.5), inset 0 0 24px rgba(0, 0, 0, 0.85), 0 0 28px rgba(255, 255, 255, 0.45)`
+            : `0 10px 30px -4px rgba(0, 0, 0, 0.75), inset 0 1px 1px 0 rgba(248, 250, 252, 0.16), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.9), inset 0 0 24px rgba(0, 0, 0, 0.8), 0 0 14px rgba(${baseRgb}, 0.08)`,
+        cornerColor: "rgba(226, 232, 240, 0.85)",
       };
     }
 
     if (isCopper) {
-      // CUSTOM COPPER / BRONZE CARD THEME (e.g. United States Copper Fund CPER)
+      // CUSTOM COPPER / BRONZE CARD THEME (e.g. United States Copper Fund CPER) - Dark Matter Gravitational Lens
       const baseRgb = "234, 88, 12"; // orange-600 (#ea580c)
       const glowRgb = "251, 146, 60"; // orange-400 (#fb923c)
       const deepRgb = "124, 45, 18"; // orange-900 (#7c2d12)
       const darkCopperRgb = "194, 65, 12"; // orange-700
 
-      const effectiveOpacity = isLiveUpFlash || isLiveDownFlash ? 0.45 : 0.32;
-
       return {
         isPositive: isPositive,
         isCustom: true,
-        background: `radial-gradient(ellipse at 35% 50%, rgba(${baseRgb}, ${effectiveOpacity * 1.5}) 0%, rgba(${deepRgb}, ${effectiveOpacity * 0.8}) 60%, rgba(28, 10, 4, 0.95) 100%)`,
+        baseRgb,
+        glowRgb,
+        background: `linear-gradient(145deg, rgba(16, 7, 2, 0.74) 0%, rgba(3, 1, 1, 0.82) 100%), radial-gradient(120% 120% at 30% -10%, rgba(${baseRgb}, 0.16) 0%, rgba(${deepRgb}, 0.05) 45%, rgba(0, 0, 0, 0.5) 100%)`,
         borderColor: isLiveUpFlash || isLiveDownFlash
           ? "rgba(253, 186, 116, 0.95)"
           : stock.isPinned
-            ? "rgba(251, 146, 60, 0.90)"
-            : "rgba(234, 88, 12, 0.70)",
+            ? "rgba(251, 146, 60, 0.75)"
+            : "rgba(234, 88, 12, 0.35)",
         boxShadow: stock.isPinned
-          ? `0 0 28px rgba(${glowRgb}, 0.48), inset 0 0 20px rgba(${darkCopperRgb}, 0.28)`
+          ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 1.5px 0 rgba(251, 146, 60, 0.35), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.95), inset 0 0 28px rgba(0, 0, 0, 0.85), 0 0 20px rgba(${glowRgb}, 0.25)`
           : isLiveUpFlash || isLiveDownFlash
-            ? `0 0 34px rgba(${glowRgb}, 0.65), inset 0 0 24px rgba(${glowRgb}, 0.35)`
-            : `0 0 22px rgba(${baseRgb}, 0.28), inset 0 0 16px rgba(${baseRgb}, 0.14)`,
+            ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 2px 0 rgba(251, 146, 60, 0.5), inset 0 0 24px rgba(0, 0, 0, 0.85), 0 0 28px rgba(${glowRgb}, 0.45)`
+            : `0 10px 30px -4px rgba(0, 0, 0, 0.75), inset 0 1px 1px 0 rgba(251, 146, 60, 0.18), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.9), inset 0 0 24px rgba(0, 0, 0, 0.8), 0 0 14px rgba(${baseRgb}, 0.08)`,
+        cornerColor: "rgba(251, 146, 60, 0.85)",
       };
     }
 
     if (isPurple) {
-      // CUSTOM PURPLE CARD THEME (e.g. Polkadot DOT)
+      // CUSTOM PURPLE CARD THEME (e.g. Polkadot DOT) - Dark Matter Gravitational Lens
       const baseRgb = "168, 85, 247"; // purple-500 (#a855f7)
       const glowRgb = "217, 70, 239"; // fuchsia-500 (#d946ef)
       const deepRgb = "88, 28, 135"; // purple-900 (#581c87)
       const darkVioletRgb = "147, 51, 234"; // purple-600 (#9333ea)
 
-      const effectiveOpacity = isLiveUpFlash || isLiveDownFlash ? 0.45 : 0.30;
-
       return {
         isPositive: isPositive,
         isCustom: true,
-        background: `radial-gradient(ellipse at 35% 50%, rgba(${baseRgb}, ${effectiveOpacity * 1.5}) 0%, rgba(${deepRgb}, ${effectiveOpacity * 0.8}) 60%, rgba(22, 6, 36, 0.94) 100%)`,
+        baseRgb,
+        glowRgb,
+        background: `linear-gradient(145deg, rgba(12, 4, 22, 0.74) 0%, rgba(3, 1, 8, 0.82) 100%), radial-gradient(120% 120% at 30% -10%, rgba(${baseRgb}, 0.16) 0%, rgba(${deepRgb}, 0.05) 45%, rgba(0, 0, 0, 0.5) 100%)`,
         borderColor: isLiveUpFlash || isLiveDownFlash
           ? "rgba(232, 121, 249, 0.95)"
           : stock.isPinned
-            ? "rgba(217, 70, 239, 0.90)"
-            : "rgba(168, 85, 247, 0.65)",
+            ? "rgba(217, 70, 239, 0.75)"
+            : "rgba(168, 85, 247, 0.35)",
         boxShadow: stock.isPinned
-          ? `0 0 26px rgba(${glowRgb}, 0.45), inset 0 0 20px rgba(${darkVioletRgb}, 0.25)`
+          ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 1.5px 0 rgba(217, 70, 239, 0.35), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.95), inset 0 0 28px rgba(0, 0, 0, 0.85), 0 0 20px rgba(${glowRgb}, 0.25)`
           : isLiveUpFlash || isLiveDownFlash
-            ? `0 0 32px rgba(${glowRgb}, 0.6), inset 0 0 22px rgba(${glowRgb}, 0.3)`
-            : `0 0 22px rgba(${baseRgb}, 0.25), inset 0 0 16px rgba(${baseRgb}, 0.12)`,
+            ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 2px 0 rgba(217, 70, 239, 0.5), inset 0 0 24px rgba(0, 0, 0, 0.85), 0 0 28px rgba(${glowRgb}, 0.45)`
+            : `0 10px 30px -4px rgba(0, 0, 0, 0.75), inset 0 1px 1px 0 rgba(217, 70, 239, 0.18), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.9), inset 0 0 24px rgba(0, 0, 0, 0.8), 0 0 14px rgba(${baseRgb}, 0.08)`,
+        cornerColor: "rgba(217, 70, 239, 0.85)",
       };
     }
 
     if (isPositive) {
-      // POSITIVE GAINER (GREEN)
+      // POSITIVE GAINER (GREEN / EMERALD) - Dark Matter Gravitational Lens
       const baseRgb = "16, 185, 129"; // emerald-500 (#10b981)
       const glowRgb = "0, 255, 136"; // cyan-emerald (#00ff88)
       const deepRgb = "4, 120, 87"; // emerald-700
       
-      // Dynamic depth scaling based on magnitude of gain
-      const gainIntensity = Math.min(0.26, 0.10 + Math.min(6, Math.max(0, stock.changePercent)) * 0.025);
-      const effectiveOpacity = isLiveUpFlash ? 0.38 : gainIntensity;
-
       return {
         isPositive: true,
         isCustom: false,
-        background: `radial-gradient(ellipse at 35% 50%, rgba(${baseRgb}, ${effectiveOpacity * 1.5}) 0%, rgba(${deepRgb}, ${effectiveOpacity * 0.6}) 60%, rgba(3, 20, 14, 0.92) 100%)`,
+        baseRgb,
+        glowRgb,
+        background: `linear-gradient(145deg, rgba(2, 12, 9, 0.72) 0%, rgba(1, 4, 3, 0.82) 100%), radial-gradient(120% 120% at 30% -10%, rgba(${baseRgb}, 0.15) 0%, rgba(${deepRgb}, 0.04) 45%, rgba(0, 0, 0, 0.5) 100%)`,
         borderColor: isLiveUpFlash
           ? "rgba(52, 211, 153, 0.95)"
           : stock.isPinned
-            ? "rgba(0, 255, 136, 0.85)"
-            : "rgba(16, 185, 129, 0.45)",
+            ? "rgba(0, 255, 136, 0.75)"
+            : "rgba(16, 185, 129, 0.3)",
         boxShadow: stock.isPinned
-          ? `0 0 25px rgba(${glowRgb}, 0.35), inset 0 0 20px rgba(${glowRgb}, 0.15)`
+          ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 1.5px 0 rgba(0, 255, 136, 0.35), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.95), inset 0 0 28px rgba(0, 0, 0, 0.85), 0 0 20px rgba(${glowRgb}, 0.25)`
           : isLiveUpFlash
-            ? `0 0 32px rgba(${glowRgb}, 0.5), inset 0 0 20px rgba(${glowRgb}, 0.25)`
-            : `0 0 20px rgba(${baseRgb}, 0.15), inset 0 0 15px rgba(${baseRgb}, 0.08)`,
+            ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 2px 0 rgba(0, 255, 136, 0.5), inset 0 0 24px rgba(0, 0, 0, 0.85), 0 0 28px rgba(${glowRgb}, 0.45)`
+            : `0 10px 30px -4px rgba(0, 0, 0, 0.75), inset 0 1px 1px 0 rgba(0, 255, 136, 0.16), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.9), inset 0 0 24px rgba(0, 0, 0, 0.8), 0 0 14px rgba(${glowRgb}, 0.08)`,
+        cornerColor: stock.isPinned ? "rgba(0, 255, 136, 0.9)" : "rgba(52, 211, 153, 0.75)",
       };
     } else {
-      // NEGATIVE LOSER (RED)
+      // NEGATIVE LOSER (RED / ROSE) - Dark Matter Gravitational Lens
       const baseRgb = "239, 68, 68"; // rose-500 (#ef4444)
       const glowRgb = "255, 0, 85"; // rose-neon (#ff0055)
       const deepRgb = "190, 18, 60"; // rose-700
       
-      // Dynamic depth scaling based on magnitude of drop
-      const dropIntensity = Math.min(0.26, 0.10 + Math.min(6, Math.max(0, Math.abs(stock.changePercent))) * 0.025);
-      const effectiveOpacity = isLiveDownFlash ? 0.38 : dropIntensity;
-
       return {
         isPositive: false,
         isCustom: false,
-        background: `radial-gradient(ellipse at 35% 50%, rgba(${baseRgb}, ${effectiveOpacity * 1.5}) 0%, rgba(${deepRgb}, ${effectiveOpacity * 0.6}) 60%, rgba(28, 4, 10, 0.92) 100%)`,
+        baseRgb,
+        glowRgb,
+        background: `linear-gradient(145deg, rgba(14, 3, 7, 0.72) 0%, rgba(4, 1, 2, 0.82) 100%), radial-gradient(120% 120% at 30% -10%, rgba(${baseRgb}, 0.15) 0%, rgba(${deepRgb}, 0.04) 45%, rgba(0, 0, 0, 0.5) 100%)`,
         borderColor: isLiveDownFlash
           ? "rgba(251, 113, 133, 0.95)"
           : stock.isPinned
-            ? "rgba(255, 0, 85, 0.85)"
-            : "rgba(239, 68, 68, 0.45)",
+            ? "rgba(255, 0, 85, 0.75)"
+            : "rgba(239, 68, 68, 0.3)",
         boxShadow: stock.isPinned
-          ? `0 0 25px rgba(${glowRgb}, 0.35), inset 0 0 20px rgba(${glowRgb}, 0.15)`
+          ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 1.5px 0 rgba(255, 0, 85, 0.35), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.95), inset 0 0 28px rgba(0, 0, 0, 0.85), 0 0 20px rgba(${glowRgb}, 0.25)`
           : isLiveDownFlash
-            ? `0 0 32px rgba(${glowRgb}, 0.5), inset 0 0 20px rgba(${glowRgb}, 0.25)`
-            : `0 0 20px rgba(${baseRgb}, 0.15), inset 0 0 15px rgba(${baseRgb}, 0.08)`,
+            ? `0 16px 44px -4px rgba(0, 0, 0, 0.85), inset 0 1px 2px 0 rgba(255, 0, 85, 0.5), inset 0 0 24px rgba(0, 0, 0, 0.85), 0 0 28px rgba(${glowRgb}, 0.45)`
+            : `0 10px 30px -4px rgba(0, 0, 0, 0.75), inset 0 1px 1px 0 rgba(255, 0, 85, 0.16), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.9), inset 0 0 24px rgba(0, 0, 0, 0.8), 0 0 14px rgba(${glowRgb}, 0.08)`,
+        cornerColor: stock.isPinned ? "rgba(255, 0, 85, 0.9)" : "rgba(251, 113, 133, 0.75)",
       };
     }
   }, [isPositive, isGold, isSilver, isCopper, isPurple, isOrange, stock.changePercent, stock.isPinned, priceFlashState]);
@@ -1208,7 +1212,14 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
       />
 
       {/* Hidden Swipe Actions Background */}
-      <div className="absolute inset-y-0 right-0 flex items-center gap-1.5 pr-2 z-0">
+      {/* Hidden Swipe Actions Background - Only visible during swipe to prevent bleed-through */}
+      <div 
+        className="absolute inset-y-0 right-0 flex items-center gap-1.5 pr-2 z-0 transition-opacity duration-150"
+        style={{
+          opacity: Math.max(0, Math.min(1, (Math.abs(dragOffset) - 15) / 35)),
+          pointerEvents: Math.abs(dragOffset) > 20 ? "auto" : "none",
+        }}
+      >
         <button
           onClick={handleQuickSaveToPortfolio}
           className="w-9 h-9 rounded-xl bg-emerald-950/90 border border-emerald-500/40 text-emerald-300 flex items-center justify-center hover:bg-emerald-900 active:scale-95 transition-all cursor-pointer shadow-md shadow-emerald-500/20"
@@ -1274,12 +1285,12 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
         whileHover={{
-          scale: 1.01,
+          scale: 1.008,
           y: -1,
           transition: { type: "spring", stiffness: 500, damping: 18 },
         }}
         whileTap={{
-          scale: 0.98,
+          scale: 0.985,
           transition: { type: "spring", stiffness: 600, damping: 14 },
         }}
         animate={{ x: dragOffset }}
@@ -1296,7 +1307,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
             onSelect(stock);
           }
         }}
-        className={`relative z-10 w-full px-4 py-3 alien-block-cut alien-card my-1 transition-all duration-200 cursor-pointer ${holoGlowClass} ${
+        className={`relative z-10 w-full px-4 py-3 rounded-xl alien-card my-2 sm:my-2.5 transition-all duration-200 cursor-pointer ${holoGlowClass} ${
           stock.isPinned ? "alien-card-active" : ""
         } ${
           isShaking ? "ring-2 ring-amber-400 bg-amber-950/20 animate-shake-card" : ""
@@ -1311,8 +1322,19 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
           background: cardTheme.background,
           borderColor: cardTheme.borderColor,
           boxShadow: cardTheme.boxShadow,
+          backdropFilter: "blur(24px) brightness(0.58) contrast(130%) saturate(145%)",
+          WebkitBackdropFilter: "blur(24px) brightness(0.58) contrast(130%) saturate(145%)",
         }}
       >
+        {/* Dark Matter Gravitational Void Singularity Depth Layer */}
+        <div
+          className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden"
+          aria-hidden="true"
+          style={{
+            background: `radial-gradient(130% 120% at 50% 0%, rgba(${cardTheme.glowRgb}, 0.05) 0%, transparent 60%)`,
+          }}
+        />
+
         {/* Subtle Live Price Update Background Flash Animation Overlay */}
         <AnimatePresence>
           {priceFlashState && (
@@ -1341,11 +1363,11 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
           )}
         </AnimatePresence>
 
-        {/* Corner HUD Ticks */}
-        <div className="hud-corner-tl" />
-        <div className="hud-corner-tr" />
-        <div className="hud-corner-bl" />
-        <div className="hud-corner-br" />
+        {/* Alien Hieroglyphic Corner Cartouches */}
+        <AlienCornerHieroglyph position="tl" color={cardTheme.cornerColor} symbolSeed={stock.symbol} />
+        <AlienCornerHieroglyph position="tr" color={cardTheme.cornerColor} symbolSeed={stock.symbol} />
+        <AlienCornerHieroglyph position="bl" color={cardTheme.cornerColor} symbolSeed={stock.symbol} />
+        <AlienCornerHieroglyph position="br" color={cardTheme.cornerColor} symbolSeed={stock.symbol} />
 
         {saveSuccessToast && (
           <div className="absolute inset-x-0 top-0 z-30 bg-emerald-950/95 border-b border-emerald-400 text-emerald-200 text-xs font-mono font-bold py-1 px-3 flex items-center justify-between shadow-lg">
