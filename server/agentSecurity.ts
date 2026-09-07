@@ -327,7 +327,7 @@ export const authenticateAgent = async (
     (req as any).agentKey = {
       keyId: 'master',
       agentId: 'platform_master_admin',
-      scopes: DEFAULT_AUTONOMOUS_SCOPES,
+      scopes: ['admin', '*', ...DEFAULT_AUTONOMOUS_SCOPES],
       status: 'active'
     };
     return next();

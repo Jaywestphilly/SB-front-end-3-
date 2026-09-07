@@ -107,8 +107,8 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
         })}
       </div>
 
-      {/* List Title & Bloc Definition Context Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between pt-1 pb-1 border-b border-cyan-500/20 gap-2">
+      {/* List Title Context Banner */}
+      <div className="flex items-end justify-between pt-1 pb-1 border-b border-cyan-500/20">
         <div>
           <h2 className="text-xl font-black font-mono tracking-wider text-cyan-100 uppercase leading-tight flex items-center gap-2">
             <span className="w-2 h-2 bg-cyan-400 inline-block animate-ping" />
@@ -117,11 +117,6 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
           <p className="text-[10px] text-cyan-400/70 font-mono">
             // {itemCount} ASSETS MONITORED IN QUANT MATRIX
           </p>
-        </div>
-
-        {/* Cold-Start Definition Pill */}
-        <div className="text-[10px] font-sans text-neutral-400 max-w-md text-left sm:text-right">
-          <span className="text-cyan-300 font-mono font-bold">What is a Bloc?</span> A curated thematic basket evaluated by 5-factor quantitative momentum. <span className="text-emerald-300 font-mono font-bold">Super Sonic Tsunami</span> is default as it tracks the foundational AI compute, power grid, and space infrastructure layer.
         </div>
       </div>
     </div>

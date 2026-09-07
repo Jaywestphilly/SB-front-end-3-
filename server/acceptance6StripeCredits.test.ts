@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import crypto from 'crypto';
 import express from 'express';
 import request from 'supertest';
@@ -327,8 +327,11 @@ function createTestApp() {
 
 describe('ACCEPTANCE #6: Stripe api_bundle → readable agent credits', () => {
   let app: any;
+  let origWebhookSecret: string | undefined;
 
   beforeEach(() => {
+    origWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    delete process.env.STRIPE_WEBHOOK_SECRET;
     app = createTestApp();
     recordedStripeSessions.clear();
     fulfilledStripeSessions.clear();
@@ -336,6 +339,14 @@ describe('ACCEPTANCE #6: Stripe api_bundle → readable agent credits', () => {
     inMemoryWalletRegistry.clear();
     inMemoryKeyRegistry.clear();
     inMemoryAgentRegistry.clear();
+  });
+
+  afterEach(() => {
+    if (origWebhookSecret !== undefined) {
+      process.env.STRIPE_WEBHOOK_SECRET = origWebhookSecret;
+    } else {
+      delete process.env.STRIPE_WEBHOOK_SECRET;
+    }
   });
 
   describe('1) POST /api/stripe/webhook (checkout.session.completed)', () => {

@@ -815,10 +815,10 @@ const handleConnectionTest = async (req: Request, res: Response) => {
 agentPlatformRouter.post('/me/test', authenticateAgent, handleConnectionTest);
 agentPlatformRouter.get('/me/test', authenticateAgent, handleConnectionTest);
 
-// POST /credits/refill - Scope & Auth Protected (P0 Security Hardening)
-// Requires authenticated agent or internal admin (Bearer sb_live_* or internal admin).
-// Reject missing/invalid auth with 401. Reject missing payments/admin scope with 403.
-// Body without credits does not mint 1000 — explicit positive credits amount is strictly required.
+// POST /credits/refill - Platform Admin Authority Required
+// Requires authenticated platform admin (master admin key or admin scope).
+// Normal agents with payments:transact are rejected with 403 Forbidden.
+// Explicit positive integer credits amount and explicit target agent are strictly required.
 export async function handleCreditsRefill(req: Request, res: Response): Promise<any> {
   try {
     const authAgent = (req as any).agent;
@@ -829,48 +829,53 @@ export async function handleCreditsRefill(req: Request, res: Response): Promise<
       return res.status(401).json({ error: 'Unauthorized: Missing or invalid agent authentication credentials.' });
     }
 
-    // 2. Strict credits parameter validation — NEVER DEFAULT TO 1000
+    // 2. Strict Platform Admin Authority check
+    // CORE RULE: Normal agents MUST NEVER have the authority to mint or arbitrarily credit another agent's wallet.
+    // Agent payment scope payments:transact allows participating in authorized transactions;
+    // it does NOT mean "mint credits" or "credit arbitrary wallets".
+    // PLATFORM ADMIN AUTHORITY is strictly required.
+    const scopes = Array.isArray(agentKey?.scopes) ? agentKey.scopes : [];
+    const isMaster = authAgent?.isMaster === true || authAgent?.agentId === 'platform_master_admin';
+    const hasAdminAuthority = isMaster || scopes.includes('admin') || scopes.includes('*');
+
+    if (!hasAdminAuthority) {
+      return res.status(403).json({
+        error: "Forbidden: Platform administrator authority required to mint credits. 'payments:transact' alone does not grant credit minting authority.",
+        requiredScope: 'admin',
+        grantedScopes: scopes
+      });
+    }
+
+    // 3. Strict credits parameter validation — positive integer required, NEVER default to 1000
     const rawCredits = req.body?.credits;
     if (rawCredits === undefined || rawCredits === null || rawCredits === '') {
       return res.status(400).json({
-        error: 'Missing credits parameter: explicit positive credits amount is required. Default credit minting is disabled.'
+        error: 'Missing credits parameter: explicit positive integer credits amount is required. Default credit minting is disabled.'
       });
     }
 
     const numCredits = typeof rawCredits === 'number' ? rawCredits : parseInt(String(rawCredits), 10);
-    if (isNaN(numCredits) || numCredits <= 0 || !Number.isFinite(numCredits)) {
+    if (isNaN(numCredits) || numCredits <= 0 || !Number.isInteger(numCredits) || !Number.isFinite(numCredits)) {
       return res.status(400).json({
         error: 'Invalid credits amount: credits must be a positive integer.'
       });
     }
 
-    // 3. Scope validation — payments:transact or admin scope required
-    const scopes = Array.isArray(agentKey?.scopes) ? agentKey.scopes : [];
-    const isMaster = authAgent?.isMaster === true || authAgent?.agentId === 'platform_master_admin';
-    const hasAdminScope = isMaster || scopes.includes('admin') || scopes.includes('*');
-    const hasPaymentScope = hasAdminScope ||
-      scopes.includes('payments:transact') ||
-      scopes.includes('payments') ||
-      scopes.includes('payments:write') ||
-      scopes.includes('payments:*');
+    // 4. Explicit target agent required
+    const { agentId, targetAgentId, apiKey } = req.body || {};
+    const target = (agentId || targetAgentId || apiKey || '').trim();
+    if (!target) {
+      return res.status(400).json({ error: 'Missing target agent: explicit agentId parameter is required.' });
+    }
 
-    if (!hasPaymentScope) {
-      return res.status(403).json({
-        error: "Forbidden: Requires 'payments:transact' or 'admin' scope to mint/refill agent credits.",
-        requiredScope: 'payments:transact',
-        grantedScopes: scopes
+    // 5. Mint / add credits to target wallet using existing wallet & ledger infrastructure
+    const result = await addCreditsToAgentWallet(target, numCredits);
+    if (!result.success) {
+      return res.status(400).json({
+        error: result.error || 'Failed to credit target agent wallet.'
       });
     }
 
-    // 4. Target resolution
-    const { agentId, apiKey } = req.body || {};
-    const target = (agentId || apiKey || authAgent?.agentId || '').trim();
-    if (!target) {
-      return res.status(400).json({ error: 'Missing agentId or apiKey parameter' });
-    }
-
-    // 5. Mint / add credits to target wallet
-    const result = await addCreditsToAgentWallet(target, numCredits);
     return res.json({
       status: 'ok',
       message: `Successfully credited ${numCredits} platform credits to agent wallet.`,
@@ -882,7 +887,7 @@ export async function handleCreditsRefill(req: Request, res: Response): Promise<
   }
 }
 
-agentPlatformRouter.post('/credits/refill', authenticateAgent, requireScope('payments:transact'), handleCreditsRefill);
+agentPlatformRouter.post('/credits/refill', authenticateAgent, requireScope('admin'), handleCreditsRefill);
 
 // GET /api/v1/agents (Public Machine-Readable Agent Directory)
 agentPlatformRouter.get('/', async (req, res) => {

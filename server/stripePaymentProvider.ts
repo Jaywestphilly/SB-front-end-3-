@@ -65,7 +65,17 @@ export class StripePaymentProvider implements PaymentProvider {
   private stripeClient: Stripe | null = null;
 
   constructor(config?: Partial<StripeConfig>) {
-    this.config = { ...DEFAULT_STRIPE_CONFIG, ...config };
+    const effectiveWebhookSecret = config
+      ? (config.webhookSecret !== undefined
+          ? config.webhookSecret
+          : (config.mode === 'production' || config.paymentModeEnv === 'production' ? '' : DEFAULT_STRIPE_CONFIG.webhookSecret))
+      : DEFAULT_STRIPE_CONFIG.webhookSecret;
+
+    this.config = {
+      ...DEFAULT_STRIPE_CONFIG,
+      ...config,
+      webhookSecret: effectiveWebhookSecret
+    };
     if (this.config.secretKey && !this.config.secretKey.includes('placeholder')) {
       try {
         this.stripeClient = new Stripe(this.config.secretKey, {

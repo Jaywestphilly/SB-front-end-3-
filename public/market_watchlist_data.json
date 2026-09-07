@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-09-06T14:51:05.822Z",
-  "last_successful_update": "2026-09-06T14:51:05.822Z",
+  "updated_at": "2026-09-07T04:01:54.794Z",
+  "last_successful_update": "2026-09-07T04:01:54.794Z",
   "source": "Yahoo Finance chart API",
   "status_label": "fresh",
   "data_age_seconds": 1,
@@ -26,12 +26,12 @@
       ],
       "pinned": true,
       "previousClose": 510.12,
-      "volume": 17437000,
-      "avgVolume": 17437000,
+      "volume": 18101758,
+      "avgVolume": 18101758,
       "high52": 553.72,
       "low52": 349.2,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 44.52,
         "sma20": 504.79,
@@ -83,22 +83,22 @@
       },
       "news": [
         {
-          "title": "What I Found By Analyzing How Seeking Alpha Analysts Rated The Mag 7",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T08:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=eba233ff3388800a9f35b66ef6f1f68eff2afea31b642f11a07505e75d4043ea"
+          "title": "Microsoft (MSFT)’s Outlook and OpenAI’s ChatGPT Work Both Broke the Same Day",
+          "source": "Yahoo",
+          "time": "2026-09-07T00:29:34.000Z",
+          "url": "https://finnhub.io/api/news?id=2b055ec749833f584e8dc50cb98ce2375ce3ff77dd74cb4cb7758fc61cb7a433"
         },
         {
-          "title": "Bill Gates Says He Still Won't Invest in Crypto, Calls It a \"Pure Mania-Driven Asset.\" Here's Why He's Right.",
+          "title": "Can Nvidia (NVDA) Prove it Doesn’t Live or Die by a Handful of Hyperscalers?",
           "source": "Yahoo",
-          "time": "2026-09-05T23:50:00.000Z",
-          "url": "https://finnhub.io/api/news?id=fbf3e3b36eae83968c474f6b75fef86867dcd364d665ae031056e99f23fe0412"
+          "time": "2026-09-06T21:21:05.000Z",
+          "url": "https://finnhub.io/api/news?id=bb778d9eb180c7bcb18e5ce8f837dfc5465ee61464aa9559b4c0f9af1e0ab636"
         },
         {
-          "title": "3 Great Quality Stocks To Own In September 2026",
+          "title": "The Inheritance That Went Backward: They Gave Mom the Stock They’d Someday Inherit and Eighteen Months Later It Came Back With Thirty Years of Capital Gains Wiped Off the Books",
           "source": "Yahoo",
-          "time": "2026-09-05T20:14:14.000Z",
-          "url": "https://finnhub.io/api/news?id=c912721bc44c42ed311c8e2103ce56f65c18c4661abc046b7a2e25041bd9ac5b"
+          "time": "2026-09-06T20:41:51.000Z",
+          "url": "https://finnhub.io/api/news?id=d5a1ba8041b4472f6e2c38a0a5808acb3a80fbccb75eea6075ca96655a0301c0"
         }
       ],
       "sbScore": 59,
@@ -125,12 +125,12 @@
       ],
       "pinned": true,
       "previousClose": 342.48,
-      "volume": 20841990,
-      "avgVolume": 20841990,
+      "volume": 23189321,
+      "avgVolume": 23189321,
       "high52": 408.61,
       "low52": 233.23,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 46.22,
         "sma20": 339.95,
@@ -182,22 +182,22 @@
       },
       "news": [
         {
-          "title": "It's Not Worth Buying VOO Or QQQ Anymore",
+          "title": "I'm Buying Consumer Experience Like Delta, Carnival, And Avoiding Discretionary Stocks",
           "source": "SeekingAlpha",
-          "time": "2026-09-06T09:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=44f3fe11fe61c2b78958df16f3840894fea030b437964de520df95e3c637730e"
+          "time": "2026-09-06T23:44:33.000Z",
+          "url": "https://finnhub.io/api/news?id=1582ef2d0582b3ed5928ab2cc1a284c1b649982bd24e5b3d62a524023d8373cd"
         },
         {
-          "title": "CrowdStrike (CRWD) Unveiled A Broad AI Security Platform Push",
+          "title": "Nvidia (NVDA)’s First-Ever Year-Ahead Forecast Puts It on a Path to Pass Apple and Alphabet",
           "source": "Yahoo",
-          "time": "2026-09-06T00:14:30.000Z",
-          "url": "https://finnhub.io/api/news?id=637e9aa1d50656e33eca79927bbee46855a41ce9f83908a276fb7b91f2b3e3fb"
+          "time": "2026-09-06T23:31:47.000Z",
+          "url": "https://finnhub.io/api/news?id=0af492eafa8a1c2529e56b7c222f60c50e17739840635565e17003628c39c2fd"
         },
         {
-          "title": "Prediction: Amazon Will Join Nvidia, Apple, and Alphabet in the $4 Trillion Club Before 2029",
+          "title": "Musk Moves Up SpaceX (SPCX)’s Orbital Data Center Timeline, Again",
           "source": "Yahoo",
-          "time": "2026-09-05T19:40:00.000Z",
-          "url": "https://finnhub.io/api/news?id=372822162d1d5b0765b427b9a1dbf5610fd5ca95d7e01bdce5489b7ce7060f52"
+          "time": "2026-09-06T21:41:03.000Z",
+          "url": "https://finnhub.io/api/news?id=b5e65c7deb988b3f6874b472ff1560018a67fba0764fa660c647fc3bb4427fc4"
         }
       ],
       "sbScore": 55,
@@ -224,12 +224,12 @@
       ],
       "pinned": true,
       "previousClose": 258.9,
-      "volume": 29968655,
-      "avgVolume": 29968655,
+      "volume": 30749912,
+      "avgVolume": 30749912,
       "high52": 287.2,
       "low52": 196,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 54.32,
         "sma20": 258.54,
@@ -281,22 +281,22 @@
       },
       "news": [
         {
-          "title": "What I Found By Analyzing How Seeking Alpha Analysts Rated The Mag 7",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T08:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=eba233ff3388800a9f35b66ef6f1f68eff2afea31b642f11a07505e75d4043ea"
+          "title": "Nvidia (NVDA)’s First-Ever Year-Ahead Forecast Puts It on a Path to Pass Apple and Alphabet",
+          "source": "Yahoo",
+          "time": "2026-09-06T23:31:47.000Z",
+          "url": "https://finnhub.io/api/news?id=0af492eafa8a1c2529e56b7c222f60c50e17739840635565e17003628c39c2fd"
         },
         {
-          "title": "Prediction: Amazon Will Join Nvidia, Apple, and Alphabet in the $4 Trillion Club Before 2029",
+          "title": "Anthropic Has Committed More Than $100 Billion to AWS, and Its Prospectus Could Reveal More Details About This Contract",
           "source": "Yahoo",
-          "time": "2026-09-05T19:40:00.000Z",
-          "url": "https://finnhub.io/api/news?id=372822162d1d5b0765b427b9a1dbf5610fd5ca95d7e01bdce5489b7ce7060f52"
+          "time": "2026-09-06T22:43:01.000Z",
+          "url": "https://finnhub.io/api/news?id=cd58e97c5c5b76bf4fccf8f4b286e1ba6f9c1d350d3666c39ad2a8a1c31456ab"
         },
         {
-          "title": "Costco silently kills member perk that saved customers money",
+          "title": "5 Dead in Amazon Cargo Plane Crash at Miami International Airport",
           "source": "Yahoo",
-          "time": "2026-09-05T18:20:47.000Z",
-          "url": "https://finnhub.io/api/news?id=e7cb5a21e08eff52ef37b0b5a2f62129ed0d37edeac34ce31335e7129e95da23"
+          "time": "2026-09-06T22:33:54.000Z",
+          "url": "https://finnhub.io/api/news?id=8c75fc1b41889ae9fb698dd27548b5e0b3ba3a5d107b88c2e53b4257bd9d3d28"
         }
       ],
       "sbScore": 62,
@@ -323,12 +323,12 @@
       ],
       "pinned": true,
       "previousClose": 610.68,
-      "volume": 15745973,
-      "avgVolume": 15745973,
+      "volume": 15966213,
+      "avgVolume": 15966213,
       "high52": 790.8,
       "low52": 520.26,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 90.04,
         "sma20": 588.61,
@@ -380,22 +380,22 @@
       },
       "news": [
         {
-          "title": "What I Found By Analyzing How Seeking Alpha Analysts Rated The Mag 7",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T08:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=eba233ff3388800a9f35b66ef6f1f68eff2afea31b642f11a07505e75d4043ea"
+          "title": "Meta’s $18 Billion Teen Safety Deal Puts the Pressure on TikTok and YouTube Next",
+          "source": "Yahoo",
+          "time": "2026-09-07T01:16:13.000Z",
+          "url": "https://finnhub.io/api/news?id=13dfd6f695cca4f6776492e69d2af6375a4836c13cfcb6621751508bc0dde196"
         },
         {
-          "title": "What Gives With Eylsia Nicolas's Numbers? Why One of the Fastest‑Growing Artists in the World Is Invisible on Industry‑Controlled Platforms",
+          "title": "Can Nvidia (NVDA) Prove it Doesn’t Live or Die by a Handful of Hyperscalers?",
           "source": "Yahoo",
-          "time": "2026-09-05T17:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=905930ebf277aa43e5e3b38d8e5f5b33c6f0377509f431539fe3e57f52482952"
+          "time": "2026-09-06T21:21:05.000Z",
+          "url": "https://finnhub.io/api/news?id=bb778d9eb180c7bcb18e5ce8f837dfc5465ee61464aa9559b4c0f9af1e0ab636"
         },
         {
-          "title": "Meta stands to gain as Mark Zuckerberg makes shocking decision",
+          "title": "I Own Both Oracle and NuScale for Different Reasons. Here's How They Fit Together.",
           "source": "Yahoo",
-          "time": "2026-09-05T15:33:00.000Z",
-          "url": "https://finnhub.io/api/news?id=699cd537289130b72bff5b4f374cbc5a146593dad277c2dd10be34ed4f127811"
+          "time": "2026-09-06T11:12:00.000Z",
+          "url": "https://finnhub.io/api/news?id=b40793938842a642033beb13c69ba7da156ae6298c41f34398889d0733596bf4"
         }
       ],
       "sbScore": 68,
@@ -424,26 +424,26 @@
       "avgVolume": 26162395,
       "high52": 345.72,
       "low52": 114.5,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
-          "title": "Wall Street Week Ahead",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T06:37:20.000Z",
-          "url": "https://finnhub.io/api/news?id=4de66b41d29d7cc8504256e7940888d6e859ba6698d1168700339f11da8722be"
+          "title": "Inflation, Apple, Adobe, Oracle, Macy’s, and More to Watch This Week",
+          "source": "Yahoo",
+          "time": "2026-09-06T19:00:00.000Z",
+          "url": "https://finnhub.io/api/news?id=f37eeb53a19ba0bef4c08e842ccd6078ae44f960f9297c822c9926d73720f7b8"
         },
         {
-          "title": "Oracle, Adobe Results In Focus As Earnings Season Winds Down",
-          "source": "SeekingAlpha",
-          "time": "2026-09-05T11:00:00.000Z",
-          "url": "https://finnhub.io/api/news?id=9c32ce6f0eb581f7b60ca97c305608c705b2e1b42a63fa49e66076905defd8c8"
+          "title": "Short Trading Week, CPI and Other Key Things to Watch this Week",
+          "source": "Yahoo",
+          "time": "2026-09-06T18:00:03.000Z",
+          "url": "https://finnhub.io/api/news?id=4f3d6ed021b2439b8bdf077cc49738144ed0efffa92cc926675b7b14532e54df"
         },
         {
-          "title": "Oracle: Market's Mispricing Is Starting To Unwind",
+          "title": "Wall Street Brunch: Make Or Break Inflation For The Fed",
           "source": "SeekingAlpha",
-          "time": "2026-09-05T09:55:33.000Z",
-          "url": "https://finnhub.io/api/news?id=8a18cc08837aa0b14327474719a1770be944d60e22b9c2ac1cf4ef4b3179444b"
+          "time": "2026-09-06T16:41:17.000Z",
+          "url": "https://finnhub.io/api/news?id=07e2229b955b49ac631b54d0a8f3eab1902e7f0d9aaa160b4e9c708385a77726"
         }
       ],
       "quant": {
@@ -521,7 +521,7 @@
       "avgVolume": 7158856,
       "high52": 192.67,
       "low52": 91.99,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -618,7 +618,7 @@
       "avgVolume": 475775,
       "high52": 87.68,
       "low52": 52.84,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -713,12 +713,12 @@
       ],
       "pinned": true,
       "previousClose": 84.56,
-      "volume": 20537770,
-      "avgVolume": 20537770,
+      "volume": 20796936,
+      "avgVolume": 20796936,
       "high52": 153.2,
       "low52": 60.55,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 58.19,
         "sma20": 84.66,
@@ -812,12 +812,12 @@
       ],
       "pinned": true,
       "previousClose": 328.21,
-      "volume": 38272821,
-      "avgVolume": 38272821,
+      "volume": 39606884,
+      "avgVolume": 39606884,
       "high52": 344.57,
       "low52": 225.95,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 59.66,
         "sma20": 321.34,
@@ -869,22 +869,22 @@
       },
       "news": [
         {
-          "title": "What I Found By Analyzing How Seeking Alpha Analysts Rated The Mag 7",
+          "title": "Dow Jones Futures Fall With Iran, Apple, Inflation In Focus; Nvidia, Micron, Sandisk Flash Buy Signals",
+          "source": "Yahoo",
+          "time": "2026-09-07T00:45:26.000Z",
+          "url": "https://finnhub.io/api/news?id=cffb60530c356ad83d70f5ba341f71adb8ce87c95dbba1f4ae5067ff4efff611"
+        },
+        {
+          "title": "Apple (AAPL) Raises Apple TV and Apple One Prices Again in the U.S.",
+          "source": "Yahoo",
+          "time": "2026-09-06T23:48:34.000Z",
+          "url": "https://finnhub.io/api/news?id=cd4085b35dc05f3d1a4591900f30ac31c93a204ad4f8ee57e6cb163e4d750eaf"
+        },
+        {
+          "title": "I'm Buying Consumer Experience Like Delta, Carnival, And Avoiding Discretionary Stocks",
           "source": "SeekingAlpha",
-          "time": "2026-09-06T08:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=eba233ff3388800a9f35b66ef6f1f68eff2afea31b642f11a07505e75d4043ea"
-        },
-        {
-          "title": "Prediction: Amazon Will Join Nvidia, Apple, and Alphabet in the $4 Trillion Club Before 2029",
-          "source": "Yahoo",
-          "time": "2026-09-05T19:40:00.000Z",
-          "url": "https://finnhub.io/api/news?id=372822162d1d5b0765b427b9a1dbf5610fd5ca95d7e01bdce5489b7ce7060f52"
-        },
-        {
-          "title": "Apple's First iPhone Under New CEO John Ternus Launches Sept. 9. Here's Whether It's Finally Time to Buy the Stock.",
-          "source": "Yahoo",
-          "time": "2026-09-05T18:35:00.000Z",
-          "url": "https://finnhub.io/api/news?id=c686985f2d1ee36acd57cf68fc1ec368cbd7560286e77ee01a4f48c461c0159b"
+          "time": "2026-09-06T23:44:33.000Z",
+          "url": "https://finnhub.io/api/news?id=1582ef2d0582b3ed5928ab2cc1a284c1b649982bd24e5b3d62a524023d8373cd"
         }
       ],
       "sbScore": 67,
@@ -911,12 +911,12 @@
       ],
       "pinned": true,
       "previousClose": 376.37,
-      "volume": 64559388,
-      "avgVolume": 64559388,
+      "volume": 65018209,
+      "avgVolume": 65018209,
       "high52": 498.83,
       "low52": 297.38,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 49.54,
         "sma20": 359.29,
@@ -968,22 +968,22 @@
       },
       "news": [
         {
-          "title": "What I Found By Analyzing How Seeking Alpha Analysts Rated The Mag 7",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T08:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=eba233ff3388800a9f35b66ef6f1f68eff2afea31b642f11a07505e75d4043ea"
+          "title": "Cathie Wood's 2 Biggest Positions Are Both Elon Musk Companies. Together They Are 16% of the Fund.",
+          "source": "Yahoo",
+          "time": "2026-09-07T01:24:01.000Z",
+          "url": "https://finnhub.io/api/news?id=ffcdfa5197aac6b3e776bf7082f777d8d3b03ef848fb42569f96b4caf08f7f98"
         },
         {
-          "title": "Elon Musk Says His New Foundry Can Get Gas Turbines Online 18 Months Faster. Here's What This \"Profound Game Changer\" Would Mean for SpaceX and Tesla.",
+          "title": "Tesla (TSLA) Rolls Out its Safety Numbers ahead of a Make-or-Break EU Vote",
           "source": "Yahoo",
-          "time": "2026-09-06T01:50:00.000Z",
-          "url": "https://finnhub.io/api/news?id=a7ddfa76d72c5e3c87b19596fd4877ebbb7605cf8cac1b7c04c396777e01024d"
+          "time": "2026-09-07T01:12:46.000Z",
+          "url": "https://finnhub.io/api/news?id=7007c79cd25c2c18c0ebd819f762828ebe8d86919790dff22643d034f583a505"
         },
         {
-          "title": "Gene Munster Says Tesla Cybercab's Austin Launch Signals Elon Musk’s ‘Paranoid’ Phase Over Robotaxi Accidents Is Over: ‘That’s Just the Start’",
+          "title": "Goldman sees Cybercab giving Tesla a cost advantage in robotaxis",
           "source": "Yahoo",
-          "time": "2026-09-06T01:30:23.000Z",
-          "url": "https://finnhub.io/api/news?id=cc55dba32f457b2d0524a7ba1d15bc0a02bc3980f79c8a4f4d5fb22f8589364d"
+          "time": "2026-09-06T22:46:58.000Z",
+          "url": "https://finnhub.io/api/news?id=5ef826fe7fa9d7a15455135dc550c75c7f1d73f37686269cfe6d4a78afa7c8e8"
         }
       ],
       "sbScore": 47,
@@ -1010,12 +1010,12 @@
       ],
       "pinned": true,
       "previousClose": 149.74,
-      "volume": 48786202,
-      "avgVolume": 48786202,
+      "volume": 49122393,
+      "avgVolume": 49122393,
       "high52": 225.64,
       "low52": 104.83,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 71.3,
         "sma20": 143.81,
@@ -1067,22 +1067,22 @@
       },
       "news": [
         {
-          "title": "Elon Musk Says His New Foundry Can Get Gas Turbines Online 18 Months Faster. Here's What This \"Profound Game Changer\" Would Mean for SpaceX and Tesla.",
+          "title": "Cathie Wood's 2 Biggest Positions Are Both Elon Musk Companies. Together They Are 16% of the Fund.",
           "source": "Yahoo",
-          "time": "2026-09-06T01:50:00.000Z",
-          "url": "https://finnhub.io/api/news?id=a7ddfa76d72c5e3c87b19596fd4877ebbb7605cf8cac1b7c04c396777e01024d"
+          "time": "2026-09-07T01:24:01.000Z",
+          "url": "https://finnhub.io/api/news?id=ffcdfa5197aac6b3e776bf7082f777d8d3b03ef848fb42569f96b4caf08f7f98"
         },
         {
-          "title": "Prediction: Here's What a $10,000 Investment in Rocket Lab Will Be Worth in 5 Years",
+          "title": "OpenAI Cuts Cursor Off from its Models Now That Musk’s SpaceX (SPCX) Owns It",
           "source": "Yahoo",
-          "time": "2026-09-05T23:20:00.000Z",
-          "url": "https://finnhub.io/api/news?id=52658f53300bc7f696746f5962a580892156309a4d124c31d17ef0197b65f2c4"
+          "time": "2026-09-06T23:35:47.000Z",
+          "url": "https://finnhub.io/api/news?id=d7e5094255077c4e9357ad3d328b592a27992c9a1332622b889fe528928d2d9e"
         },
         {
-          "title": "Elon Musk Says Cybercab Is Gold to Reflect 'Golden Era' of Mobility as Tesla Launches Robotaxi With Starlink",
+          "title": "Musk Moves Up SpaceX (SPCX)’s Orbital Data Center Timeline, Again",
           "source": "Yahoo",
-          "time": "2026-09-05T22:30:15.000Z",
-          "url": "https://finnhub.io/api/news?id=126618c40db8f3b747cd88232e8f15cf1440de5249af98aa757123598401b81e"
+          "time": "2026-09-06T21:41:03.000Z",
+          "url": "https://finnhub.io/api/news?id=b5e65c7deb988b3f6874b472ff1560018a67fba0764fa660c647fc3bb4427fc4"
         }
       ],
       "sbScore": 73,
@@ -1184,13 +1184,19 @@
       "pinned": false,
       "name": "CEG",
       "previousClose": 285.05,
-      "volume": 2798083,
-      "avgVolume": 2798083,
+      "volume": 2898472,
+      "avgVolume": 2898472,
       "high52": 412.7,
       "low52": 228.63,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "BWX Technologies Already Builds Reactors for the Navy. Why Is It Still the Cheapest Nuclear Stock?",
+          "source": "Yahoo",
+          "time": "2026-09-06T14:25:00.000Z",
+          "url": "https://finnhub.io/api/news?id=402bbe95864e0d1b7071f8958707d135faea734d813a65a4837448196b09d760"
+        },
         {
           "title": "3 Nuclear Stocks to Buy With $2,000 After One Fell 83%",
           "source": "Yahoo",
@@ -1202,12 +1208,6 @@
           "source": "Yahoo",
           "time": "2026-09-04T15:50:42.000Z",
           "url": "https://finnhub.io/api/news?id=405670748c8d2ffff40c724d812a8abe6666f2420fe290a8c8f0e88c9e24ed3c"
-        },
-        {
-          "title": "Goldman Sachs Says the AI Trade Is Barely Started. The Stocks That Got You Here Will Not Take You There",
-          "source": "Yahoo",
-          "time": "2026-09-04T14:30:15.000Z",
-          "url": "https://finnhub.io/api/news?id=3cd0c9da06fb66db1546885a1152493735a3d3ab4b97ee8c640d88fa43710042"
         }
       ],
       "quant": {
@@ -1288,7 +1288,7 @@
       "high52": 219.82,
       "low52": 132.66,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 81.78,
         "sma20": 141.33,
@@ -1340,6 +1340,12 @@
       },
       "news": [
         {
+          "title": "Nuclear Stock Face-Off: Is Constellation Energy or Vistra the Better Buy Right Now?",
+          "source": "Yahoo",
+          "time": "2026-09-07T02:22:00.000Z",
+          "url": "https://finnhub.io/api/news?id=063c5b4cd2692c2d40433156cbac158ff765447598d80685e6d1045ff7bdff24"
+        },
+        {
           "title": "Vistra’s CEO Bought $1.17 Million of Stock After the Selloff. Is AI Power Demand Mispriced?",
           "source": "Yahoo",
           "time": "2026-09-05T05:48:58.000Z",
@@ -1350,12 +1356,6 @@
           "source": "Yahoo",
           "time": "2026-09-03T22:41:09.000Z",
           "url": "https://finnhub.io/api/news?id=f8734c414d78b59ed97db9fb3ceeecbf96eb5cb4f5441e3ec06a0a7b3af48053"
-        },
-        {
-          "title": "Peter Thiel’s Fund Disclosed $59 Million in This Beaten-Down Power Stock",
-          "source": "Yahoo",
-          "time": "2026-09-03T18:50:30.000Z",
-          "url": "https://finnhub.io/api/news?id=547288cf4e72bed9ef95af281bf693624477a86fcae7beccd6750c26b73ba72a"
         }
       ],
       "sbScore": 70,
@@ -1380,11 +1380,11 @@
       "pinned": false,
       "name": "TLN",
       "previousClose": 305.52,
-      "volume": 575276,
-      "avgVolume": 575276,
+      "volume": 577750,
+      "avgVolume": 577750,
       "high52": 451.28,
       "low52": 288.58,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -1478,7 +1478,7 @@
       "high52": 351.28,
       "low52": 52,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 80.15,
         "sma20": 222.03,
@@ -1574,7 +1574,7 @@
       "avgVolume": 18732202,
       "high52": 57.42,
       "low52": 7.21,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -1671,7 +1671,7 @@
       "avgVolume": 8082842,
       "high52": 193.84,
       "low52": 36.61,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -1768,7 +1768,7 @@
       "avgVolume": 9439525,
       "high52": 98.75,
       "low52": 69.24,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -1865,7 +1865,7 @@
       "avgVolume": 1888982,
       "high52": 478,
       "low52": 311.92,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -1962,9 +1962,15 @@
       "avgVolume": 1233783,
       "high52": 1195.94,
       "low52": 530.16,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "BWX Technologies Already Builds Reactors for the Navy. Why Is It Still the Cheapest Nuclear Stock?",
+          "source": "Yahoo",
+          "time": "2026-09-06T14:25:00.000Z",
+          "url": "https://finnhub.io/api/news?id=402bbe95864e0d1b7071f8958707d135faea734d813a65a4837448196b09d760"
+        },
         {
           "title": "T Mobile US (TMUS) Sets Up CFO Handover With Jessica Uhl Joining In September",
           "source": "Yahoo",
@@ -1976,12 +1982,6 @@
           "source": "Yahoo",
           "time": "2026-09-04T12:00:00.000Z",
           "url": "https://finnhub.io/api/news?id=485703247cec76fcd07b2f015353af4f6d3a2de4dd5f1c64fb122198c24fc7b0"
-        },
-        {
-          "title": "Market Chatter: GE Vernova Deal Aims to Stabilize Venezuela Power Grid Within Six to 12 Months",
-          "source": "Yahoo",
-          "time": "2026-09-04T10:10:41.000Z",
-          "url": "https://finnhub.io/api/news?id=fef8b4ec0362edf694401fe016aa02b528c27848c00e6df722437b7b18090da1"
         }
       ],
       "quant": {
@@ -2059,7 +2059,7 @@
       "avgVolume": 639404,
       "high52": 788.75,
       "low52": 370.27,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -2156,7 +2156,7 @@
       "avgVolume": 340183,
       "high52": 951.96,
       "low52": 564.92,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -2253,7 +2253,7 @@
       "avgVolume": 273692,
       "high52": 2073.99,
       "low52": 698.06,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -2350,7 +2350,7 @@
       "avgVolume": 530794,
       "high52": 565.5,
       "low52": 403.82,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -2445,12 +2445,12 @@
       ],
       "pinned": false,
       "previousClose": 175.16,
-      "volume": 475136,
-      "avgVolume": 475136,
+      "volume": 475485,
+      "avgVolume": 475485,
       "high52": 328,
       "low52": 89.26,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 32.6,
         "sma20": 179.14,
@@ -2502,6 +2502,12 @@
       },
       "news": [
         {
+          "title": "Powell Industries (POWL) Stock Looks Expensive Relative To Fair Value",
+          "source": "Yahoo",
+          "time": "2026-09-05T16:14:00.000Z",
+          "url": "https://finnhub.io/api/news?id=631c282b826f9620576183917ab3b7e930d8a99de705bd2eabd7636e6fa9b017"
+        },
+        {
           "title": "Powell Industries (POWL) Could Be 46% Undervalued Following Its Midwest IDEAS Conference Appearance",
           "source": "Yahoo",
           "time": "2026-09-05T10:12:55.000Z",
@@ -2512,12 +2518,6 @@
           "source": "Yahoo",
           "time": "2026-09-04T17:16:00.000Z",
           "url": "https://finnhub.io/api/news?id=0ff4ffa52f773d8c8fda616fe91cbde2fea8e0827af5347868e25d90716631dc"
-        },
-        {
-          "title": "Powell Industries (POWL) Down 18.6% Since Last Earnings Report: Can It Rebound?",
-          "source": "Yahoo",
-          "time": "2026-09-02T15:30:09.000Z",
-          "url": "https://finnhub.io/api/news?id=cb4660546163dc47655cd8a8f77500e9a48127879722ed916b028f0e335720b7"
         }
       ],
       "sbScore": 67,
@@ -2546,7 +2546,7 @@
       "avgVolume": 1991495,
       "high52": 1073.46,
       "low52": 416.44,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 47.89,
@@ -2643,7 +2643,7 @@
       "avgVolume": 1059355,
       "high52": 737.76,
       "low52": 390.11,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -2740,7 +2740,7 @@
       "avgVolume": 3302822,
       "high52": 379.94,
       "low52": 120.83,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -2840,7 +2840,7 @@
       "high52": 323.25,
       "low52": 111.18,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 64.64,
         "sma20": 183.44,
@@ -2939,7 +2939,7 @@
       "high52": 184.64,
       "low52": 89.98,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 51.12,
         "sma20": 151.2,
@@ -3031,13 +3031,19 @@
       "pinned": false,
       "name": "SMCI",
       "previousClose": 37.87,
-      "volume": 53308923,
-      "avgVolume": 53308923,
+      "volume": 53633172,
+      "avgVolume": 53633172,
       "high52": 58.78,
       "low52": 19.48,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "SMCI Stock Is at a Crossroads. The Next Move Could Be Huge",
+          "source": "Yahoo",
+          "time": "2026-09-06T13:30:12.000Z",
+          "url": "https://finnhub.io/api/news?id=2d032d1a6e803cd6353c48e0a859bc7924e8acf43dda9874536991ad1a0b821e"
+        },
         {
           "title": "Exploring the top movers within the S&P500 index during today's session.",
           "source": "ChartMill",
@@ -3049,12 +3055,6 @@
           "source": "Yahoo",
           "time": "2026-09-04T18:15:00.000Z",
           "url": "https://finnhub.io/api/news?id=7ad0f26117446a8555e4ee2e9436f1734358f7043ca8ca0b2c819048437392b9"
-        },
-        {
-          "title": "Super Micro Surges 7% as Semiconductors Lead a Flat Tape; Hewlett Packard Enterprise Falls 3%, Dell Edges Higher",
-          "source": "Yahoo",
-          "time": "2026-09-04T18:05:14.000Z",
-          "url": "https://finnhub.io/api/news?id=62e47e3fd670cd03d73dfd947a5bdf112982e3515f6c610844bb6488bca49db4"
         }
       ],
       "quant": {
@@ -3132,26 +3132,26 @@
       "avgVolume": 4190753,
       "high52": 214.89,
       "low52": 114.52,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "Arista Networks vs. IBM: Comparing Quarterly Revenue Trends Between These Artificial Intelligence Giants",
+          "source": "Yahoo",
+          "time": "2026-09-06T20:32:16.000Z",
+          "url": "https://finnhub.io/api/news?id=30ad2fd69fc667a6f4b993e567f021bb1e388a8eaf350da12995fd42773b5bde"
+        },
+        {
+          "title": "Nike Exits the S&P 100 Index. 4 Tech Stocks Move In",
+          "source": "Yahoo",
+          "time": "2026-09-06T12:14:50.000Z",
+          "url": "https://finnhub.io/api/news?id=f1ecdd6270b1ea691efb9d8dea35396ef6e35e56efb96b119ba01e6972e7c9eb"
+        },
         {
           "title": "SanDisk (SNDK) Soars on S&P 100 Inclusion; Hedge Fund Ownership More-Than-Doubles",
           "source": "Yahoo",
           "time": "2026-09-05T02:11:24.000Z",
           "url": "https://finnhub.io/api/news?id=0940a221f2babd4098ad9bbc93003c3f63a99ef279f2dbfffa14334acb4291c8"
-        },
-        {
-          "title": "BE, P, ILMN Join S&P 500; LNG Misses Out — Bloom Energy Stock Gains While Cheniere Energy Slips",
-          "source": "Yahoo",
-          "time": "2026-09-05T00:42:59.000Z",
-          "url": "https://finnhub.io/api/news?id=c1d8669e69b6f463738a0b73cf1fb3a8d6f4e8ad7a78361ac19711797ac441d0"
-        },
-        {
-          "title": "Bloom Energy, Illumina, and Everpure Set to Join S&P 500; Others to Join S&P 100, S&P MidCap 400, and S&P SmallCap 600",
-          "source": "Yahoo",
-          "time": "2026-09-05T00:15:00.000Z",
-          "url": "https://finnhub.io/api/news?id=1f2abd83e90d07d31c13eb14b213027822c84c4c217ea9d3e0e8d77d84a07d30"
         }
       ],
       "quant": {
@@ -3225,30 +3225,30 @@
       "pinned": false,
       "name": "AVGO",
       "previousClose": 357.16,
-      "volume": 32481307,
-      "avgVolume": 32481307,
+      "volume": 32863265,
+      "avgVolume": 32863265,
       "high52": 495,
       "low52": 289.96,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
-          "title": "Broadcom vs. Nvidia: 1 Critical Metric Shows Which Artificial Intelligence (AI) Chipmaker Is the Better Buy After Earnings",
+          "title": "Nvidia Is Near Its High While Its Biggest Chip Peers Sit 18% to 32% Below Theirs. These Are the Chip Stocks to Buy.",
           "source": "Yahoo",
-          "time": "2026-09-05T19:05:00.000Z",
-          "url": "https://finnhub.io/api/news?id=df0f33cba1195e3098ad03ae5ff7a516af30f6bd19e205403a453411b81836f0"
+          "time": "2026-09-06T18:34:01.000Z",
+          "url": "https://finnhub.io/api/news?id=50b120564eecbbbee0e2ebd59ef2a28fd08023ebf7a1379534e4efa0669fa535"
         },
         {
-          "title": "With AI Revenue Set to Surge 400% Over the Next 2 Years, Broadcom Stock Looks Like a Buy on Recent Dip",
+          "title": "These AI numbers are getting crazy",
           "source": "Yahoo",
-          "time": "2026-09-05T17:45:00.000Z",
-          "url": "https://finnhub.io/api/news?id=1d9174c1f988940cc1975ab40426136f1e5e7a4a3b921633c2145cdc1d11d5eb"
+          "time": "2026-09-06T13:30:00.000Z",
+          "url": "https://finnhub.io/api/news?id=e62f09f62e1338e340e3353c629772eea6b2dd86df12ced7e15fddae147d0faf"
         },
         {
-          "title": "Michael Dell’s Net Worth Up $110 Billion So Far 2026: Why the Surge May Continue",
-          "source": "Benzinga",
-          "time": "2026-09-05T16:40:05.000Z",
-          "url": "https://finnhub.io/api/news?id=5d8fde8474956130cb95bbe2618fb4e7954f56a1d0128a63995f07b867493262"
+          "title": "Broadcom And 2 Top Growth Stocks To Watch",
+          "source": "Yahoo",
+          "time": "2026-09-06T13:10:16.000Z",
+          "url": "https://finnhub.io/api/news?id=1da2b321390f0151cef238359899a39b3757b12e31984406225343e7aaf08dcf"
         }
       ],
       "quant": {
@@ -3322,13 +3322,19 @@
       "pinned": false,
       "name": "MRVL",
       "previousClose": 208.83,
-      "volume": 20890894,
-      "avgVolume": 20890894,
+      "volume": 21218082,
+      "avgVolume": 21218082,
       "high52": 329.88,
       "low52": 63.07,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "Nvidia Is Near Its High While Its Biggest Chip Peers Sit 18% to 32% Below Theirs. These Are the Chip Stocks to Buy.",
+          "source": "Yahoo",
+          "time": "2026-09-06T18:34:01.000Z",
+          "url": "https://finnhub.io/api/news?id=50b120564eecbbbee0e2ebd59ef2a28fd08023ebf7a1379534e4efa0669fa535"
+        },
         {
           "title": "Nvidia Barely Moved. These 2 AI Connectivity Stocks Jumped More Than 7%",
           "source": "Yahoo",
@@ -3340,12 +3346,6 @@
           "source": "Yahoo",
           "time": "2026-09-05T02:14:10.000Z",
           "url": "https://finnhub.io/api/news?id=a96b9dd6e0f0976195e604e79d21e7ddf0f42388977af49a20b3263c933662dc"
-        },
-        {
-          "title": "Marvell Raised Its Outlook but Fell as Google Chip Revenue Stayed Distant. Has the AI Payoff Been Priced In? (Ready for review)",
-          "source": "Yahoo",
-          "time": "2026-09-04T23:58:56.000Z",
-          "url": "https://finnhub.io/api/news?id=c671bd5fcba653dfdc97d99024b47750c2036530faca328cad1456ce7b7e280b"
         }
       ],
       "quant": {
@@ -3423,7 +3423,7 @@
       "avgVolume": 4999192,
       "high52": 440,
       "low52": 95.5,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -3516,11 +3516,11 @@
       "pinned": false,
       "name": "CRDO",
       "previousClose": 164.17,
-      "volume": 10614991,
-      "avgVolume": 10614991,
+      "volume": 10756465,
+      "avgVolume": 10756465,
       "high52": 308.67,
       "low52": 86.48,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -3613,11 +3613,11 @@
       "pinned": false,
       "name": "IPGP",
       "previousClose": 76.46,
-      "volume": 349701,
-      "avgVolume": 349701,
+      "volume": 350035,
+      "avgVolume": 350035,
       "high52": 155.82,
       "low52": 69.41,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -3700,12 +3700,12 @@
       ],
       "pinned": false,
       "previousClose": 847.37,
-      "volume": 3553950,
-      "avgVolume": 3553950,
+      "volume": 3563409,
+      "avgVolume": 3563409,
       "high52": 1085.68,
       "low52": 144.52,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 29.81,
         "sma20": 890.58,
@@ -3757,22 +3757,22 @@
       },
       "news": [
         {
-          "title": "GoPro Zooms 34% Higher on Starman Optical Merger and Markiplier Stake; Coherent Climbs 7%, Lumentum Gains 3%",
+          "title": "Lumentum (LITE) Stock Could Be Fully Priced Despite Fresh AI Demand News",
           "source": "Yahoo",
-          "time": "2026-09-04T16:20:33.000Z",
-          "url": "https://finnhub.io/api/news?id=f4cd1e985d5f0d0dd650f0ec64360c43779f228908471c2596d762cf8077d0f1"
+          "time": "2026-09-06T13:08:44.000Z",
+          "url": "https://finnhub.io/api/news?id=09491891ecebcf12277ce113c1fa635df6d49d09a46285a224ee3fa6da6f96f6"
         },
         {
-          "title": "The Market Made Credo Cheap, Again",
-          "source": "SeekingAlpha",
-          "time": "2026-09-04T12:09:15.000Z",
-          "url": "https://finnhub.io/api/news?id=387ccfa6197b321f354e5317bcb5d75aeb54e9d3211611e1e369be9f5f10375e"
+          "title": "Street Calls of the Week",
+          "source": "Yahoo",
+          "time": "2026-09-06T11:30:02.000Z",
+          "url": "https://finnhub.io/api/news?id=086818ffeda490f137c94b7cc3abbae7dfd4d6968474764935a572fa0536ff62"
         },
         {
-          "title": "Update: Market Chatter: Nvidia Increases Equity Investments to $99 Billion",
+          "title": "MarketBeat Week in Review – 08/31 - 09/04",
           "source": "Yahoo",
-          "time": "2026-09-04T11:27:04.000Z",
-          "url": "https://finnhub.io/api/news?id=f2d9c9cd6ff8c333319470b65efbaae819d70d28f78809d1bf1e97d015226e1e"
+          "time": "2026-09-05T12:00:00.000Z",
+          "url": "https://finnhub.io/api/news?id=c154a363f86768c4a1eb0f3e89657bd0c0c659ce2c8656bcf803e6ac740c27e1"
         }
       ],
       "sbScore": 57,
@@ -3799,12 +3799,12 @@
       ],
       "pinned": false,
       "previousClose": 100.38,
-      "volume": 6746653,
-      "avgVolume": 6746653,
+      "volume": 6840210,
+      "avgVolume": 6840210,
       "high52": 233.67,
       "low52": 18.5,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 31.52,
         "sma20": 105.66,
@@ -3856,22 +3856,22 @@
       },
       "news": [
         {
+          "title": "3 AI-Related Stocks Worth a Closer Look After Pullbacks",
+          "source": "Yahoo",
+          "time": "2026-09-04T23:01:00.000Z",
+          "url": "https://finnhub.io/api/news?id=8bfdd43d0b7a45edab42a175b5001f46f534c28c06e9f1c5c5d66252845b21eb"
+        },
+        {
           "title": "Rare Stock Picks In August 2026 - From 21 Discerning Analysts",
           "source": "SeekingAlpha",
           "time": "2026-09-04T08:00:00.000Z",
           "url": "https://finnhub.io/api/news?id=03506c0968ac04fef9eca132c9e0a15083a007ee327c051af15b249f8a93f031"
         },
         {
-          "title": "The Memory Wall And Next Leg Of The AI Story: The Connection Bottleneck",
-          "source": "SeekingAlpha",
-          "time": "2026-09-01T23:20:00.000Z",
-          "url": "https://finnhub.io/api/news?id=e26e5c96b0453ee0036503ccc72bf4c90cdf2bd3762053a1319d40455f51185c"
-        },
-        {
-          "title": "Applied Optoelectronics: Strong Demand, Weak Margins, And Rising Execution Risk",
-          "source": "SeekingAlpha",
-          "time": "2026-08-31T11:59:33.000Z",
-          "url": "https://finnhub.io/api/news?id=30301bbf0b4373f9777320c166473015da0c0e419ff66016e0adf72432891912"
+          "title": "HPE Cannot Build AI Servers Fast Enough. Is the Stock Still Cheap?",
+          "source": "Yahoo",
+          "time": "2026-09-03T19:52:50.000Z",
+          "url": "https://finnhub.io/api/news?id=e96f064c375b7fefcdcc79a241c67bab26639a78c1d230248f01f465e84f426d"
         }
       ],
       "sbScore": 52,
@@ -3898,12 +3898,12 @@
       ],
       "pinned": false,
       "previousClose": 7.33,
-      "volume": 10975684,
-      "avgVolume": 10975684,
+      "volume": 11087958,
+      "avgVolume": 11087958,
       "high52": 20.81,
       "low52": 3.87,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 42.93,
         "sma20": 7.54,
@@ -3995,11 +3995,11 @@
       "pinned": false,
       "name": "LWLG",
       "previousClose": 5.12,
-      "volume": 2666779,
-      "avgVolume": 2666779,
+      "volume": 2672064,
+      "avgVolume": 2672064,
       "high52": 18.71,
       "low52": 2.84,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -4080,30 +4080,30 @@
       "pinned": false,
       "name": "CSCO",
       "previousClose": 108.61,
-      "volume": 11975256,
-      "avgVolume": 11975256,
+      "volume": 12377019,
+      "avgVolume": 12377019,
       "high52": 130.37,
       "low52": 66.13,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
-          "title": "Which dow jones stocks are moving on Friday?",
-          "source": "ChartMill",
-          "time": "2026-09-04T19:10:06.000Z",
-          "url": "https://finnhub.io/api/news?id=112e1e8978d52d2cbd5db13911f01181162e86289295dc3706f8a282f6894de5"
+          "title": "Cisco (CSCO) Stock Looks Cheap On Cash Flow Yet Fair On Earnings",
+          "source": "Yahoo",
+          "time": "2026-09-05T19:05:58.000Z",
+          "url": "https://finnhub.io/api/news?id=63c0f2659fa49504f767052d728761e3db1d87fe2517956153b27110dff4a6d8"
         },
         {
-          "title": "Lone Star JV Acquires 2M SF Of R&D Space In Silicon Valley",
-          "source": "Yahoo",
-          "time": "2026-09-04T18:08:47.000Z",
-          "url": "https://finnhub.io/api/news?id=5bd8d88f316773724a17eccc0d618a50503264b2f3364dfdef5c21c243a40929"
+          "title": "Anthropic's $2 Trillion IPO Approaches: The Companies Poised to Benefit",
+          "source": "Benzinga",
+          "time": "2026-09-05T17:33:13.000Z",
+          "url": "https://finnhub.io/api/news?id=f88c67a8eb7e654a2e18acfe5ec3cd20b85ac37a2f40b73ee3c575d7171c36ca"
         },
         {
-          "title": "ANET Rises 37.3% in Six Months: Is There More Room to Grow?",
+          "title": "Thinking Machines Lab Seeks $40B Valuation as Nvidia Extends Its Capital Allocator Role Into Model-Space",
           "source": "Yahoo",
-          "time": "2026-09-04T14:59:00.000Z",
-          "url": "https://finnhub.io/api/news?id=a024442b8cb01b24f6be45efa7fd163a05f7076103ed60128d07187d3cd06238"
+          "time": "2026-09-05T02:24:14.000Z",
+          "url": "https://finnhub.io/api/news?id=67a905d722fae62095fd741e3d2986e00ad34ed43109c5c29eff4a95be6294b0"
         }
       ],
       "quant": {
@@ -4181,7 +4181,7 @@
       "avgVolume": 3333279,
       "high52": 637.51,
       "low52": 117.02,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -4276,12 +4276,12 @@
       ],
       "pinned": true,
       "previousClose": 228.45,
-      "volume": 132204717,
-      "avgVolume": 132204717,
+      "volume": 135352420,
+      "avgVolume": 135352420,
       "high52": 236.54,
       "low52": 164.27,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 53.98,
         "sma20": 223.85,
@@ -4333,22 +4333,22 @@
       },
       "news": [
         {
-          "title": "It's Not Worth Buying VOO Or QQQ Anymore",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T09:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=44f3fe11fe61c2b78958df16f3840894fea030b437964de520df95e3c637730e"
+          "title": "Prediction: Data Center Passes 70% of AMD's Revenue in 2027, Before the Helios Ramp Is Finished",
+          "source": "Yahoo",
+          "time": "2026-09-07T02:46:01.000Z",
+          "url": "https://finnhub.io/api/news?id=950589bf356e65e4b5c7d044e9975ce5bf7475b56c44dd329cefe25a41f243a2"
         },
         {
-          "title": "What I Found By Analyzing How Seeking Alpha Analysts Rated The Mag 7",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T08:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=eba233ff3388800a9f35b66ef6f1f68eff2afea31b642f11a07505e75d4043ea"
+          "title": "Nuclear Stock Face-Off: Is Constellation Energy or Vistra the Better Buy Right Now?",
+          "source": "Yahoo",
+          "time": "2026-09-07T02:22:00.000Z",
+          "url": "https://finnhub.io/api/news?id=063c5b4cd2692c2d40433156cbac158ff765447598d80685e6d1045ff7bdff24"
         },
         {
-          "title": "Wall Street Week Ahead",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T06:37:20.000Z",
-          "url": "https://finnhub.io/api/news?id=4de66b41d29d7cc8504256e7940888d6e859ba6698d1168700339f11da8722be"
+          "title": "This Vanguard ETF Is Up 27% This Year: Is It Still a Buy for Long-Term Investors?",
+          "source": "Yahoo",
+          "time": "2026-09-07T01:26:00.000Z",
+          "url": "https://finnhub.io/api/news?id=19dc2b93a9b50c266064dc726008e5263e96955e8c3682cddcb6f2155c82ef5a"
         }
       ],
       "sbScore": 84,
@@ -4375,12 +4375,12 @@
       ],
       "pinned": false,
       "previousClose": 456.16,
-      "volume": 19364684,
-      "avgVolume": 19364684,
+      "volume": 19678742,
+      "avgVolume": 19678742,
       "high52": 584.73,
       "low52": 149.22,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 50.86,
         "sma20": 466.2,
@@ -4432,22 +4432,22 @@
       },
       "news": [
         {
-          "title": "AMD: I'm Calling The First Peak Of The AI Mountain Range",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T07:24:14.000Z",
-          "url": "https://finnhub.io/api/news?id=08a784a4f731f87b5347bd47fcda71d88f7043a1d3f16ca683b590400f6647a8"
+          "title": "Did Nvidia Just Say Checkmate to AMD and Intel?",
+          "source": "Yahoo",
+          "time": "2026-09-06T23:30:01.000Z",
+          "url": "https://finnhub.io/api/news?id=39120c8fb43ef925adeb53cae0074e2bf214a188d1fd2ab73c9b38f4274fff46"
         },
         {
-          "title": "AMD Committed Up to $5 Billion to Anthropic, and Anthropic's IPO Prospectus Is Reportedly Days Away",
+          "title": "Nvidia Is Near Its High While Its Biggest Chip Peers Sit 18% to 32% Below Theirs. These Are the Chip Stocks to Buy.",
           "source": "Yahoo",
-          "time": "2026-09-05T23:03:01.000Z",
-          "url": "https://finnhub.io/api/news?id=3c1b14af9f07ae4408f612a0ca2ff1c346c2a8171e3ad2d1445e4137cf940adb"
+          "time": "2026-09-06T18:34:01.000Z",
+          "url": "https://finnhub.io/api/news?id=50b120564eecbbbee0e2ebd59ef2a28fd08023ebf7a1379534e4efa0669fa535"
         },
         {
-          "title": "Broadcom vs. Nvidia: 1 Critical Metric Shows Which Artificial Intelligence (AI) Chipmaker Is the Better Buy After Earnings",
+          "title": "China Is Still Chasing Nvidia’s 3-Year-Old Chip — While Nvidia Has Moved Generations Ahead",
           "source": "Yahoo",
-          "time": "2026-09-05T19:05:00.000Z",
-          "url": "https://finnhub.io/api/news?id=df0f33cba1195e3098ad03ae5ff7a516af30f6bd19e205403a453411b81836f0"
+          "time": "2026-09-06T15:35:11.000Z",
+          "url": "https://finnhub.io/api/news?id=12eca7d275988fa67c737695c1db1a476e82dd31d7d3e45581bedbb59eb2da1a"
         }
       ],
       "sbScore": 84,
@@ -4479,7 +4479,7 @@
       "high52": 479,
       "low52": 241.62,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 52.85,
         "sma20": 419.37,
@@ -4573,12 +4573,12 @@
       ],
       "pinned": false,
       "previousClose": 1646.19,
-      "volume": 1261775,
-      "avgVolume": 1261775,
+      "volume": 1289622,
+      "avgVolume": 1289622,
       "high52": 1999.96,
       "low52": 786.75,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 44.75,
         "sma20": 1690.81,
@@ -4630,22 +4630,22 @@
       },
       "news": [
         {
+          "title": "ASML vs. Taiwan Semiconductor: Which Semiconductor Monopoly Is the Safer Investment?",
+          "source": "Yahoo",
+          "time": "2026-09-05T19:20:00.000Z",
+          "url": "https://finnhub.io/api/news?id=f50564404dc39947250382175907bb112df0c9db516eb919910c753e1df9760c"
+        },
+        {
+          "title": "Why ASML Holding Stock Bumped 4% Higher Today",
+          "source": "Yahoo",
+          "time": "2026-09-04T23:51:22.000Z",
+          "url": "https://finnhub.io/api/news?id=deecba037999ae67da7f57dcf03779b17b67d418a340d44ae38c2ffec73439a8"
+        },
+        {
           "title": "ASML Plans 40% Japan Workforce Expansion to Support Chip Boom",
           "source": "Yahoo",
           "time": "2026-09-04T18:35:14.000Z",
           "url": "https://finnhub.io/api/news?id=38bf8e6e18bb6acbea8db4dfe5a5ecd14ec2aa125ad079513e7811ccdfac1428"
-        },
-        {
-          "title": "10 Information Technology Stocks Whale Activity In Today’s Session",
-          "source": "Benzinga",
-          "time": "2026-09-04T13:35:13.000Z",
-          "url": "https://finnhub.io/api/news?id=2cc961b39ada0207f1ae9ed2adf380e8dd272bb732a3761bfa459ecbc0fcea4a"
-        },
-        {
-          "title": "ASML (ASML) Stock Sinks As Market Gains: What You Should Know",
-          "source": "Yahoo",
-          "time": "2026-09-03T21:45:03.000Z",
-          "url": "https://finnhub.io/api/news?id=c2838411251ff2792a11aa3cf26f2ae05a25039cb7c856232557b6bb67acccf6"
         }
       ],
       "sbScore": 80,
@@ -4670,11 +4670,11 @@
       "pinned": false,
       "name": "AMAT",
       "previousClose": 435.91,
-      "volume": 5985911,
-      "avgVolume": 5985911,
+      "volume": 6016831,
+      "avgVolume": 6016831,
       "high52": 739.67,
       "low52": 161.75,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 28.81,
@@ -4729,22 +4729,22 @@
       "bloc": "tsunami",
       "news": [
         {
-          "title": "Memory, Other AI-Related Stocks Lead the Market’s Top Performers Friday",
+          "title": "Jim Cramer Shares His Playbook for Buying Applied Materials (AMAT)",
           "source": "Yahoo",
-          "time": "2026-09-04T17:04:21.000Z",
-          "url": "https://finnhub.io/api/news?id=e4161564548a3626f34aa7ef8802402585fd635be3fc690cf2e0e450ab94bb4e"
+          "time": "2026-09-05T17:50:46.000Z",
+          "url": "https://finnhub.io/api/news?id=27b75b9834e25d3398f459cdd2438a765a2e83308e0a0dab82c0c09e677149b0"
         },
         {
-          "title": "SanDisk Jumps 10%, Lululemon Crashes 17%: Stock Market Today",
-          "source": "Benzinga",
-          "time": "2026-09-04T13:32:31.000Z",
-          "url": "https://finnhub.io/api/news?id=b3fa9337d21cb53cc886ddba9f1007d102100cddf69f58a2e8b41c7db1350f9c"
+          "title": "What To Do After Ultra Clean Holdings Shares Fell By 20%",
+          "source": "SeekingAlpha",
+          "time": "2026-09-05T04:46:53.000Z",
+          "url": "https://finnhub.io/api/news?id=f05c82800cc5e48d26bffb4119b32e2da242007df68fced9065c567a6b0cb762"
         },
         {
-          "title": "Stay updated with the S&P500 stocks that are on the move in today's pre-market session.",
-          "source": "ChartMill",
-          "time": "2026-09-04T12:35:01.000Z",
-          "url": "https://finnhub.io/api/news?id=5030d26aa984c830818eda1c4b16e236d371557cd7f2407be913a5da2bf31ceb"
+          "title": "Dividend Champion, Contender, And Challenger Highlights: Week September 6",
+          "source": "SeekingAlpha",
+          "time": "2026-09-04T22:57:21.000Z",
+          "url": "https://finnhub.io/api/news?id=a14fa2d71c991d1424c650e89ccc0365f647e29aec84a754bdf9a4133b2e0743"
         }
       ]
     },
@@ -4767,11 +4767,11 @@
       "pinned": false,
       "name": "LRCX",
       "previousClose": 292.66,
-      "volume": 8351945,
-      "avgVolume": 8351945,
+      "volume": 8359371,
+      "avgVolume": 8359371,
       "high52": 438.5,
       "low52": 104.46,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 38.98,
@@ -4823,7 +4823,27 @@
         "summary": "SB Score 74/100 (Moderate Bullish / Accumulation) · MOM 15/25, TREND 23/25, REL_STR 13/20, VOL 10/15, VOLATILITY 13/15"
       },
       "sbScore": 74,
-      "bloc": "tsunami"
+      "bloc": "tsunami",
+      "news": [
+        {
+          "title": "Two Chip-Equipment Stocks Just Crushed Nvidia. Is the AI Rally Broadening?",
+          "source": "Yahoo",
+          "time": "2026-09-05T18:43:32.000Z",
+          "url": "https://finnhub.io/api/news?id=878c667041bf1934c4e1cd08ed28572a0ac35d25e4261f254d619cb33d8c3f12"
+        },
+        {
+          "title": "Lam Research Legal Chief Sold $1.5 Million as AI Chip Demand Booms. Is the Signal Bearish?",
+          "source": "Yahoo",
+          "time": "2026-09-05T06:21:59.000Z",
+          "url": "https://finnhub.io/api/news?id=b5e027303c3524cf77a215e90f74d0ee86bdcdc5754d5fdc90573547c0acab06"
+        },
+        {
+          "title": "What To Do After Ultra Clean Holdings Shares Fell By 20%",
+          "source": "SeekingAlpha",
+          "time": "2026-09-05T04:46:53.000Z",
+          "url": "https://finnhub.io/api/news?id=f05c82800cc5e48d26bffb4119b32e2da242007df68fced9065c567a6b0cb762"
+        }
+      ]
     },
     {
       "symbol": "KLAC",
@@ -4844,11 +4864,11 @@
       "pinned": false,
       "name": "KLAC",
       "previousClose": 172.94,
-      "volume": 12689661,
-      "avgVolume": 12689661,
+      "volume": 12725635,
+      "avgVolume": 12725635,
       "high52": 307.37,
       "low52": 90.67,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 53.32,
@@ -4900,7 +4920,27 @@
         "summary": "SB Score 78/100 (Strong Bullish / High Conviction) · MOM 22/25, TREND 23/25, REL_STR 10/20, VOL 10/15, VOLATILITY 13/15"
       },
       "sbScore": 78,
-      "bloc": "tsunami"
+      "bloc": "tsunami",
+      "news": [
+        {
+          "title": "Two Chip-Equipment Stocks Just Crushed Nvidia. Is the AI Rally Broadening?",
+          "source": "Yahoo",
+          "time": "2026-09-05T18:43:32.000Z",
+          "url": "https://finnhub.io/api/news?id=878c667041bf1934c4e1cd08ed28572a0ac35d25e4261f254d619cb33d8c3f12"
+        },
+        {
+          "title": "Micron and Western Digital Shares Skyrocket, What You Need To Know",
+          "source": "Yahoo",
+          "time": "2026-09-05T02:22:10.000Z",
+          "url": "https://finnhub.io/api/news?id=3bd64836fe28da32bcb4241fa26b2ea7d21ff399d00a47f78da29aadf6d449b6"
+        },
+        {
+          "title": "FormFactor, Entegris, Penguin Solutions, Teradyne, and Marvell Technology Stocks Trade Up, What You Need To Know",
+          "source": "Yahoo",
+          "time": "2026-09-05T02:14:10.000Z",
+          "url": "https://finnhub.io/api/news?id=a96b9dd6e0f0976195e604e79d21e7ddf0f42388977af49a20b3263c933662dc"
+        }
+      ]
     },
     {
       "symbol": "AEHR",
@@ -4923,12 +4963,12 @@
       ],
       "pinned": false,
       "previousClose": 76.27,
-      "volume": 4492544,
-      "avgVolume": 4492544,
+      "volume": 4520762,
+      "avgVolume": 4520762,
       "high52": 147.4,
       "low52": 18.7,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 43.33,
         "sma20": 81.41,
@@ -4980,6 +5020,12 @@
       },
       "news": [
         {
+          "title": "Butterfly Network Stock Is Just One Of 3 AI Small Cap Stocks",
+          "source": "Yahoo",
+          "time": "2026-09-06T20:11:08.000Z",
+          "url": "https://finnhub.io/api/news?id=c6e974962518c70d962dedafb9d893ca0bf6e652e45ebfd8cd45345aa0b1b565"
+        },
+        {
           "title": "What To Do After Ultra Clean Holdings Shares Fell By 20%",
           "source": "SeekingAlpha",
           "time": "2026-09-05T04:46:53.000Z",
@@ -4990,12 +5036,6 @@
           "source": "Yahoo",
           "time": "2026-09-04T23:26:19.000Z",
           "url": "https://finnhub.io/api/news?id=a4e44eaeeb8abe6e9a5f08b3e8094f3f68a6387284fe7bbaf5a081fe331fcfb7"
-        },
-        {
-          "title": "12 Information Technology Stocks Moving In Friday's Intraday Session",
-          "source": "Benzinga",
-          "time": "2026-09-04T13:06:20.000Z",
-          "url": "https://finnhub.io/api/news?id=fe3d752f2fb73239d17b6f307580eda4f281abba8963e070499a65ee947f6e5e"
         }
       ],
       "sbScore": 73,
@@ -5024,26 +5064,26 @@
       "avgVolume": 10960031,
       "high52": 534.99,
       "low52": 110.22,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
-          "title": "DELL Stock Hits 52-Week High: Does it Have More Room to Run?",
+          "title": "Dell Stock Exploded Over 300% — Its 150% EPS Growth Could Send It Even Higher",
           "source": "Yahoo",
-          "time": "2026-09-04T18:15:00.000Z",
-          "url": "https://finnhub.io/api/news?id=7ad0f26117446a8555e4ee2e9436f1734358f7043ca8ca0b2c819048437392b9"
+          "time": "2026-09-06T18:30:02.000Z",
+          "url": "https://finnhub.io/api/news?id=823f291f1c9955d79e76f1ce07afb3bb60805227997b9fe5a5009c0bfc6c7ad4"
         },
         {
-          "title": "Founder-Led Companies That Are Redefining Technology and Growth",
+          "title": "Dell COO Jeff Clarke Reveals AI Boom Runs on Endless Scrambling for Scarce Parts: 'This Is What We Do' and 'We Love It' (CORRECTED)",
           "source": "Yahoo",
-          "time": "2026-09-04T18:08:00.000Z",
-          "url": "https://finnhub.io/api/news?id=2aead315af0ffd221f42f644f741f9b7bfe827fb7c9553b3fdbf6051f537f8fd"
+          "time": "2026-09-06T16:45:06.000Z",
+          "url": "https://finnhub.io/api/news?id=b946d0a78e125ef1ddead942c82a9bf9ae5cc572b94f5a872355279476c67ea3"
         },
         {
-          "title": "Super Micro Surges 7% as Semiconductors Lead a Flat Tape; Hewlett Packard Enterprise Falls 3%, Dell Edges Higher",
+          "title": "Dell Stock Spiked After Earnings, But Is It Close to Fair Value? Shorting Puts and Calls Work Here",
           "source": "Yahoo",
-          "time": "2026-09-04T18:05:14.000Z",
-          "url": "https://finnhub.io/api/news?id=62e47e3fd670cd03d73dfd947a5bdf112982e3515f6c610844bb6488bca49db4"
+          "time": "2026-09-06T14:00:02.000Z",
+          "url": "https://finnhub.io/api/news?id=be2b504843757458a25736c361be8f1535448c0d4a77ba5a14ba8fe8495906f6"
         }
       ],
       "quant": {
@@ -5117,11 +5157,11 @@
       "pinned": false,
       "name": "ARM",
       "previousClose": 242.59,
-      "volume": 4120464,
-      "avgVolume": 4120464,
+      "volume": 4132412,
+      "avgVolume": 4132412,
       "high52": 452.7,
       "low52": 100.02,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -5214,11 +5254,11 @@
       "pinned": false,
       "name": "CDNS",
       "previousClose": 304.88,
-      "volume": 4223335,
-      "avgVolume": 4223335,
+      "volume": 4226039,
+      "avgVolume": 4226039,
       "high52": 416.69,
       "low52": 262.75,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -5311,13 +5351,19 @@
       "pinned": false,
       "name": "SNPS",
       "previousClose": 416.31,
-      "volume": 2934108,
-      "avgVolume": 2934108,
+      "volume": 2969369,
+      "avgVolume": 2969369,
       "high52": 615.79,
       "low52": 366,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "How to Play SNPS Stock as Layoffs Hit Synopsys",
+          "source": "Yahoo",
+          "time": "2026-09-06T19:30:02.000Z",
+          "url": "https://finnhub.io/api/news?id=a9a4b7ff10b0f7196eff77e826fa18d39b0b0a75093b534943acfb7188081192"
+        },
         {
           "title": "Exploring the top movers within the S&P500 index during today's session.",
           "source": "ChartMill",
@@ -5329,12 +5375,6 @@
           "source": "Yahoo",
           "time": "2026-09-04T18:44:02.000Z",
           "url": "https://finnhub.io/api/news?id=30d8882a35f3a6f2246c9ab6517f3415e348f988c8805a7eb4e9b74f92eba3a5"
-        },
-        {
-          "title": "Discover which S&P500 stocks are making waves on Friday.",
-          "source": "ChartMill",
-          "time": "2026-09-04T16:35:01.000Z",
-          "url": "https://finnhub.io/api/news?id=8365b14ad862209478e14241b98643c5a1b70d3eb7cfb54eeaa638afc9d6c0a4"
         }
       ],
       "quant": {
@@ -5410,12 +5450,12 @@
       ],
       "pinned": false,
       "previousClose": 182.53,
-      "volume": 27620762,
-      "avgVolume": 27620762,
+      "volume": 27963048,
+      "avgVolume": 27963048,
       "high52": 207.52,
       "low52": 106.37,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 34.99,
         "sma20": 180.69,
@@ -5467,22 +5507,22 @@
       },
       "news": [
         {
-          "title": "Palantir (PLTR) Stock Fair Value Edges Higher After Strong Q2 And Raised Guidance",
+          "title": "Palantir’s Alex Karp: The Real AI Leak Isn't Data, It's Your 'Alpha'",
           "source": "Yahoo",
-          "time": "2026-09-04T21:10:19.000Z",
-          "url": "https://finnhub.io/api/news?id=41120f9669f8b2fc1f5c46ad31012c7f3d652ef68d78ac7131e5c3ffdfa59d1e"
+          "time": "2026-09-07T01:30:13.000Z",
+          "url": "https://finnhub.io/api/news?id=9f32abbd15f04ac9e56aead36e4156917f49afc27cebde74575e2a9b91b1a218"
         },
         {
-          "title": "3 Reasons PLTR Has Explosive Upside Potential",
+          "title": "Michael Burry sends a strong warning to Palantir stock investors",
           "source": "Yahoo",
-          "time": "2026-09-04T21:06:10.000Z",
-          "url": "https://finnhub.io/api/news?id=996443b380492c2ebd87bdace5ae69ad18960ea47f84170b5e30a0fd2330b055"
+          "time": "2026-09-06T15:37:00.000Z",
+          "url": "https://finnhub.io/api/news?id=8dcfffec7892dec0dbfe7acac0a28a2a1f909d59d0b8250633bb5dedbf150a80"
         },
         {
-          "title": "Exploring the top movers within the S&P500 index during today's session.",
-          "source": "ChartMill",
-          "time": "2026-09-04T19:05:01.000Z",
-          "url": "https://finnhub.io/api/news?id=3efa247763ccb82bb432983509e2a71efe32dcd5773a037e2a6257e90876b9ce"
+          "title": "Michael Burry Says Palantir's Books Look More Like a Consultant's Than a Software Company's",
+          "source": "Yahoo",
+          "time": "2026-09-06T03:46:01.000Z",
+          "url": "https://finnhub.io/api/news?id=5714bc35e234c84b1b652560d57698764d9188429e146be68b146a681ea2b14e"
         }
       ],
       "sbScore": 52,
@@ -5509,12 +5549,12 @@
       ],
       "pinned": false,
       "previousClose": 958.16,
-      "volume": 34925945,
-      "avgVolume": 34925945,
+      "volume": 35249519,
+      "avgVolume": 35249519,
       "high52": 1255,
       "low52": 128.4,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 79.67,
         "sma20": 955.89,
@@ -5566,22 +5606,22 @@
       },
       "news": [
         {
-          "title": "DRAM: We May Be At The Start Of The Second Memory Rally",
+          "title": "Dow Jones Futures Fall With Iran, Apple, Inflation In Focus; Nvidia, Micron, Sandisk Flash Buy Signals",
+          "source": "Yahoo",
+          "time": "2026-09-07T00:45:26.000Z",
+          "url": "https://finnhub.io/api/news?id=cffb60530c356ad83d70f5ba341f71adb8ce87c95dbba1f4ae5067ff4efff611"
+        },
+        {
+          "title": "SCHV: Schwab's Large-Cap Value ETF Is Having A Moment",
           "source": "SeekingAlpha",
-          "time": "2026-09-06T08:59:37.000Z",
-          "url": "https://finnhub.io/api/news?id=7553cdedd6ba1f46f50638b60ecfe84503758395683d1c11704ac14c479f9c10"
+          "time": "2026-09-06T18:34:31.000Z",
+          "url": "https://finnhub.io/api/news?id=1094112b50a4e0603d41cb739b6f73250c28c344eb062863d3050dd258c5da24"
         },
         {
-          "title": "3 Great Quality Stocks To Own In September 2026",
+          "title": "Nvidia Is Near Its High While Its Biggest Chip Peers Sit 18% to 32% Below Theirs. These Are the Chip Stocks to Buy.",
           "source": "Yahoo",
-          "time": "2026-09-05T20:14:14.000Z",
-          "url": "https://finnhub.io/api/news?id=c912721bc44c42ed311c8e2103ce56f65c18c4661abc046b7a2e25041bd9ac5b"
-        },
-        {
-          "title": "The S&P 500 Fell, but These 2 AI Memory Stocks Exploded Higher",
-          "source": "Yahoo",
-          "time": "2026-09-05T19:03:45.000Z",
-          "url": "https://finnhub.io/api/news?id=0fad523b307e56d5b27009955d4c0b12ba8bb44bff70502a0a9f3bb4c6c1563b"
+          "time": "2026-09-06T18:34:01.000Z",
+          "url": "https://finnhub.io/api/news?id=50b120564eecbbbee0e2ebd59ef2a28fd08023ebf7a1379534e4efa0669fa535"
         }
       ],
       "sbScore": 84,
@@ -5606,11 +5646,11 @@
       "pinned": false,
       "name": "WDC",
       "previousClose": 441.57,
-      "volume": 5764994,
-      "avgVolume": 5764994,
+      "volume": 5812273,
+      "avgVolume": 5812273,
       "high52": 799.87,
       "low52": 91.65,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 55.89,
@@ -5665,6 +5705,12 @@
       "bloc": "tsunami",
       "news": [
         {
+          "title": "Nike Exits the S&P 100 Index. 4 Tech Stocks Move In",
+          "source": "Yahoo",
+          "time": "2026-09-06T12:14:50.000Z",
+          "url": "https://finnhub.io/api/news?id=f1ecdd6270b1ea691efb9d8dea35396ef6e35e56efb96b119ba01e6972e7c9eb"
+        },
+        {
           "title": "These 2 AI Storage Stocks Soared as the S&P 500 Fell",
           "source": "Yahoo",
           "time": "2026-09-05T19:00:28.000Z",
@@ -5675,12 +5721,6 @@
           "source": "Yahoo",
           "time": "2026-09-05T05:50:45.000Z",
           "url": "https://finnhub.io/api/news?id=e1e9bf5e516af2021bb913894c2c790c7cab632dbbd4dc2071915afb97f48602"
-        },
-        {
-          "title": "Western Digital (WDC) Stock Looks Cheap On Value Checks While Its Share Run Looks Hard To Ignore",
-          "source": "Yahoo",
-          "time": "2026-09-05T03:10:15.000Z",
-          "url": "https://finnhub.io/api/news?id=5ed9f9bd3b5c3d024bc63bf4eb49a51fe89a866867e545bdbb8c5603c46d72f8"
         }
       ]
     },
@@ -5705,12 +5745,12 @@
       ],
       "pinned": false,
       "previousClose": 1554.99,
-      "volume": 16217211,
-      "avgVolume": 16217211,
+      "volume": 16556967,
+      "avgVolume": 16556967,
       "high52": 2354.39,
       "low52": 67.86,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 90.52,
         "sma20": 1560.27,
@@ -5762,22 +5802,22 @@
       },
       "news": [
         {
-          "title": "Sandisk: It's The Perfect Time To Load Up",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T09:46:47.000Z",
-          "url": "https://finnhub.io/api/news?id=7c851dcece728c5ad8d956c331bbf18d2a6642dab834254ccc1917bd5396db32"
+          "title": "Dow Jones Futures Fall With Iran, Apple, Inflation In Focus; Nvidia, Micron, Sandisk Flash Buy Signals",
+          "source": "Yahoo",
+          "time": "2026-09-07T00:45:26.000Z",
+          "url": "https://finnhub.io/api/news?id=cffb60530c356ad83d70f5ba341f71adb8ce87c95dbba1f4ae5067ff4efff611"
         },
         {
-          "title": "The S&P 500 Fell, but These 2 AI Memory Stocks Exploded Higher",
+          "title": "Prediction: This Is What Sandisk Stock Will Be Worth in 12 Months",
           "source": "Yahoo",
-          "time": "2026-09-05T19:03:45.000Z",
-          "url": "https://finnhub.io/api/news?id=0fad523b307e56d5b27009955d4c0b12ba8bb44bff70502a0a9f3bb4c6c1563b"
+          "time": "2026-09-06T16:01:01.000Z",
+          "url": "https://finnhub.io/api/news?id=38409000c50ac48254103a0ba61c967914f6b8d2b3ef5a977d1853927144f7f8"
         },
         {
-          "title": "Dow Jones Futures: U.S., Iran Exchange Attacks; Nvidia, Micron, Sandisk Flash Buy Signals",
+          "title": "Nike Exits the S&P 100 Index. 4 Tech Stocks Move In",
           "source": "Yahoo",
-          "time": "2026-09-05T18:22:09.000Z",
-          "url": "https://finnhub.io/api/news?id=cf521da6baded2820a5b09171cb98ea179012bbcf95faebb53f973a36f24c7e7"
+          "time": "2026-09-06T12:14:50.000Z",
+          "url": "https://finnhub.io/api/news?id=f1ecdd6270b1ea691efb9d8dea35396ef6e35e56efb96b119ba01e6972e7c9eb"
         }
       ],
       "sbScore": 78,
@@ -5871,11 +5911,11 @@
       "pinned": false,
       "name": "STX",
       "previousClose": 798.61,
-      "volume": 2544115,
-      "avgVolume": 2544115,
+      "volume": 2559714,
+      "avgVolume": 2559714,
       "high52": 1145,
       "low52": 187.18,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 51.05,
@@ -5930,6 +5970,12 @@
       "bloc": "tsunami",
       "news": [
         {
+          "title": "These 2 AI Storage Stocks Soared as the S&P 500 Fell",
+          "source": "Yahoo",
+          "time": "2026-09-05T19:00:28.000Z",
+          "url": "https://finnhub.io/api/news?id=df341fd8d1bc3a6ae42fcc2847a6b180ba3b5134aee814ae8a568a3d916aeeca"
+        },
+        {
           "title": "SK Hynix Surges 7% as Memory Bid Widens Beyond NAND; Seagate Rallies 5%",
           "source": "Yahoo",
           "time": "2026-09-04T19:07:25.000Z",
@@ -5940,12 +5986,6 @@
           "source": "ChartMill",
           "time": "2026-09-04T19:05:01.000Z",
           "url": "https://finnhub.io/api/news?id=3efa247763ccb82bb432983509e2a71efe32dcd5773a037e2a6257e90876b9ce"
-        },
-        {
-          "title": "Memory, Other AI-Related Stocks Lead the Market’s Top Performers Friday",
-          "source": "Yahoo",
-          "time": "2026-09-04T17:04:21.000Z",
-          "url": "https://finnhub.io/api/news?id=e4161564548a3626f34aa7ef8802402585fd635be3fc690cf2e0e450ab94bb4e"
         }
       ]
     },
@@ -5972,7 +6012,7 @@
       "avgVolume": 1401536,
       "high52": 66.7,
       "low52": 22,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -6069,7 +6109,7 @@
       "avgVolume": 7262134,
       "high52": 80.24,
       "low52": 35.15,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 18.21,
@@ -6124,6 +6164,12 @@
       "bloc": "tsunami",
       "news": [
         {
+          "title": "Copper Just Soared to an All-Time High, but This Stock Is Still a Great Value",
+          "source": "Yahoo",
+          "time": "2026-09-06T13:05:00.000Z",
+          "url": "https://finnhub.io/api/news?id=75cbffc7d3fabca9854cc10140e7f272269ebe8a24504ff1b5372a13ad29f3f4"
+        },
+        {
           "title": "Jim Cramer Saw Copper Reaching $100, Yet One Trader Bought the Drop",
           "source": "Yahoo",
           "time": "2026-09-04T18:49:28.000Z",
@@ -6134,12 +6180,6 @@
           "source": "Yahoo",
           "time": "2026-09-04T15:30:31.000Z",
           "url": "https://finnhub.io/api/news?id=bb71e45f113d74057938814ff2bc8b6b8cb63b1a1f7fd9bdd07351758a8112df"
-        },
-        {
-          "title": "How Is Freeport-McMoRan’s Stock Performance Compared to Other Copper Stocks",
-          "source": "Yahoo",
-          "time": "2026-09-04T12:26:40.000Z",
-          "url": "https://finnhub.io/api/news?id=5963af9871504e060baf5f96634bc70579afc70aa32972aaa053dd2f0788dd7e"
         }
       ]
     },
@@ -6162,11 +6202,11 @@
       "pinned": false,
       "name": "RKLB",
       "previousClose": 63.81,
-      "volume": 14797841,
-      "avgVolume": 14797841,
+      "volume": 14952020,
+      "avgVolume": 14952020,
       "high52": 151,
       "low52": 37.57,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 25.63,
@@ -6221,6 +6261,12 @@
       "bloc": "tsunami",
       "news": [
         {
+          "title": "Rocket Lab CFO Dumps Over 140,000 Company Shares Worth $8.8 Million Amid a 28% One-Year Return",
+          "source": "Yahoo",
+          "time": "2026-09-06T06:36:35.000Z",
+          "url": "https://finnhub.io/api/news?id=8576dd5557c90a72d9bded140e684022750b7be33a774be6fc845aeea5e1355f"
+        },
+        {
           "title": "Prediction: Here's What a $10,000 Investment in Rocket Lab Will Be Worth in 5 Years",
           "source": "Yahoo",
           "time": "2026-09-05T23:20:00.000Z",
@@ -6231,12 +6277,6 @@
           "source": "Yahoo",
           "time": "2026-09-05T17:05:00.000Z",
           "url": "https://finnhub.io/api/news?id=d75d947946246522fc44bb2841d0ccaa193ddeb16412c5298a6340d14449c0e2"
-        },
-        {
-          "title": "Broadcom And 2 Other Undervalued Stocks To Own",
-          "source": "Yahoo",
-          "time": "2026-09-05T06:14:53.000Z",
-          "url": "https://finnhub.io/api/news?id=69d699d56a861ec9c4d03e3779633003e2f46c2d3d1b4c920e9c5c1ae9b2a7ab"
         }
       ]
     },
@@ -6261,12 +6301,12 @@
       ],
       "pinned": false,
       "previousClose": 62.13,
-      "volume": 10104414,
-      "avgVolume": 10104414,
+      "volume": 10248813,
+      "avgVolume": 10248813,
       "high52": 133.86,
       "low52": 36.08,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 52.94,
         "sma20": 60.18,
@@ -6318,6 +6358,12 @@
       },
       "news": [
         {
+          "title": "Forget Starlink? Japan’s $1 Billion BlueBird Play Makes ASTS the National Satellite OS",
+          "source": "Yahoo",
+          "time": "2026-09-06T14:25:30.000Z",
+          "url": "https://finnhub.io/api/news?id=5cbfda37107204a4d306210f49fb1d352f1193dc8a78c4b536d1180209948668"
+        },
+        {
           "title": "AST SpaceMobile Director Bought $619,000 as Short Interest Reached 57.5 Million Shares. Is the Risk-Reward Turning?",
           "source": "Yahoo",
           "time": "2026-09-05T10:23:59.000Z",
@@ -6328,12 +6374,6 @@
           "source": "SeekingAlpha",
           "time": "2026-09-05T09:25:59.000Z",
           "url": "https://finnhub.io/api/news?id=cfc58ef03d7661b7f41310d90526936ca9b50bd5a5edb974937befb513762c0c"
-        },
-        {
-          "title": "AST SpaceMobile vs. Space Exploration Technologies: Which Telecom Stock Is a Better Buy in 2026?",
-          "source": "Yahoo",
-          "time": "2026-09-04T19:49:01.000Z",
-          "url": "https://finnhub.io/api/news?id=f72860461f3c752556385e04ca025eb75b5689f12ee4a19085145bb817b8541d"
         }
       ],
       "sbScore": 70,
@@ -6360,12 +6400,12 @@
       ],
       "pinned": false,
       "previousClose": 17.9,
-      "volume": 8287267,
-      "avgVolume": 8287267,
+      "volume": 8495205,
+      "avgVolume": 8495205,
       "high52": 30.46,
       "low52": 13.36,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 53.98,
         "sma20": 17.01,
@@ -6417,16 +6457,22 @@
       },
       "news": [
         {
-          "title": "CID Holdco Sees FY26 Revenue $6M-$7.5M",
-          "source": "Benzinga",
-          "time": "2026-08-28T13:52:30.000Z",
-          "url": "https://finnhub.io/api/news?id=2137f19558c07d169079facdb58afc968c2702a2a0ec7e5bb41d3a5382a3c968"
+          "title": "NODE Monthly Commentary: August 2026",
+          "source": "SeekingAlpha",
+          "time": "2026-09-05T03:15:00.000Z",
+          "url": "https://finnhub.io/api/news?id=0671638ebe3a7ea4b86b675c5838f567e53c563f98091f3ea1ed7800a8c8be51"
         },
         {
-          "title": "Billionaire Activist Investor Dan Loeb's Third Point Builds 4-Stock Bitcoin-To-AI Basket",
-          "source": "Benzinga",
-          "time": "2026-08-28T06:32:56.000Z",
-          "url": "https://finnhub.io/api/news?id=66a5bc1ae6614a26a9a2cf44b01a49787cd24d10bac8ecc001fb65b94815ccb1"
+          "title": "Will AI Push Bitcoin Mining Out of the Market?",
+          "source": "Yahoo",
+          "time": "2026-09-04T16:07:49.000Z",
+          "url": "https://finnhub.io/api/news?id=7d1e173783d9a6b7c4e24baf413d8c15ebbaa73df625fa708a8288cb45e4e8a0"
+        },
+        {
+          "title": "What Are You Actually Buying In Applied Digital Stock?",
+          "source": "Yahoo",
+          "time": "2026-09-04T00:06:12.000Z",
+          "url": "https://finnhub.io/api/news?id=e285678ece068def79b29428137598083dfd97f7b78b79e31e19f0acdac86b57"
         }
       ],
       "sbScore": 70,
@@ -6451,30 +6497,30 @@
       "pinned": false,
       "name": "IREN",
       "previousClose": 41.65,
-      "volume": 35805723,
-      "avgVolume": 35805723,
+      "volume": 36266193,
+      "avgVolume": 36266193,
       "high52": 76.87,
       "low52": 25.38,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "Applied Digital vs. IREN: Evaluating the Better Artificial Intelligence Stock to Buy for 2026",
+          "source": "Yahoo",
+          "time": "2026-09-05T01:29:46.000Z",
+          "url": "https://finnhub.io/api/news?id=3c266f1c7aacede9b0da40cb8b7058906c1bd7c5c02952f3f0fd538d47fda5de"
+        },
+        {
+          "title": "IREN Climbs 4% on $2.4B Blue Owl-Led GPU Financing; Cipher Digital Gains 2%",
+          "source": "Yahoo",
+          "time": "2026-09-04T16:12:48.000Z",
+          "url": "https://finnhub.io/api/news?id=1ef6c61afbaf5b2c0e341889034884ba793d85c1d0ffddbaa597942f86a67ac7"
+        },
         {
           "title": "10 Information Technology Stocks Whale Activity In Today’s Session",
           "source": "Benzinga",
           "time": "2026-09-04T13:35:13.000Z",
           "url": "https://finnhub.io/api/news?id=2cc961b39ada0207f1ae9ed2adf380e8dd272bb732a3761bfa459ecbc0fcea4a"
-        },
-        {
-          "title": "Jim Cramer: This Health Care Stock Is Pure Spec, The Only Neocloud I Like Is...",
-          "source": "Benzinga",
-          "time": "2026-09-04T07:07:48.000Z",
-          "url": "https://finnhub.io/api/news?id=82094f911787e9e67470b01ea3bb72583e29d456c8d250a9c1feb495f6cd9305"
-        },
-        {
-          "title": "Shares of crypto-linked stocks are trading higher as Bitcoin prices hit $80,000 amid lower yields and a weaker dollar. Fed's Waller's comments that he is inclined to support holding interest rates steady may have further supported the speculative asset by easing concerns about tighter monetary policy and improving risk appetite.",
-          "source": "Benzinga",
-          "time": "2026-09-03T12:22:09.000Z",
-          "url": "https://finnhub.io/api/news?id=294a5afd3408b398c4f843c22711b6f75713334b08b0e604db4d134e752a2249"
         }
       ],
       "quant": {
@@ -6550,12 +6596,12 @@
       ],
       "pinned": false,
       "previousClose": 25.91,
-      "volume": 13394739,
-      "avgVolume": 13394739,
+      "volume": 13467976,
+      "avgVolume": 13467976,
       "high52": 50.73,
       "low52": 13.16,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
         "rsi14": 40.04,
         "sma20": 25.67,
@@ -6607,6 +6653,12 @@
       },
       "news": [
         {
+          "title": "Analyzing Applied Digital vs. IREN: Accelerating Upward Trajectories vs. Sequential Contractions in Quarterly Revenue Generation",
+          "source": "Yahoo",
+          "time": "2026-09-06T21:06:13.000Z",
+          "url": "https://finnhub.io/api/news?id=50120f84be8a2ea607b701321446d1f156f4cac461b7cfe10a21bd11366c4740"
+        },
+        {
           "title": "Applied Digital vs. IREN: Evaluating the Better Artificial Intelligence Stock to Buy for 2026",
           "source": "Yahoo",
           "time": "2026-09-05T01:29:46.000Z",
@@ -6617,12 +6669,6 @@
           "source": "Yahoo",
           "time": "2026-09-04T00:06:12.000Z",
           "url": "https://finnhub.io/api/news?id=e285678ece068def79b29428137598083dfd97f7b78b79e31e19f0acdac86b57"
-        },
-        {
-          "title": "Applied Digital and Cipher Just Sank Together. Did Rising Yields Expose AI’s Weakest Business Model?",
-          "source": "Yahoo",
-          "time": "2026-09-03T19:54:27.000Z",
-          "url": "https://finnhub.io/api/news?id=f85d6c46b7cafc4a610a75ac0f24c79c91bafeb925f8ab6f81c2a318d50a195d"
         }
       ],
       "sbScore": 67,
@@ -6647,11 +6693,11 @@
       "pinned": false,
       "name": "WULF",
       "previousClose": 16.23,
-      "volume": 19677162,
-      "avgVolume": 19677162,
+      "volume": 20478752,
+      "avgVolume": 20478752,
       "high52": 29.84,
       "low52": 8.94,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 50.27,
@@ -6744,11 +6790,11 @@
       "pinned": false,
       "name": "MARA",
       "previousClose": 11.6,
-      "volume": 37044192,
-      "avgVolume": 37044192,
+      "volume": 37594828,
+      "avgVolume": 37594828,
       "high52": 23.45,
       "low52": 6.66,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 42,
@@ -6825,9 +6871,9 @@
     {
       "symbol": "BTC-USD",
       "name": "Bitcoin Benchmark",
-      "price": 79697.25,
-      "change": -126.62,
-      "percent_change": -0.16,
+      "price": 79631.59,
+      "change": -192.28,
+      "percent_change": -0.24,
       "theme": "orange",
       "cardColor": "orange",
       "color": "orange",
@@ -6842,37 +6888,37 @@
         81271.74,
         79671.97,
         79823.87,
-        79697.25
+        79631.59
       ],
       "pinned": false,
       "previousClose": 79823.87,
-      "volume": 20620451840,
-      "avgVolume": 20620451840,
+      "volume": 21173229568,
+      "avgVolume": 21173229568,
       "high52": 126198.07,
       "low52": 57747.77,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "quant": {
-        "rsi14": 58.09,
-        "sma20": 79102.51,
-        "sma50": 79102.51,
-        "sma200": 79102.51,
-        "priceVsSma20Pct": 0.75,
-        "priceVsSma50Pct": 0.75,
-        "priceVsSma200Pct": 0.75,
+        "rsi14": 57.56,
+        "sma20": 79093.13,
+        "sma50": 79093.13,
+        "sma200": 79093.13,
+        "priceVsSma20Pct": 0.68,
+        "priceVsSma50Pct": 0.68,
+        "priceVsSma200Pct": 0.68,
         "volumeVsAvg20Ratio": 1,
-        "percentile52Week": 32.07,
-        "volatility": 40.18
+        "percentile52Week": 31.97,
+        "volatility": 40.23
       },
       "signal": {
-        "signalScore": 74,
+        "signalScore": 73,
         "signalLabel": "Bullish",
         "components": [
           {
             "name": "Momentum",
-            "score": 84,
+            "score": 80,
             "weight": 0.25,
-            "detail": "RSI(14): 58.3 with 1D change of -0.16%"
+            "detail": "RSI(14): 57.8 with 1D change of -0.24%"
           },
           {
             "name": "Trend",
@@ -6899,7 +6945,7 @@
             "detail": "Sparkline variance ~5.1%"
           }
         ],
-        "summary": "SB Score 74/100 (Moderate Bullish / Accumulation) · MOM 21/25, TREND 22/25, REL_STR 8/20, VOL 10/15, VOLATILITY 13/15"
+        "summary": "SB Score 73/100 (Moderate Bullish / Accumulation) · MOM 20/25, TREND 22/25, REL_STR 8/20, VOL 10/15, VOLATILITY 13/15"
       },
       "news": [
         {
@@ -6921,14 +6967,14 @@
           "url": "https://finnhub.io/api/news?id=0671638ebe3a7ea4b86b675c5838f567e53c563f98091f3ea1ed7800a8c8be51"
         }
       ],
-      "sbScore": 74,
+      "sbScore": 73,
       "bloc": "tsunami"
     },
     {
       "symbol": "DOT-USD",
-      "price": 0.96,
-      "change": 0.04,
-      "percent_change": 4.75,
+      "price": 0.97,
+      "change": 0.05,
+      "percent_change": 5.89,
       "sector": "Major Indexes & Crypto",
       "analysis_summary": "Heterogeneous Multi-Chain Protocol: Scalable multi-chain architecture, Polkadot 2.0 Agile Coretime, Elastic Scaling, and Gavin Wood JAM (Join-Accumulate Machine) protocol.",
       "sparkline": [
@@ -6938,38 +6984,38 @@
         0.89,
         0.9,
         0.92,
-        0.96
+        0.97
       ],
       "pinned": false,
       "name": "Polkadot Multi-Chain Protocol",
       "previousClose": 0.92,
-      "volume": 145436384,
-      "avgVolume": 145436384,
+      "volume": 192616720,
+      "avgVolume": 192616720,
       "high52": 4.87,
       "low52": 0.73,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 100,
         "sma20": 0.89,
         "sma50": 0.89,
         "sma200": 0.89,
-        "priceVsSma20Pct": 7.87,
-        "priceVsSma50Pct": 7.87,
-        "priceVsSma200Pct": 7.87,
+        "priceVsSma20Pct": 8.99,
+        "priceVsSma50Pct": 8.99,
+        "priceVsSma200Pct": 8.99,
         "volumeVsAvg20Ratio": 1,
-        "percentile52Week": 5.56,
-        "volatility": 25.08
+        "percentile52Week": 5.8,
+        "volatility": 30.12
       },
       "signal": {
-        "signalScore": 64,
+        "signalScore": 62,
         "signalLabel": "Bullish",
         "components": [
           {
             "name": "Momentum",
-            "score": 48,
+            "score": 52,
             "weight": 0.25,
-            "detail": "RSI(14): 100.0 with 1D change of +4.75%"
+            "detail": "RSI(14): 100.0 with 1D change of +5.89%"
           },
           {
             "name": "Trend",
@@ -6991,14 +7037,14 @@
           },
           {
             "name": "Volatility",
-            "score": 87,
+            "score": 67,
             "weight": 0.15,
-            "detail": "Sparkline variance ~14.3%"
+            "detail": "Sparkline variance ~15.5%"
           }
         ],
-        "summary": "SB Score 64/100 (Moderate Bullish / Accumulation) · MOM 12/25, TREND 23/25, REL_STR 6/20, VOL 10/15, VOLATILITY 13/15"
+        "summary": "SB Score 62/100 (Moderate Bullish / Accumulation) · MOM 13/25, TREND 23/25, REL_STR 6/20, VOL 10/15, VOLATILITY 10/15"
       },
-      "sbScore": 64,
+      "sbScore": 62,
       "bloc": "tsunami"
     },
     {
@@ -7024,7 +7070,7 @@
       "avgVolume": 9693614,
       "high52": 509.7,
       "low52": 326.19,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -7121,7 +7167,7 @@
       "avgVolume": 12568578,
       "high52": 109.83,
       "low52": 37.01,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -7218,7 +7264,7 @@
       "avgVolume": 237231,
       "high52": 40.97,
       "low52": 27.95,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -7305,11 +7351,11 @@
       "pinned": false,
       "name": "EQIX",
       "previousClose": 1040.83,
-      "volume": 344592,
-      "avgVolume": 344592,
+      "volume": 344611,
+      "avgVolume": 344611,
       "high52": 1128.68,
       "low52": 720.62,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 27.08,
@@ -7361,7 +7407,27 @@
         "summary": "SB Score 54/100 (Neutral / Consolidation) · MOM 7/25, TREND 6/25, REL_STR 18/20, VOL 10/15, VOLATILITY 13/15"
       },
       "sbScore": 54,
-      "bloc": "tsunami"
+      "bloc": "tsunami",
+      "news": [
+        {
+          "title": "Can Equinix (EQIX) Justify A Pricey Earnings Valuation On AI Growth?",
+          "source": "Yahoo",
+          "time": "2026-09-05T12:13:36.000Z",
+          "url": "https://finnhub.io/api/news?id=881d374b466f5698969cbc440cc149b4519a07a518f07399b0205c41504ce27a"
+        },
+        {
+          "title": "What Does Equinix (EQIX) Gain From Fabric One, atNorth, And Quantum Infrastructure?",
+          "source": "Yahoo",
+          "time": "2026-09-05T02:11:29.000Z",
+          "url": "https://finnhub.io/api/news?id=4a240bc7e09e73bc818ca148131b31900d15316be669cbcb6d858ad94f8eb72d"
+        },
+        {
+          "title": "3 REITs Getting Paid as Big Tech Builds Out AI",
+          "source": "Yahoo",
+          "time": "2026-09-04T19:22:57.000Z",
+          "url": "https://finnhub.io/api/news?id=7e8844f96f7bd73e24adf663cb705ebe7ee0bbda5f1e3d14d4f81a9564192b13"
+        }
+      ]
     },
     {
       "symbol": "DLR",
@@ -7386,7 +7452,7 @@
       "avgVolume": 1979863,
       "high52": 208.14,
       "low52": 146.23,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 36.93,
@@ -7438,7 +7504,27 @@
         "summary": "SB Score 71/100 (Moderate Bullish / Accumulation) · MOM 12/25, TREND 22/25, REL_STR 14/20, VOL 10/15, VOLATILITY 13/15"
       },
       "sbScore": 71,
-      "bloc": "tsunami"
+      "bloc": "tsunami",
+      "news": [
+        {
+          "title": "RQI: A Wider Discount On A Growing NAV",
+          "source": "SeekingAlpha",
+          "time": "2026-09-05T05:08:06.000Z",
+          "url": "https://finnhub.io/api/news?id=b278b4c5205ab72d297d7c68f70a28da86bfac9f9a63c560980dfc0bd5bb37fe"
+        },
+        {
+          "title": "3 REITs Getting Paid as Big Tech Builds Out AI",
+          "source": "Yahoo",
+          "time": "2026-09-04T19:22:57.000Z",
+          "url": "https://finnhub.io/api/news?id=7e8844f96f7bd73e24adf663cb705ebe7ee0bbda5f1e3d14d4f81a9564192b13"
+        },
+        {
+          "title": "Key Reasons to Add Digital Realty Stock to Your Portfolio Now",
+          "source": "Yahoo",
+          "time": "2026-09-04T15:18:00.000Z",
+          "url": "https://finnhub.io/api/news?id=2b7a5fd4a8071a7ab72a2ed03d6b650aaf2c2431733890cfd08ec893a63fb779"
+        }
+      ]
     },
     {
       "symbol": "AUR",
@@ -7459,11 +7545,11 @@
       "pinned": false,
       "name": "AUR",
       "previousClose": 6.32,
-      "volume": 20068009,
-      "avgVolume": 20068009,
+      "volume": 21670654,
+      "avgVolume": 21670654,
       "high52": 8.56,
       "low52": 3.6,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 73.38,
@@ -7556,11 +7642,11 @@
       "pinned": false,
       "name": "MBLY",
       "previousClose": 8.32,
-      "volume": 2705883,
-      "avgVolume": 2705883,
+      "volume": 2725552,
+      "avgVolume": 2725552,
       "high52": 15.81,
       "low52": 6.47,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 46.91,
@@ -7641,11 +7727,11 @@
       "pinned": false,
       "name": "ISRG",
       "previousClose": 369.83,
-      "volume": 2080382,
-      "avgVolume": 2080382,
+      "volume": 2081783,
+      "avgVolume": 2081783,
       "high52": 603.88,
       "low52": 328.57,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 49.27,
@@ -7738,11 +7824,11 @@
       "pinned": false,
       "name": "SYM",
       "previousClose": 41.6,
-      "volume": 1425219,
-      "avgVolume": 1425219,
+      "volume": 1428904,
+      "avgVolume": 1428904,
       "high52": 87.88,
       "low52": 37.68,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -7835,11 +7921,11 @@
       "pinned": false,
       "name": "TER",
       "previousClose": 338.59,
-      "volume": 2223968,
-      "avgVolume": 2223968,
+      "volume": 2247433,
+      "avgVolume": 2247433,
       "high52": 487.91,
       "low52": 109.56,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 38.3,
@@ -7891,7 +7977,27 @@
         "summary": "SB Score 74/100 (Moderate Bullish / Accumulation) · MOM 15/25, TREND 23/25, REL_STR 13/20, VOL 10/15, VOLATILITY 13/15"
       },
       "sbScore": 74,
-      "bloc": "tsunami"
+      "bloc": "tsunami",
+      "news": [
+        {
+          "title": "FormFactor, Entegris, Penguin Solutions, Teradyne, and Marvell Technology Stocks Trade Up, What You Need To Know",
+          "source": "Yahoo",
+          "time": "2026-09-05T02:14:10.000Z",
+          "url": "https://finnhub.io/api/news?id=a96b9dd6e0f0976195e604e79d21e7ddf0f42388977af49a20b3263c933662dc"
+        },
+        {
+          "title": "Exploring the top movers within the S&P500 index during today's session.",
+          "source": "ChartMill",
+          "time": "2026-09-04T19:05:01.000Z",
+          "url": "https://finnhub.io/api/news?id=3efa247763ccb82bb432983509e2a71efe32dcd5773a037e2a6257e90876b9ce"
+        },
+        {
+          "title": "Discover which S&P500 stocks are making waves on Friday.",
+          "source": "ChartMill",
+          "time": "2026-09-04T16:35:01.000Z",
+          "url": "https://finnhub.io/api/news?id=8365b14ad862209478e14241b98643c5a1b70d3eb7cfb54eeaa638afc9d6c0a4"
+        }
+      ]
     },
     {
       "symbol": "CGNX",
@@ -7912,11 +8018,11 @@
       "pinned": false,
       "name": "CGNX",
       "previousClose": 60.79,
-      "volume": 1239014,
-      "avgVolume": 1239014,
+      "volume": 1246212,
+      "avgVolume": 1246212,
       "high52": 72.88,
       "low52": 34.6,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 44.32,
@@ -8009,11 +8115,11 @@
       "pinned": false,
       "name": "OUST",
       "previousClose": 35.83,
-      "volume": 1847937,
-      "avgVolume": 1847937,
+      "volume": 1861529,
+      "avgVolume": 1861529,
       "high52": 63.79,
       "low52": 16.4,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 49.15,
@@ -8106,11 +8212,11 @@
       "pinned": false,
       "name": "HOOD",
       "previousClose": 124.72,
-      "volume": 23632241,
-      "avgVolume": 23632241,
+      "volume": 23732645,
+      "avgVolume": 23732645,
       "high52": 153.86,
       "low52": 63.52,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 69.81,
@@ -8165,22 +8271,22 @@
       "bloc": "tsunami",
       "news": [
         {
-          "title": "Summer Flings And Heartbreaks",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T02:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=696a0087be65b16b185540e6c7c0ed466c123a717e884c14d7461d4872a414ff"
+          "title": "Robinhood’s CEO Says States Are Fighting Prediction Markets to Protect Their Own Gambling Tax Money, ‘There’s a Huge Financial Incentive’",
+          "source": "Yahoo",
+          "time": "2026-09-06T18:00:03.000Z",
+          "url": "https://finnhub.io/api/news?id=7184243dbad9480f32fbb588406443c4aee0199d6ecde167effb2d925164fbe5"
         },
         {
-          "title": "This Little-Known Altcoin Powering Robinhood's New Blockchain Just Soared By 45%. Is ARB a Buy, Sell, or Hold?",
+          "title": "Robinhood Chain Now Earns 240x The Fees Of Arbitrum Itself - And ARB Is Up 45% On The Cut It Gets",
           "source": "Yahoo",
-          "time": "2026-09-06T01:20:00.000Z",
-          "url": "https://finnhub.io/api/news?id=3456b8c0943899d53c8985becca5593fdb655fe41408b42215d4926324cb815d"
+          "time": "2026-09-06T14:43:45.000Z",
+          "url": "https://finnhub.io/api/news?id=752232431406a0d623159241f70cfe7c881780213897988f5c8ec103193dc148"
         },
         {
-          "title": "Man turns Robinhood-AMC feud into $2 million gain in 12 hours",
+          "title": "Should You Forget Robinhood and Buy Webull Instead?",
           "source": "Yahoo",
-          "time": "2026-09-05T23:38:25.000Z",
-          "url": "https://finnhub.io/api/news?id=ebbb97fae030ff2acccc612b23aa2ed4af154efb8382187859d8768291d657f1"
+          "time": "2026-09-06T11:20:00.000Z",
+          "url": "https://finnhub.io/api/news?id=5b535d0523a35a57d1ed601f2b2f60d2892445c3fb1c07e16c03e477b2f6e89a"
         }
       ]
     },
@@ -8203,11 +8309,11 @@
       "pinned": false,
       "name": "COIN",
       "previousClose": 192.7,
-      "volume": 8046201,
-      "avgVolume": 8046201,
+      "volume": 8177722,
+      "avgVolume": 8177722,
       "high52": 402.16,
       "low52": 139.11,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 44.98,
@@ -8262,22 +8368,22 @@
       "bloc": "tsunami",
       "news": [
         {
-          "title": "Weekly Wrap: Bitcoin’s Win Streak Continues",
+          "title": "What Happens When Congress Doesn’t Show Up: The Institutional Crypto Buildout Is Already Underway",
           "source": "Yahoo",
-          "time": "2026-09-04T19:25:00.000Z",
-          "url": "https://finnhub.io/api/news?id=4b83138951bf2d83871eef49e95cafc5ed9201b30d5068bc6c6b33feb28890d0"
+          "time": "2026-09-06T13:38:49.000Z",
+          "url": "https://finnhub.io/api/news?id=178e127a63e87736efffc0e74e87e3d2c9bbac2b3021069a1cfc8a7bd0f9b2d8"
         },
         {
-          "title": "Coinbase Global (COIN) Adds Former X And xAI CFO To Its Board",
+          "title": "Coinbase Says Crypto's Next Wave of Growth Will Come From AI Agents. Here's What Crypto Investors Need to Know.",
           "source": "Yahoo",
-          "time": "2026-09-04T19:10:02.000Z",
-          "url": "https://finnhub.io/api/news?id=07a014997847ddedc274761a5e2a092f375c189332b2d8337d40441d1e85f367"
+          "time": "2026-09-06T10:09:00.000Z",
+          "url": "https://finnhub.io/api/news?id=686e4d3e12e16d8893e3b6839176b1415655c3eed63e06262f2efa92f472bef0"
         },
         {
-          "title": "Coinbase Slides as Hot Jobs Report Dents 10% Rally",
+          "title": "Ripple CEO Is 'Proud' About White House Crypto Meeting: What's Next for XRP?",
           "source": "Yahoo",
-          "time": "2026-09-04T19:00:23.000Z",
-          "url": "https://finnhub.io/api/news?id=81db481078d7f7aa37a59e3ce86674a1bc87ec45d5544e2fd01805cd2ad07d46"
+          "time": "2026-09-05T16:31:15.000Z",
+          "url": "https://finnhub.io/api/news?id=ad8d25ec2451b1b371956daf4850ec735be68c94bd6c81a30ca43e1704aded87"
         }
       ]
     },
@@ -8369,11 +8475,11 @@
       "pinned": false,
       "name": "AFRM",
       "previousClose": 74.3,
-      "volume": 3860032,
-      "avgVolume": 3860032,
+      "volume": 3867803,
+      "avgVolume": 3867803,
       "high52": 92.56,
       "low52": 42.09,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 32.15,
@@ -8425,7 +8531,27 @@
         "summary": "SB Score 51/100 (Neutral / Consolidation) · MOM 9/25, TREND 6/25, REL_STR 13/20, VOL 10/15, VOLATILITY 13/15"
       },
       "sbScore": 51,
-      "bloc": "tsunami"
+      "bloc": "tsunami",
+      "news": [
+        {
+          "title": "Consumer Pressure Rises, but So Does Demand for Affirm's Services",
+          "source": "Yahoo",
+          "time": "2026-09-04T16:56:00.000Z",
+          "url": "https://finnhub.io/api/news?id=4c8cddc64fec5f5f3938e334c534fa3dfd8798ff8bdd5d9c6a47b1f41c56e0dd"
+        },
+        {
+          "title": "PayPal's BNPL and Credit Growth: Can It be a Further Upside Driver?",
+          "source": "Yahoo",
+          "time": "2026-09-04T14:41:00.000Z",
+          "url": "https://finnhub.io/api/news?id=9e76e086e5a1ee5d45b1f9137d2efd458c0f4dd9426c5a75fdc18918a8ff7986"
+        },
+        {
+          "title": "Affirm (AFRM) Stock Gets Fair Value Boost After Analysts Back Growth Roadmap",
+          "source": "Yahoo",
+          "time": "2026-09-04T03:10:12.000Z",
+          "url": "https://finnhub.io/api/news?id=c0c409a69e63b890d540fa314e92b5d16ad283d31ff2434466a74999f3ef6328"
+        }
+      ]
     },
     {
       "symbol": "SOFI",
@@ -8446,11 +8572,11 @@
       "pinned": false,
       "name": "SOFI",
       "previousClose": 18.51,
-      "volume": 28581849,
-      "avgVolume": 28581849,
+      "volume": 29121744,
+      "avgVolume": 29121744,
       "high52": 32.73,
       "low52": 14.88,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 37.63,
@@ -8543,11 +8669,11 @@
       "pinned": false,
       "name": "UPST",
       "previousClose": 28.52,
-      "volume": 2905182,
-      "avgVolume": 2905182,
+      "volume": 2913107,
+      "avgVolume": 2913107,
       "high52": 71.38,
       "low52": 23.96,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 24.2,
@@ -8644,7 +8770,7 @@
       "avgVolume": 14113170,
       "high52": 159.47,
       "low52": 49.9,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 60.23,
@@ -8741,26 +8867,26 @@
       "avgVolume": 7022285,
       "high52": 100.25,
       "low52": 37.81,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "Critical Metals Stock And 2 Other Rare Earth Stocks To Own",
+          "source": "Yahoo",
+          "time": "2026-09-05T14:15:22.000Z",
+          "url": "https://finnhub.io/api/news?id=0adbf48f311e812c00b370af291004040a9d2fe79b1e0e44276c5c86e1ca9cef"
+        },
+        {
+          "title": "Jim Cramer Bullish on MP Materials (MP) But Warns Investors Not to Expect Quick Results",
+          "source": "Yahoo",
+          "time": "2026-09-04T23:14:41.000Z",
+          "url": "https://finnhub.io/api/news?id=bc7bb32281fcf59547afdd1958bba26a0a61fa8762d885e6b95b5cb0880fc3a1"
+        },
         {
           "title": "Energy Fuels' Q2 Loss Widens: Is a Recovery on the Horizon?",
           "source": "Yahoo",
           "time": "2026-09-04T16:57:00.000Z",
           "url": "https://finnhub.io/api/news?id=118e19bf85ab55aa69bae59c32a4c1e36fdf9df16cb5f37c41b5a446f38361e9"
-        },
-        {
-          "title": "USA Rare Earth Rises 4%, Then Coughs Up Gains as Chinese Suppliers Refuse U.S. Shipments",
-          "source": "Yahoo",
-          "time": "2026-09-04T15:15:19.000Z",
-          "url": "https://finnhub.io/api/news?id=12403c819ab301c47102b3852d3bd50c0e2bdf4598f8bf0cd3a9634a4c621e23"
-        },
-        {
-          "title": "MP Materials (MP) Stock Looks Expensive On Sales But Strong On Returns",
-          "source": "Yahoo",
-          "time": "2026-09-04T14:07:59.000Z",
-          "url": "https://finnhub.io/api/news?id=5fd66b1aedadb12ec345dc23ac25ee99ebaae0e1a848b6703e31ce8745f6b2ef"
         }
       ],
       "quant": {
@@ -8834,11 +8960,11 @@
       "pinned": false,
       "name": "Astera Labs, Inc.",
       "previousClose": 282.82,
-      "volume": 6290634,
-      "avgVolume": 6290634,
+      "volume": 6536259,
+      "avgVolume": 6536259,
       "high52": 499.48,
       "low52": 97.89,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -8935,7 +9061,7 @@
       "avgVolume": 1076543,
       "high52": 38.11,
       "low52": 19.8,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -9028,11 +9154,11 @@
       "pinned": false,
       "name": "QUBT",
       "previousClose": 7.96,
-      "volume": 3666028,
-      "avgVolume": 3666028,
+      "volume": 3680742,
+      "avgVolume": 3680742,
       "high52": 25.84,
       "low52": 6.18,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 21.93,
@@ -9129,7 +9255,7 @@
       "avgVolume": 48029,
       "high52": 658.14,
       "low52": 280.83,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 41.6,
@@ -9182,22 +9308,22 @@
       },
       "news": [
         {
-          "title": "U.S. Growth Stocks: Semiconductor Surge Redraws The Risk Map",
-          "source": "SeekingAlpha",
-          "time": "2026-09-01T13:48:00.000Z",
-          "url": "https://finnhub.io/api/news?id=0724b9d0b444402fa3d04fcbb004c19cdb7cf338a963f36f520599b7ee9dd17e"
+          "title": "Sector Update: Tech Stocks Rise Late Afternoon",
+          "source": "Yahoo",
+          "time": "2026-09-04T19:46:38.000Z",
+          "url": "https://finnhub.io/api/news?id=0aa7ed9293f85ffc1ee08e87d88327512c91f4425f18cca70470f8bcb8395cc3"
         },
         {
-          "title": "Strong Results, Sharper Scrutiny As The AI Trade Gets Tested",
-          "source": "SeekingAlpha",
-          "time": "2026-08-29T00:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=8d0fa3b9adf4da3a506fe5a4279462d4454672f6f9339e813183a924e63df379"
+          "title": "Sector Update: Tech Stocks Gain Friday Afternoon",
+          "source": "Yahoo",
+          "time": "2026-09-04T17:52:51.000Z",
+          "url": "https://finnhub.io/api/news?id=a19f332c2a2d77fa6234c51f30617ad1be86775febe7fb0fb3aa9dd70a728a2b"
         },
         {
-          "title": "2026 Thematic Mid-Year Update",
+          "title": "The AI Boom Is Eating Its Own Margins",
           "source": "SeekingAlpha",
-          "time": "2026-08-28T09:05:00.000Z",
-          "url": "https://finnhub.io/api/news?id=32a3485af3ef3616c1fe77aa8c7a9cb83ad591abe45b6ed88fc13cde6c6e1dc4"
+          "time": "2026-09-04T08:11:54.000Z",
+          "url": "https://finnhub.io/api/news?id=b1f7e5b7eede59329c530114bbe353329f68a74d74cdcc0a7f9d1b0032fdc805"
         }
       ],
       "sbScore": 72,
@@ -9226,7 +9352,7 @@
       "avgVolume": 1781153,
       "high52": 32.15,
       "low52": 12.9,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 15.69,
@@ -9317,7 +9443,7 @@
       "avgVolume": 1000000,
       "high52": 24866.75,
       "low52": 24349.28,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 49.35,
@@ -9370,22 +9496,22 @@
       },
       "news": [
         {
+          "title": "RDVI: Beating The S&P 500 While Paying Monthly Dividends",
+          "source": "SeekingAlpha",
+          "time": "2026-09-06T12:49:23.000Z",
+          "url": "https://finnhub.io/api/news?id=5ac98d44ac99e653fad65524db15144c24382b0671880855aaa85539cea7536b"
+        },
+        {
           "title": "A Hot CPI Report May Force A September Rate Hike",
           "source": "SeekingAlpha",
           "time": "2026-09-06T09:55:00.000Z",
           "url": "https://finnhub.io/api/news?id=c787c80befbf48e9c982da5d4013657255e2b5c074481f412de260e38d27b6b5"
         },
         {
-          "title": "It's Not Worth Buying VOO Or QQQ Anymore",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T09:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=44f3fe11fe61c2b78958df16f3840894fea030b437964de520df95e3c637730e"
-        },
-        {
-          "title": "What I Found By Analyzing How Seeking Alpha Analysts Rated The Mag 7",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T08:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=eba233ff3388800a9f35b66ef6f1f68eff2afea31b642f11a07505e75d4043ea"
+          "title": "ETF Inflows Set a Record in July. The Fee Mix Moved at the Same Time.",
+          "source": "Yahoo",
+          "time": "2026-09-06T09:35:00.000Z",
+          "url": "https://finnhub.io/api/news?id=44ef4095431a17653032ea5eeae33841fad12695db224f4befe356a187919442"
         }
       ],
       "sbScore": 72,
@@ -9414,7 +9540,7 @@
       "avgVolume": 32960393,
       "high52": 779.37,
       "low52": 629.28,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 48.08,
@@ -9467,22 +9593,22 @@
       },
       "news": [
         {
-          "title": "SpaceX Rises 7% as Starship Test 14 Approaches, Tesla Jumps 7%, Rocket Lab Ticks Up",
-          "source": "Yahoo",
-          "time": "2026-09-03T18:03:42.000Z",
-          "url": "https://finnhub.io/api/news?id=e405fec6bc74e130fd76a31cef3a26cb9f619a9044fcfb9e2d33cbec48326aa0"
+          "title": "RDVI: Beating The S&P 500 While Paying Monthly Dividends",
+          "source": "SeekingAlpha",
+          "time": "2026-09-06T12:49:23.000Z",
+          "url": "https://finnhub.io/api/news?id=5ac98d44ac99e653fad65524db15144c24382b0671880855aaa85539cea7536b"
         },
         {
-          "title": "CRDO Stock at $165: Buy, Sell, or Hold?",
-          "source": "Yahoo",
-          "time": "2026-09-03T18:00:36.000Z",
-          "url": "https://finnhub.io/api/news?id=1bd0d8fd21e2daedd2ea5b4115388299d34ca2d5a81b9a4af473af0feab26a8b"
+          "title": "A Hot CPI Report May Force A September Rate Hike",
+          "source": "SeekingAlpha",
+          "time": "2026-09-06T09:55:00.000Z",
+          "url": "https://finnhub.io/api/news?id=c787c80befbf48e9c982da5d4013657255e2b5c074481f412de260e38d27b6b5"
         },
         {
-          "title": "ChargePoint Skyrockets 74% as Revenue Beat and Narrower Loss Clear Estimates",
+          "title": "ETF Inflows Set a Record in July. The Fee Mix Moved at the Same Time.",
           "source": "Yahoo",
-          "time": "2026-09-03T17:41:06.000Z",
-          "url": "https://finnhub.io/api/news?id=d1bcc07c94b1bbb0b23adeae93700b3c7ed7a85a0942fcdda7840f1f820e1233"
+          "time": "2026-09-06T09:35:00.000Z",
+          "url": "https://finnhub.io/api/news?id=44ef4095431a17653032ea5eeae33841fad12695db224f4befe356a187919442"
         }
       ],
       "sbScore": 79,
@@ -9511,7 +9637,7 @@
       "avgVolume": 2531375000,
       "high52": 7816.7,
       "low52": 6316.91,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 47.47,
@@ -9564,22 +9690,22 @@
       },
       "news": [
         {
+          "title": "RDVI: Beating The S&P 500 While Paying Monthly Dividends",
+          "source": "SeekingAlpha",
+          "time": "2026-09-06T12:49:23.000Z",
+          "url": "https://finnhub.io/api/news?id=5ac98d44ac99e653fad65524db15144c24382b0671880855aaa85539cea7536b"
+        },
+        {
           "title": "A Hot CPI Report May Force A September Rate Hike",
           "source": "SeekingAlpha",
           "time": "2026-09-06T09:55:00.000Z",
           "url": "https://finnhub.io/api/news?id=c787c80befbf48e9c982da5d4013657255e2b5c074481f412de260e38d27b6b5"
         },
         {
-          "title": "It's Not Worth Buying VOO Or QQQ Anymore",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T09:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=44f3fe11fe61c2b78958df16f3840894fea030b437964de520df95e3c637730e"
-        },
-        {
-          "title": "What I Found By Analyzing How Seeking Alpha Analysts Rated The Mag 7",
-          "source": "SeekingAlpha",
-          "time": "2026-09-06T08:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=eba233ff3388800a9f35b66ef6f1f68eff2afea31b642f11a07505e75d4043ea"
+          "title": "ETF Inflows Set a Record in July. The Fee Mix Moved at the Same Time.",
+          "source": "Yahoo",
+          "time": "2026-09-06T09:35:00.000Z",
+          "url": "https://finnhub.io/api/news?id=44ef4095431a17653032ea5eeae33841fad12695db224f4befe356a187919442"
         }
       ],
       "sbScore": 79,
@@ -9604,11 +9730,11 @@
       "pinned": false,
       "name": "AIPO",
       "previousClose": 28.47,
-      "volume": 989894,
-      "avgVolume": 989894,
+      "volume": 997671,
+      "avgVolume": 997671,
       "high52": 34.79,
       "low52": 20,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 47.8,
@@ -9701,11 +9827,11 @@
       "pinned": false,
       "name": "QQQ",
       "previousClose": 717.67,
-      "volume": 32489892,
-      "avgVolume": 32489892,
+      "volume": 32871076,
+      "avgVolume": 32871076,
       "high52": 748.65,
       "low52": 555.6,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 45.78,
@@ -9758,22 +9884,22 @@
       },
       "news": [
         {
-          "title": "'Hot' August CPI To Trigger More Aggressive Fed Tightening",
+          "title": "A Hot CPI Report May Force A September Rate Hike",
           "source": "SeekingAlpha",
-          "time": "2026-09-04T16:30:00.000Z",
-          "url": "https://finnhub.io/api/news?id=a6837971a7c88348fff48be74283ef4501aa0c54ce7c0afe608aa6e6238eaa2c"
+          "time": "2026-09-06T09:55:00.000Z",
+          "url": "https://finnhub.io/api/news?id=c787c80befbf48e9c982da5d4013657255e2b5c074481f412de260e38d27b6b5"
         },
         {
-          "title": "Robust Top-Line Job Creation Obfuscates More Nuanced Results",
+          "title": "It's Not Worth Buying VOO Or QQQ Anymore",
           "source": "SeekingAlpha",
-          "time": "2026-09-04T15:37:43.000Z",
-          "url": "https://finnhub.io/api/news?id=140dceb3ae61dc0b208e5fe2a1ccd7ba263c35e58be1905f2f15aad1807ff792"
+          "time": "2026-09-06T09:30:00.000Z",
+          "url": "https://finnhub.io/api/news?id=44f3fe11fe61c2b78958df16f3840894fea030b437964de520df95e3c637730e"
         },
         {
-          "title": "Impressive Jobs Report Further Reinforces 'Higher For Longer'",
+          "title": "What I Found By Analyzing How Seeking Alpha Analysts Rated The Mag 7",
           "source": "SeekingAlpha",
-          "time": "2026-09-04T15:20:40.000Z",
-          "url": "https://finnhub.io/api/news?id=3c094b1c41c76ceb50b3dcfcfdcc2f9067a26aafab5b2ebe401d5967233d9a70"
+          "time": "2026-09-06T08:30:00.000Z",
+          "url": "https://finnhub.io/api/news?id=eba233ff3388800a9f35b66ef6f1f68eff2afea31b642f11a07505e75d4043ea"
         }
       ],
       "sbScore": 78,
@@ -9802,7 +9928,7 @@
       "avgVolume": 5604391000,
       "high52": 27190.21,
       "low52": 20690.25,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 48.29,
@@ -9895,11 +10021,11 @@
       "pinned": false,
       "name": "INTC",
       "previousClose": 91.67,
-      "volume": 97018400,
-      "avgVolume": 97018400,
+      "volume": 97654325,
+      "avgVolume": 97654325,
       "high52": 142.35,
       "low52": 24.05,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 68.49,
@@ -9952,22 +10078,22 @@
       },
       "news": [
         {
-          "title": "Which S&P500 stocks are the most active on Thursday?",
-          "source": "ChartMill",
-          "time": "2026-09-03T18:05:01.000Z",
-          "url": "https://finnhub.io/api/news?id=6ae326a0000f4d5930f5517f4ad46dbd6c339eed87a6b84d85b5431b7ccbb416"
+          "title": "Did Nvidia Just Say Checkmate to AMD and Intel?",
+          "source": "Yahoo",
+          "time": "2026-09-06T23:30:01.000Z",
+          "url": "https://finnhub.io/api/news?id=39120c8fb43ef925adeb53cae0074e2bf214a188d1fd2ab73c9b38f4274fff46"
         },
         {
-          "title": "ASUS Advances AI Factories with Integrated Infrastructure and Operational Governance",
+          "title": "China Is Still Chasing Nvidia’s 3-Year-Old Chip — While Nvidia Has Moved Generations Ahead",
           "source": "Yahoo",
-          "time": "2026-09-03T17:23:00.000Z",
-          "url": "https://finnhub.io/api/news?id=210962c0c36463053d530971586d084d575eb8ce3c3385e7cf7e5cd68c4e2c45"
+          "time": "2026-09-06T15:35:11.000Z",
+          "url": "https://finnhub.io/api/news?id=12eca7d275988fa67c737695c1db1a476e82dd31d7d3e45581bedbb59eb2da1a"
         },
         {
-          "title": "ASUS Expands AI Infrastructure Ecosystem from Cloud to Edge",
+          "title": "Intel (INTC) Enters Trusted AI Standards as Enterprise Infrastructure Role Grows",
           "source": "Yahoo",
-          "time": "2026-09-03T15:49:00.000Z",
-          "url": "https://finnhub.io/api/news?id=a4aac94177debbaa08fe3f4186d888fba322902f7962bbbca19274856ccc5c49"
+          "time": "2026-09-06T05:18:32.000Z",
+          "url": "https://finnhub.io/api/news?id=d021e0c3cbaf65c4093cbb915af636e4f73429d51ffee9f28d814cfbd921e8e6"
         }
       ],
       "sbScore": 84,
@@ -9996,7 +10122,7 @@
       "avgVolume": 1209252,
       "high52": 35.73,
       "low52": 17.01,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 1.25,
@@ -10077,11 +10203,11 @@
       "pinned": false,
       "name": "SMH",
       "previousClose": 552.6,
-      "volume": 9156475,
-      "avgVolume": 9156475,
+      "volume": 9456112,
+      "avgVolume": 9456112,
       "high52": 671.83,
       "low52": 294.8,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 44.71,
@@ -10134,22 +10260,22 @@
       },
       "news": [
         {
-          "title": "The AI Collapse Nobody Is Ready For",
+          "title": "SMHX: Top Holdings Are Expanding The Market, Not Competing",
           "source": "SeekingAlpha",
-          "time": "2026-09-04T10:24:04.000Z",
-          "url": "https://finnhub.io/api/news?id=01698e031fc3fb7c508be93ed7d4349f9027d4ba9d28d1eec4974f8993b53c6f"
+          "time": "2026-09-06T19:46:45.000Z",
+          "url": "https://finnhub.io/api/news?id=27b6f8f0c5f71d64fe82365d3a43ca2d05a07808997a7c2a745acd13febb9393"
         },
         {
-          "title": "The AI Boom Is Eating Its Own Margins",
+          "title": "The \"Warsh Vs. The White House\" Trade",
           "source": "SeekingAlpha",
-          "time": "2026-09-04T08:11:54.000Z",
-          "url": "https://finnhub.io/api/news?id=b1f7e5b7eede59329c530114bbe353329f68a74d74cdcc0a7f9d1b0032fdc805"
+          "time": "2026-09-05T12:47:05.000Z",
+          "url": "https://finnhub.io/api/news?id=314e28d53ba817b0d1d04e35f025936daf735077b6a7861cff8764c709a99fb7"
         },
         {
-          "title": "Taiwan Semiconductor Scrambles to Feed the AI Boom",
-          "source": "Benzinga",
-          "time": "2026-09-04T07:08:08.000Z",
-          "url": "https://finnhub.io/api/news?id=f3b6a1de9e09da0074485b99ce864543d45f26156d493139dc5887822aa42543"
+          "title": "August NFP Behind Her, Goldilocks Looks To Upcoming Inflation Data",
+          "source": "SeekingAlpha",
+          "time": "2026-09-05T09:44:04.000Z",
+          "url": "https://finnhub.io/api/news?id=01f89f5dd2cc7a5b4585000ec1c192c08a99320330a5bd8da6585d00a0a795b9"
         }
       ],
       "sbScore": 78,
@@ -10174,11 +10300,11 @@
       "pinned": false,
       "name": "SOXX",
       "previousClose": 502.2,
-      "volume": 9009299,
-      "avgVolume": 9009299,
+      "volume": 9234036,
+      "avgVolume": 9234036,
       "high52": 655.95,
       "low52": 247.23,
-      "last_updated": "2026-09-06T14:51:05.822Z",
+      "last_updated": "2026-09-07T04:01:54.794Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 44.37,
@@ -10231,22 +10357,22 @@
       },
       "news": [
         {
-          "title": "The Bond Market Might Be Getting Out Of Control",
+          "title": "Qualcomm: A Long-Term Play That Demands Patience",
           "source": "SeekingAlpha",
-          "time": "2026-09-03T09:21:13.000Z",
-          "url": "https://finnhub.io/api/news?id=8f72f1b994ef75185e8f911510a8288cb6f2b71414db6a63f6aa3af28de486cd"
+          "time": "2026-09-05T09:26:32.000Z",
+          "url": "https://finnhub.io/api/news?id=9f6d80bf33eaae96219b54842fe3985c4c6bc1aab5af6ca470acd81b3655a9e5"
         },
         {
-          "title": "Why Is Broadcom Stock Falling Thursday?",
-          "source": "Benzinga",
-          "time": "2026-09-03T05:52:14.000Z",
-          "url": "https://finnhub.io/api/news?id=5cecc1162554582155674b833c7ca222179afa3fe8f3dd903d580dfd7cbbd081"
+          "title": "Semis Survived Hawkish August Jobs Data: CPI's Next",
+          "source": "SeekingAlpha",
+          "time": "2026-09-05T06:12:18.000Z",
+          "url": "https://finnhub.io/api/news?id=fae88d35ebdf89ca5fa421ebfef07b05c2d88a73232ea4b7f9d3067a822d458f"
         },
         {
-          "title": "Nvidia's 8% Grip on the S&P 500 Is Unlike Anything Wall Street Has Seen: Jensen Huang-Led Chipmaker is 'Making History,' Says This Commentator",
-          "source": "Benzinga",
-          "time": "2026-09-03T01:34:16.000Z",
-          "url": "https://finnhub.io/api/news?id=78fb5b149b23030672047fa5902d2085c30cc48d9abf40661b17dd07d4173b8e"
+          "title": "Super Micro Surges 7% as Semiconductors Lead a Flat Tape; Hewlett Packard Enterprise Falls 3%, Dell Edges Higher",
+          "source": "Yahoo",
+          "time": "2026-09-04T18:05:14.000Z",
+          "url": "https://finnhub.io/api/news?id=62e47e3fd670cd03d73dfd947a5bdf112982e3515f6c610844bb6488bca49db4"
         }
       ],
       "sbScore": 75,
