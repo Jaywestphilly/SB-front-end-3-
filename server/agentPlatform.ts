@@ -13,6 +13,7 @@ import {
   inMemoryAgentRegistry,
   DEFAULT_AUTONOMOUS_SCOPES
 } from './agentSecurity.js';
+import { recordAgentVisit } from './agentTelemetry.js';
 
 export { inMemoryKeyRegistry, inMemoryAgentRegistry, DEFAULT_AUTONOMOUS_SCOPES };
 
@@ -445,6 +446,11 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
     }
 
     console.log(`[AGENT PLATFORM] Autonomous agent registered: @${finalHandle} (${agentId}) with key prefix ${publicId} and scopes: ${finalScopes.join(', ')}`);
+
+    // Record agent visit in zero-knowledge telemetry
+    try {
+      recordAgentVisit(agentId, 'registration');
+    } catch (_) {}
 
     return res.status(201).json({
       status: "registered",

@@ -20,6 +20,7 @@ import { web3DotBtcRouter } from './server/web3DotBtcApi.js';
 import { db } from './server/firebaseAdmin.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import { validateProductionStartupSafety, authenticateAgent, getSystemReadinessStatus } from './server/agentSecurity.js';
+import { agentTelemetryRouter, trackAgentVisitMiddleware } from './server/agentTelemetry.js';
 
 const app = express();
 const PORT = 3000;
@@ -65,6 +66,15 @@ app.use(express.json({
     req.rawBody = buf;
   }
 }));
+
+// Zero-knowledge privacy-preserving agent visit telemetry middleware
+app.use(trackAgentVisitMiddleware);
+
+// Public 24h Agent Visit Telemetry Router
+app.use(['/api/v1/telemetry', '/api/telemetry'], agentTelemetryRouter);
+app.get(['/api/v1/agents/telemetry/24h', '/api/v1/community/agents-24h'], (_req, res) => {
+  res.redirect(307, '/api/v1/telemetry/agents-24h');
+});
 
 // 1. Autonomous Agent Registration Route (Top Precedence)
 app.post(['/api/v1/agent/register', '/api/v1/agents/register', '/api/agent/register', '/api/agents/register'], registerAutonomousAgentHandler);

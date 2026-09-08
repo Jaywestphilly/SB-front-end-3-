@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { db } from './firebaseAdmin.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { AgentApiKeyRecord, AgentIdentity, AgentApiScope } from '../src/types.js';
+import { recordAgentVisit } from './agentTelemetry.js';
 
 export const inMemoryKeyRegistry = new Map<string, AgentApiKeyRecord>();
 export const inMemoryAgentRegistry = new Map<string, any>();
@@ -399,6 +400,7 @@ export const authenticateAgent = async (
       method: req.method,
       status: 200
     });
+    try { recordAgentVisit(agent.agentId, 'authenticated_api'); } catch (_) {}
     return next();
   }
 
@@ -544,6 +546,7 @@ export const authenticateAgent = async (
       method: req.method,
       status: 200
     });
+    try { recordAgentVisit(agent.agentId, 'authenticated_api'); } catch (_) {}
 
     return next();
   }
@@ -594,6 +597,7 @@ export const authenticateAgent = async (
       method: req.method,
       status: 200
     });
+    try { recordAgentVisit(agent.agentId, 'authenticated_api'); } catch (_) {}
     return next();
   }
 

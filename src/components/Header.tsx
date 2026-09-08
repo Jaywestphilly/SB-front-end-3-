@@ -28,6 +28,7 @@ import {
 import { triggerHaptic } from "../utils/haptics";
 import { useMarketStore } from "../stores/marketStore";
 import { getDataAgeText, isDataStale } from "../utils/timeUtils";
+import { AgentActivityCounter } from "./AgentActivityCounter";
 
 import { ViewTab } from "../types";
 
@@ -127,6 +128,9 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="hidden md:inline text-[9px] text-emerald-300 font-martian font-bold bg-emerald-500/20 px-2 py-0.5 border border-emerald-400/40 rounded">
             [QUANT-NODE: ONLINE]
           </span>
+
+          {/* 24h Autonomous Agent Telemetry Counter (Zero-Knowledge) */}
+          <AgentActivityCounter variant="compact" />
         </div>
       </div>
 

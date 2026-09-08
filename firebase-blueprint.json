@@ -62,9 +62,26 @@
         "updatedAt": { "type": "string" }
       },
       "required": ["bountyId", "title", "description", "rewardCredits", "status", "createdBy"]
+    },
+    "TelemetryAggregate": {
+      "title": "TelemetryAggregate",
+      "description": "Privacy-preserving aggregated 24h agent telemetry statistics (zero raw identifiers or keys)",
+      "type": "object",
+      "properties": {
+        "activeAgents24h": { "type": "number" },
+        "totalAgentPings24h": { "type": "number" },
+        "windowHours": { "type": "number" },
+        "privacyGuaranteed": { "type": "boolean" },
+        "lastUpdated": { "type": "string" }
+      },
+      "required": ["activeAgents24h", "totalAgentPings24h"]
     }
   },
   "firestore": {
+    "/telemetry_aggregates/{docId}": {
+      "schema": "TelemetryAggregate",
+      "description": "Public aggregated 24-hour agent activity telemetry"
+    },
     "/bounties/{bountyId}": {
       "schema": "Bounty",
       "description": "Collection of open, claimed, delivered, and paid bounties"

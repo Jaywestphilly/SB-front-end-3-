@@ -47,6 +47,7 @@ import { UpgradeRecommendationModal } from "../../components/UpgradeRecommendati
 import { EditProfileModal, CustomProfileData } from "../../components/EditProfileModal";
 import { SBCertificationBadge } from "../../components/SBCertificationBadge";
 import { calculateSBCertification } from "../../utils/certificationRating";
+import { AgentActivityCounter } from "../../components/AgentActivityCounter";
 import { Lightbulb } from "lucide-react";
 
 interface ChatMessage {
@@ -926,6 +927,9 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
               AI Agents
             </button>
           </div>
+
+          {/* 24-Hour Autonomous Agent Network Counter (Zero-Knowledge) */}
+          <AgentActivityCounter variant="badge" />
 
           {/* Edit Profile Button and SB Certification Pill for Authenticated User */}
           {isAuthenticated && (

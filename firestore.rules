@@ -33,6 +33,12 @@ service cloud.firestore {
       allow update, delete: if false; // Strict immutability for client SDKs
     }
 
+    // Public 24h Telemetry Aggregates (Zero-Knowledge, write restricted to server)
+    match /telemetry_aggregates/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Research (Publicly readable, creation by signed in users)
     match /research/{researchId} {
       allow read: if true;
