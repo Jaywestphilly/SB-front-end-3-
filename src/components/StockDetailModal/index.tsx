@@ -167,7 +167,13 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
   const activeStock = stock || displayStock;
 
   // Candlestick Pinch-to-Zoom & Pan & Engine State
-  const [chartMode, setChartMode] = useState<"candle" | "line">("candle"); // 'candle' (TradingView) vs 'line' (Robinhood)
+  const [chartMode, setChartMode] = useState<"candle" | "line">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("stockbloc_modal_chart_style");
+      if (saved === "line" || saved === "candle") return saved;
+    }
+    return "candle";
+  }); // 'candle' (TradingView) vs 'line' (Robinhood)
   const [zoomLevel, setZoomLevel] = useState<number>(1.0); // 1.0x to 5.0x
   const [panOffset, setPanOffset] = useState<number>(0.0); // 0.0 (left) to 1.0 (right)
   const [showSMA, setShowSMA] = useState<boolean>(true); // 50-Day SMA Line Overlay toggle
@@ -1361,6 +1367,20 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
         Math.max(0.0, dragStartPanRef.current + panDelta),
       );
       setPanOffset(Number(newPan.toFixed(3)));
+    } else if (e.touches.length === 1 && zoomLevel <= 1.05 && !isTrendlineActive) {
+      // Continuous touch scrubbing on chart
+      const rect = e.currentTarget.getBoundingClientRect();
+      const relX = (e.touches[0].clientX - rect.left) / rect.width;
+      if (candleOHLCData.length > 0 && relX >= 0 && relX <= 1) {
+        const idx = Math.max(
+          0,
+          Math.min(
+            candleOHLCData.length - 1,
+            Math.round(relX * (candleOHLCData.length - 1)),
+          ),
+        );
+        setHoverIndex(idx);
+      }
     }
   };
 
@@ -1413,6 +1433,20 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
         Math.max(0.0, dragStartPanRef.current + panDelta),
       );
       setPanOffset(Number(newPan.toFixed(3)));
+      return;
+    }
+    // Continuous Scrubbing when moving mouse over stage
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relX = (e.clientX - rect.left) / rect.width;
+    if (candleOHLCData.length > 0 && relX >= 0 && relX <= 1) {
+      const idx = Math.max(
+        0,
+        Math.min(
+          candleOHLCData.length - 1,
+          Math.round(relX * (candleOHLCData.length - 1)),
+        ),
+      );
+      setHoverIndex(idx);
     }
   };
 

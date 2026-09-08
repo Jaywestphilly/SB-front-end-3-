@@ -1059,6 +1059,23 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
       ((rawData[rawData.length - 1] - minVal) / range) *
         (chartHeight - 2 * padY);
 
+    const activeHoverVal =
+      hoveredCandleIdx !== null && rawData[hoveredCandleIdx] !== undefined
+        ? rawData[hoveredCandleIdx]
+        : null;
+    const hoverX =
+      hoveredCandleIdx !== null
+        ? padX +
+          (hoveredCandleIdx / Math.max(1, rawData.length - 1)) *
+            (chartWidth - 2 * padX)
+        : null;
+    const hoverY =
+      hoveredCandleIdx !== null && activeHoverVal !== null
+        ? chartHeight -
+          padY -
+          ((activeHoverVal - minVal) / range) * (chartHeight - 2 * padY)
+        : null;
+
     return (
       <div
         className="relative w-full max-w-[170px] sm:max-w-[240px] md:max-w-[300px] h-[34px] flex items-center justify-center overflow-visible group/sparkline cursor-pointer"
@@ -1067,10 +1084,21 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
           triggerHaptic("selection");
           onSelect(stock);
         }}
+        onMouseLeave={() => setHoveredCandleIdx(null)}
         title={`24H Price Trend • RelVol: ${volatilityOverlay.relVolText} • Tap to open full chart`}
       >
         {/* Dotted 24h Price Baseline */}
         <div className="absolute w-full border-t border-dashed border-cyan-900/50 top-1/2 pointer-events-none z-0" />
+
+        {/* Floating Hover Price Tooltip */}
+        {activeHoverVal !== null && (
+          <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-30 px-2 py-0.5 rounded bg-[#031322]/95 border border-cyan-400/50 shadow-xl backdrop-blur-md text-[8.5px] font-mono whitespace-nowrap pointer-events-none flex items-center gap-1.5 text-white">
+            <span className="font-bold" style={{ color: lineColor }}>
+              ${activeHoverVal.toFixed(2)}
+            </span>
+            <span className="text-white/60 text-[7.5px]">24H</span>
+          </div>
+        )}
 
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
@@ -1088,8 +1116,20 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
               <stop offset="0%" stopColor={lineColor} stopOpacity="0.38" />
               <stop offset="100%" stopColor={lineColor} stopOpacity="0.0" />
             </linearGradient>
-            <filter id={`glow-${stock.symbol}`} x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="0" stdDeviation="1.5" floodColor={lineColor} floodOpacity="0.6" />
+            <filter
+              id={`glow-${stock.symbol}`}
+              x="-20%"
+              y="-20%"
+              width="140%"
+              height="140%"
+            >
+              <feDropShadow
+                dx="0"
+                dy="0"
+                stdDeviation="1.5"
+                floodColor={lineColor}
+                floodOpacity="0.6"
+              />
             </filter>
           </defs>
           <path d={areaD} fill={`url(#sparkGrad-${stock.symbol})`} />
@@ -1102,23 +1142,71 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
             strokeLinejoin="round"
             filter={`url(#glow-${stock.symbol})`}
           />
-          {/* Live Price End-Point Marker */}
-          <circle
-            cx={lastX}
-            cy={lastY}
-            r="2.5"
-            fill={lineColor}
-            className="animate-pulse"
-          />
-          <circle
-            cx={lastX}
-            cy={lastY}
-            r="4.5"
-            fill="none"
-            stroke={lineColor}
-            strokeWidth="0.8"
-            strokeOpacity="0.5"
-          />
+
+          {/* Live Price End-Point Marker when not hovering */}
+          {activeHoverVal === null && (
+            <>
+              <circle
+                cx={lastX}
+                cy={lastY}
+                r="2.5"
+                fill={lineColor}
+                className="animate-pulse"
+              />
+              <circle
+                cx={lastX}
+                cy={lastY}
+                r="4.5"
+                fill="none"
+                stroke={lineColor}
+                strokeWidth="0.8"
+                strokeOpacity="0.5"
+              />
+            </>
+          )}
+
+          {/* Hover Cursor and Snapped Beacon */}
+          {hoverX !== null && hoverY !== null && (
+            <g className="pointer-events-none">
+              <line
+                x1={hoverX}
+                y1={0}
+                x2={hoverX}
+                y2={chartHeight}
+                stroke="rgba(255,255,255,0.4)"
+                strokeDasharray="2 2"
+                strokeWidth="1"
+              />
+              <circle
+                cx={hoverX}
+                cy={hoverY}
+                r="3.5"
+                fill="#ffffff"
+                stroke={lineColor}
+                strokeWidth="2"
+              />
+            </g>
+          )}
+
+          {/* Interactive Scrubbing Columns */}
+          {rawData.map((_, idx) => {
+            const slotW =
+              (chartWidth - 2 * padX) / Math.max(1, rawData.length - 1);
+            const x = padX + idx * slotW;
+            return (
+              <rect
+                key={`scrub-line-${idx}`}
+                x={x - slotW / 2}
+                y={0}
+                width={Math.max(4, slotW)}
+                height={chartHeight}
+                fill="transparent"
+                className="cursor-crosshair"
+                onMouseEnter={() => setHoveredCandleIdx(idx)}
+                onTouchStart={() => setHoveredCandleIdx(idx)}
+              />
+            );
+          })}
         </svg>
       </div>
     );

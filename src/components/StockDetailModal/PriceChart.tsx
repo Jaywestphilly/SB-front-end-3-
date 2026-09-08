@@ -55,6 +55,7 @@ import {
   Newspaper,
   PenTool,
   LineChart,
+  CandlestickChart,
 } from "lucide-react";
 import { triggerHaptic } from "../../utils/haptics";
 import { getInstitutionalDataForStock } from "../../utils/institutionalHelper";
@@ -141,7 +142,7 @@ export const PriceChart = (props: StockDetailSubProps) => {
               <div className="relative bg-[#0b0e17] border border-slate-800 rounded-2xl p-4 overflow-hidden shadow-2xl">
                 {/* Controls Bar: Timeframe & Technical Indicator Toolbar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-slate-800/80 text-xs">
-                  {/* Timeframe Selector & Chart Type Indicator */}
+                  {/* Timeframe Selector & Chart Style (Line 6982 vs Candles 6984) Toggle */}
                   <div className="flex items-center gap-2 flex-wrap">
                     <div className="flex items-center gap-1 bg-[#121624] p-1 rounded-xl border border-slate-800">
                       {(["1D", "1W", "1M", "1Y", "ALL"] as TimeFrame[]).map(
@@ -163,6 +164,47 @@ export const PriceChart = (props: StockDetailSubProps) => {
                           </button>
                         ),
                       )}
+                    </div>
+
+                    {/* Chart Style Switcher: Line (Robinhood 6982) vs Candles (TradingView 6984) */}
+                    <div className="flex items-center gap-1 bg-[#121624] p-1 rounded-xl border border-slate-800">
+                      <button
+                        onClick={() => {
+                          triggerHaptic("selection");
+                          setChartMode("line");
+                          try {
+                            localStorage.setItem("stockbloc_modal_chart_style", "line");
+                          } catch (e) {}
+                        }}
+                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 text-xs font-mono font-bold ${
+                          chartMode === "line"
+                            ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.25)]"
+                            : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                        }`}
+                        title="Sleek Line Chart (Robinhood 6982)"
+                      >
+                        <LineChart className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Line</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          triggerHaptic("selection");
+                          setChartMode("candle");
+                          try {
+                            localStorage.setItem("stockbloc_modal_chart_style", "candle");
+                          } catch (e) {}
+                        }}
+                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 text-xs font-mono font-bold ${
+                          chartMode === "candle"
+                            ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.25)]"
+                            : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                        }`}
+                        title="Japanese Candlestick Chart (TradingView 6984)"
+                      >
+                        <CandlestickChart className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Candles</span>
+                      </button>
                     </div>
                   </div>
 
@@ -340,45 +382,88 @@ export const PriceChart = (props: StockDetailSubProps) => {
                   </div>
                 )}
 
-                {/* TradingView High Density Header HUD */}
+                {/* High Density Header HUD (Dynamic for Line vs Candle) */}
                 <div className="mb-2 p-2 rounded-lg bg-[#0d101b] border border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
                   <div className="flex items-center gap-3 flex-wrap">
                     <span className="text-slate-300 font-bold flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                      <span className="text-slate-400">
-                        {stock.symbol} ({activeCandle.time}):
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          chartMode === "line"
+                            ? isPositive
+                              ? "bg-[#00c805]"
+                              : "bg-[#ff3b30]"
+                            : activeCandle.isUp
+                              ? "bg-emerald-400"
+                              : "bg-rose-400"
+                        } animate-pulse`}
+                      />
+                      <span className="text-slate-200 font-bold">
+                        {stock.symbol}
+                      </span>
+                      <span className="text-slate-400 text-[11px]">
+                        ({hoverIndex !== null ? activeCandle.time : "Latest"}):
                       </span>
                     </span>
-                    <span className="text-slate-400">
-                      O{" "}
-                      <strong className="text-slate-200">
-                        ${activeCandle.open.toFixed(2)}
-                      </strong>
-                    </span>
-                    <span className="text-slate-400">
-                      H{" "}
-                      <strong className="text-emerald-400">
-                        ${activeCandle.high.toFixed(2)}
-                      </strong>
-                    </span>
-                    <span className="text-slate-400">
-                      L{" "}
-                      <strong className="text-rose-400">
-                        ${activeCandle.low.toFixed(2)}
-                      </strong>
-                    </span>
-                    <span className="text-slate-400">
-                      C{" "}
-                      <strong
-                        className={
-                          activeCandle.isUp
-                            ? "text-emerald-400 font-bold"
-                            : "text-rose-400 font-bold"
-                        }
-                      >
-                        ${activeCandle.close.toFixed(2)}
-                      </strong>
-                    </span>
+
+                    {chartMode === "line" ? (
+                      <>
+                        <span className="text-slate-400">
+                          Price{" "}
+                          <strong className="text-white font-bold text-sm font-mono">
+                            ${activeCandle.close.toFixed(2)}
+                          </strong>
+                        </span>
+                        <span className="text-slate-400 border-l border-slate-800 pl-2.5">
+                          Vol{" "}
+                          <strong className="text-cyan-300">
+                            {activeCandle.volume
+                              ? `${(activeCandle.volume / 1000).toFixed(1)}k`
+                              : "Norm"}
+                          </strong>
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-slate-400">
+                          O{" "}
+                          <strong className="text-slate-200">
+                            ${activeCandle.open.toFixed(2)}
+                          </strong>
+                        </span>
+                        <span className="text-slate-400">
+                          H{" "}
+                          <strong className="text-emerald-400">
+                            ${activeCandle.high.toFixed(2)}
+                          </strong>
+                        </span>
+                        <span className="text-slate-400">
+                          L{" "}
+                          <strong className="text-rose-400">
+                            ${activeCandle.low.toFixed(2)}
+                          </strong>
+                        </span>
+                        <span className="text-slate-400">
+                          C{" "}
+                          <strong
+                            className={
+                              activeCandle.isUp
+                                ? "text-emerald-400 font-bold"
+                                : "text-rose-400 font-bold"
+                            }
+                          >
+                            ${activeCandle.close.toFixed(2)}
+                          </strong>
+                        </span>
+                        <span className="text-slate-400 border-l border-slate-800 pl-2">
+                          Vol{" "}
+                          <strong className="text-cyan-300">
+                            {activeCandle.volume
+                              ? `${(activeCandle.volume / 1000).toFixed(1)}k`
+                              : "Norm"}
+                          </strong>
+                        </span>
+                      </>
+                    )}
 
                     {showSMA && activeSma !== undefined && (
                       <span className="text-slate-400 border-l border-slate-800 pl-2.5">
@@ -478,7 +563,7 @@ export const PriceChart = (props: StockDetailSubProps) => {
 
                 {/* Interactive Chart Stage with Pinch-to-Zoom & Pan */}
                 <div
-                  className="relative w-full h-48 select-none touch-none cursor-crosshair overflow-hidden rounded-xl border border-white/10"
+                  className="relative w-full h-64 sm:h-72 md:h-80 select-none touch-none cursor-crosshair overflow-hidden rounded-xl border border-white/10 bg-[#070a12] shadow-inner"
                   style={{ touchAction: "none" }}
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
@@ -796,85 +881,211 @@ export const PriceChart = (props: StockDetailSubProps) => {
                       </g>
                     )}
 
-                    {/* TRADINGVIEW HIGH-TECH SVG CANDLESTICK CHART */}
-                    <g>
-                      {/* Candlesticks */}
-                      {candleOHLCData.map((c, idx) => {
-                        const x = (idx / Math.max(1, candleOHLCData.length - 1)) * plotWidth;
-                        const yOpen = plotBottom - ((c.open - minVal) / valRange) * plotHeight;
-                        const yClose = plotBottom - ((c.close - minVal) / valRange) * plotHeight;
-                        const yHigh = plotBottom - ((c.high - minVal) / valRange) * plotHeight;
-                        const yLow = plotBottom - ((c.low - minVal) / valRange) * plotHeight;
-                        
-                        const isUp = c.close >= c.open;
-                        const color = isUp ? "#10b981" : "#ef4444";
+                    {/* ROBINHOOD SLEEK SVG LINE CHART (6982) */}
+                    {chartMode === "line" && (
+                      <g>
+                        {/* Dotted Reference Baseline */}
+                        {stockBasePrice > 0 && (
+                          <line
+                            x1={0}
+                            y1={
+                              plotBottom -
+                              ((stockBasePrice - minVal) / valRange) *
+                                plotHeight
+                            }
+                            x2={plotWidth}
+                            y2={
+                              plotBottom -
+                              ((stockBasePrice - minVal) / valRange) *
+                                plotHeight
+                            }
+                            stroke="rgba(255, 255, 255, 0.18)"
+                            strokeDasharray="3 3"
+                            strokeWidth="1"
+                          />
+                        )}
 
-                        const rectY = Math.min(yOpen, yClose);
-                        const rectHeight = Math.max(1, Math.abs(yOpen - yClose));
-                        
-                        const pointSpacing = plotWidth / Math.max(1, candleOHLCData.length - 1);
-                        const barW = Math.max(1, pointSpacing * 0.7);
-                        
-                        return (
-                          <g key={`candle-${idx}`}>
-                            {/* Wick */}
-                            <line
-                              x1={x}
-                              y1={yHigh}
-                              x2={x}
-                              y2={yLow}
-                              stroke={color}
-                              strokeWidth={Math.max(1, barW * 0.2)}
+                        {/* Smooth Gradient Fill Under Line */}
+                        {areaPathD && (
+                          <path
+                            d={areaPathD}
+                            fill={
+                              isPositive
+                                ? "url(#rhGradientUp)"
+                                : "url(#rhGradientDown)"
+                            }
+                            className="transition-all duration-200"
+                          />
+                        )}
+
+                        {/* Crisp Glowing Neon Price Line Path */}
+                        {linePathD && (
+                          <path
+                            d={linePathD}
+                            fill="none"
+                            stroke={isPositive ? "#00c805" : "#ff3b30"}
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className={
+                              isPositive
+                                ? "drop-shadow-[0_0_8px_rgba(0,200,5,0.7)]"
+                                : "drop-shadow-[0_0_8px_rgba(255,59,48,0.7)]"
+                            }
+                          />
+                        )}
+
+                        {/* Live Price End-Point Pulse Marker (when not scrubbing) */}
+                        {hoverIndex === null && candleOHLCData.length > 0 && (
+                          <g className="pointer-events-none">
+                            <circle
+                              cx={plotWidth}
+                              cy={
+                                plotBottom -
+                                ((candleOHLCData[candleOHLCData.length - 1].close -
+                                  minVal) /
+                                  valRange) *
+                                  plotHeight
+                              }
+                              r="3.5"
+                              fill={isPositive ? "#00c805" : "#ff3b30"}
                             />
-                            {/* Body */}
-                            <rect
-                              x={x - barW / 2}
-                              y={rectY}
-                              width={barW}
-                              height={rectHeight}
-                              fill={isUp ? color : color}
-                              stroke={color}
-                              strokeWidth={1}
-                              rx={barW > 3 ? 1 : 0}
+                            <circle
+                              cx={plotWidth}
+                              cy={
+                                plotBottom -
+                                ((candleOHLCData[candleOHLCData.length - 1].close -
+                                  minVal) /
+                                  valRange) *
+                                  plotHeight
+                              }
+                              r="7"
+                              fill="none"
+                              stroke={isPositive ? "#00c805" : "#ff3b30"}
+                              strokeWidth="1.2"
+                              strokeOpacity="0.4"
+                              className="animate-ping"
                             />
                           </g>
-                        );
-                      })}
-                      
-                      {/* Live Current Price Horizontal Line */}
-                      {candleOHLCData.length > 0 && (
-                        <line
-                          x1={0}
-                          y1={plotBottom - ((candleOHLCData[candleOHLCData.length - 1].close - minVal) / valRange) * plotHeight}
-                          x2={plotWidth}
-                          y2={plotBottom - ((candleOHLCData[candleOHLCData.length - 1].close - minVal) / valRange) * plotHeight}
-                          stroke={candleOHLCData[candleOHLCData.length - 1].close >= candleOHLCData[candleOHLCData.length - 1].open ? "#10b981" : "#ef4444"}
-                          strokeDasharray="4 4"
-                          strokeWidth="1"
-                          opacity="0.5"
-                        />
-                      )}
-                      
-                      {/* Interactive Scrubbing Columns */}
-                      {candleOHLCData.map((_, idx) => {
-                        const x = (idx / Math.max(1, candleOHLCData.length - 1)) * plotWidth;
-                        const pointSpacing = plotWidth / Math.max(1, candleOHLCData.length - 1);
-                        const rectW = Math.max(4, pointSpacing);
-                        return (
-                          <rect
-                            key={`scrub-col-${idx}`}
-                            x={x - rectW / 2}
-                            y="0"
-                            width={rectW}
-                            height={plotBottom}
-                            fill="transparent"
-                            className="cursor-crosshair"
-                            onMouseEnter={() => setHoverIndex(idx)}
-                            onTouchStart={() => setHoverIndex(idx)}
+                        )}
+                      </g>
+                    )}
+
+                    {/* TRADINGVIEW HIGH-TECH SVG CANDLESTICK CHART (6984) */}
+                    {chartMode === "candle" && (
+                      <g>
+                        {/* Candlesticks */}
+                        {candleOHLCData.map((c, idx) => {
+                          const x =
+                            (idx / Math.max(1, candleOHLCData.length - 1)) *
+                            plotWidth;
+                          const yOpen =
+                            plotBottom -
+                            ((c.open - minVal) / valRange) * plotHeight;
+                          const yClose =
+                            plotBottom -
+                            ((c.close - minVal) / valRange) * plotHeight;
+                          const yHigh =
+                            plotBottom -
+                            ((c.high - minVal) / valRange) * plotHeight;
+                          const yLow =
+                            plotBottom -
+                            ((c.low - minVal) / valRange) * plotHeight;
+
+                          const isUp = c.close >= c.open;
+                          const color = isUp ? "#10b981" : "#ef4444";
+
+                          const rectY = Math.min(yOpen, yClose);
+                          const rectHeight = Math.max(
+                            1.5,
+                            Math.abs(yOpen - yClose),
+                          );
+
+                          const pointSpacing =
+                            plotWidth / Math.max(1, candleOHLCData.length - 1);
+                          const barW = Math.max(1.5, pointSpacing * 0.7);
+
+                          return (
+                            <g key={`candle-${idx}`}>
+                              {/* Wick */}
+                              <line
+                                x1={x}
+                                y1={yHigh}
+                                x2={x}
+                                y2={yLow}
+                                stroke={color}
+                                strokeWidth={Math.max(1, barW * 0.2)}
+                              />
+                              {/* Body */}
+                              <rect
+                                x={x - barW / 2}
+                                y={rectY}
+                                width={barW}
+                                height={rectHeight}
+                                fill={color}
+                                stroke={color}
+                                strokeWidth={1}
+                                rx={barW > 3 ? 1 : 0}
+                              />
+                            </g>
+                          );
+                        })}
+
+                        {/* Live Current Price Horizontal Line */}
+                        {candleOHLCData.length > 0 && (
+                          <line
+                            x1={0}
+                            y1={
+                              plotBottom -
+                              ((candleOHLCData[candleOHLCData.length - 1].close -
+                                minVal) /
+                                valRange) *
+                                plotHeight
+                            }
+                            x2={plotWidth}
+                            y2={
+                              plotBottom -
+                              ((candleOHLCData[candleOHLCData.length - 1].close -
+                                minVal) /
+                                valRange) *
+                                plotHeight
+                            }
+                            stroke={
+                              candleOHLCData[candleOHLCData.length - 1].close >=
+                              candleOHLCData[candleOHLCData.length - 1].open
+                                ? "#10b981"
+                                : "#ef4444"
+                            }
+                            strokeDasharray="4 4"
+                            strokeWidth="1"
+                            opacity="0.5"
                           />
-                        );
-                      })}
-                    </g>
+                        )}
+                      </g>
+                    )}
+
+                    {/* Interactive Scrubbing Columns (both modes) */}
+                    {candleOHLCData.map((_, idx) => {
+                      const x =
+                        (idx / Math.max(1, candleOHLCData.length - 1)) *
+                        plotWidth;
+                      const pointSpacing =
+                        plotWidth / Math.max(1, candleOHLCData.length - 1);
+                      const rectW = Math.max(4, pointSpacing);
+                      return (
+                        <rect
+                          key={`scrub-col-${idx}`}
+                          x={x - rectW / 2}
+                          y="0"
+                          width={rectW}
+                          height={plotBottom}
+                          fill="transparent"
+                          className="cursor-crosshair"
+                          onMouseEnter={() => setHoverIndex(idx)}
+                          onTouchStart={() => setHoverIndex(idx)}
+                        />
+                      );
+                    })}
 
                     {/* Live Current Price Scale Badge */}
                     {activeStock && (
@@ -904,7 +1115,7 @@ export const PriceChart = (props: StockDetailSubProps) => {
                       </g>
                     )}
 
-                    {/* TRADINGVIEW DYNAMIC CROSSHAIR & AXIS MAGNET BADGES */}
+                    {/* DYNAMIC CROSSHAIR & AXIS MAGNET BADGES */}
                     {hoverIndex !== null && activeCandle && (
                       <g className="pointer-events-none">
                         {/* Vertical Crosshair Line */}
@@ -921,28 +1132,77 @@ export const PriceChart = (props: StockDetailSubProps) => {
                             plotWidth
                           }
                           y2={265}
-                          stroke="#38bdf8"
+                          stroke={
+                            chartMode === "line"
+                              ? isPositive
+                                ? "#00c805"
+                                : "#ff3b30"
+                              : "#38bdf8"
+                          }
                           strokeWidth="1.2"
                           strokeDasharray="3 3"
                         />
                         {/* Horizontal Crosshair Line */}
-                        <line
-                          x1="0"
-                          y1={
-                            plotBottom -
-                            ((activeCandle.close - minVal) / valRange) *
-                              plotHeight
-                          }
-                          x2={plotWidth}
-                          y2={
-                            plotBottom -
-                            ((activeCandle.close - minVal) / valRange) *
-                              plotHeight
-                          }
-                          stroke="#38bdf8"
-                          strokeWidth="1.2"
-                          strokeDasharray="3 3"
-                        />
+                        {chartMode === "candle" && (
+                          <line
+                            x1="0"
+                            y1={
+                              plotBottom -
+                              ((activeCandle.close - minVal) / valRange) *
+                                plotHeight
+                            }
+                            x2={plotWidth}
+                            y2={
+                              plotBottom -
+                              ((activeCandle.close - minVal) / valRange) *
+                                plotHeight
+                            }
+                            stroke="#38bdf8"
+                            strokeWidth="1.2"
+                            strokeDasharray="3 3"
+                          />
+                        )}
+
+                        {/* Glowing cursor beacon on line in Line Mode */}
+                        {chartMode === "line" && (
+                          <g>
+                            <circle
+                              cx={
+                                (hoverIndex /
+                                  Math.max(1, candleOHLCData.length - 1)) *
+                                plotWidth
+                              }
+                              cy={
+                                plotBottom -
+                                ((activeCandle.close - minVal) / valRange) *
+                                  plotHeight
+                              }
+                              r="5"
+                              fill="#ffffff"
+                              stroke={isPositive ? "#00c805" : "#ff3b30"}
+                              strokeWidth="2.5"
+                              className="drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]"
+                            />
+                            <circle
+                              cx={
+                                (hoverIndex /
+                                  Math.max(1, candleOHLCData.length - 1)) *
+                                plotWidth
+                              }
+                              cy={
+                                plotBottom -
+                                ((activeCandle.close - minVal) / valRange) *
+                                  plotHeight
+                              }
+                              r="9"
+                              fill="none"
+                              stroke={isPositive ? "#00c805" : "#ff3b30"}
+                              strokeWidth="1.2"
+                              strokeOpacity="0.4"
+                            />
+                          </g>
+                        )}
+
                         {/* Right Y-Axis Hover Price Badge */}
                         <g
                           transform={`translate(${plotWidth + 2}, ${plotBottom - ((activeCandle.close - minVal) / valRange) * plotHeight - 10})`}
@@ -954,7 +1214,13 @@ export const PriceChart = (props: StockDetailSubProps) => {
                             height="20"
                             rx="4"
                             fill="#0f172a"
-                            stroke="#38bdf8"
+                            stroke={
+                              chartMode === "line"
+                                ? isPositive
+                                  ? "#00c805"
+                                  : "#ff3b30"
+                                : "#38bdf8"
+                            }
                             strokeWidth="1.5"
                           />
                           <text
@@ -969,6 +1235,7 @@ export const PriceChart = (props: StockDetailSubProps) => {
                             ${activeCandle.close.toFixed(2)}
                           </text>
                         </g>
+
                         {/* Bottom X-Axis Hover Timestamp Badge */}
                         <g
                           transform={`translate(${Math.max(25, Math.min(plotWidth - 35, (hoverIndex / Math.max(1, candleOHLCData.length - 1)) * plotWidth)) - 30}, 266)`}
@@ -980,14 +1247,26 @@ export const PriceChart = (props: StockDetailSubProps) => {
                             height="14"
                             rx="3"
                             fill="#0f172a"
-                            stroke="#38bdf8"
+                            stroke={
+                              chartMode === "line"
+                                ? isPositive
+                                  ? "#00c805"
+                                  : "#ff3b30"
+                                : "#38bdf8"
+                            }
                             strokeWidth="1"
                           />
                           <text
                             x="30"
                             y="10"
                             textAnchor="middle"
-                            fill="#38bdf8"
+                            fill={
+                              chartMode === "line"
+                                ? isPositive
+                                  ? "#00c805"
+                                  : "#ff3b30"
+                                : "#38bdf8"
+                            }
                             fontSize="8"
                             fontFamily="monospace"
                             fontWeight="bold"

@@ -148,6 +148,17 @@ export const StockHeader = (props: StockDetailSubProps) => {
 
   if (!stock) return null;
 
+  const isHovered = hoverIndex !== null;
+  const currentPrice = isHovered ? hoveredPoint.price : stock.price;
+  const basePrice = stockBasePrice || (stock.price - stock.change);
+  const diff = isHovered ? currentPrice - basePrice : stock.change;
+  const diffPct = isHovered
+    ? basePrice > 0
+      ? (diff / basePrice) * 100
+      : 0
+    : stock.changePercent;
+  const isDiffPositive = diff >= 0;
+
   return (
     <>
       {/* Modal Top Header (Symbol, Name, Actions) */}
@@ -213,28 +224,29 @@ export const StockHeader = (props: StockDetailSubProps) => {
         <div>
           <div className="text-4xl font-black tracking-tight font-mono text-white">
             $
-            {hoveredPoint.price.toLocaleString(undefined, {
+            {currentPrice.toLocaleString(undefined, {
               minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
             })}
           </div>
           <div className="flex items-center gap-2 mt-1">
             <span
-              className={`flex items-center font-bold text-sm ${isPositive ? "text-[#00ff88]" : "text-[#ff3b3b]"}`}
+              className={`flex items-center font-bold text-sm ${isDiffPositive ? "text-[#00c805]" : "text-[#ff3b30]"}`}
             >
-              {isPositive ? (
+              {isDiffPositive ? (
                 <TrendingUp className="w-4 h-4 mr-1" />
               ) : (
                 <TrendingDown className="w-4 h-4 mr-1" />
               )}
-              {isPositive ? "+" : ""}
-              {stock.change.toFixed(2)} (
-              {stock.changePercent.toFixed(2)}%)
+              {isDiffPositive ? "+" : ""}${Math.abs(diff).toFixed(2)} (
+              {isDiffPositive ? "+" : ""}
+              {diffPct.toFixed(2)}%)
             </span>
             <span className="text-xs text-neutral-500 font-medium">
-              Today
+              {isHovered ? "" : timeframe === "1D" ? "Today" : `Past ${timeframe}`}
             </span>
-            {hoverIndex !== null && (
-              <span className="text-xs text-cyan-400 font-mono bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
+            {isHovered && (
+              <span className="text-xs text-cyan-400 font-mono bg-cyan-500/10 px-2.5 py-0.5 rounded-full border border-cyan-500/30">
                 {hoveredPoint.time}
               </span>
             )}
