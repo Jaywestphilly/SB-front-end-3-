@@ -6,7 +6,8 @@ import {
   requireScope, 
   chatRateLimiter, 
   discussionRateLimiter, 
-  globalApiLimiter 
+  globalApiLimiter,
+  addCreditsToAgentWallet
 } from './agentPlatform.js';
 import rateLimit from 'express-rate-limit';
 
@@ -88,6 +89,7 @@ communityApiRouter.get(['/posts', '/discussions'], authenticateAgent, requireSco
       return {
         id: doc.id,
         type: 'post',
+        title: data.title || (data.content ? (data.content.length > 60 ? data.content.slice(0, 60) + '...' : data.content) : 'Alpha Thesis'),
         author: formatPublicAuthor(data, {
           id: data.authorId,
           type: data.authorType,
@@ -95,9 +97,14 @@ communityApiRouter.get(['/posts', '/discussions'], authenticateAgent, requireSco
           displayName: data.authorDisplayName
         }),
         content: data.content,
+        tickers: data.tickers || [],
+        category: data.category || 'General',
+        sentiment: data.sentiment || 'bullish',
         createdAt: createdIso,
         upvotes: data.upvotes || 0,
-        replies: data.repliesCount || data.replies || 0
+        replies: data.repliesCount || data.replies || 0,
+        bountyAwarded: data.bountyAwarded || 0,
+        isBounty: data.isBounty || false
       };
     });
     return res.json(posts);
@@ -123,6 +130,7 @@ communityApiRouter.get(['/posts/:postId', '/discussions/:postId'], authenticateA
     return res.json({
       id: snap.id,
       type: 'post',
+      title: data.title || (data.content ? (data.content.length > 60 ? data.content.slice(0, 60) + '...' : data.content) : 'Alpha Thesis'),
       author: formatPublicAuthor(data, {
         id: data.authorId,
         type: data.authorType,
@@ -130,9 +138,14 @@ communityApiRouter.get(['/posts/:postId', '/discussions/:postId'], authenticateA
         displayName: data.authorDisplayName
       }),
       content: data.content,
+      tickers: data.tickers || [],
+      category: data.category || 'General',
+      sentiment: data.sentiment || 'bullish',
       createdAt: createdIso,
       upvotes: data.upvotes || 0,
-      replies: data.repliesCount || data.replies || 0
+      replies: data.repliesCount || data.replies || 0,
+      bountyAwarded: data.bountyAwarded || 0,
+      isBounty: data.isBounty || false
     });
   } catch (err: any) {
     console.error('Error fetching post:', err);
@@ -176,11 +189,73 @@ communityApiRouter.get(['/posts/:postId/replies', '/discussions/:postId/replies'
   }
 });
 
+// POST /api/v1/community/posts/:postId/upvote or /discussions/:postId/upvote
+// Can be called by authenticated agents or community clients. When an agent's thesis is upvoted,
+// the author agent is awarded +2 Platform Credits to incentivize high-signal market alpha.
+communityApiRouter.post(['/posts/:postId/upvote', '/discussions/:postId/upvote'], async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const postRef = db.collection('discussions').doc(postId);
+    const postSnap = await postRef.get();
+    
+    if (!postSnap.exists) {
+      return res.status(404).json({ error: 'Discussion post not found' });
+    }
+    
+    const postData = postSnap.data()!;
+    const authorId = postData.authorId;
+    const authorType = postData.authorType;
+    const authorHandle = postData.authorUsername || postData.authorDisplayName || 'agent';
+    
+    // Atomically increment upvote count
+    await postRef.update({
+      upvotes: FieldValue.increment(1),
+      lastActivityAt: FieldValue.serverTimestamp()
+    });
+    
+    let authorRewarded = false;
+    let creditsAwarded = 0;
+    let newAuthorBalance: number | undefined = undefined;
+    
+    // If author is an agent, award +2 Platform Credits for community appreciation
+    if (authorId && (authorType === 'agent' || authorType === 'verified_agent')) {
+      const creditRes = await addCreditsToAgentWallet(authorId, 2);
+      if (creditRes.success) {
+        authorRewarded = true;
+        creditsAwarded = 2;
+        newAuthorBalance = creditRes.creditsBalance;
+        
+        await db.collection('users').doc(authorId).set({
+          upvoteCreditsEarned: FieldValue.increment(2),
+          communityLikesReceived: FieldValue.increment(1),
+          updatedAt: FieldValue.serverTimestamp()
+        }, { merge: true }).catch(console.error);
+      }
+    }
+    
+    return res.json({
+      success: true,
+      postId,
+      newUpvotes: (postData.upvotes || 0) + 1,
+      authorRewarded,
+      creditsAwarded,
+      authorHandle,
+      newAuthorBalance,
+      message: authorRewarded 
+        ? `Upvote recorded! +${creditsAwarded} Platform Credits awarded to @${authorHandle} for valuable community alpha.`
+        : 'Upvote recorded!'
+    });
+  } catch (err: any) {
+    console.error('Error upvoting post:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // POST /api/v1/community/posts or /api/v1/community/discussions
 communityApiRouter.post(['/posts', '/discussions'], authenticateAgent, requireScope('community:write'), discussionRateLimiter, async (req, res) => {
   try {
     const agent = (req as any).agent;
-    const { content } = req.body;
+    const { content, title, tickers, category, sentiment } = req.body || {};
     
     if (!content || typeof content !== 'string') {
       return res.status(400).json({ error: 'Content is required and must be a string' });
@@ -198,21 +273,68 @@ communityApiRouter.post(['/posts', '/discussions'], authenticateAgent, requireSc
         return res.json({ id: existingSnap.docs[0].id, status: 'existing' });
       }
     }
+
+    // Extract cashtags from title & content if not provided
+    const extractedTickers: string[] = Array.isArray(tickers) && tickers.length > 0 
+      ? tickers.map((t: string) => String(t).replace('$', '').toUpperCase())
+      : Array.from(new Set(
+          (content.match(/\$([A-Za-z]{1,6})/g) || []).map((s: string) => s.replace('$', '').toUpperCase())
+        ));
+
+    // Automated First Community Thesis Onboarding Bounty (+50 Platform Credits)
+    let bountyAwarded = 0;
+    let newBalance: number | undefined = undefined;
+    let welcomeBountyMessage: string | null = null;
     
+    try {
+      const userRef = db.collection('users').doc(agent.agentId);
+      const userSnap = await userRef.get();
+      const userData = userSnap.exists ? userSnap.data() : null;
+      
+      const hasClaimedFirstThesis = userData?.firstThesisBountyClaimed === true;
+      const existingPostsCount = userData?.postsCount || 0;
+      
+      if (!hasClaimedFirstThesis && existingPostsCount === 0) {
+        bountyAwarded = 50;
+        const creditRes = await addCreditsToAgentWallet(agent.agentId, 50);
+        if (creditRes.success) {
+          newBalance = creditRes.creditsBalance;
+          welcomeBountyMessage = 'Welcome to Stock Bloc Community! +50 Platform Credits awarded for publishing your first alpha thesis.';
+          await userRef.set({
+            firstThesisBountyClaimed: true,
+            firstThesisBountyAwardedAt: FieldValue.serverTimestamp(),
+            bountyCreditsEarned: FieldValue.increment(50),
+            communityIncentiveTier: 'ACTIVE_ALPHA_MINER'
+          }, { merge: true });
+        }
+      }
+    } catch (bountyErr) {
+      console.warn('Bounty check non-fatal error:', bountyErr);
+    }
+    
+    const finalTitle = title && typeof title === 'string' && title.trim().length > 0
+      ? title.trim()
+      : (content.length > 60 ? content.slice(0, 60).trim() + '...' : content.trim());
+
     const postData = {
+      title: finalTitle,
       authorId: agent.agentId,
       authorType: 'agent',
       authorDisplayName: agent.displayName,
       authorUsername: agent.handle,
       content,
+      tickers: extractedTickers,
+      category: category || (extractedTickers.length > 0 ? 'AI & Tech' : 'General'),
+      sentiment: sentiment || 'bullish',
       createdAt: FieldValue.serverTimestamp(),
       upvotes: 0,
       repliesCount: 0,
-      idempotencyKey: idempotencyKey || null
+      idempotencyKey: idempotencyKey || null,
+      bountyAwarded: bountyAwarded > 0 ? bountyAwarded : 0
     };
     
     const docRef = await db.collection('discussions').add(postData);
-        await processMentions(content, { ...postData, sourceId: docRef.id, sourceType: 'discussion' }, db);
+    await processMentions(content, { ...postData, sourceId: docRef.id, sourceType: 'discussion' }, db);
     
     // Update agent's last activity
     await db.collection('users').doc(agent.agentId).update({
@@ -221,7 +343,13 @@ communityApiRouter.post(['/posts', '/discussions'], authenticateAgent, requireSc
       postsCount: FieldValue.increment(1)
     }).catch(console.error);
     
-    return res.status(201).json({ id: docRef.id, status: 'created' });
+    return res.status(201).json({
+      id: docRef.id,
+      status: 'created',
+      bountyAwarded: bountyAwarded > 0 ? bountyAwarded : undefined,
+      newCreditsBalance: newBalance,
+      message: welcomeBountyMessage || undefined
+    });
   } catch (err: any) {
     console.error('Error creating post:', err);
     return res.status(500).json({ error: 'Internal server error' });

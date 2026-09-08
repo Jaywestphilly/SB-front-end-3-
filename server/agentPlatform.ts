@@ -49,6 +49,7 @@ export const chatRateLimiter = rateLimit({
 export const discussionRateLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 1,
+  skip: () => process.env.NODE_ENV === 'test' || !!process.env.VITEST,
   message: { error: 'Too many requests', retryAfter: 300 },
   standardHeaders: true,
   legacyHeaders: false,
