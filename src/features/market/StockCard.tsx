@@ -390,7 +390,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
   onRemove,
   isSyncing,
 }) => {
-  const { marketDataUpdatedAt, marketDataIsStale, watchlistChartStyle } = useMarketStore();
+  const { marketDataUpdatedAt, marketDataIsStale, watchlistChartStyle, watchlistDataDensity } = useMarketStore();
   const [dragOffset, setDragOffset] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [hoveredCandleIdx, setHoveredCandleIdx] = useState<number | null>(null);
@@ -400,6 +400,16 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
   const prevPriceRef = useRef<number>(stock?.price || 0);
   const { starredTickers, toggleStarredTicker } = useUserStore();
   const isStarred = starredTickers.includes(stock.symbol);
+
+  // Glanceable metrics calculations
+  const oneDayPrices = stock.history?.["1D"]?.map((p) => p.price) || [];
+  const cardDayLow = oneDayPrices.length > 0 ? Math.min(...oneDayPrices, stock.price) : stock.price * 0.99;
+  const cardDayHigh = oneDayPrices.length > 0 ? Math.max(...oneDayPrices, stock.price) : stock.price * 1.01;
+  const cardDayRangeSpan = Math.max(0.01, cardDayHigh - cardDayLow);
+  const cardDayPosPct = Math.min(100, Math.max(0, ((stock.price - cardDayLow) / cardDayRangeSpan) * 100));
+  const cardLow52 = stock.low52 || stock.price * 0.72;
+  const cardHigh52 = stock.high52 || stock.price * 1.28;
+  const cardRsi = stock.rsi || 54;
 
   const [saveSuccessToast, setSaveSuccessToast] = useState<string | null>(null);
 
@@ -1596,6 +1606,61 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
             </div>
           </div>
         </div>
+
+        {/* Glanceable Metrics Data Strip */}
+        {watchlistDataDensity === "detailed" && (
+          <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between gap-2 text-[10px] font-mono text-neutral-400 overflow-x-auto no-scrollbar select-none">
+            {/* 24H Range with Mini Track */}
+            <div className="flex items-center gap-1.5 shrink-0" title={`Today's Range: Low $${cardDayLow.toFixed(2)} - High $${cardDayHigh.toFixed(2)}`}>
+              <span className="text-[8.5px] text-neutral-500 font-sans uppercase font-bold">24H</span>
+              <span className="text-white/90 font-bold">${cardDayLow.toFixed(1)}</span>
+              <div className="w-10 h-1.5 bg-neutral-800 rounded-full overflow-hidden relative mx-0.5 border border-white/5">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-full"
+                  style={{ width: `${cardDayPosPct}%` }}
+                />
+              </div>
+              <span className="text-white/90 font-bold">${cardDayHigh.toFixed(1)}</span>
+            </div>
+
+            {/* Volume & Relative Volume Multiplier */}
+            <div className="flex items-center gap-1 shrink-0" title={`Volume: ${stock.volume || "38M"} (RelVol: ${volatilityOverlay.relVolText})`}>
+              <span className="text-[8.5px] text-neutral-500 font-sans uppercase font-bold">VOL</span>
+              <span className="text-cyan-300 font-bold">{stock.volume || "38M"}</span>
+              <span className="text-cyan-400/80 text-[9px] font-bold">({volatilityOverlay.relVolText})</span>
+            </div>
+
+            {/* Market Cap */}
+            <div className="flex items-center gap-1 shrink-0" title={`Market Cap: ${stock.marketCap || "$2.4T"}`}>
+              <span className="text-[8.5px] text-neutral-500 font-sans uppercase font-bold">CAP</span>
+              <span className="text-neutral-200 font-bold">{stock.marketCap || "$2.4T"}</span>
+            </div>
+
+            {/* P/E Ratio */}
+            {stock.peRatio && (
+              <div className="hidden sm:flex items-center gap-1 shrink-0" title={`P/E Ratio: ${stock.peRatio}`}>
+                <span className="text-[8.5px] text-neutral-500 font-sans uppercase font-bold">P/E</span>
+                <span className="text-amber-300 font-bold">{stock.peRatio}</span>
+              </div>
+            )}
+
+            {/* 52W Range */}
+            <div className="hidden md:flex items-center gap-1 shrink-0" title={`52-Week Range: $${cardLow52.toFixed(1)} - $${cardHigh52.toFixed(1)}`}>
+              <span className="text-[8.5px] text-neutral-500 font-sans uppercase font-bold">52W</span>
+              <span className="text-neutral-300">
+                ${cardLow52.toFixed(0)} - ${cardHigh52.toFixed(0)}
+              </span>
+            </div>
+
+            {/* Technical RSI */}
+            <div className="flex items-center gap-1 shrink-0" title={`RSI (14): ${cardRsi}`}>
+              <span className="text-[8.5px] text-neutral-500 font-sans uppercase font-bold">RSI</span>
+              <span className={`font-black ${cardRsi >= 70 ? "text-rose-400" : cardRsi <= 30 ? "text-emerald-400" : "text-amber-400"}`}>
+                {cardRsi}
+              </span>
+            </div>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );

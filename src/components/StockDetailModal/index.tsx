@@ -63,6 +63,7 @@ import { getInstitutionalDataForStock } from "../../utils/institutionalHelper";
 import { StockHeader } from "./StockHeader";
 import { TradeSimulator } from "./TradeSimulator";
 import { PriceChart } from "./PriceChart";
+import { GlanceableStatsGrid } from "./GlanceableStatsGrid";
 import { FinancialMetrics } from "./FinancialMetrics";
 import { NewsPanel } from "./NewsPanel";
 import { InstitutionalData } from "./InstitutionalData";
@@ -1920,20 +1921,24 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
             }}
           >
             <StockHeader {...propsToPass} />
-            <div className="p-6 space-y-6 overflow-y-auto">
-                <NewsPanel {...propsToPass} />
-                <TradeScreenerPanel stock={stock} />
-                <div className="flex flex-col lg:flex-row gap-6">
-                  <div className="flex-1 space-y-6">
-                    <TradeSimulator {...propsToPass} />
-                    <PriceChart {...propsToPass} />
-                    <FinancialMetrics {...propsToPass} />
-                  </div>
-                  <div className="w-full lg:w-[400px] space-y-6 shrink-0">
-                    <InstitutionalData {...propsToPass} />
-                    <OptionsPanel {...propsToPass} />
-                  </div>
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto">
+              {/* PRIMARY FOCUS: Chart & Glanceable Data Points right at the top */}
+              <PriceChart {...propsToPass} />
+              <GlanceableStatsGrid stock={stock} />
+
+              {/* Trading Tools, Screener & Financials */}
+              <div className="flex flex-col lg:flex-row gap-6">
+                <div className="flex-1 space-y-6">
+                  <TradeSimulator {...propsToPass} />
+                  <TradeScreenerPanel stock={stock} />
+                  <FinancialMetrics {...propsToPass} />
                 </div>
+                <div className="w-full lg:w-[400px] space-y-6 shrink-0">
+                  <InstitutionalData {...propsToPass} />
+                  <OptionsPanel {...propsToPass} />
+                  <NewsPanel {...propsToPass} />
+                </div>
+              </div>
             </div>
           </motion.div>
         </motion.div>

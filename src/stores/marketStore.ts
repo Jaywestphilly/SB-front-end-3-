@@ -26,6 +26,8 @@ interface MarketState {
   setSelectedStock: (stock: StockTicker | null) => void;
   watchlistChartStyle: "candlestick" | "line";
   setWatchlistChartStyle: (style: "candlestick" | "line") => void;
+  watchlistDataDensity: "detailed" | "compact";
+  setWatchlistDataDensity: (density: "detailed" | "compact") => void;
 }
 
 export const useMarketStore = create<MarketState>((set) => ({
@@ -55,5 +57,12 @@ export const useMarketStore = create<MarketState>((set) => ({
       localStorage.setItem("stockbloc_watchlist_chart_style", watchlistChartStyle);
     }
     set({ watchlistChartStyle });
+  },
+  watchlistDataDensity: (typeof window !== "undefined" && (localStorage.getItem("stockbloc_watchlist_density") as "detailed" | "compact")) || "detailed",
+  setWatchlistDataDensity: (watchlistDataDensity) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("stockbloc_watchlist_density", watchlistDataDensity);
+    }
+    set({ watchlistDataDensity });
   },
 }));
