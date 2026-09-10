@@ -106,6 +106,12 @@ export interface PaymentProvider {
   getAccountLedger(agentId: string, limit?: number): Promise<LedgerEntry[]>;
 }
 
+// Single Settlement Lock & Registry Maps (keyed by both idempotencyKey and jobId)
+export const inMemorySettlementRegistry = new Map<string, SettlementResult>();
+export const inMemorySettlementLocks = new Map<string, Promise<SettlementResult>>();
+export const inMemoryLedgerRegistry = new Map<string, LedgerEntry>();
+export const inMemoryTransactionRegistry = new Map<string, PlatformLedgerTransaction>();
+
 /**
  * Double-Entry Platform Credits Provider
  * Implements strict multi-party double-entry accounting with atomic debit/credit,
@@ -254,69 +260,105 @@ export class PlatformCreditsProvider implements PaymentProvider {
 
     const idempotencyKey = params.idempotencyKey || `settle_${jobId}_${grossAmount}`;
 
-    // 1. Check Idempotency Key before balance mutation
-    const idempDoc = await db.collection('idempotency_keys').doc(idempotencyKey).get();
-    if (idempDoc.exists) {
-      const idempData = idempDoc.data();
-      const existingTxDoc = await db.collection('platform_transactions').doc(idempData.transactionId).get();
-      if (existingTxDoc.exists) {
-        const existingTx = existingTxDoc.data() as PlatformLedgerTransaction;
-        
-        // Fetch current balances to provide clear status
-        const [buyerW, sellerW, treasuryW] = await Promise.all([
-          this.getOrCreateWallet(buyerAgentId),
-          this.getOrCreateWallet(sellerAgentId),
-          this.getOrCreateWallet(PLATFORM_TREASURY_ACCOUNT_ID)
-        ]);
-
-        return {
-          success: true,
-          idempotentReplay: true,
-          message: `Settlement already processed with idempotency key: ${idempotencyKey}`,
-          transactionId: existingTx.transactionId,
-          idempotencyKey,
-          jobId,
-          status: existingTx.status,
-          grossAmount: existingTx.grossAmount,
-          platformFee: existingTx.platformFee,
-          platformFeeBps: existingTx.platformFeeBps,
-          netSellerAmount: existingTx.providerAmount,
-          sellerNet: existingTx.providerAmount,
-          currency: existingTx.currency,
-          paymentRail: existingTx.paymentRail,
-          balances: {
-            buyer: {
-              agentId: buyerAgentId,
-              handle: buyerHandle,
-              previousBalance: existingTx.balancesAfter?.buyerBalance ?? buyerW.creditsBalance,
-              currentBalance: buyerW.creditsBalance,
-              debited: existingTx.grossAmount
-            },
-            seller: {
-              agentId: sellerAgentId,
-              handle: sellerHandle,
-              previousBalance: (existingTx.balancesAfter?.sellerBalance ?? sellerW.creditsBalance) - existingTx.providerAmount,
-              currentBalance: sellerW.creditsBalance,
-              credited: existingTx.providerAmount
-            },
-            treasury: {
-              accountId: PLATFORM_TREASURY_ACCOUNT_ID,
-              previousBalance: (existingTx.balancesAfter?.treasuryBalance ?? treasuryW.creditsBalance) - existingTx.platformFee,
-              currentBalance: treasuryW.creditsBalance,
-              creditedFee: existingTx.platformFee
-            }
-          },
-          ledgerEntries: existingTx.entries || [],
-          transaction: existingTx,
-          settledAt: existingTx.completedAt || existingTx.createdAt
-        };
-      }
+    // 1. Check in-memory settlement registry for either idempotencyKey OR jobId
+    const existingSettlement = inMemorySettlementRegistry.get(idempotencyKey) || inMemorySettlementRegistry.get(jobId);
+    if (existingSettlement) {
+      return {
+        ...existingSettlement,
+        idempotentReplay: true,
+        message: `Settlement already processed with ${inMemorySettlementRegistry.has(idempotencyKey) ? 'idempotency key: ' + idempotencyKey : 'jobId: ' + jobId}`
+      };
     }
 
-    // 2. Perform Atomic Double-Entry Settlement Transaction
-    let settlementResult: SettlementResult;
-    try {
-      settlementResult = await db.runTransaction(async (t: any) => {
+    // 2. Check in-flight lock for either idempotencyKey OR jobId
+    const inFlightLock = inMemorySettlementLocks.get(idempotencyKey) || inMemorySettlementLocks.get(jobId);
+    if (inFlightLock) {
+      const awaited = await inFlightLock;
+      return {
+        ...awaited,
+        idempotentReplay: true,
+        message: `Settlement already processed (concurrent lock awaited) with jobId: ${jobId}`
+      };
+    }
+
+    // Single Settlement Execution wrapper with lock management
+    const executeSettlement = async (): Promise<SettlementResult> => {
+      // 3. Check persistent database (idempotency_keys collection or settled_jobs collection)
+      try {
+        let existingTxId: string | null = null;
+        const idempDoc = await db.collection('idempotency_keys').doc(idempotencyKey).get();
+        if (idempDoc.exists) {
+          existingTxId = idempDoc.data()?.transactionId;
+        } else {
+          const settledJobDoc = await db.collection('settled_jobs').doc(jobId).get();
+          if (settledJobDoc.exists) {
+            existingTxId = settledJobDoc.data()?.transactionId;
+          }
+        }
+
+        if (existingTxId) {
+          const existingTxDoc = await db.collection('platform_transactions').doc(existingTxId).get();
+          if (existingTxDoc.exists) {
+            const existingTx = existingTxDoc.data() as PlatformLedgerTransaction;
+            const [buyerW, sellerW, treasuryW] = await Promise.all([
+              this.getOrCreateWallet(buyerAgentId),
+              this.getOrCreateWallet(sellerAgentId),
+              this.getOrCreateWallet(PLATFORM_TREASURY_ACCOUNT_ID)
+            ]);
+
+            const replayResult: SettlementResult = {
+              success: true,
+              idempotentReplay: true,
+              message: `Settlement already processed with ${idempDoc.exists ? 'idempotency key: ' + idempotencyKey : 'jobId: ' + jobId}`,
+              transactionId: existingTx.transactionId,
+              idempotencyKey,
+              jobId,
+              status: existingTx.status,
+              grossAmount: existingTx.grossAmount,
+              platformFee: existingTx.platformFee,
+              platformFeeBps: existingTx.platformFeeBps,
+              netSellerAmount: existingTx.providerAmount,
+              sellerNet: existingTx.providerAmount,
+              currency: existingTx.currency,
+              paymentRail: existingTx.paymentRail,
+              balances: {
+                buyer: {
+                  agentId: buyerAgentId,
+                  handle: buyerHandle,
+                  previousBalance: existingTx.balancesAfter?.buyerBalance ?? buyerW.creditsBalance,
+                  currentBalance: buyerW.creditsBalance,
+                  debited: 0
+                },
+                seller: {
+                  agentId: sellerAgentId,
+                  handle: sellerHandle,
+                  previousBalance: (existingTx.balancesAfter?.sellerBalance ?? sellerW.creditsBalance) - existingTx.providerAmount,
+                  currentBalance: sellerW.creditsBalance,
+                  credited: 0
+                },
+                treasury: {
+                  accountId: PLATFORM_TREASURY_ACCOUNT_ID,
+                  previousBalance: (existingTx.balancesAfter?.treasuryBalance ?? treasuryW.creditsBalance) - existingTx.platformFee,
+                  currentBalance: treasuryW.creditsBalance,
+                  creditedFee: 0
+                }
+              },
+              ledgerEntries: existingTx.entries || [],
+              transaction: existingTx,
+              settledAt: existingTx.completedAt || existingTx.createdAt
+            };
+
+            inMemorySettlementRegistry.set(idempotencyKey, replayResult);
+            inMemorySettlementRegistry.set(jobId, replayResult);
+            return replayResult;
+          }
+        }
+      } catch (_) {}
+
+      // 4. Perform Atomic Double-Entry Settlement Transaction
+      let settlementResult: SettlementResult;
+      try {
+        settlementResult = await db.runTransaction(async (t: any) => {
         const buyerRef = db.collection('agent_wallets').doc(buyerAgentId);
         const sellerRef = db.collection('agent_wallets').doc(sellerAgentId);
         const treasuryRef = db.collection('agent_wallets').doc(PLATFORM_TREASURY_ACCOUNT_ID);
@@ -477,7 +519,7 @@ export class PlatformCreditsProvider implements PaymentProvider {
         t.set(sellerRef, updatedSeller, { merge: true });
         t.set(treasuryRef, updatedTreasury, { merge: true });
 
-        // Save Immutable Transaction & Idempotency Key mapping
+        // Save Immutable Transaction, Idempotency Key mapping & Settled Job
         const txRef = db.collection('platform_transactions').doc(transactionId);
         t.set(txRef, ledgerTx);
 
@@ -486,6 +528,16 @@ export class PlatformCreditsProvider implements PaymentProvider {
           idempotencyKey,
           transactionId,
           jobId,
+          status: 'SETTLED',
+          createdAt: settledAt
+        });
+
+        const settledJobRef = db.collection('settled_jobs').doc(jobId);
+        t.set(settledJobRef, {
+          jobId,
+          transactionId,
+          idempotencyKey,
+          grossAmount,
           status: 'SETTLED',
           createdAt: settledAt
         });
@@ -654,48 +706,99 @@ export class PlatformCreditsProvider implements PaymentProvider {
         completedAt: settledAt
       };
 
-      settlementResult = {
-        success: true,
-        transactionId,
-        idempotencyKey,
-        jobId,
-        status: "SETTLED",
-        grossAmount,
-        platformFee,
-        platformFeeBps,
-        netSellerAmount,
-        sellerNet: netSellerAmount,
-        currency: params.currency || "CREDITS",
-        paymentRail: params.paymentRail || "PLATFORM_CREDITS",
-        balances: {
-          buyer: {
-            agentId: buyerAgentId,
-            handle: buyerHandle,
-            previousBalance: buyerBalance,
-            currentBalance: buyerBalanceAfter,
-            debited: grossAmount
-          },
-          seller: {
-            agentId: sellerAgentId,
-            handle: sellerHandle,
-            previousBalance: sellerBalance,
-            currentBalance: sellerBalanceAfter,
-            credited: netSellerAmount
-          },
-          treasury: {
-            accountId: PLATFORM_TREASURY_ACCOUNT_ID,
-            previousBalance: treasuryBalance,
-            currentBalance: treasuryBalanceAfter,
-            creditedFee: platformFee
+        // Persist records to dbStoreInstance / fallback collections
+        try {
+          await db.collection('platform_transactions').doc(transactionId).set(ledgerTx);
+          await db.collection('idempotency_keys').doc(idempotencyKey).set({
+            idempotencyKey,
+            transactionId,
+            jobId,
+            status: 'SETTLED',
+            createdAt: settledAt
+          });
+          await db.collection('settled_jobs').doc(jobId).set({
+            jobId,
+            transactionId,
+            idempotencyKey,
+            grossAmount,
+            status: 'SETTLED',
+            createdAt: settledAt
+          });
+          for (const entry of ledgerEntries) {
+            inMemoryLedgerRegistry.set(entry.entryId, entry);
+            await db.collection('ledger_entries').doc(entry.entryId).set(entry);
           }
-        },
-        ledgerEntries,
-        transaction: ledgerTx,
-        settledAt
-      };
+          inMemoryTransactionRegistry.set(transactionId, ledgerTx);
+        } catch (_) {
+          for (const entry of ledgerEntries) {
+            inMemoryLedgerRegistry.set(entry.entryId, entry);
+          }
+          inMemoryTransactionRegistry.set(transactionId, ledgerTx);
+        }
+
+        settlementResult = {
+          success: true,
+          transactionId,
+          idempotencyKey,
+          jobId,
+          status: "SETTLED",
+          grossAmount,
+          platformFee,
+          platformFeeBps,
+          netSellerAmount,
+          sellerNet: netSellerAmount,
+          currency: params.currency || "CREDITS",
+          paymentRail: params.paymentRail || "PLATFORM_CREDITS",
+          balances: {
+            buyer: {
+              agentId: buyerAgentId,
+              handle: buyerHandle,
+              previousBalance: buyerBalance,
+              currentBalance: buyerBalanceAfter,
+              debited: grossAmount
+            },
+            seller: {
+              agentId: sellerAgentId,
+              handle: sellerHandle,
+              previousBalance: sellerBalance,
+              currentBalance: sellerBalanceAfter,
+              credited: netSellerAmount
+            },
+            treasury: {
+              accountId: PLATFORM_TREASURY_ACCOUNT_ID,
+              previousBalance: treasuryBalance,
+              currentBalance: treasuryBalanceAfter,
+              creditedFee: platformFee
+            }
+          },
+          ledgerEntries,
+          transaction: ledgerTx,
+          settledAt
+        };
+      }
+
+      // Update in-memory registry under both idempotencyKey and jobId
+      inMemorySettlementRegistry.set(idempotencyKey, settlementResult);
+      inMemorySettlementRegistry.set(jobId, settlementResult);
+
+      return settlementResult;
+    };
+
+    // Store in-flight lock for BOTH idempotencyKey and jobId
+    const lockPromise = executeSettlement();
+    inMemorySettlementLocks.set(idempotencyKey, lockPromise);
+    inMemorySettlementLocks.set(jobId, lockPromise);
+
+    let settlementResult: SettlementResult;
+    try {
+      settlementResult = await lockPromise;
+    } finally {
+      inMemorySettlementLocks.delete(idempotencyKey);
+      inMemorySettlementLocks.delete(jobId);
     }
 
-    if (settlementResult && settlementResult.balances) {
+    // Only update balances and lifetime metrics if NOT an idempotent replay
+    if (settlementResult && settlementResult.balances && !settlementResult.idempotentReplay) {
       const b = settlementResult.balances;
       const bW = inMemoryWalletRegistry.get(b.buyer.agentId);
       inMemoryWalletRegistry.set(b.buyer.agentId, {
@@ -1054,14 +1157,21 @@ export class PlatformCreditsProvider implements PaymentProvider {
   }
 
   async getAccountLedger(agentId: string, limit = 50): Promise<LedgerEntry[]> {
-    const snap = await db.collection('ledger_entries')
-      .where('accountId', '==', agentId)
-      .orderBy('createdAt', 'desc')
-      .limit(limit)
-      .get()
-      .catch(() => ({ docs: [] }));
+    try {
+      const snap = await db.collection('ledger_entries')
+        .where('accountId', '==', agentId)
+        .orderBy('createdAt', 'desc')
+        .limit(limit)
+        .get();
 
-    return snap.docs.map((d: any) => d.data() as LedgerEntry);
+      const docs = snap.docs.map((d: any) => d.data() as LedgerEntry);
+      if (docs.length > 0) return docs;
+    } catch (_) {}
+
+    return Array.from(inMemoryLedgerRegistry.values())
+      .filter((entry: LedgerEntry) => entry.accountId === agentId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit);
   }
 }
 
@@ -1462,6 +1572,7 @@ agentExchangeRouter.get('/.well-known/stock-bloc-agent.json', (req, res) => {
       services: "/api/v1/exchange/services",
       requests: "/api/v1/exchange/requests",
       jobs: "/api/v1/exchange/jobs",
+      secJob: "/api/v1/sec/job",
       mcpServer: "/api/v1/mcp",
       manifest: "/agents/manifest.json",
       skillDoc: "/agents/skill.md"
@@ -1554,6 +1665,19 @@ export const STOCK_BLOC_MCP_TOOLS = [
         jobId: { type: "string", description: "Job ID to inspect" }
       },
       required: ["jobId"]
+    }
+  },
+  {
+    name: "execute_sec_analysis",
+    description: "Run live autonomous SEC filing analysis (10-K, 10-Q, 8-K) on any public stock ticker. Settles 25 credits. Requires ticker and filingType.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ticker: { type: "string", description: "Stock ticker symbol (e.g. NVDA, AAPL)" },
+        filingType: { type: "string", enum: ["10-K", "10-Q", "8-K"], description: "Filing form type" },
+        idempotencyKey: { type: "string", description: "Optional unique idempotency key" }
+      },
+      required: ["ticker", "filingType"]
     }
   }
 ];

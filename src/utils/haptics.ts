@@ -12,7 +12,8 @@ export const triggerHaptic = (type: HapticPattern = "light") => {
   if (
     typeof window !== "undefined" &&
     "navigator" in window &&
-    "vibrate" in navigator
+    "vibrate" in navigator &&
+    (navigator as any).userActivation?.isActive
   ) {
     try {
       switch (type) {

@@ -100,6 +100,7 @@ export const StripeCheckoutModal: React.FC<Props> = ({
           billingPeriod: item.billingPeriod || "one_time",
           email: userEmail,
           paymentMethod: selectedMethod,
+          credits: item.creditsGranted ? String(item.creditsGranted) : undefined,
         }),
       });
 

@@ -248,10 +248,15 @@ export function resolveAgentIdFromKey(token?: string): string | null {
 }
 
 // Helper to atomically credit an agent's platform wallet (e.g. from Stripe checkout or bounty settlement)
-export async function addCreditsToAgentWallet(agentIdOrKey: string, creditsToAdd: number): Promise<{
+export async function addCreditsToAgentWallet(
+  agentIdOrKey: string,
+  creditsToAdd: number,
+  reasonTag: string = 'STRIPE_PURCHASE'
+): Promise<{
   success: boolean;
   agentId?: string;
   creditsBalance: number;
+  tag?: string;
   error?: string;
 }> {
   if (!agentIdOrKey || creditsToAdd <= 0) {
@@ -313,11 +318,34 @@ export async function addCreditsToAgentWallet(agentIdOrKey: string, creditsToAdd
     };
   }
 
-  wallet.creditsBalance = (wallet.creditsBalance || 0) + creditsToAdd;
+  const prevBalance = wallet.creditsBalance || 0;
+  wallet.creditsBalance = prevBalance + creditsToAdd;
   wallet.availableBalance = (wallet.availableBalance || 0) + creditsToAdd;
+  wallet.lastCreditTag = reasonTag;
+  wallet.lastCreditAmount = creditsToAdd;
+  wallet.lastCreditedAt = new Date().toISOString();
   wallet.updatedAt = new Date().toISOString();
 
   inMemoryWalletRegistry.set(resolvedAgentId, wallet);
+
+  // Write ledger entry for audit trail
+  try {
+    const entryId = 'ent_credit_' + crypto.randomBytes(6).toString('hex');
+    const creditEntry = {
+      entryId,
+      accountId: resolvedAgentId,
+      accountType: 'BUYER',
+      entryType: 'CREDIT',
+      amount: creditsToAdd,
+      currency: 'CREDITS',
+      tag: reasonTag,
+      description: `Wallet credit purchase (${creditsToAdd} credits) [${reasonTag}]`,
+      balanceBefore: prevBalance,
+      balanceAfter: wallet.creditsBalance,
+      createdAt: new Date().toISOString()
+    };
+    await db.collection('ledger_entries').doc(entryId).set(creditEntry);
+  } catch (_) {}
 
   try {
     await db.collection('agent_wallets').doc(resolvedAgentId).set(wallet, { merge: true });
@@ -328,7 +356,8 @@ export async function addCreditsToAgentWallet(agentIdOrKey: string, creditsToAdd
   return {
     success: true,
     agentId: resolvedAgentId,
-    creditsBalance: wallet.creditsBalance
+    creditsBalance: wallet.creditsBalance,
+    tag: reasonTag
   };
 }
 
@@ -391,10 +420,12 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
       ? (req.body.scopes as AgentApiScope[])
       : null;
 
-    // Grant all standard marketplace (services, jobs, requests, payments) and intelligence scopes by default
+    // Least privilege: Restrict new autonomous registers to: services:read, jobs:read, jobs:execute, payments:transact, community:read
+    const allowedAutonomousScopes: AgentApiScope[] = [...DEFAULT_AUTONOMOUS_SCOPES];
     const finalScopes: AgentApiScope[] = requestedScopes
-      ? Array.from(new Set([...requestedScopes, ...DEFAULT_AUTONOMOUS_SCOPES]))
-      : [...DEFAULT_AUTONOMOUS_SCOPES];
+      ? requestedScopes.filter((s) => allowedAutonomousScopes.includes(s))
+      : allowedAutonomousScopes;
+    const resolvedScopes: AgentApiScope[] = finalScopes.length > 0 ? finalScopes : allowedAutonomousScopes;
 
     const keyRecord: AgentApiKeyRecord = {
       keyId: publicId,
@@ -402,7 +433,7 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
       ownerUid: 'autonomous_agent',
       keyPrefix,
       keyHash,
-      scopes: finalScopes,
+      scopes: resolvedScopes,
       createdAt: new Date() as any,
       lastUsedAt: null,
       expiresAt: null,

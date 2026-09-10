@@ -3565,7 +3565,7 @@ app.get('/llms.txt', (req, res) => {
 // MCP Configuration Manifest for Claude Desktop, Cursor, and Windsurf
 app.get(['/mcp.json', '/api/v1/mcp-config.json'], (req, res) => {
   const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-  const host = req.get('host') || 'ais-pre-p3tflmsyxu75gnec7nb7vy-350859978227.us-east1.run.app';
+  const host = req.get('host') || 'stockbloc.ai.studio';
   const baseUrl = `${protocol}://${host}`;
 
   res.json({
@@ -3606,7 +3606,7 @@ app.get(['/mcp.json', '/api/v1/mcp-config.json'], (req, res) => {
 app.post('/api/mcp/rpc', async (req, res) => {
   const { jsonrpc = "2.0", id, method, params } = req.body || {};
   const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-  const host = req.get('host') || 'ais-pre-p3tflmsyxu75gnec7nb7vy-350859978227.us-east1.run.app';
+  const host = req.get('host') || 'stockbloc.ai.studio';
   const baseUrl = `${protocol}://${host}`;
 
   if (method === "initialize") {
@@ -4068,7 +4068,7 @@ app.post('/api/mcp/rpc', async (req, res) => {
 // 19b. Full Agent Specification: /llms-full.txt
 app.get('/llms-full.txt', (req, res) => {
   const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-  const host = req.get('host') || 'ais-pre-p3tflmsyxu75gnec7nb7vy-350859978227.us-east1.run.app';
+  const host = req.get('host') || 'stockbloc.ai.studio';
   const baseUrl = `${protocol}://${host}`;
 
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
@@ -4160,6 +4160,15 @@ app.get('/pricing.json', (req, res) => {
   res.json({
     "products": [
       {
+        "id": "agent_credits_1000",
+        "name": "Agent Credits — 1,000 credits — $10",
+        "price_usd": 10.00,
+        "credits": 1000,
+        "type": "api_credits",
+        "checkout_url_stripe": "https://stockbloc.ai.studio/pricing",
+        "crypto_payment_supported": true
+      },
+      {
         "id": "playbook-trilogy",
         "name": "Stock Bloc Wealth Playbook Trilogy",
         "price_usd": 97.00,
@@ -4222,7 +4231,12 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
           email: email || 'anonymous',
           agentId: req.body?.agentId || (email ? `agent_${email.replace(/[^a-z0-9]/gi, '_')}` : undefined),
           apiKey: req.body?.apiKey || undefined,
-          credits: String(productType === 'subscription' || productId?.includes('bundle') ? 5000 : 1000)
+          credits: String(
+            req.body?.credits ||
+            (productId === 'agent_credits_1000' || productId === 'agent_credits_10'
+              ? 1000
+              : (productType === 'subscription' || productId?.includes('bundle') ? 5000 : 1000))
+          )
         },
         line_items: [
           {
@@ -4232,7 +4246,7 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
                 name: title || 'Stock Bloc Digital Product',
                 description: `Stock Bloc ${productType} purchase - Instant Digital Delivery`,
               },
-              unit_amount: Math.round((price || 5) * 100),
+              unit_amount: Math.round((price || (productId === 'agent_credits_1000' ? 10 : 5)) * 100),
               ...(productType === 'subscription'
                 ? {
                     recurring: {
@@ -4258,7 +4272,7 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
       id: sessionId,
       payment_status: 'paid',
       status: 'complete',
-      amount_total: Math.round((price || 5) * 100),
+      amount_total: Math.round((price || (productId === 'agent_credits_1000' ? 10 : 5)) * 100),
       customer_details: { email: email || 'customer@stockbloc.ai' },
       metadata: {
         productId: productId || 'product_general',
@@ -4266,7 +4280,12 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
         email: email || 'customer@stockbloc.ai',
         agentId: req.body?.agentId || (email ? `agent_${email.replace(/[^a-z0-9]/gi, '_')}` : undefined),
         apiKey: req.body?.apiKey || undefined,
-        credits: String(productType === 'subscription' || productId?.includes('bundle') ? 5000 : 1000)
+        credits: String(
+          req.body?.credits ||
+          (productId === 'agent_credits_1000' || productId === 'agent_credits_10'
+            ? 1000
+            : (productType === 'subscription' || productId?.includes('bundle') ? 5000 : 1000))
+        )
       }
     });
 
@@ -4411,6 +4430,8 @@ app.post(['/api/stripe/webhook', '/api/webhooks/stripe', '/webhooks/stripe'], as
         creditsToAdd = parseInt(metadata.credits, 10) || 0;
       } else if (metadata.creditsGranted) {
         creditsToAdd = parseInt(metadata.creditsGranted, 10) || 0;
+      } else if (productId === 'agent_credits_1000' || productId === 'agent_credits_10') {
+        creditsToAdd = 1000;
       } else if (productId === 'api_bundle_50') {
         creditsToAdd = 7500;
       } else if (productId === 'api_bundle_25') {
@@ -4429,7 +4450,7 @@ app.post(['/api/stripe/webhook', '/api/webhooks/stripe', '/webhooks/stripe'], as
 
       let result: { success: boolean; agentId?: string; creditsBalance: number; error?: string } = { success: true, agentId: target, creditsBalance: 0 };
       if (creditsToAdd > 0) {
-        result = await addCreditsToAgentWallet(target, creditsToAdd);
+        result = await addCreditsToAgentWallet(target, creditsToAdd, 'STRIPE_PURCHASE');
       } else {
         const currentWallet = inMemoryWalletRegistry.get(target);
         result.creditsBalance = currentWallet?.creditsBalance || 0;

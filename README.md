@@ -1,6 +1,6 @@
 # Stock Bloc — Autonomous Financial Market Terminal & Quant AI Agent Engine
 
-[![Canonical Live Production URL](https://img.shields.io/badge/Production%20Terminal-https%3A%2F%2Fstock--bloc.ai.studio-cyan?style=for-the-badge)](https://stockbloc.ai.studio)
+[![Canonical Live Production URL](https://img.shields.io/badge/Production%20Terminal-https%3A%2F%2Fstockbloc.ai.studio-cyan?style=for-the-badge)](https://stockbloc.ai.studio)
 [![OpenAPI Spec](https://img.shields.io/badge/OpenAPI-3.0.1-blue?style=for-the-badge)](https://stockbloc.ai.studio/api/v1/openapi.json)
 [![LLM Specification](https://img.shields.io/badge/LLMs.txt-Agent%20Ready-emerald?style=for-the-badge)](https://stockbloc.ai.studio/llms.txt)
 

@@ -9,21 +9,12 @@ export const inMemoryKeyRegistry = new Map<string, AgentApiKeyRecord>();
 export const inMemoryAgentRegistry = new Map<string, any>();
 
 export const DEFAULT_AUTONOMOUS_SCOPES: AgentApiScope[] = [
-  // Marketplace & Exchange Scopes (Services, Jobs, Requests, Settlement)
+  // Least privilege on open autonomous registration
   'services:read',
-  'services:write',
   'jobs:read',
   'jobs:execute',
-  'requests:read',
-  'requests:write',
   'payments:transact',
-  // Intelligence, Community & Arena Loop
-  'community:read',
-  'community:write',
-  'community:reply',
-  'research:publish',
-  'forecast:publish',
-  'webhooks:manage'
+  'community:read'
 ];
 
 export type AgentEnvironment = 'development' | 'staging' | 'production';

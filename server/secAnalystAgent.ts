@@ -1259,6 +1259,7 @@ export const SEC_ANALYST_SERVICE_RECORD: AgentService = {
 // In-memory idempotency and job registry caches
 export const inMemorySecJobRegistry = new Map<string, any>();
 export const inMemorySecIdempotencyMap = new Map<string, string>();
+export const secJobExecutionLocks = new Map<string, Promise<any>>();
 
 // Active key reference tracker for rotation
 let activeSecAnalystKeyId: string | null = null;
@@ -1313,6 +1314,17 @@ export async function executeSecAnalystJob(params: {
     };
   }
 
+  // Check in-flight execution locks for either key
+  const inFlightJob = secJobExecutionLocks.get(canonicalIdempotencyKey) || secJobExecutionLocks.get(jobId);
+  if (inFlightJob) {
+    const awaited = await inFlightJob;
+    return {
+      ...awaited,
+      idempotentReplay: true,
+      message: `Job already executed and settled (concurrent execution awaited) for jobId: ${jobId}`
+    };
+  }
+
   // 3. Input Validation
   if (!input || !input.ticker || typeof input.ticker !== 'string' || input.ticker.trim().length === 0) {
     throw new Error('Validation error: "ticker" is required and cannot be empty.');
@@ -1327,67 +1339,90 @@ export async function executeSecAnalystJob(params: {
   const provider = paymentProviders.PLATFORM_CREDITS as PlatformCreditsProvider;
   const buyerWallet = await provider.getOrCreateWallet(requesterAgentId);
   if (buyerWallet.creditsBalance < canonicalPrice) {
-    throw new Error(`Insufficient credits balance for buyer ${requesterAgentId}. Required: ${canonicalPrice} credits, Available: ${buyerWallet.creditsBalance} credits.`);
+    const balanceErr = new Error(`Insufficient credits balance for buyer ${requesterAgentId}. Required: ${canonicalPrice} credits, Available: ${buyerWallet.creditsBalance} credits.`);
+    (balanceErr as any).availableCredits = buyerWallet.creditsBalance;
+    (balanceErr as any).requiredCredits = canonicalPrice;
+    throw balanceErr;
   }
 
-  // 5. Perform filing retrieval & analysis (dynamic live retrieval prioritized)
-  const output = await analyzeSecFilingAsync(input);
+  const runExecution = async () => {
+    // 5. Perform filing retrieval & analysis (dynamic live retrieval prioritized)
+    const output = await analyzeSecFilingAsync(input);
 
-  // 6. Mark job delivered and verified
-  const deliveredAt = new Date().toISOString();
-  const latencyMs = Date.now() - startTime;
+    // 6. Mark job delivered and verified
+    const deliveredAt = new Date().toISOString();
+    const latencyMs = Date.now() - startTime;
 
-  const deliveryRecord = {
-    deliveredAt,
-    summary: output.executiveSummary,
-    payload: output,
-    latencyMs
-  };
+    const deliveryRecord = {
+      deliveredAt,
+      summary: output.executiveSummary,
+      payload: output,
+      latencyMs
+    };
 
-  const verificationRecord = {
-    verifiedAt: deliveredAt,
-    verifier: 'system' as const,
-    passed: true,
-    verificationScore: output.isLiveSecData ? 100 : 99,
-    notes: output.isLiveSecData
-      ? 'Automated verification passed: All 12 SEC intelligence fields verified against live U.S. SEC EDGAR submission.'
-      : 'Automated verification passed: All 12 SEC intelligence fields present and cited from grounded test fixture.'
-  };
+    const verificationRecord = {
+      verifiedAt: deliveredAt,
+      verifier: 'system' as const,
+      passed: true,
+      verificationScore: output.isLiveSecData ? 100 : 99,
+      notes: output.isLiveSecData
+        ? 'Automated verification passed: All 12 SEC intelligence fields verified against live U.S. SEC EDGAR submission.'
+        : 'Automated verification passed: All 12 SEC intelligence fields present and cited from grounded test fixture.'
+    };
 
-  // 7. Atomic Double-Entry Settlement via PlatformCreditsProvider
-  // Rate: 5% platform fee (500 bps).
-  // For grossAmount = 25:
-  // Gross = 25
-  // Platform Fee = Math.max(1, Math.round((25 * 500) / 10000)) = 1 credit (Stock Bloc Treasury)
-  // Net Seller Amount = 25 - 1 = 24 credits (Stock Bloc SEC Analyst)
-  // Buyer debited = 25 credits
-  const settlement = await provider.settlePayment({
-    jobId,
-    buyerAgentId: requesterAgentId,
-    buyerHandle: requesterHandle || requesterAgentId,
-    sellerAgentId: SEC_ANALYST_AGENT_ID,
-    sellerHandle: SEC_ANALYST_HANDLE,
-    grossAmount: canonicalPrice,
-    platformFeeBps: PLATFORM_ECONOMICS.platformFeeBps,
-    currency: 'CREDITS',
-    paymentRail: 'PLATFORM_CREDITS',
-    idempotencyKey: canonicalIdempotencyKey,
-    description: `Settlement for SEC Filing Analysis (${input.ticker} ${input.filingType}) job: ${jobId}`
-  });
+    // 7. Atomic Double-Entry Settlement via PlatformCreditsProvider
+    const settlement = await provider.settlePayment({
+      jobId,
+      buyerAgentId: requesterAgentId,
+      buyerHandle: requesterHandle || requesterAgentId,
+      sellerAgentId: SEC_ANALYST_AGENT_ID,
+      sellerHandle: SEC_ANALYST_HANDLE,
+      grossAmount: canonicalPrice,
+      platformFeeBps: PLATFORM_ECONOMICS.platformFeeBps,
+      currency: 'CREDITS',
+      paymentRail: 'PLATFORM_CREDITS',
+      idempotencyKey: canonicalIdempotencyKey,
+      description: `Settlement for SEC Filing Analysis (${input.ticker} ${input.filingType}) job: ${jobId}`
+    });
 
-  // 8. Update Agent Performance Statistics & Reputation (strictly on fresh settlement)
-  if (!settlement.idempotentReplay) {
-    secAnalystStats.jobsCompleted += 1;
-    secAnalystStats.revenue += settlement.grossAmount;
-    secAnalystStats.netRevenue += settlement.sellerNet;
-    secAnalystStats.averageJobValue = Math.round((secAnalystStats.revenue / secAnalystStats.jobsCompleted) * 100) / 100;
-    secAnalystStats.averageResponseTime = secAnalystStats.jobsCompleted === 1
-      ? latencyMs
-      : Math.round((secAnalystStats.averageResponseTime + latencyMs) / 2);
-    secAnalystStats.successRate = 100;
+    // 8. Update Agent Performance Statistics & Reputation (strictly on fresh settlement)
+    if (!settlement.idempotentReplay) {
+      secAnalystStats.jobsCompleted += 1;
+      secAnalystStats.revenue += settlement.grossAmount;
+      secAnalystStats.netRevenue += settlement.sellerNet;
+      secAnalystStats.averageJobValue = Math.round((secAnalystStats.revenue / secAnalystStats.jobsCompleted) * 100) / 100;
+      secAnalystStats.averageResponseTime = secAnalystStats.jobsCompleted === 1
+        ? latencyMs
+        : Math.round((secAnalystStats.averageResponseTime + latencyMs) / 2);
+      secAnalystStats.successRate = 100;
 
-    // Honest reputation computed from actual verified jobs history
-    const repMetrics: AgentReputationMetrics = {
+      const repMetrics: AgentReputationMetrics = {
+        agentId: SEC_ANALYST_AGENT_ID,
+        handle: SEC_ANALYST_HANDLE,
+        displayName: SEC_ANALYST_DISPLAY_NAME,
+        totalJobsAssigned: secAnalystStats.jobsCompleted,
+        totalJobsCompleted: secAnalystStats.jobsCompleted,
+        totalJobsVerified: secAnalystStats.jobsCompleted,
+        totalBountiesCompleted: 0,
+        brierScore: 0,
+        forecastWinRate: 0,
+        totalForecasts: 0,
+        resolvedForecasts: 0,
+        calibrationScore: 0,
+        customerRatingAverage: 5.0,
+        totalRatingsCount: secAnalystStats.jobsCompleted,
+        averageLatencySeconds: Math.max(1, Math.round(secAnalystStats.averageResponseTime / 1000)),
+        slaUptimePercent: 100,
+        disputesInitiated: 0,
+        disputesLost: 0,
+        refundCount: 0
+      };
+
+      const reputation = computeCompositeReputation(repMetrics);
+      secAnalystStats.reputationScore = reputation.compositeScore;
+    }
+
+    const currentRep = computeCompositeReputation({
       agentId: SEC_ANALYST_AGENT_ID,
       handle: SEC_ANALYST_HANDLE,
       displayName: SEC_ANALYST_DISPLAY_NAME,
@@ -1407,79 +1442,65 @@ export async function executeSecAnalystJob(params: {
       disputesInitiated: 0,
       disputesLost: 0,
       refundCount: 0
+    });
+
+    // 9. Update Firestore documents if available
+    try {
+      await db.collection('agent_jobs').doc(jobId).set({
+        jobId,
+        serviceId: SEC_ANALYST_SERVICE_ID,
+        serviceName: SEC_ANALYST_SERVICE_NAME,
+        requesterAgentId,
+        requesterHandle: requesterHandle || requesterAgentId,
+        providerAgentId: SEC_ANALYST_AGENT_ID,
+        providerHandle: SEC_ANALYST_HANDLE,
+        providerDisplayName: SEC_ANALYST_DISPLAY_NAME,
+        title: `${input.ticker} ${input.filingType} SEC Filing Analysis`,
+        input,
+        price: canonicalPrice,
+        currency: 'CREDITS',
+        paymentRail: 'PLATFORM_CREDITS',
+        status: 'VERIFIED',
+        delivery: deliveryRecord,
+        verification: verificationRecord,
+        evidenceSources: output.sourceReferences,
+        completedAt: deliveredAt
+      }, { merge: true });
+
+      await db.collection('agent_services').doc(SEC_ANALYST_SERVICE_ID).set({
+        completedJobsCount: FieldValue.increment(1),
+        reputationScore: currentRep.compositeScore
+      }, { merge: true });
+    } catch {
+      // Non-blocking in-memory resilience
+    }
+
+    const executionResult = {
+      success: true,
+      jobId,
+      output,
+      settlement,
+      reputation: currentRep,
+      stats: { ...secAnalystStats }
     };
 
-    const reputation = computeCompositeReputation(repMetrics);
-    secAnalystStats.reputationScore = reputation.compositeScore;
-  }
+    // Cache job and idempotency mapping
+    inMemorySecJobRegistry.set(jobId, executionResult);
+    inMemorySecIdempotencyMap.set(canonicalIdempotencyKey, jobId);
 
-  const currentRep = computeCompositeReputation({
-    agentId: SEC_ANALYST_AGENT_ID,
-    handle: SEC_ANALYST_HANDLE,
-    displayName: SEC_ANALYST_DISPLAY_NAME,
-    totalJobsAssigned: secAnalystStats.jobsCompleted,
-    totalJobsCompleted: secAnalystStats.jobsCompleted,
-    totalJobsVerified: secAnalystStats.jobsCompleted,
-    totalBountiesCompleted: 0,
-    brierScore: 0,
-    forecastWinRate: 0,
-    totalForecasts: 0,
-    resolvedForecasts: 0,
-    calibrationScore: 0,
-    customerRatingAverage: 5.0,
-    totalRatingsCount: secAnalystStats.jobsCompleted,
-    averageLatencySeconds: Math.max(1, Math.round(secAnalystStats.averageResponseTime / 1000)),
-    slaUptimePercent: 100,
-    disputesInitiated: 0,
-    disputesLost: 0,
-    refundCount: 0
-  });
-
-  // 9. Update Firestore documents if available
-  try {
-    await db.collection('agent_jobs').doc(jobId).set({
-      jobId,
-      serviceId: SEC_ANALYST_SERVICE_ID,
-      serviceName: SEC_ANALYST_SERVICE_NAME,
-      requesterAgentId,
-      requesterHandle: requesterHandle || requesterAgentId,
-      providerAgentId: SEC_ANALYST_AGENT_ID,
-      providerHandle: SEC_ANALYST_HANDLE,
-      providerDisplayName: SEC_ANALYST_DISPLAY_NAME,
-      title: `${input.ticker} ${input.filingType} SEC Filing Analysis`,
-      input,
-      price: canonicalPrice,
-      currency: 'CREDITS',
-      paymentRail: 'PLATFORM_CREDITS',
-      status: 'VERIFIED',
-      delivery: deliveryRecord,
-      verification: verificationRecord,
-      evidenceSources: output.sourceReferences,
-      completedAt: deliveredAt
-    }, { merge: true });
-
-    await db.collection('agent_services').doc(SEC_ANALYST_SERVICE_ID).set({
-      completedJobsCount: FieldValue.increment(1),
-      reputationScore: currentRep.compositeScore
-    }, { merge: true });
-  } catch {
-    // Non-blocking in-memory resilience
-  }
-
-  const executionResult = {
-    success: true,
-    jobId,
-    output,
-    settlement,
-    reputation: currentRep,
-    stats: { ...secAnalystStats }
+    return executionResult;
   };
 
-  // Cache job and idempotency mapping
-  inMemorySecJobRegistry.set(jobId, executionResult);
-  inMemorySecIdempotencyMap.set(canonicalIdempotencyKey, jobId);
+  const jobPromise = runExecution();
+  secJobExecutionLocks.set(canonicalIdempotencyKey, jobPromise);
+  secJobExecutionLocks.set(jobId, jobPromise);
 
-  return executionResult;
+  try {
+    return await jobPromise;
+  } finally {
+    secJobExecutionLocks.delete(canonicalIdempotencyKey);
+    secJobExecutionLocks.delete(jobId);
+  }
 }
 
 // ==========================================
@@ -1769,6 +1790,17 @@ secAnalystRouter.post(
         });
       }
 
+      // Enforce 10-K | 10-Q | 8-K contract
+      const allowedFilingTypes: SecFilingType[] = ['10-K', '10-Q', '8-K'];
+      const normalizedFilingType = String(filingType).trim().toUpperCase() as SecFilingType;
+      if (!allowedFilingTypes.includes(normalizedFilingType)) {
+        return res.status(400).json({
+          error: `Contract validation error: "filingType" must be one of: ${allowedFilingTypes.join(', ')}. Received: "${filingType}".`,
+          code: 'INVALID_FILING_TYPE',
+          allowedFilingTypes
+        });
+      }
+
       const idempotencyKey = (
         req.body?.idempotencyKey ||
         (req.headers['idempotency-key'] as string) ||
@@ -1779,7 +1811,7 @@ secAnalystRouter.post(
         jobId,
         input: {
           ticker: String(ticker).toUpperCase().trim(),
-          filingType: filingType as SecFilingType,
+          filingType: normalizedFilingType,
           question: question ? String(question).trim() : undefined,
           forceFixture: Boolean(forceFixture)
         },
@@ -1791,10 +1823,23 @@ secAnalystRouter.post(
       return res.status(200).json(result);
     } catch (err: any) {
       const isBalanceError = /insufficient/i.test(err.message || '');
-      const statusCode = isBalanceError ? 402 : 500;
+      const isValidationError = /validation/i.test(err.message || '');
+      const statusCode = isBalanceError ? 402 : (isValidationError ? 400 : 500);
       return res.status(statusCode).json({
         error: err.message || 'Failed to execute SEC analyst job',
-        code: isBalanceError ? 'INSUFFICIENT_FUNDS' : 'JOB_EXECUTION_ERROR'
+        code: isBalanceError ? 'INSUFFICIENT_FUNDS' : (isValidationError ? 'VALIDATION_ERROR' : 'JOB_EXECUTION_ERROR'),
+        ...(isBalanceError ? {
+          checkoutUrl: 'https://stockbloc.ai.studio/pricing',
+          requiredCredits: SEC_ANALYST_SERVICE_PRICE_CREDITS,
+          availableCredits: err.availableCredits ?? 0,
+          purchaseOption: {
+            sku: 'agent_credits_1000',
+            name: 'Agent Credits — 1,000 credits',
+            priceUsd: 10.00,
+            checkoutUrl: 'https://stockbloc.ai.studio/pricing'
+          },
+          message: 'Insufficient credits balance. Please purchase agent credits ($10 for 1,000 credits) at https://stockbloc.ai.studio/pricing'
+        } : {})
       });
     }
   }

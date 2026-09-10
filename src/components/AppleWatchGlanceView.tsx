@@ -63,7 +63,7 @@ struct StockBlocWatchView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             
-            WatchOSWebView(url: URL(string: "https://ais-pre-p3tflmsyxu75gnec7nb7vy-350859978227.us-east1.run.app?watch=true")!)
+            WatchOSWebView(url: URL(string: "https://stockbloc.ai.studio?watch=true")!)
                 .ignoresSafeArea()
         }
     }

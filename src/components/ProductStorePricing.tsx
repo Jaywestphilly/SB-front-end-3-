@@ -161,48 +161,49 @@ export const ProductStorePricing: React.FC<Props> = ({
     ],
   };
 
-  // 3. AI Agent API Key Credit Bundles
+  // 3. AI Agent API Key Credit Bundles & Marketplace Credits
   const apiBundles: CheckoutItem[] = [
     {
-      id: "api_bundle_10",
-      title: "Starter API Credit Refill (1,000 Credits)",
+      id: "agent_credits_1000",
+      title: "Agent Credits — 1,000 credits — $10",
       category: "api_bundle",
-      price: 5,
-      displayPrice: "$5",
+      price: 10,
+      displayPrice: "$10",
       creditsGranted: 1000,
       features: [
-        "1,000 Metered API Requests for /api/v1/agent/quant-sim",
-        "Live Market Quote API Access (/api/live-quote/:symbol)",
-        "Instant API Key Generation (sb_live_...)",
-        "Zero Rate Limit Throttle & High Concurrency",
+        "1,000 Autonomous Agent Platform Credits ($0.01 / credit)",
+        "Fund 40 Complete SEC Filing Analysis Jobs (25 credits each)",
+        "Double-Entry Ledger Verified Settlement on Platform",
+        "Instant Wallet Credit on Stripe Payment (STRIPE_PURCHASE)",
+        "Zero Expiration — Works Across All Stock Bloc Market Services",
       ],
     },
     {
       id: "api_bundle_25",
       title: "Quant Agent Refill (3,000 Credits)",
       category: "api_bundle",
-      price: 5,
-      displayPrice: "$5",
+      price: 25,
+      displayPrice: "$25",
       creditsGranted: 3000,
       features: [
-        "3,000 Metered API Requests (Best Value for Agents)",
-        "Access to /api/v1/agent/quant-sim & Backtests",
+        "3,000 Metered API Requests (120 SEC Analysis Jobs)",
+        "Access to /api/v1/sec/job & Quant Simulation",
         "Instant API Key Generation (sb_live_...)",
-        "Full Open-API 3.0 & LangChain Tool Support",
+        "Full Open-API 3.0 & MCP Autonomous Agent Support",
       ],
     },
     {
       id: "api_bundle_50",
       title: "Sovereign Agent Refill (7,500 Credits)",
       category: "api_bundle",
-      price: 5,
-      displayPrice: "$5",
+      price: 50,
+      displayPrice: "$50",
       creditsGranted: 7500,
       features: [
         "7,500 Metered API Requests for Production Pipelines",
         "Priority High-Speed Dedicated Agent Route",
-        "Instant API Key Generation (sb_live_...)",
-        "Lifetime Unused Credit Rollover",
+        "Covers 300 Deep SEC EDGAR Analysis Jobs",
+        "Lifetime Unused Credit Rollover & Dedicated Ledger",
       ],
     },
   ];
@@ -503,10 +504,10 @@ export const ProductStorePricing: React.FC<Props> = ({
             </div>
             <div>
               <h2 className="text-xl font-black font-tech text-white uppercase tracking-wide">
-                3. AI AGENT API KEY CREDIT REFILL BUNDLES ($5 EACH)
+                3. AI AGENT API KEY CREDIT REFILL BUNDLES
               </h2>
               <p className="text-xs text-neutral-300 font-sans">
-                Metered API credits for autonomous trading subagents calling <span className="text-emerald-300 font-mono">/api/v1/agent/quant-sim</span>.
+                Metered API credits for autonomous trading subagents calling <span className="text-emerald-300 font-mono">/api/v1/sec/job</span> and <span className="text-emerald-300 font-mono">/api/v1/agent/quant-sim</span>.
               </p>
             </div>
           </div>
@@ -520,7 +521,7 @@ export const ProductStorePricing: React.FC<Props> = ({
             <div
               key={bundle.id}
               className={`bg-[#020f18] border-2 alien-block-cut p-6 shadow-xl transition-all duration-300 flex flex-col justify-between group relative ${
-                idx === 1
+                idx === 0
                   ? "border-emerald-400 shadow-emerald-500/20"
                   : "border-emerald-500/40 hover:border-emerald-400"
               }`}
@@ -531,7 +532,7 @@ export const ProductStorePricing: React.FC<Props> = ({
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded">
-                    {idx === 1 ? "POPULAR FOR AGENTS" : "API CREDIT BUNDLE"}
+                    {idx === 0 ? "RECOMMENDED FOR SEC JOBS" : (idx === 1 ? "POPULAR FOR AGENTS" : "API CREDIT BUNDLE")}
                   </span>
                   <span className="text-2xl font-black text-emerald-300 font-tech">
                     {bundle.displayPrice}

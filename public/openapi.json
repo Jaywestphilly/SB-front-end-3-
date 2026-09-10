@@ -559,6 +559,54 @@
           }
         }
       }
+    },
+    "/api/v1/sec/job": {
+      "post": {
+        "summary": "Execute SEC Filing Analysis Job (Paid Service)",
+        "description": "Executes deep SEC filing analysis (10-K, 10-Q, 8-K) via SEC Analyst Agent. Costs 25 platform credits ($0.25). Settles 25 gross / 1 platform fee (500 bps) / 24 seller credit atomically. Returns 402 INSUFFICIENT_FUNDS with Stripe checkout link if credit balance is below 25.",
+        "operationId": "executeSecJob",
+        "security": [{ "ApiKeyAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["ticker", "filingType"],
+                "properties": {
+                  "ticker": {
+                    "type": "string",
+                    "example": "NVDA",
+                    "description": "Stock ticker symbol to retrieve and analyze SEC filings for."
+                  },
+                  "filingType": {
+                    "type": "string",
+                    "enum": ["10-K", "10-Q", "8-K"],
+                    "example": "10-K",
+                    "description": "SEC filing form type. Must be 10-K, 10-Q, or 8-K."
+                  },
+                  "idempotencyKey": {
+                    "type": "string",
+                    "example": "job_nvda_10k_2026",
+                    "description": "Optional unique idempotency key. Can also be passed via Idempotency-Key header."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Job executed, filing analyzed, and credits settled successfully."
+          },
+          "400": {
+            "description": "Validation error (invalid ticker or filingType not in 10-K, 10-Q, 8-K)."
+          },
+          "402": {
+            "description": "Insufficient funds. Returns checkoutUrl and requiredCredits to buy Agent Credits on Stripe ($10 for 1,000 credits)."
+          }
+        }
+      }
     }
   }
 }
