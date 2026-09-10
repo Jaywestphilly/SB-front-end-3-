@@ -3450,68 +3450,88 @@ app.get('/api/data/:feed', async (req, res) => {
 
 // Data Pipeline Freshness & Status API (with alias /api/data-status)
 const handleDataStatusRequest = async (req: express.Request, res: express.Response) => {
-  const [market, sec, dyson, news] = await Promise.all([
-    fetchAndProcessFeed('market'),
-    fetchAndProcessFeed('sec'),
-    fetchAndProcessFeed('dyson'),
-    fetchAndProcessFeed('news')
-  ]);
+  try {
+    const [marketResult, secResult, dysonResult, newsResult] = await Promise.allSettled([
+      fetchAndProcessFeed('market'),
+      fetchAndProcessFeed('sec'),
+      fetchAndProcessFeed('dyson'),
+      fetchAndProcessFeed('news')
+    ]);
 
-  const serverTime = new Date().toISOString();
-  const nowMs = Date.now();
+    const market = marketResult.status === 'fulfilled' ? marketResult.value : null;
+    const sec = secResult.status === 'fulfilled' ? secResult.value : null;
+    const dyson = dysonResult.status === 'fulfilled' ? dysonResult.value : null;
+    const news = newsResult.status === 'fulfilled' ? newsResult.value : null;
 
-  const getFeedAgeSeconds = (updatedAt: string | undefined) => {
-    if (!updatedAt) return 0;
-    const t = new Date(updatedAt).getTime();
-    return isNaN(t) ? 0 : Math.max(0, Math.floor((nowMs - t) / 1000));
-  };
+    const serverTime = new Date().toISOString();
+    const nowMs = Date.now();
 
-  const marketAge = typeof market?.data_age_seconds === 'number' ? market.data_age_seconds : getFeedAgeSeconds(market?.updated_at);
-  const secAge = getFeedAgeSeconds(sec?.updated_at);
-  const dysonAge = getFeedAgeSeconds(dyson?.updated_at);
-  const newsAge = getFeedAgeSeconds(news?.updated_at);
+    const getFeedAgeSeconds = (updatedAt: string | undefined) => {
+      if (!updatedAt) return 0;
+      const t = new Date(updatedAt).getTime();
+      return isNaN(t) ? 0 : Math.max(0, Math.floor((nowMs - t) / 1000));
+    };
 
-  const isFeedStale = (ageSec: number, explicitStale?: boolean) => {
-    if (explicitStale !== undefined) return explicitStale;
-    return ageSec > 86400; // > 24 hours
-  };
+    const marketAge = typeof market?.data_age_seconds === 'number'
+      ? market.data_age_seconds
+      : getFeedAgeSeconds(market?.updated_at);
+    const secAge = getFeedAgeSeconds(sec?.updated_at);
+    const dysonAge = getFeedAgeSeconds(dyson?.updated_at);
+    const newsAge = getFeedAgeSeconds(news?.updated_at);
 
-  res.setHeader('Cache-Control', 'public, max-age=30');
-  return res.json({
-    market: {
-      updated_at: market.updated_at || serverTime,
-      last_successful_update: market.last_successful_update || market.updated_at || serverTime,
-      source: market.source || MarketDataService.getProviderName(),
-      data_age_seconds: marketAge,
-      status: market.status_label || (marketAge > 3600 ? 'stale' : 'fresh'),
-      stale: market.status_label ? (market.status_label === 'stale' || market.status_label === 'very_stale') : (marketAge > 3600)
-    },
-    sec: {
-      updated_at: sec.updated_at || serverTime,
-      last_successful_update: sec.updated_at || serverTime,
-      source: sec.source || "U.S. SEC EDGAR Submissions API",
-      data_age_seconds: secAge,
-      status: secAge > 86400 ? 'stale' : 'fresh',
-      stale: isFeedStale(secAge, sec.stale)
-    },
-    dyson: {
-      updated_at: dyson.updated_at || serverTime,
-      last_successful_update: dyson.updated_at || serverTime,
-      source: dyson.source || "SpaceX / Planet Labs / NASA Orbital Telemetry",
-      data_age_seconds: dysonAge,
-      status: dysonAge > 86400 ? 'stale' : 'fresh',
-      stale: isFeedStale(dysonAge, dyson.stale)
-    },
-    news: {
-      updated_at: news.updated_at || serverTime,
-      last_successful_update: news.updated_at || serverTime,
-      source: news.source || "Financial News RSS & YouTube Intel Aggregator",
-      data_age_seconds: newsAge,
-      status: newsAge > 86400 ? 'stale' : 'fresh',
-      stale: isFeedStale(newsAge, news.stale)
-    },
-    server_time: serverTime
-  });
+    const isFeedStale = (ageSec: number, explicitStale?: boolean, isDown?: boolean) => {
+      if (isDown) return true;
+      if (explicitStale !== undefined) return explicitStale;
+      return ageSec > 86400; // > 24 hours
+    };
+
+    res.setHeader('Cache-Control', 'public, max-age=30');
+    return res.status(200).json({
+      market: {
+        updated_at: market?.updated_at || serverTime,
+        last_successful_update: market?.last_successful_update || market?.updated_at || serverTime,
+        source: market?.source || MarketDataService.getProviderName(),
+        data_age_seconds: market ? marketAge : 86400,
+        status: market ? (market.status_label || (marketAge > 3600 ? 'stale' : 'fresh')) : 'down',
+        stale: market ? (market.status_label ? (market.status_label === 'stale' || market.status_label === 'very_stale') : (marketAge > 3600)) : true
+      },
+      sec: {
+        updated_at: sec?.updated_at || serverTime,
+        last_successful_update: sec?.updated_at || serverTime,
+        source: sec?.source || "U.S. SEC EDGAR Submissions API",
+        data_age_seconds: sec ? secAge : 86400,
+        status: sec ? (secAge > 86400 ? 'stale' : 'fresh') : 'down',
+        stale: isFeedStale(secAge, sec?.stale, !sec)
+      },
+      dyson: {
+        updated_at: dyson?.updated_at || serverTime,
+        last_successful_update: dyson?.updated_at || serverTime,
+        source: dyson?.source || "SpaceX / Planet Labs / NASA Orbital Telemetry",
+        data_age_seconds: dyson ? dysonAge : 86400,
+        status: dyson ? (dysonAge > 86400 ? 'stale' : 'fresh') : 'down',
+        stale: isFeedStale(dysonAge, dyson?.stale, !dyson)
+      },
+      news: {
+        updated_at: news?.updated_at || serverTime,
+        last_successful_update: news?.updated_at || serverTime,
+        source: news?.source || "Financial News RSS & YouTube Intel Aggregator",
+        data_age_seconds: news ? newsAge : 86400,
+        status: news ? (newsAge > 86400 ? 'stale' : 'fresh') : 'down',
+        stale: isFeedStale(newsAge, news?.stale, !news)
+      },
+      server_time: serverTime
+    });
+  } catch (err: any) {
+    // Fail-safe: Always return 200 with ISO updated_at and stale flags, never 503
+    const fallbackTime = new Date().toISOString();
+    return res.status(200).json({
+      market: { updated_at: fallbackTime, last_successful_update: fallbackTime, source: "Market Watchlist", data_age_seconds: 86400, status: "down", stale: true },
+      sec: { updated_at: fallbackTime, last_successful_update: fallbackTime, source: "U.S. SEC EDGAR", data_age_seconds: 86400, status: "down", stale: true },
+      dyson: { updated_at: fallbackTime, last_successful_update: fallbackTime, source: "Orbital Telemetry", data_age_seconds: 86400, status: "down", stale: true },
+      news: { updated_at: fallbackTime, last_successful_update: fallbackTime, source: "Financial News Aggregator", data_age_seconds: 86400, status: "down", stale: true },
+      server_time: fallbackTime
+    });
+  }
 };
 
 app.get('/api/v1/data-status', handleDataStatusRequest);
@@ -5020,50 +5040,20 @@ app.get('/api/download/playbook/:playbookId', async (req, res) => {
 
 // 20. OpenAPI 3.0 Specification Endpoint: /api/v1/openapi.json
 app.get('/api/v1/openapi.json', (req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'api', 'v1', 'openapi.json');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/json');
+    return res.sendFile(filePath);
+  }
   res.setHeader('Content-Type', 'application/json');
   res.json({
     openapi: "3.0.1",
     info: {
       title: "Stock Bloc Agent API",
-      description: "Machine-readable REST API for autonomous AI trading agents, quant model evaluators, and financial data pipelines.",
+      description: "Machine-readable REST API for autonomous AI agents.",
       version: "v1.0.0"
     },
-    servers: [{ url: "/" }],
-    paths: {
-      "/api/v1/agent/leaderboard": {
-        get: {
-          summary: "Get Community Agent Arena Leaderboard",
-          description: "Fetches top-performing AI agents, win rates, 30D returns, badges, and recommended trade ideas.",
-          responses: {
-            "200": {
-              description: "Leaderboard payload",
-              content: { "application/json": {} }
-            }
-          }
-        }
-      },
-      "/api/v1/agent/quant-sim": {
-        post: {
-          summary: "Simulate Agent Strategy",
-          description: "Evaluates an agent's asset allocation and returns backtest risk metrics.",
-          responses: {
-            "200": {
-              description: "Simulation results",
-              content: { "application/json": {} }
-            }
-          }
-        }
-      },
-      "/api/live-quote/{symbol}": {
-        get: {
-          summary: "Get Live Real-time Quote",
-          parameters: [
-            { name: "symbol", in: "path", required: true, schema: { type: "string" } }
-          ],
-          responses: { "200": { description: "Stock quote details" } }
-        }
-      }
-    }
+    servers: [{ url: "https://stockbloc.ai.studio" }]
   });
 });
 

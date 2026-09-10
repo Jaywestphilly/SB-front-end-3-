@@ -266,7 +266,22 @@ export class PlatformCreditsProvider implements PaymentProvider {
       return {
         ...existingSettlement,
         idempotentReplay: true,
-        message: `Settlement already processed with ${inMemorySettlementRegistry.has(idempotencyKey) ? 'idempotency key: ' + idempotencyKey : 'jobId: ' + jobId}`
+        status: "SETTLED",
+        message: `Settlement already processed with ${inMemorySettlementRegistry.has(idempotencyKey) ? 'idempotency key: ' + idempotencyKey : 'jobId: ' + jobId}`,
+        balances: existingSettlement.balances ? {
+          buyer: {
+            ...existingSettlement.balances.buyer,
+            debited: 0
+          },
+          seller: {
+            ...existingSettlement.balances.seller,
+            credited: 0
+          },
+          treasury: {
+            ...existingSettlement.balances.treasury,
+            creditedFee: 0
+          }
+        } : undefined
       };
     }
 
@@ -277,7 +292,22 @@ export class PlatformCreditsProvider implements PaymentProvider {
       return {
         ...awaited,
         idempotentReplay: true,
-        message: `Settlement already processed (concurrent lock awaited) with jobId: ${jobId}`
+        status: "SETTLED",
+        message: `Settlement already processed (concurrent lock awaited) with jobId: ${jobId}`,
+        balances: awaited.balances ? {
+          buyer: {
+            ...awaited.balances.buyer,
+            debited: 0
+          },
+          seller: {
+            ...awaited.balances.seller,
+            credited: 0
+          },
+          treasury: {
+            ...awaited.balances.treasury,
+            creditedFee: 0
+          }
+        } : undefined
       };
     }
 

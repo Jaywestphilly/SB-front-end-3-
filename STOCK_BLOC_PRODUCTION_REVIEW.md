@@ -3,7 +3,7 @@
 **Product Name:** Stock Bloc | Quant Wealth Terminal  
 **Version:** 1.0.0 Production  
 **Total Codebase Volume:** **~52,000 Lines of Code (LOC)**  
-**Live Application URL:** [https://ais-pre-p3tflmsyxu75gnec7nb7vy-350859978227.us-east1.run.app](https://ais-pre-p3tflmsyxu75gnec7nb7vy-350859978227.us-east1.run.app)  
+**Live Application URL:** [https://stockbloc.ai.studio](https://stockbloc.ai.studio)  
 
 ---
 

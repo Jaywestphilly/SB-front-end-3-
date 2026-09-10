@@ -519,4 +519,76 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       expect(liveAapl.sourceReferences[0].url).toContain('sec.gov');
     }
   });
+
+  it('Requirement 14: Settlement Lock & Regression Guard — Exactly one BUYER DEBIT per jobId; must fail if >1 BUYER DEBIT', async () => {
+    const lockedJobId = 'job_settlement_regression_001';
+    const idempKey = 'idemp_settlement_regression_001';
+
+    // 1. First execution (Fresh settlement)
+    const res1 = await request(app)
+      .post('/api/v1/sec/job')
+      .set('Authorization', `Bearer ${buyerApiKey}`)
+      .set('Idempotency-Key', idempKey)
+      .send({
+        jobId: lockedJobId,
+        ticker: 'NVDA',
+        filingType: '10-K'
+      });
+
+    expect(res1.status).toBe(200);
+    expect(res1.body.success).toBe(true);
+    expect(res1.body.settlement.status).toBe('SETTLED');
+    expect(res1.body.settlement.balances.buyer.debited).toBe(25);
+    expect(res1.body.settlement.balances.seller.credited).toBe(24);
+    expect(res1.body.settlement.balances.treasury.creditedFee).toBe(1);
+
+    // 2. Replay 1
+    const res2 = await request(app)
+      .post('/api/v1/sec/job')
+      .set('Authorization', `Bearer ${buyerApiKey}`)
+      .set('Idempotency-Key', idempKey)
+      .send({
+        jobId: lockedJobId,
+        ticker: 'NVDA',
+        filingType: '10-K'
+      });
+
+    expect(res2.status).toBe(200);
+    expect(res2.body.idempotentReplay).toBe(true);
+    expect(res2.body.settlement.status).toBe('SETTLED');
+    expect(res2.body.settlement.balances.buyer.debited).toBe(0);
+
+    // 3. Replay 2 (via jobId match)
+    const res3 = await request(app)
+      .post('/api/v1/sec/job')
+      .set('Authorization', `Bearer ${buyerApiKey}`)
+      .send({
+        jobId: lockedJobId,
+        ticker: 'NVDA',
+        filingType: '10-K'
+      });
+
+    expect(res3.status).toBe(200);
+    expect(res3.body.idempotentReplay).toBe(true);
+    expect(res3.body.settlement.status).toBe('SETTLED');
+    expect(res3.body.settlement.balances.buyer.debited).toBe(0);
+
+    // 4. Regression Assertion: Scan ledger entries
+    const ledgerCollection = dbStoreInstance.getCollection('ledger_entries');
+    const allEntries = Array.from(ledgerCollection.values());
+    const buyerDebitsForJob = allEntries.filter((e: any) =>
+      e.jobId === lockedJobId &&
+      e.accountType === 'BUYER' &&
+      e.entryType === 'DEBIT'
+    );
+
+    // MUST fail if >1 BUYER DEBIT
+    expect(buyerDebitsForJob.length).toBeLessThanOrEqual(1);
+    expect(buyerDebitsForJob.length).toBe(1);
+
+    // Verify balances in wallet
+    const buyerWallet = inMemoryWalletRegistry.get(buyerId);
+    expect(buyerWallet?.creditsBalance).toBe(75);
+    expect(buyerWallet?.lifetimeSpent).toBe(25);
+  });
 });

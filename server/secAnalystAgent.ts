@@ -1293,36 +1293,40 @@ export async function executeSecAnalystJob(params: {
   const canonicalIdempotencyKey = params.idempotencyKey || `settle_sec_${jobId}_${canonicalPrice}`;
 
   // 2. Idempotency Check: Prevent duplicate settlement / charging / reputation increment
+  const formatReplayResult = (base: any, msg: string) => ({
+    ...base,
+    idempotentReplay: true,
+    message: msg,
+    settlement: base.settlement ? {
+      ...base.settlement,
+      idempotentReplay: true,
+      status: 'SETTLED',
+      balances: base.settlement.balances ? {
+        buyer: { ...base.settlement.balances.buyer, debited: 0 },
+        seller: { ...base.settlement.balances.seller, credited: 0 },
+        treasury: { ...base.settlement.balances.treasury, creditedFee: 0 }
+      } : undefined
+    } : base.settlement
+  });
+
   if (inMemorySecIdempotencyMap.has(canonicalIdempotencyKey)) {
     const prevJobId = inMemorySecIdempotencyMap.get(canonicalIdempotencyKey)!;
     if (inMemorySecJobRegistry.has(prevJobId)) {
       const prevResult = inMemorySecJobRegistry.get(prevJobId);
-      return {
-        ...prevResult,
-        idempotentReplay: true,
-        message: `Settlement already processed with idempotency key: ${canonicalIdempotencyKey}`
-      };
+      return formatReplayResult(prevResult, `Settlement already processed with idempotency key: ${canonicalIdempotencyKey}`);
     }
   }
 
   if (inMemorySecJobRegistry.has(jobId)) {
     const prevResult = inMemorySecJobRegistry.get(jobId);
-    return {
-      ...prevResult,
-      idempotentReplay: true,
-      message: `Job already executed and settled with jobId: ${jobId}`
-    };
+    return formatReplayResult(prevResult, `Job already executed and settled with jobId: ${jobId}`);
   }
 
   // Check in-flight execution locks for either key
   const inFlightJob = secJobExecutionLocks.get(canonicalIdempotencyKey) || secJobExecutionLocks.get(jobId);
   if (inFlightJob) {
     const awaited = await inFlightJob;
-    return {
-      ...awaited,
-      idempotentReplay: true,
-      message: `Job already executed and settled (concurrent execution awaited) for jobId: ${jobId}`
-    };
+    return formatReplayResult(awaited, `Job already executed and settled (concurrent execution awaited) for jobId: ${jobId}`);
   }
 
   // 3. Input Validation
