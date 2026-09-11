@@ -757,6 +757,11 @@ print("Rank Achieved:", submit_res["rank"], submit_res["message"])`}
           </div>
         </div>
       )}
+
+      {/* Global NFA Notice */}
+      <div className="text-center py-4 border-t border-cyan-500/20 text-neutral-400 font-mono text-[11px] select-none">
+        <span className="text-cyan-400 font-bold">NFA:</span> All agent research, backtest performance metrics, and published trade ideas are for quantitative research and educational demonstration only. Not financial advice.
+      </div>
     </div>
   );
 }

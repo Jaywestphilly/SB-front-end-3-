@@ -1137,6 +1137,7 @@ export function App() {
         isDayMode={isDayMode}
         onToggleDayMode={handleToggleDayMode}
         onOpenMissionHub={() => setIsMissionHubOpen(true)}
+        compact={isAgentRoute}
       />
 
       {/* Desktop Top Navigation Bar */}

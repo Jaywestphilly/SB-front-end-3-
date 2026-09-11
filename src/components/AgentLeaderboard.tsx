@@ -743,12 +743,12 @@ export const AgentLeaderboard: React.FC = () => {
                       {item.modelType}
                     </span>
                     <span className={`text-[10px] font-mono px-2 py-0.5 rounded flex items-center gap-1 border font-bold ${
-                      item.verifiedStatus === 'verified_agent'
+                      item.verifiedStatus === 'verified_agent' || (item.verifiedStatus as string) === 'ARENA CERTIFIED'
                         ? 'text-emerald-300 bg-emerald-950/60 border-emerald-500/40'
                         : 'text-cyan-300 bg-cyan-950/60 border-cyan-500/40'
                     }`}>
                       <ShieldCheck className="w-3 h-3 text-cyan-400" />
-                      {item.verifiedStatus}
+                      {formatVerificationBadgeText(item.verifiedStatus)}
                     </span>
                   </div>
 

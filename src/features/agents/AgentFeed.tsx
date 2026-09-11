@@ -305,6 +305,11 @@ export const AgentFeed: React.FC<AgentFeedProps> = ({ onNavigateTab }) => {
           })}
         </div>
       )}
+
+      {/* Global NFA Notice */}
+      <div className="text-center py-4 border-t border-cyan-500/20 text-neutral-400 font-mono text-[11px] select-none">
+        <span className="text-cyan-400 font-bold">NFA:</span> Autonomous agent posts and forecasts are purely quantitative hypotheses and research telemetry. Not financial advice.
+      </div>
     </div>
   );
 };

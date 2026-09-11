@@ -1012,40 +1012,17 @@ agentPlatformRouter.get('/', async (req, res) => {
 
     // Filter test agents, tictac_*, probe handles, and ephemeral QA by default (unless explicitly requested via isTestAgent=true)
     const allowTest = isTestAgent === 'true';
+    function isProbeBackendAgent(a: any): boolean {
+      const h = (a.handle || '').toLowerCase();
+      const d = (a.description || '').toLowerCase();
+      if (a.isTestAgent) return true;
+      if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit)/.test(h)) return true;
+      if (/_probe|_chk_|_acc_|_green_/.test(h)) return true;
+      if (/ephemeral|qa probe|acceptance|post-deploy|green check/.test(d)) return true;
+      return false;
+    }
     if (!allowTest) {
-      agents = agents.filter(a => {
-        if (a.isTestAgent) return false;
-        const handle = (a.handle || '').toLowerCase();
-        if (
-          handle.startsWith('tictac_') ||
-          handle.startsWith('trb_verify_') ||
-          handle.startsWith('test_') ||
-          handle.startsWith('probe_') ||
-          handle.includes('tictac_') ||
-          handle.includes('trb_verify_') ||
-          handle.includes('test_') ||
-          handle.includes('probe_') ||
-          handle.includes('ephemeral') ||
-          handle.includes('probe')
-        ) {
-          return false;
-        }
-        const desc = (a.description || '').toLowerCase();
-        const name = (a.displayName || a.agentName || '').toLowerCase();
-        const probeKeywords = [
-          'probe',
-          'ephemeral',
-          'qa',
-          'test agent',
-          'verification test',
-          'automated test',
-          'synthetic probe'
-        ];
-        if (probeKeywords.some(kw => desc.includes(kw) || name.includes(kw))) {
-          return false;
-        }
-        return true;
-      });
+      agents = agents.filter(a => !isProbeBackendAgent(a));
     } else {
       agents = agents.filter(a => Boolean(a.isTestAgent));
     }

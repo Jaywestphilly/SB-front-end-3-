@@ -50,6 +50,7 @@ interface HeaderProps {
   isDayMode?: boolean;
   onToggleDayMode?: () => void;
   onOpenMissionHub?: () => void;
+  compact?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -70,6 +71,7 @@ export const Header: React.FC<HeaderProps> = ({
   isDayMode = false,
   onToggleDayMode,
   onOpenMissionHub,
+  compact = false,
 }) => {
   const { marketDataUpdatedAt, marketDataIsStale } = useMarketStore();
   const [timeStr, setTimeStr] = useState("");
@@ -95,44 +97,46 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-30 w-full backdrop-blur-2xl bg-black/95 border-b border-cyan-500/30 text-white transition-colors relative overflow-hidden">
-      {/* Top Cyber Telemetry Bar */}
-      <div className="flex items-center justify-between px-3 sm:px-5 pt-1.5 pb-1 text-[10px] font-martian tracking-widest text-cyan-400/90 bg-black/60 border-b border-cyan-500/20 select-none">
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 bg-emerald-400 animate-ping inline-block" />
-            <span className="font-zen text-[9px] text-cyan-300">SYS.QUANT-88</span>
-            <span className="text-cyan-600">//</span>
-            <span className="text-cyan-200">{timeStr || "19:42:01"}</span>
-          </span>
+      {/* Top Cyber Telemetry Bar - Hidden in compact mode for <=2 sticky chrome on agent routes */}
+      {!compact && (
+        <div className="flex items-center justify-between px-3 sm:px-5 pt-1.5 pb-1 text-[10px] font-martian tracking-widest text-cyan-400/90 bg-black/60 border-b border-cyan-500/20 select-none">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 bg-emerald-400 animate-ping inline-block" />
+              <span className="font-zen text-[9px] text-cyan-300">SYS.QUANT-88</span>
+              <span className="text-cyan-600">//</span>
+              <span className="text-cyan-200">{timeStr || "19:42:01"}</span>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Compact Market Data Status Indicator */}
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic("selection");
+                if (onOpenDataStatus) onOpenDataStatus();
+              }}
+              className={`px-2 py-0.5 rounded border text-[9px] font-martian font-bold uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer ${
+                dataStale
+                  ? "bg-amber-500/20 text-amber-300 border-amber-500/50 hover:bg-amber-500/30"
+                  : "bg-emerald-500/20 text-emerald-300 border-emerald-400/40 hover:bg-emerald-500/30"
+              }`}
+              title="Click to view live data feeds and system sync health"
+            >
+              <span className={`w-1.5 h-1.5 rounded-full inline-block ${dataStale ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
+              <span>{compactStatusText}</span>
+            </button>
+
+            <span className="hidden md:inline text-[9px] text-emerald-300 font-martian font-bold bg-emerald-500/20 px-2 py-0.5 border border-emerald-400/40 rounded">
+              [QUANT-NODE: ONLINE]
+            </span>
+
+            {/* 24h Autonomous Agent Telemetry Counter (Zero-Knowledge) */}
+            <AgentActivityCounter variant="compact" />
+          </div>
         </div>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Compact Market Data Status Indicator */}
-          <button
-            type="button"
-            onClick={() => {
-              triggerHaptic("selection");
-              if (onOpenDataStatus) onOpenDataStatus();
-            }}
-            className={`px-2 py-0.5 rounded border text-[9px] font-martian font-bold uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer ${
-              dataStale
-                ? "bg-amber-500/20 text-amber-300 border-amber-500/50 hover:bg-amber-500/30"
-                : "bg-emerald-500/20 text-emerald-300 border-emerald-400/40 hover:bg-emerald-500/30"
-            }`}
-            title="Click to view live data feeds and system sync health"
-          >
-            <span className={`w-1.5 h-1.5 rounded-full inline-block ${dataStale ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
-            <span>{compactStatusText}</span>
-          </button>
-
-          <span className="hidden md:inline text-[9px] text-emerald-300 font-martian font-bold bg-emerald-500/20 px-2 py-0.5 border border-emerald-400/40 rounded">
-            [QUANT-NODE: ONLINE]
-          </span>
-
-          {/* 24h Autonomous Agent Telemetry Counter (Zero-Knowledge) */}
-          <AgentActivityCounter variant="compact" />
-        </div>
-      </div>
+      )}
 
       {/* Main Brand & Actions Header */}
       <div className="px-3 sm:px-4 py-2 flex items-center justify-between gap-2 relative">
