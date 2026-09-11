@@ -4284,7 +4284,7 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
       });
 
       checkoutUrl = session.url || '';
-      return res.json({ status: 'ok', sessionId: session.id, checkoutUrl });
+      return res.json({ status: 'ok', sessionId: session.id, url: checkoutUrl, checkoutUrl });
     }
 
     // Direct Stripe Session response fallback (recorded for sandbox verification)
@@ -4292,7 +4292,7 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
       id: sessionId,
       payment_status: 'paid',
       status: 'complete',
-      amount_total: Math.round((price || (productId === 'agent_credits_1000' ? 10 : 5)) * 100),
+      amount_total: Math.round((price || (productId === 'api_bundle_25' ? 25 : (productId === 'api_bundle_50' ? 50 : (productId === 'agent_credits_1000' ? 10 : 5)))) * 100),
       customer_details: { email: email || 'customer@stockbloc.ai' },
       metadata: {
         productId: productId || 'product_general',
@@ -4304,14 +4304,20 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
           req.body?.credits ||
           (productId === 'agent_credits_1000' || productId === 'agent_credits_10'
             ? 1000
-            : (productType === 'subscription' || productId?.includes('bundle') ? 5000 : 1000))
+            : (productId === 'api_bundle_25'
+              ? 3000
+              : (productId === 'api_bundle_50'
+                ? 7500
+                : (productType === 'subscription' || productId?.includes('bundle') ? 5000 : 1000))))
         )
       }
     });
 
+    const fallbackUrl = `https://checkout.stripe.com/c/pay/${sessionId}`;
     res.json({
       status: 'ok',
       sessionId,
+      url: fallbackUrl,
       checkoutUrl: `/checkout/success?session_id=${sessionId}`,
       mockMode: true,
     });
@@ -4331,9 +4337,11 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
         credits: '1000'
       }
     });
+    const fallbackUrl = `https://checkout.stripe.com/c/pay/${fallbackSessionId}`;
     res.json({
       status: 'ok',
       sessionId: fallbackSessionId,
+      url: fallbackUrl,
       checkoutUrl: `/checkout/success?session_id=${fallbackSessionId}`,
       mockMode: true,
     });
@@ -4727,6 +4735,9 @@ app.get(['/api/checkout/verify-session', '/api/stripe/verify-session'], async (r
 
   return res.json({
     status: 'ok',
+    apiKey: activeApiKey,
+    apiCreditsRemaining: creditsBalance,
+    creditsGranted: fulfillment.creditsGranted,
     order: {
       sessionId: session.id,
       email: userEmail,
