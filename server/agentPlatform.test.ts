@@ -248,16 +248,16 @@ describe('Agent Platform API', () => {
      expect(res2.status).toBe(200);
   });
 
-  it('12. Autonomous Agent self-registration grants full marketplace and arena scopes', async () => {
+  it('12. Autonomous Agent self-registration grants autonomous scopes including community write and reply', async () => {
     const { registerAutonomousAgentHandler, authenticateAgent, requireScope } = await import('./agentPlatform.js');
     const autoApp = express();
     autoApp.use(express.json());
     autoApp.post('/api/v1/agent/register', registerAutonomousAgentHandler);
     
-    // Add dummy marketplace endpoints to verify scope access
-    autoApp.post('/api/v1/exchange/services', authenticateAgent, requireScope('services:write'), (req, res) => res.status(201).json({ success: true, action: 'service_published' }));
-    autoApp.post('/api/v1/exchange/requests', authenticateAgent, requireScope('requests:write'), (req, res) => res.status(201).json({ success: true, action: 'request_created' }));
+    // Add dummy endpoints to verify scope access
     autoApp.post('/api/v1/exchange/jobs', authenticateAgent, requireScope('jobs:execute'), (req, res) => res.status(201).json({ success: true, action: 'job_executed' }));
+    autoApp.post('/api/v1/community/posts', authenticateAgent, requireScope('community:write'), (req, res) => res.status(200).json({ success: true, action: 'post_created' }));
+    autoApp.post('/api/v1/community/replies', authenticateAgent, requireScope('community:reply'), (req, res) => res.status(200).json({ success: true, action: 'reply_created' }));
 
     const regRes = await request(autoApp)
       .post('/api/v1/agent/register')
@@ -271,31 +271,17 @@ describe('Agent Platform API', () => {
     expect(regRes.body.status).toBe('registered');
     expect(regRes.body.apiKey).toContain('sb_live_');
     expect(regRes.body.trialCredits).toBe(100);
-    expect(regRes.body.scopes).toContain('services:write');
-    expect(regRes.body.scopes).toContain('requests:write');
+    expect(regRes.body.scopes).toContain('services:read');
+    expect(regRes.body.scopes).toContain('jobs:read');
     expect(regRes.body.scopes).toContain('jobs:execute');
     expect(regRes.body.scopes).toContain('payments:transact');
     expect(regRes.body.scopes).toContain('community:read');
+    expect(regRes.body.scopes).toContain('community:write');
+    expect(regRes.body.scopes).toContain('community:reply');
     expect(regRes.body.marketplace).toBeDefined();
     expect(regRes.body.marketplace.enabled).toBe(true);
 
     const apiKey = regRes.body.apiKey;
-
-    // Verify services:write access
-    const srvRes = await request(autoApp)
-      .post('/api/v1/exchange/services')
-      .set('Authorization', `Bearer ${apiKey}`)
-      .send({ name: '13F Whale Tracking Service' });
-    expect(srvRes.status).toBe(201);
-    expect(srvRes.body.action).toBe('service_published');
-
-    // Verify requests:write access
-    const reqRes = await request(autoApp)
-      .post('/api/v1/exchange/requests')
-      .set('Authorization', `Bearer ${apiKey}`)
-      .send({ title: 'Quantum Compute Deep Dive' });
-    expect(reqRes.status).toBe(201);
-    expect(reqRes.body.action).toBe('request_created');
 
     // Verify jobs:execute access
     const jobRes = await request(autoApp)
@@ -304,5 +290,21 @@ describe('Agent Platform API', () => {
       .send({ taskId: 'task_001' });
     expect(jobRes.status).toBe(201);
     expect(jobRes.body.action).toBe('job_executed');
+
+    // Verify community:write access
+    const postRes = await request(autoApp)
+      .post('/api/v1/community/posts')
+      .set('Authorization', `Bearer ${apiKey}`)
+      .send({ content: 'Autonomous thesis test post' });
+    expect(postRes.status).toBe(200);
+    expect(postRes.body.action).toBe('post_created');
+
+    // Verify community:reply access
+    const replyRes = await request(autoApp)
+      .post('/api/v1/community/replies')
+      .set('Authorization', `Bearer ${apiKey}`)
+      .send({ threadId: 'thread_1', content: 'Autonomous reply test' });
+    expect(replyRes.status).toBe(200);
+    expect(replyRes.body.action).toBe('reply_created');
   });
 });

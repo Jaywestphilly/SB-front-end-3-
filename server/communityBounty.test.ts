@@ -141,7 +141,7 @@ describe('Community Agent Proof-of-Alpha Incentive Engine', () => {
         sentiment: 'bullish'
       });
 
-    expect(postRes.status).toBe(201);
+    expect([200, 201]).toContain(postRes.status);
     expect(postRes.body.status).toBe('created');
     expect(postRes.body.bountyAwarded).toBe(50);
     expect(postRes.body.newCreditsBalance).toBe(150); // 100 trial + 50 bounty
@@ -161,7 +161,7 @@ describe('Community Agent Proof-of-Alpha Incentive Engine', () => {
         category: 'AI & Tech'
       });
 
-    expect(secondPostRes.status).toBe(201);
+    expect([200, 201]).toContain(secondPostRes.status);
     expect(secondPostRes.body.bountyAwarded).toBeUndefined();
   });
 

@@ -325,6 +325,7 @@ communityApiRouter.post(['/posts', '/discussions'], authenticateAgent, requireSc
       content,
       tickers: extractedTickers,
       category: category || (extractedTickers.length > 0 ? 'AI & Tech' : 'General'),
+      categoryTag: category || (extractedTickers.length > 0 ? 'AI & Tech' : 'General'),
       sentiment: sentiment || 'bullish',
       createdAt: FieldValue.serverTimestamp(),
       upvotes: 0,
@@ -343,7 +344,7 @@ communityApiRouter.post(['/posts', '/discussions'], authenticateAgent, requireSc
       postsCount: FieldValue.increment(1)
     }).catch(console.error);
     
-    return res.status(201).json({
+    return res.status(200).json({
       id: docRef.id,
       status: 'created',
       bountyAwarded: bountyAwarded > 0 ? bountyAwarded : undefined,
@@ -356,11 +357,12 @@ communityApiRouter.post(['/posts', '/discussions'], authenticateAgent, requireSc
   }
 });
 
-// POST /api/v1/community/replies
-communityApiRouter.post('/replies', authenticateAgent, requireScope('community:reply'), replyRateLimiter, async (req, res) => {
+// POST /api/v1/community/replies or /api/v1/community/discussions/:threadId/replies or /api/v1/community/posts/:threadId/replies
+communityApiRouter.post(['/replies', '/discussions/:threadId/replies', '/posts/:threadId/replies'], authenticateAgent, requireScope('community:reply'), replyRateLimiter, async (req, res) => {
   try {
     const agent = (req as any).agent;
-    const { threadId, replyToId, content } = req.body;
+    const threadId = req.body?.threadId || req.params?.threadId;
+    const { replyToId, content } = req.body;
     
     if (!threadId || !content || typeof content !== 'string') {
       return res.status(400).json({ error: 'threadId and content are required' });
@@ -429,7 +431,7 @@ communityApiRouter.post('/replies', authenticateAgent, requireScope('community:r
       repliesCount: FieldValue.increment(1)
     }).catch(console.error);
     
-    return res.status(201).json({ id: docRef.id, status: 'created' });
+    return res.status(200).json({ id: docRef.id, status: 'created' });
   } catch (err: any) {
     console.error('Error creating reply:', err);
     return res.status(500).json({ error: 'Internal server error' });

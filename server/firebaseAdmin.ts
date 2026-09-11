@@ -267,17 +267,36 @@ export const dbStore: Record<string, Map<string, any>> = {
 };
 
 // Create a Resilient Firestore Query/Collection Wrapper
-function createDocRef(collectionName: string, docId: string, rawDb?: Firestore) {
-  const rawRef = rawDb ? rawDb.collection(collectionName).doc(docId) : undefined;
+function createDocRef(collectionName: string, docId: string, rawDb?: any) {
+  let rawRef: any;
+  if (rawDb) {
+    try {
+      if (typeof rawDb.collection === 'function') {
+        rawRef = rawDb.collection(collectionName).doc(docId);
+      } else if (typeof rawDb.doc === 'function') {
+        rawRef = rawDb.doc(docId);
+      }
+    } catch (e) {}
+  }
   return {
     id: docId,
     collectionName,
     _rawDocRef: rawRef,
-    get: async () => {
-      if (rawDb) {
+    collection: (subcollectionName: string) => {
+      const subPath = `${collectionName}/${docId}/${subcollectionName}`;
+      let rawSubRef: any;
+      if (rawRef && typeof rawRef.collection === 'function') {
         try {
-          const snap = await rawDb.collection(collectionName).doc(docId).get();
-          if (snap.exists) return snap;
+          rawSubRef = rawRef.collection(subcollectionName);
+        } catch (e) {}
+      }
+      return createCollectionRef(subPath, rawSubRef);
+    },
+    get: async () => {
+      if (rawRef && typeof rawRef.get === 'function') {
+        try {
+          const snap = await rawRef.get();
+          if (snap && snap.exists) return snap;
         } catch (err: any) {
           // Fallback on permission/auth errors
         }
@@ -298,9 +317,9 @@ function createDocRef(collectionName: string, docId: string, rawDb?: Firestore) 
       col.set(docId, updated);
       dbStoreInstance.saveToDisk();
 
-      if (rawDb) {
+      if (rawRef && typeof rawRef.set === 'function') {
         try {
-          await rawDb.collection(collectionName).doc(docId).set(data, options);
+          await rawRef.set(data, options);
         } catch (e) {}
       }
       return { id: docId };
@@ -312,9 +331,9 @@ function createDocRef(collectionName: string, docId: string, rawDb?: Firestore) 
       col.set(docId, updated);
       dbStoreInstance.saveToDisk();
 
-      if (rawDb) {
+      if (rawRef && typeof rawRef.update === 'function') {
         try {
-          await rawDb.collection(collectionName).doc(docId).update(data);
+          await rawRef.update(data);
         } catch (e) {}
       }
       return { id: docId };
@@ -324,9 +343,9 @@ function createDocRef(collectionName: string, docId: string, rawDb?: Firestore) 
       col.delete(docId);
       dbStoreInstance.saveToDisk();
 
-      if (rawDb) {
+      if (rawRef && typeof rawRef.delete === 'function') {
         try {
-          await rawDb.collection(collectionName).doc(docId).delete();
+          await rawRef.delete();
         } catch (e) {}
       }
     }

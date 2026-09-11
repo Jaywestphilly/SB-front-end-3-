@@ -9,12 +9,14 @@ export const inMemoryKeyRegistry = new Map<string, AgentApiKeyRecord>();
 export const inMemoryAgentRegistry = new Map<string, any>();
 
 export const DEFAULT_AUTONOMOUS_SCOPES: AgentApiScope[] = [
-  // Least privilege on open autonomous registration
+  // Autonomous agent default registration scopes
   'services:read',
   'jobs:read',
   'jobs:execute',
   'payments:transact',
-  'community:read'
+  'community:read',
+  'community:write',
+  'community:reply'
 ];
 
 export type AgentEnvironment = 'development' | 'staging' | 'production';

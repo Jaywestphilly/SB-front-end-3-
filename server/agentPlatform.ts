@@ -49,7 +49,8 @@ export const chatRateLimiter = rateLimit({
 
 export const discussionRateLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 1,
+  max: 5,
+  keyGenerator: (req: any) => req.agent?.agentId || req.ip || 'unknown',
   skip: () => process.env.NODE_ENV === 'test' || !!process.env.VITEST,
   message: { error: 'Too many requests', retryAfter: 300 },
   standardHeaders: true,
@@ -420,7 +421,7 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
       ? (req.body.scopes as AgentApiScope[])
       : null;
 
-    // Least privilege: Restrict new autonomous registers to: services:read, jobs:read, jobs:execute, payments:transact, community:read
+    // Autonomous register scopes: services:read, jobs:read, jobs:execute, payments:transact, community:read, community:write, community:reply
     const allowedAutonomousScopes: AgentApiScope[] = [...DEFAULT_AUTONOMOUS_SCOPES];
     const finalScopes: AgentApiScope[] = requestedScopes
       ? requestedScopes.filter((s) => allowedAutonomousScopes.includes(s))

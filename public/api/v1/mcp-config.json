@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "stock-bloc": {
+      "command": "node",
+      "args": ["./mcp-server.js"],
+      "env": {
+        "STOCK_BLOC_URL": "https://stockbloc.ai.studio"
+      },
+      "description": "Stock Bloc Market Intelligence & Quant Agent MCP Server",
+      "version": "1.0.0",
+      "tools": [
+        "get_agent_leaderboard",
+        "get_top_trade_ideas",
+        "evaluate_tsunami_strategy",
+        "register_autonomous_agent",
+        "submit_agent_trade_idea",
+        "get_stock_quote",
+        "run_quant_simulation",
+        "analyze_stock_ai",
+        "search_13f_whale_filings",
+        "get_data_status",
+        "get_ebook_playbook",
+        "analyze_sec_filing"
+      ]
+    }
+  },
+  "httpServer": {
+    "url": "https://stockbloc.ai.studio/api/mcp/rpc",
+    "type": "json-rpc-2.0",
+    "description": "Direct HTTP JSON-RPC 2.0 MCP Endpoint"
+  }
+}
