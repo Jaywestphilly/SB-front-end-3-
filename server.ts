@@ -4619,7 +4619,7 @@ app.get(['/api/checkout/verify-session', '/api/stripe/verify-session'], async (r
 
     let walletRes = { creditsBalance: 0 };
     if (creditsToAdd > 0) {
-      walletRes = await addCreditsToAgentWallet(targetAgentId, creditsToAdd);
+      walletRes = await addCreditsToAgentWallet(targetAgentId, creditsToAdd, 'STRIPE_PURCHASE');
     } else {
       const existingWallet = inMemoryWalletRegistry.get(targetAgentId);
       walletRes.creditsBalance = existingWallet?.creditsBalance || 0;

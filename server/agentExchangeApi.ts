@@ -144,6 +144,8 @@ export class PlatformCreditsProvider implements PaymentProvider {
         agentId,
         creditsBalance: isTreasury ? 0 : defaultCredits,
         availableBalance: isTreasury ? 0 : defaultCredits,
+        paidCreditsBalance: 0,
+        trialCredits: isTreasury ? 0 : defaultCredits,
         usdPendingBalance: 0,
         usdSettledBalance: 0,
         usdcPendingBalance: 0,
@@ -172,6 +174,8 @@ export class PlatformCreditsProvider implements PaymentProvider {
         agentId,
         creditsBalance: isTreasury ? 0 : defaultCredits,
         availableBalance: isTreasury ? 0 : defaultCredits,
+        paidCreditsBalance: 0,
+        trialCredits: isTreasury ? 0 : defaultCredits,
         usdPendingBalance: 0,
         usdSettledBalance: 0,
         usdcPendingBalance: 0,
@@ -383,7 +387,12 @@ export class PlatformCreditsProvider implements PaymentProvider {
             return replayResult;
           }
         }
-      } catch (_) {}
+      } catch (readErr: any) {
+        if (readErr && !readErr.message?.includes('PERMISSION_DENIED') && !readErr.message?.includes('Missing or insufficient permissions') && !readErr.message?.includes('database')) {
+          console.error('[PlatformCreditsProvider] Pre-transaction idempotency check error:', readErr);
+          throw new Error(`Idempotency check failed: ${readErr.message || 'Database error'}`);
+        }
+      }
 
       // 4. Perform Atomic Double-Entry Settlement Transaction
       let settlementResult: SettlementResult;
@@ -392,12 +401,24 @@ export class PlatformCreditsProvider implements PaymentProvider {
         const buyerRef = db.collection('agent_wallets').doc(buyerAgentId);
         const sellerRef = db.collection('agent_wallets').doc(sellerAgentId);
         const treasuryRef = db.collection('agent_wallets').doc(PLATFORM_TREASURY_ACCOUNT_ID);
+        const settledJobRef = db.collection('settled_jobs').doc(jobId);
+        const idempKeyRef = db.collection('idempotency_keys').doc(idempotencyKey);
 
-        const [buyerSnap, sellerSnap, treasurySnap] = await Promise.all([
+        const [buyerSnap, sellerSnap, treasurySnap, settledJobSnap, idempKeySnap] = await Promise.all([
           t.get(buyerRef),
           t.get(sellerRef),
-          t.get(treasuryRef)
+          t.get(treasuryRef),
+          t.get(settledJobRef),
+          t.get(idempKeyRef)
         ]);
+
+        if (settledJobSnap.exists || idempKeySnap.exists) {
+          const replayTxId = settledJobSnap.data()?.transactionId || idempKeySnap.data()?.transactionId;
+          const replayErr = new Error(`IDEMPOTENT_REPLAY_SETTLED_JOB:${replayTxId || ''}`);
+          (replayErr as any).isIdempotentReplay = true;
+          (replayErr as any).transactionId = replayTxId;
+          throw replayErr;
+        }
 
         const memBuyer = inMemoryWalletRegistry.get(buyerAgentId);
         const memSeller = inMemoryWalletRegistry.get(sellerAgentId);
@@ -406,10 +427,13 @@ export class PlatformCreditsProvider implements PaymentProvider {
         const buyerData = (buyerSnap.exists ? buyerSnap.data() : memBuyer) || {
           agentId: buyerAgentId,
           creditsBalance: PLATFORM_ECONOMICS.defaultTrialCredits,
+          paidCreditsBalance: 0,
           lifetimeSpent: 0
         };
 
         const buyerBalance = typeof buyerData.creditsBalance === 'number' ? buyerData.creditsBalance : PLATFORM_ECONOMICS.defaultTrialCredits;
+        const buyerPaidBalance = typeof buyerData.paidCreditsBalance === 'number' ? buyerData.paidCreditsBalance : 0;
+
         if (buyerBalance < grossAmount) {
           throw new Error(`Insufficient credits balance for buyer ${buyerAgentId}. Required: ${grossAmount}, Available: ${buyerBalance}`);
         }
@@ -434,6 +458,7 @@ export class PlatformCreditsProvider implements PaymentProvider {
 
         // Calculate post-settlement balances
         const buyerBalanceAfter = buyerBalance - grossAmount;
+        const buyerPaidBalanceAfter = Math.max(0, buyerPaidBalance - grossAmount);
         const sellerBalanceAfter = sellerBalance + netSellerAmount;
         const treasuryBalanceAfter = treasuryBalance + platformFee;
 
@@ -520,6 +545,7 @@ export class PlatformCreditsProvider implements PaymentProvider {
           agentId: buyerAgentId,
           creditsBalance: buyerBalanceAfter,
           availableBalance: buyerBalanceAfter,
+          paidCreditsBalance: Math.max(0, (buyerData.paidCreditsBalance || 0) - grossAmount),
           lifetimeSpent: (buyerData.lifetimeSpent || 0) + grossAmount,
           updatedAt: settledAt
         };
@@ -528,6 +554,7 @@ export class PlatformCreditsProvider implements PaymentProvider {
           agentId: sellerAgentId,
           creditsBalance: sellerBalanceAfter,
           availableBalance: sellerBalanceAfter,
+          paidCreditsBalance: (sellerData.paidCreditsBalance || 0) + netSellerAmount,
           lifetimeGrossEarnings: (sellerData.lifetimeGrossEarnings || 0) + grossAmount,
           lifetimePlatformFeesPaid: (sellerData.lifetimePlatformFeesPaid || 0) + platformFee,
           lifetimeNetEarnings: (sellerData.lifetimeNetEarnings || 0) + netSellerAmount,
@@ -553,7 +580,6 @@ export class PlatformCreditsProvider implements PaymentProvider {
         const txRef = db.collection('platform_transactions').doc(transactionId);
         t.set(txRef, ledgerTx);
 
-        const idempKeyRef = db.collection('idempotency_keys').doc(idempotencyKey);
         t.set(idempKeyRef, {
           idempotencyKey,
           transactionId,
@@ -562,7 +588,6 @@ export class PlatformCreditsProvider implements PaymentProvider {
           createdAt: settledAt
         });
 
-        const settledJobRef = db.collection('settled_jobs').doc(jobId);
         t.set(settledJobRef, {
           jobId,
           transactionId,
@@ -576,6 +601,15 @@ export class PlatformCreditsProvider implements PaymentProvider {
         for (const entry of ledgerEntries) {
           t.set(db.collection('ledger_entries').doc(entry.entryId), entry);
         }
+
+        // Keep local in-memory state in sync
+        inMemoryWalletRegistry.set(buyerAgentId, updatedBuyer);
+        inMemoryWalletRegistry.set(sellerAgentId, updatedSeller);
+        inMemoryWalletRegistry.set(PLATFORM_TREASURY_ACCOUNT_ID, updatedTreasury);
+        for (const entry of ledgerEntries) {
+          inMemoryLedgerRegistry.set(entry.entryId, entry);
+        }
+        inMemoryTransactionRegistry.set(transactionId, ledgerTx);
 
         const result: SettlementResult = {
           success: true,
@@ -617,11 +651,64 @@ export class PlatformCreditsProvider implements PaymentProvider {
           settledAt
         };
 
+        inMemorySettlementRegistry.set(idempotencyKey, result);
+        inMemorySettlementRegistry.set(jobId, result);
+
         return result;
       });
     } catch (firestoreErr: any) {
+      if (firestoreErr.message?.startsWith('IDEMPOTENT_REPLAY_SETTLED_JOB') || firestoreErr.isIdempotentReplay) {
+        const txId = firestoreErr.transactionId || firestoreErr.message?.split(':')[1];
+        const existingTx = txId ? inMemoryTransactionRegistry.get(txId) : undefined;
+        const buyerW = await this.getOrCreateWallet(buyerAgentId);
+        const replayResult: SettlementResult = {
+          success: true,
+          idempotentReplay: true,
+          message: `Settlement already processed for jobId: ${jobId}`,
+          transactionId: txId || ('tx_' + crypto.randomBytes(8).toString('hex')),
+          idempotencyKey,
+          jobId,
+          status: 'SETTLED',
+          grossAmount,
+          platformFee,
+          platformFeeBps,
+          netSellerAmount,
+          sellerNet: netSellerAmount,
+          currency: params.currency || 'CREDITS',
+          paymentRail: params.paymentRail || 'PLATFORM_CREDITS',
+          balances: {
+            buyer: {
+              agentId: buyerAgentId,
+              handle: buyerHandle,
+              previousBalance: buyerW.creditsBalance,
+              currentBalance: buyerW.creditsBalance,
+              debited: 0
+            },
+            seller: {
+              agentId: sellerAgentId,
+              handle: sellerHandle,
+              previousBalance: (existingTx?.balancesAfter?.sellerBalance ?? 0) - netSellerAmount,
+              currentBalance: existingTx?.balancesAfter?.sellerBalance ?? 0,
+              credited: 0
+            },
+            treasury: {
+              accountId: PLATFORM_TREASURY_ACCOUNT_ID,
+              previousBalance: (existingTx?.balancesAfter?.treasuryBalance ?? 0) - platformFee,
+              currentBalance: existingTx?.balancesAfter?.treasuryBalance ?? 0,
+              creditedFee: 0
+            }
+          },
+          ledgerEntries: existingTx?.entries || [],
+          transaction: existingTx,
+          settledAt: new Date().toISOString()
+        };
+        inMemorySettlementRegistry.set(idempotencyKey, replayResult);
+        inMemorySettlementRegistry.set(jobId, replayResult);
+        return replayResult;
+      }
+
       if (firestoreErr.message && (
-        firestoreErr.message.includes('Insufficient credits') ||
+        firestoreErr.message.includes('Insufficient') ||
         firestoreErr.message.includes('Gross amount') ||
         firestoreErr.message.includes('Ledger integrity') ||
         firestoreErr.message.includes('Missing required')
@@ -629,13 +716,29 @@ export class PlatformCreditsProvider implements PaymentProvider {
         throw firestoreErr;
       }
 
+      // Check if settled_jobs has this job in memory before fallback
+      const inMemSettled = inMemorySettlementRegistry.get(jobId) || inMemorySettlementRegistry.get(idempotencyKey);
+      if (inMemSettled) {
+        return {
+          ...inMemSettled,
+          idempotentReplay: true,
+          balances: inMemSettled.balances ? {
+            buyer: { ...inMemSettled.balances.buyer, debited: 0 },
+            seller: { ...inMemSettled.balances.seller, credited: 0 },
+            treasury: { ...inMemSettled.balances.treasury, creditedFee: 0 }
+          } : undefined
+        };
+      }
+
       // Resilient local in-memory fallback
       const memBuyer = inMemoryWalletRegistry.get(buyerAgentId) || {
         agentId: buyerAgentId,
         creditsBalance: PLATFORM_ECONOMICS.defaultTrialCredits,
+        paidCreditsBalance: 0,
         lifetimeSpent: 0
       };
       const buyerBalance = typeof memBuyer.creditsBalance === 'number' ? memBuyer.creditsBalance : PLATFORM_ECONOMICS.defaultTrialCredits;
+      const buyerPaidBalance = typeof memBuyer.paidCreditsBalance === 'number' ? memBuyer.paidCreditsBalance : 0;
       if (buyerBalance < grossAmount) {
         throw new Error(`Insufficient credits balance for buyer ${buyerAgentId}. Required: ${grossAmount}, Available: ${buyerBalance}`);
       }
@@ -736,6 +839,39 @@ export class PlatformCreditsProvider implements PaymentProvider {
         completedAt: settledAt
       };
 
+        // Update in-memory wallet registry
+        inMemoryWalletRegistry.set(buyerAgentId, {
+          ...memBuyer,
+          agentId: buyerAgentId,
+          creditsBalance: buyerBalanceAfter,
+          availableBalance: buyerBalanceAfter,
+          paidCreditsBalance: Math.max(0, (memBuyer.paidCreditsBalance || 0) - grossAmount),
+          lifetimeSpent: (memBuyer.lifetimeSpent || 0) + grossAmount,
+          updatedAt: settledAt
+        });
+        inMemoryWalletRegistry.set(sellerAgentId, {
+          ...memSeller,
+          agentId: sellerAgentId,
+          creditsBalance: sellerBalanceAfter,
+          availableBalance: sellerBalanceAfter,
+          paidCreditsBalance: (memSeller.paidCreditsBalance || 0) + netSellerAmount,
+          lifetimeGrossEarnings: (memSeller.lifetimeGrossEarnings || 0) + grossAmount,
+          lifetimePlatformFeesPaid: (memSeller.lifetimePlatformFeesPaid || 0) + platformFee,
+          lifetimeNetEarnings: (memSeller.lifetimeNetEarnings || 0) + netSellerAmount,
+          updatedAt: settledAt
+        });
+        inMemoryWalletRegistry.set(PLATFORM_TREASURY_ACCOUNT_ID, {
+          ...memTreasury,
+          agentId: PLATFORM_TREASURY_ACCOUNT_ID,
+          accountType: 'PLATFORM_TREASURY',
+          creditsBalance: treasuryBalanceAfter,
+          availableBalance: treasuryBalanceAfter,
+          lifetimeGrossEarnings: (memTreasury.lifetimeGrossEarnings || 0) + platformFee,
+          lifetimeFeesCollected: (memTreasury.lifetimeFeesCollected || 0) + platformFee,
+          totalSettledVolume: (memTreasury.totalSettledVolume || 0) + grossAmount,
+          updatedAt: settledAt
+        });
+
         // Persist records to dbStoreInstance / fallback collections
         try {
           await db.collection('platform_transactions').doc(transactionId).set(ledgerTx);
@@ -825,37 +961,6 @@ export class PlatformCreditsProvider implements PaymentProvider {
     } finally {
       inMemorySettlementLocks.delete(idempotencyKey);
       inMemorySettlementLocks.delete(jobId);
-    }
-
-    // Only update balances and lifetime metrics if NOT an idempotent replay
-    if (settlementResult && settlementResult.balances && !settlementResult.idempotentReplay) {
-      const b = settlementResult.balances;
-      const bW = inMemoryWalletRegistry.get(b.buyer.agentId);
-      inMemoryWalletRegistry.set(b.buyer.agentId, {
-        ...(bW || {}),
-        agentId: b.buyer.agentId,
-        creditsBalance: b.buyer.currentBalance,
-        availableBalance: b.buyer.currentBalance,
-        lifetimeSpent: (bW?.lifetimeSpent || 0) + (b.buyer.debited || 0)
-      });
-      const sW = inMemoryWalletRegistry.get(b.seller.agentId);
-      inMemoryWalletRegistry.set(b.seller.agentId, {
-        ...(sW || {}),
-        agentId: b.seller.agentId,
-        creditsBalance: b.seller.currentBalance,
-        availableBalance: b.seller.currentBalance,
-        lifetimeGrossEarnings: (sW?.lifetimeGrossEarnings || 0) + settlementResult.grossAmount,
-        lifetimeNetEarnings: (sW?.lifetimeNetEarnings || 0) + (b.seller.credited || 0),
-        lifetimePlatformFeesPaid: (sW?.lifetimePlatformFeesPaid || 0) + settlementResult.platformFee
-      });
-      const tW = inMemoryWalletRegistry.get(b.treasury.accountId);
-      inMemoryWalletRegistry.set(b.treasury.accountId, {
-        ...(tW || {}),
-        agentId: b.treasury.accountId,
-        creditsBalance: b.treasury.currentBalance,
-        availableBalance: b.treasury.currentBalance,
-        totalSettledVolume: (tW?.totalSettledVolume || 0) + settlementResult.grossAmount
-      });
     }
 
     return settlementResult;

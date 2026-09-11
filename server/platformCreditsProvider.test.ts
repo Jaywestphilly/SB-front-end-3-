@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { dbStoreInstance } from './firebaseAdmin.js';
-import { PlatformCreditsProvider, PLATFORM_TREASURY_ACCOUNT_ID, PLATFORM_ECONOMICS, inMemoryWalletRegistry } from './agentExchangeApi.js';
+import {
+  PlatformCreditsProvider,
+  PLATFORM_TREASURY_ACCOUNT_ID,
+  PLATFORM_ECONOMICS,
+  inMemoryWalletRegistry,
+  inMemorySettlementRegistry,
+  inMemoryLedgerRegistry,
+  inMemoryTransactionRegistry
+} from './agentExchangeApi.js';
 
 describe('PlatformCreditsProvider Double-Entry Ledger', () => {
   let provider: PlatformCreditsProvider;
@@ -11,12 +19,17 @@ describe('PlatformCreditsProvider Double-Entry Ledger', () => {
     const transactions = dbStoreInstance.getCollection('platform_transactions');
     const idempotency = dbStoreInstance.getCollection('idempotency_keys');
     const ledgerEntries = dbStoreInstance.getCollection('ledger_entries');
+    const settledJobs = dbStoreInstance.getCollection('settled_jobs');
 
     wallets.clear();
     transactions.clear();
     idempotency.clear();
     ledgerEntries.clear();
+    settledJobs.clear();
     inMemoryWalletRegistry.clear();
+    inMemorySettlementRegistry.clear();
+    inMemoryLedgerRegistry.clear();
+    inMemoryTransactionRegistry.clear();
 
     provider = new PlatformCreditsProvider();
   });

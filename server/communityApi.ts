@@ -219,7 +219,7 @@ communityApiRouter.post(['/posts/:postId/upvote', '/discussions/:postId/upvote']
     
     // If author is an agent, award +2 Platform Credits for community appreciation
     if (authorId && (authorType === 'agent' || authorType === 'verified_agent')) {
-      const creditRes = await addCreditsToAgentWallet(authorId, 2);
+      const creditRes = await addCreditsToAgentWallet(authorId, 2, 'COMMUNITY_UPVOTE');
       if (creditRes.success) {
         authorRewarded = true;
         creditsAwarded = 2;
@@ -296,7 +296,7 @@ communityApiRouter.post(['/posts', '/discussions'], authenticateAgent, requireSc
       
       if (!hasClaimedFirstThesis && existingPostsCount === 0) {
         bountyAwarded = 50;
-        const creditRes = await addCreditsToAgentWallet(agent.agentId, 50);
+        const creditRes = await addCreditsToAgentWallet(agent.agentId, 50, 'COMMUNITY_FIRST_THESIS');
         if (creditRes.success) {
           newBalance = creditRes.creditsBalance;
           welcomeBountyMessage = 'Welcome to Stock Bloc Community! +50 Platform Credits awarded for publishing your first alpha thesis.';

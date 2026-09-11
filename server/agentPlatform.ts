@@ -322,6 +322,17 @@ export async function addCreditsToAgentWallet(
   const prevBalance = wallet.creditsBalance || 0;
   wallet.creditsBalance = prevBalance + creditsToAdd;
   wallet.availableBalance = (wallet.availableBalance || 0) + creditsToAdd;
+  
+  if (reasonTag === 'STRIPE_PURCHASE') {
+    wallet.paidCreditsBalance = (wallet.paidCreditsBalance || 0) + creditsToAdd;
+  } else if (reasonTag === 'TRIAL') {
+    wallet.trialCreditsBalance = (wallet.trialCreditsBalance || 0) + creditsToAdd;
+  } else if (reasonTag.startsWith('COMMUNITY_')) {
+    wallet.promoCreditsBalance = (wallet.promoCreditsBalance || 0) + creditsToAdd;
+  } else {
+    wallet.promoCreditsBalance = (wallet.promoCreditsBalance || 0) + creditsToAdd;
+  }
+  
   wallet.lastCreditTag = reasonTag;
   wallet.lastCreditAmount = creditsToAdd;
   wallet.lastCreditedAt = new Date().toISOString();
@@ -332,6 +343,12 @@ export async function addCreditsToAgentWallet(
   // Write ledger entry for audit trail
   try {
     const entryId = 'ent_credit_' + crypto.randomBytes(6).toString('hex');
+    const description = reasonTag.startsWith('COMMUNITY_')
+      ? `Community bonus award (${creditsToAdd} credits) [${reasonTag}]`
+      : reasonTag.startsWith('ADMIN_')
+      ? `Admin balance adjustment (${creditsToAdd} credits) [${reasonTag}]`
+      : `Wallet credit purchase (${creditsToAdd} credits) [${reasonTag}]`;
+
     const creditEntry = {
       entryId,
       accountId: resolvedAgentId,
@@ -340,7 +357,7 @@ export async function addCreditsToAgentWallet(
       amount: creditsToAdd,
       currency: 'CREDITS',
       tag: reasonTag,
-      description: `Wallet credit purchase (${creditsToAdd} credits) [${reasonTag}]`,
+      description,
       balanceBefore: prevBalance,
       balanceAfter: wallet.creditsBalance,
       createdAt: new Date().toISOString()
@@ -448,7 +465,14 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
     inMemoryKeyRegistry.set(publicId, { ...keyRecord, secretHash: keyHash });
     inMemoryKeyRegistry.set(rawKey, { ...keyRecord, secretHash: keyHash });
     inMemoryWalletRegistry.set(agentId, {
+      agentId,
       creditsBalance: 100,
+      availableBalance: 100,
+      paidCreditsBalance: 0,
+      promoCreditsBalance: 0,
+      trialCreditsBalance: 100,
+      trialCredits: 100,
+      lastCreditTag: 'TRIAL',
       lifetimeSpent: 0,
       simulationRuns: 0,
       verifiedSimulations: 0
@@ -469,6 +493,12 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
       await db.collection('agent_wallets').doc(agentId).set({
         agentId,
         creditsBalance: 100,
+        availableBalance: 100,
+        paidCreditsBalance: 0,
+        promoCreditsBalance: 0,
+        trialCreditsBalance: 100,
+        trialCredits: 100,
+        lastCreditTag: 'TRIAL',
         lifetimeGrossEarnings: 0,
         lifetimeSpent: 0,
         status: 'active'

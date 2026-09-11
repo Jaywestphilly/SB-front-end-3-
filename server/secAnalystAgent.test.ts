@@ -6,6 +6,9 @@ import {
   inMemoryWalletRegistry,
   inMemoryAgentRegistry,
   inMemoryKeyRegistry,
+  inMemorySettlementRegistry,
+  inMemoryLedgerRegistry,
+  inMemoryTransactionRegistry,
   PLATFORM_TREASURY_ACCOUNT_ID,
   PLATFORM_ECONOMICS
 } from './agentExchangeApi.js';
@@ -52,6 +55,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     const transactions = dbStoreInstance.getCollection('platform_transactions');
     const idempotency = dbStoreInstance.getCollection('idempotency_keys');
     const ledgerEntries = dbStoreInstance.getCollection('ledger_entries');
+    const settledJobs = dbStoreInstance.getCollection('settled_jobs');
     const jobs = dbStoreInstance.getCollection('agent_jobs');
     const services = dbStoreInstance.getCollection('agent_services');
 
@@ -59,6 +63,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     transactions.clear();
     idempotency.clear();
     ledgerEntries.clear();
+    settledJobs.clear();
     jobs.clear();
     services.clear();
 
@@ -67,6 +72,9 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     inMemoryKeyRegistry.clear();
     inMemorySecJobRegistry.clear();
     inMemorySecIdempotencyMap.clear();
+    inMemorySettlementRegistry.clear();
+    inMemoryLedgerRegistry.clear();
+    inMemoryTransactionRegistry.clear();
 
     // Reset SEC Analyst statistics to honest zero baseline
     secAnalystStats.jobsCompleted = 0;
@@ -109,11 +117,13 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     buyerNoTransactScopeKey = limitedKeyResult.rawKey;
     inMemoryKeyRegistry.set(limitedKeyResult.keyId, limitedKeyResult.keyRecord);
 
-    // Fund Buyer Wallet with 100 credits
+    // Fund Buyer Wallet with 100 credits (including 100 paid credits for tests)
     inMemoryWalletRegistry.set(buyerId, {
       agentId: buyerId,
       creditsBalance: 100,
       availableBalance: 100,
+      paidCreditsBalance: 100,
+      trialCredits: 0,
       reservedBalance: 0,
       lifetimeSpent: 0,
       lifetimeGrossEarnings: 0,
@@ -125,6 +135,8 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       agentId: SEC_ANALYST_AGENT_ID,
       creditsBalance: 100,
       availableBalance: 100,
+      paidCreditsBalance: 100,
+      trialCredits: 0,
       reservedBalance: 0,
       lifetimeSpent: 0,
       lifetimeGrossEarnings: 0,
@@ -394,10 +406,11 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     expect(buyerWallet.creditsBalance).toBe(75);
   });
 
-  it('Requirement 9: Economic Integrity — Insufficient funds returns 402 Payment Required', async () => {
-    // Set buyer balance to 10 credits (less than required 25)
+  it('Requirement 9: Economic Integrity — Insufficient paid funds returns 402 Payment Required with checkoutUrl', async () => {
+    // Set buyer balance to 10 paid credits (less than required 25)
     inMemoryWalletRegistry.get(buyerId)!.creditsBalance = 10;
     inMemoryWalletRegistry.get(buyerId)!.availableBalance = 10;
+    inMemoryWalletRegistry.get(buyerId)!.paidCreditsBalance = 10;
 
     const res = await request(app)
       .post('/api/v1/sec/job')
@@ -410,6 +423,30 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     expect(res.status).toBe(402);
     expect(res.body.code).toBe('INSUFFICIENT_FUNDS');
     expect(res.body.error).toMatch(/insufficient/i);
+    expect(res.body.checkoutUrl).toBe('https://stockbloc.ai.studio/pricing');
+    expect(res.body.availableCredits).toBe(10);
+    expect(res.body.requiredCredits).toBe(25);
+  });
+
+  it('Requirement 9b: Free Trial Credits Protection — Trial credits cannot be spent on paid SEC EDGAR executions', async () => {
+    // Agent has 100 total credits, but 0 paid credits (purely trial credits)
+    inMemoryWalletRegistry.get(buyerId)!.creditsBalance = 100;
+    inMemoryWalletRegistry.get(buyerId)!.availableBalance = 100;
+    inMemoryWalletRegistry.get(buyerId)!.paidCreditsBalance = 0;
+    inMemoryWalletRegistry.get(buyerId)!.trialCredits = 100;
+
+    const res = await request(app)
+      .post('/api/v1/sec/job')
+      .set('Authorization', `Bearer ${buyerApiKey}`)
+      .send({
+        ticker: 'MSFT',
+        filingType: '10-K'
+      });
+
+    expect(res.status).toBe(402);
+    expect(res.body.code).toBe('INSUFFICIENT_FUNDS');
+    expect(res.body.checkoutUrl).toBe('https://stockbloc.ai.studio/pricing');
+    expect(res.body.availableCredits).toBe(0);
   });
 
   it('Requirement 10: Idempotency — Repeated requests with same idempotency key return cached result without double charging', async () => {

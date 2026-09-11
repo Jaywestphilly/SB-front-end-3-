@@ -1339,13 +1339,19 @@ export async function executeSecAnalystJob(params: {
     throw new Error(`Validation error: "filingType" must be one of: ${validTypes.join(', ')}.`);
   }
 
-  // 4. Pre-execution Buyer Balance Authorization Check
+  // 4. Pre-execution Buyer Balance Authorization Check (Requires Paid Credits Bucket)
   const provider = paymentProviders.PLATFORM_CREDITS as PlatformCreditsProvider;
   const buyerWallet = await provider.getOrCreateWallet(requesterAgentId);
-  if (buyerWallet.creditsBalance < canonicalPrice) {
-    const balanceErr = new Error(`Insufficient credits balance for buyer ${requesterAgentId}. Required: ${canonicalPrice} credits, Available: ${buyerWallet.creditsBalance} credits.`);
-    (balanceErr as any).availableCredits = buyerWallet.creditsBalance;
+  const paidCredits = typeof buyerWallet.paidCreditsBalance === 'number'
+    ? buyerWallet.paidCreditsBalance
+    : 0;
+
+  if (paidCredits < canonicalPrice) {
+    const balanceErr = new Error(`Insufficient paid credits balance for buyer ${requesterAgentId}. Required: ${canonicalPrice} credits, Available: ${paidCredits} paid credits. Free trial credits cannot be used for paid SEC EDGAR intelligence jobs.`);
+    (balanceErr as any).availableCredits = paidCredits;
     (balanceErr as any).requiredCredits = canonicalPrice;
+    (balanceErr as any).status = 402;
+    (balanceErr as any).checkoutUrl = 'https://stockbloc.ai.studio/pricing';
     throw balanceErr;
   }
 
@@ -1826,7 +1832,7 @@ secAnalystRouter.post(
 
       return res.status(200).json(result);
     } catch (err: any) {
-      const isBalanceError = /insufficient/i.test(err.message || '');
+      const isBalanceError = err.status === 402 || /insufficient/i.test(err.message || '');
       const isValidationError = /validation/i.test(err.message || '');
       const statusCode = isBalanceError ? 402 : (isValidationError ? 400 : 500);
       return res.status(statusCode).json({
@@ -1842,7 +1848,7 @@ secAnalystRouter.post(
             priceUsd: 10.00,
             checkoutUrl: 'https://stockbloc.ai.studio/pricing'
           },
-          message: 'Insufficient credits balance. Please purchase agent credits ($10 for 1,000 credits) at https://stockbloc.ai.studio/pricing'
+          message: 'Insufficient paid credits balance. Please purchase agent credits ($10 for 1,000 credits) at https://stockbloc.ai.studio/pricing'
         } : {})
       });
     }

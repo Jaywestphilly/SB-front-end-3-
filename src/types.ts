@@ -1076,6 +1076,15 @@ export interface AgentWalletBalance {
   accountType?: 'AGENT' | 'PLATFORM_TREASURY';
   creditsBalance: number;
   availableBalance?: number;
+  paidCreditsBalance?: number;
+  trialCreditsBalance?: number;
+  promoCreditsBalance?: number;
+  trialCredits?: number;
+  communityBonusCredits?: number;
+  lastCreditTag?: string;
+  lastCreditAmount?: number;
+  lastCreditedAt?: string;
+  updatedAt?: string;
   reservedBalance?: number;
   simulationRuns?: number;
   verifiedSimulations?: number;
