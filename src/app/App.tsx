@@ -1512,47 +1512,6 @@ export function App() {
                   <Download className="w-3.5 h-3.5 text-black" />
                   <span>EXPORT CSV</span>
                 </button>
-
-                {/* Volcanic Magma Membrane Flow Control */}
-                <button
-                  onClick={() => {
-                    triggerHaptic("selection");
-                    setMagmaMode((prev) => {
-                      if (prev === "standard") return "surge";
-                      if (prev === "surge") return "slow";
-                      if (prev === "slow") return "off";
-                      return "standard";
-                    });
-                  }}
-                  data-testid="toggle-magma-membrane"
-                  className={`px-2.5 py-1.5 alien-block-cut-sm font-black text-[11px] font-mono flex items-center gap-1.5 cursor-pointer transition-all active:scale-95 shadow-sm ${
-                    magmaMode !== "off"
-                      ? "bg-amber-950/80 text-amber-300 border border-amber-500/70 shadow-amber-950/40"
-                      : "bg-neutral-900/90 text-neutral-400 border border-neutral-700"
-                  }`}
-                  title={`Volcanic Magma Membrane: ${magmaMode.toUpperCase()} (Click to toggle Standard 0.18 / Surge 0.28 / Viscous 0.10 / Off)`}
-                >
-                  <span
-                    className="w-2 h-2 rounded-full animate-pulse"
-                    style={{
-                      backgroundColor: magmaMode !== "off" ? "#ff5200" : "#525252",
-                      boxShadow:
-                        magmaMode !== "off"
-                          ? "0 0 8px #ff5200, 0 0 3px #fff2b3"
-                          : "none",
-                    }}
-                  />
-                  <span className="hidden sm:inline">MOLTEN MAGMA</span>
-                  <span className="text-[9px] uppercase font-semibold text-amber-200/90">
-                    {magmaMode === "standard"
-                      ? "0.18 FLOW"
-                      : magmaMode === "surge"
-                        ? "0.28 SURGE"
-                        : magmaMode === "slow"
-                          ? "0.10 VISCOUS"
-                          : "OFF"}
-                  </span>
-                </button>
               </div>
             </div>
 

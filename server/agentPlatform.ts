@@ -1483,27 +1483,47 @@ agentPlatformRouter.get('/feed', async (req, res) => {
       });
     });
 
-    // Dedupe by author|symbol|target; prefer trade_idea_* over leaderboard_trade_*
-    const seenMap = new Map<string, any>();
-    feedItems.forEach((item) => {
-      const author = (item.author?.handle || item.authorUsername || item.authorId || item.authorName || '').toLowerCase();
-      const symbol = (item.symbol || item.asset || '').toUpperCase();
-      const target = item.targetPrice !== undefined && item.targetPrice !== null ? String(item.targetPrice) : '';
-      if (author && symbol) {
-        const dedupeKey = `${author}|${symbol}|${target}`;
-        if (!seenMap.has(dedupeKey)) {
-          seenMap.set(dedupeKey, item);
-        } else {
-          const existing = seenMap.get(dedupeKey);
-          if (String(item.id).startsWith('trade_idea_') && !String(existing.id).startsWith('trade_idea_')) {
-            seenMap.set(dedupeKey, item);
-          }
-        }
-      } else {
-        seenMap.set(item.id || Math.random().toString(), item);
-      }
+    // Filter probes
+    function isProbeBackend(item: any): boolean {
+      if (!item) return true;
+      if (item.isTestAgent) return true;
+      const h = (item.authorUsername || item.author?.handle || item.authorId || item.authorName || '').toLowerCase();
+      const title = (item.title || '').toLowerCase();
+      const content = (item.summary || item.content || '').toLowerCase();
+      if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit)/.test(h)) return true;
+      if (/_probe|_chk_|_acc_|_green_/.test(h)) return true;
+      if (/ephemeral|qa probe|acceptance|post-deploy|green check/.test(content) || /ephemeral|qa probe|acceptance|post-deploy|green check/.test(title)) return true;
+      return false;
+    }
+
+    function getDedupeKey(item: any): string {
+      const author = (item.authorUsername || item.author?.handle || item.authorId || item.authorName || '').toLowerCase().trim();
+      const symbol = (item.symbol || item.asset || item.ticker || '').toUpperCase().trim();
+      const target = item.targetPrice ?? item.forecast?.targetPrice ?? item.tradeIdea?.targetPrice ?? '';
+      if (symbol) return `f:${author}|${symbol}|${target}`;
+      const title = (item.title || item.id || '').toLowerCase().trim();
+      return `d:${author}|${title}`;
+    }
+
+    const cleanFeedItems = feedItems.filter((item) => !isProbeBackend(item));
+
+    // Sort so trade_idea_* is preferred over leaderboard_trade_*
+    cleanFeedItems.sort((a, b) => {
+      const aTrade = String(a.id || '').startsWith('trade_idea_') || a.category === 'trade_idea';
+      const bTrade = String(b.id || '').startsWith('trade_idea_') || b.category === 'trade_idea';
+      if (aTrade && !bTrade) return -1;
+      if (!aTrade && bTrade) return 1;
+      return 0;
     });
-    const dedupedFeed = Array.from(seenMap.values());
+
+    const seenSet = new Set<string>();
+    const dedupedFeed: any[] = [];
+    for (const item of cleanFeedItems) {
+      const key = getDedupeKey(item);
+      if (seenSet.has(key)) continue;
+      seenSet.add(key);
+      dedupedFeed.push(item);
+    }
 
     dedupedFeed.sort((a, b) => {
       const tA = a.createdAt?._seconds ? a.createdAt._seconds * 1000 : new Date(a.createdAt || 0).getTime();

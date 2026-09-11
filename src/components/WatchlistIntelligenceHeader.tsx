@@ -37,7 +37,7 @@ export const WatchlistIntelligenceHeader: React.FC<WatchlistIntelligenceHeaderPr
 }) => {
   const marketOpen = getMarketOpenStatus();
   const freshness = getStockDataFreshness(marketDataUpdatedAt);
-  const { watchlistChartStyle, setWatchlistChartStyle, watchlistDataDensity, setWatchlistDataDensity } = useMarketStore();
+  const { watchlistChartStyle, setWatchlistChartStyle } = useMarketStore();
   const [isSBGuideOpen, setIsSBGuideOpen] = useState(false);
 
   return (
@@ -105,23 +105,6 @@ export const WatchlistIntelligenceHeader: React.FC<WatchlistIntelligenceHeaderPr
                     <span>Candles</span>
                   </button>
                 </div>
-
-                {/* Glanceable Metrics Density Toggle */}
-                <button
-                  onClick={() => {
-                    triggerHaptic("selection");
-                    setWatchlistDataDensity(watchlistDataDensity === "detailed" ? "compact" : "detailed");
-                  }}
-                  className={`px-2 py-1 text-[10px] font-alien-hud uppercase flex items-center gap-1 border alien-block-cut-sm transition-all cursor-pointer ${
-                    watchlistDataDensity === "detailed"
-                      ? "bg-cyan-950/80 text-cyan-300 border-cyan-400/60 glow-cyan"
-                      : "bg-black/70 text-neutral-400 border-cyan-900/40 hover:text-cyan-200"
-                  }`}
-                  title={watchlistDataDensity === "detailed" ? "Glanceable Data Points Active (Tap to hide)" : "Compact Mode Active (Tap to show glanceable data points)"}
-                >
-                  <BarChart3 className="w-3 h-3" />
-                  <span>{watchlistDataDensity === "detailed" ? "Glance: ON" : "Glance: OFF"}</span>
-                </button>
 
                 {/* Manual Refresh Button */}
                 <button

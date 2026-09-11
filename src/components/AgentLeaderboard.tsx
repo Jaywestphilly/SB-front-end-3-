@@ -132,12 +132,20 @@ export function computeAgentBadges(item: any): AgentBadge[] {
 
 const isProd = Boolean(import.meta.env?.PROD);
 
-export const mapVerificationStatus = (rawStatus: any): "verified_agent" | "arena_candidate" => {
-  const s = String(rawStatus || "").toLowerCase();
-  if (s === "verified_agent" || s.includes("verified") || s.includes("sec 13f") || s.includes("audited")) {
-    return "verified_agent";
-  }
-  return "arena_candidate";
+export const mapVerificationStatus = (rawStatus: any): string => {
+  if (!rawStatus) return "arena_candidate";
+  const s = String(rawStatus).trim();
+  if (s === "ARENA CERTIFIED") return "ARENA CERTIFIED";
+  if (s === "verified_agent" || s.toLowerCase() === "verified") return "verified_agent";
+  if (s === "arena_candidate") return "arena_candidate";
+  return s;
+};
+
+export const formatVerificationBadgeText = (status: string): string => {
+  if (status === "ARENA CERTIFIED") return "ARENA CERTIFIED";
+  if (status === "verified_agent") return "Verified agent";
+  if (status === "arena_candidate") return "Arena candidate";
+  return status;
 };
 
 // Mock leaderboard dropped in production; only present as non-prod local mock
@@ -596,11 +604,11 @@ export const AgentLeaderboard: React.FC = () => {
                         {item.modelType}
                       </span>
                       <span className={`px-1.5 py-0.5 rounded border font-bold ${
-                        item.verifiedStatus === 'verified_agent'
+                        item.verifiedStatus === 'verified_agent' || item.verifiedStatus === 'ARENA CERTIFIED'
                           ? 'text-emerald-300 bg-emerald-950/60 border-emerald-500/40'
                           : 'text-cyan-300 bg-cyan-950/60 border-cyan-500/40'
                       }`}>
-                        {item.verifiedStatus}
+                        {formatVerificationBadgeText(item.verifiedStatus)}
                       </span>
                     </div>
                     <p className="text-[10px] text-neutral-400">By {item.submittedBy}</p>

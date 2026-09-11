@@ -54,6 +54,19 @@ const SPECIALTIES_LIST = [
   "Alternative Assets"
 ];
 
+function isProbe(a: any): boolean {
+  if (!a) return true;
+  if (a.isTestAgent) return true;
+  const h = (a.handle || a.authorUsername || a.author?.handle || "").toLowerCase();
+  const d = (a.description || a.summary || a.content || "").toLowerCase();
+  const name = (a.displayName || a.agentName || a.authorName || "").toLowerCase();
+
+  if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit)/.test(h)) return true;
+  if (/_probe|_chk_|_acc_|_green_/.test(h)) return true;
+  if (/ephemeral|qa probe|acceptance|post-deploy|green check/.test(d) || /ephemeral|qa probe|acceptance|post-deploy|green check/.test(name)) return true;
+  return false;
+}
+
 export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
   const [activeSubTab, setActiveSubTab] = useSubTabUrl(
     "/agents",
@@ -85,31 +98,7 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
           const data = await res.json();
           const list = data.agents || [];
           if (Array.isArray(list) && list.length > 0) {
-            const cleanList = list.filter((a: any) => {
-              if (a.isTestAgent) return false;
-              const handle = (a.handle || '').toLowerCase();
-              if (
-                handle.startsWith('tictac_') ||
-                handle.startsWith('trb_verify_') ||
-                handle.startsWith('test_') ||
-                handle.startsWith('probe_') ||
-                handle.includes('tictac_') ||
-                handle.includes('trb_verify_') ||
-                handle.includes('test_') ||
-                handle.includes('probe_') ||
-                handle.includes('ephemeral') ||
-                handle.includes('probe')
-              ) {
-                return false;
-              }
-              const desc = (a.description || '').toLowerCase();
-              const name = (a.displayName || a.agentName || '').toLowerCase();
-              const probeKeywords = ['probe', 'ephemeral', 'qa', 'test agent', 'verification test', 'automated test', 'synthetic probe'];
-              if (probeKeywords.some(kw => desc.includes(kw) || name.includes(kw))) {
-                return false;
-              }
-              return true;
-            });
+            const cleanList = list.filter((a: any) => !isProbe(a));
 
             setAgents(cleanList.map((a: any) => {
               const isVerified = a.verificationStatus === 'verified_agent' || a.verificationStatus === 'verified' || a.verifiedStatus === 'VERIFIED SIMULATION' || a.verifiedSimulation;
@@ -144,22 +133,7 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
         const snap = await getDocs(q);
         const agentData = snap.docs
           .map(doc => ({ id: doc.id, ...doc.data() as any }))
-          .filter((a: any) => {
-            if (a.isTestAgent) return false;
-            const handle = (a.handle || '').toLowerCase();
-            if (
-              handle.startsWith('tictac_') ||
-              handle.startsWith('trb_verify_') ||
-              handle.startsWith('test_') ||
-              handle.startsWith('probe_') ||
-              handle.includes('tictac_') ||
-              handle.includes('probe_') ||
-              handle.includes('ephemeral')
-            ) {
-              return false;
-            }
-            return true;
-          });
+          .filter((a: any) => !isProbe(a));
         setAgents(agentData);
       } catch (err) {
         console.error("Error fetching agents directory:", err);
@@ -206,39 +180,7 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
 
   const filteredAgents = agents.filter(a => {
     // 1. Drop test agents and probe handles
-    if (a.isTestAgent) return false;
-
-    const handle = (a.handle || "").toLowerCase();
-    if (
-      handle.startsWith("tictac_") ||
-      handle.startsWith("trb_verify_") ||
-      handle.startsWith("test_") ||
-      handle.startsWith("probe_") ||
-      handle.includes("tictac_") ||
-      handle.includes("trb_verify_") ||
-      handle.includes("test_") ||
-      handle.includes("probe_") ||
-      handle.includes("ephemeral") ||
-      handle.includes("probe")
-    ) {
-      return false;
-    }
-
-    // Drop ephemeral/probe/QA descriptions
-    const desc = (a.description || "").toLowerCase();
-    const name = (a.displayName || a.agentName || "").toLowerCase();
-    const probeKeywords = [
-      "probe",
-      "ephemeral",
-      "qa",
-      "test agent",
-      "verification test",
-      "automated test",
-      "synthetic probe"
-    ];
-    if (probeKeywords.some(keyword => desc.includes(keyword) || name.includes(keyword))) {
-      return false;
-    }
+    if (isProbe(a)) return false;
 
     // Status filter
     if (filter === "verified" && a.verificationStatus !== "verified_agent" && a.verificationStatus !== "verified") return false;

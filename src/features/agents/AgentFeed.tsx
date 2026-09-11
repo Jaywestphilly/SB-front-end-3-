@@ -19,6 +19,27 @@ interface AgentFeedProps {
   onNavigateTab: (tab: ViewTab) => void;
 }
 
+function isProbe(item: any): boolean {
+  if (!item) return true;
+  if (item.isTestAgent) return true;
+  const h = (item.authorUsername || item.author?.handle || item.authorId || item.authorName || item.author?.displayName || "").toLowerCase();
+  const title = (item.title || "").toLowerCase();
+  const content = (item.summary || item.content || "").toLowerCase();
+  if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit)/.test(h)) return true;
+  if (/_probe|_chk_|_acc_|_green_/.test(h)) return true;
+  if (/ephemeral|qa probe|acceptance|post-deploy|green check/.test(content) || /ephemeral|qa probe|acceptance|post-deploy|green check/.test(title)) return true;
+  return false;
+}
+
+function dedupeKey(item: any): string {
+  const author = (item.authorUsername || item.author?.handle || item.authorId || item.authorName || "").toLowerCase().trim();
+  const symbol = (item.symbol || item.asset || item.ticker || "").toUpperCase().trim();
+  const target = item.targetPrice ?? item.forecast?.targetPrice ?? item.tradeIdea?.targetPrice ?? "";
+  if (symbol) return `f:${author}|${symbol}|${target}`;
+  const title = (item.title || item.id || "").toLowerCase().trim();
+  return `d:${author}|${title}`;
+}
+
 export const AgentFeed: React.FC<AgentFeedProps> = ({ onNavigateTab }) => {
   const [feedItems, setFeedItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,56 +53,29 @@ export const AgentFeed: React.FC<AgentFeedProps> = ({ onNavigateTab }) => {
         const data = await res.json();
         const rawItems: any[] = data.items || data.feed || [];
 
-        // Filter out probe / test clutter
-        const nonTestItems = rawItems.filter((item) => {
-          if (item.isTestAgent) return false;
-          const aName = (item.author?.handle || item.authorUsername || item.authorId || item.authorName || "").toLowerCase();
-          if (
-            aName.startsWith("tictac_") ||
-            aName.startsWith("trb_verify_") ||
-            aName.startsWith("test_") ||
-            aName.startsWith("probe_") ||
-            aName.includes("tictac_") ||
-            aName.includes("probe_") ||
-            aName.includes("ephemeral")
-          ) {
-            return false;
-          }
-          return true;
+        // 1. Filter out probes & test agents
+        const nonTestItems = rawItems.filter((item) => !isProbe(item));
+
+        // 2. Sort so trade_idea_* / category trade_idea are preferred over leaderboard_trade_*
+        const sortedItems = [...nonTestItems].sort((a, b) => {
+          const aTrade = String(a.id || "").startsWith("trade_idea_") || a.category === "trade_idea";
+          const bTrade = String(b.id || "").startsWith("trade_idea_") || b.category === "trade_idea";
+          if (aTrade && !bTrade) return -1;
+          if (!aTrade && bTrade) return 1;
+          return 0;
         });
 
-        // Dedupe strictly by author|symbol|targetPrice after fetch
-        const dedupeMap = new Map<string, any>();
-        nonTestItems.forEach((item, idx) => {
-          const author = (item.author?.handle || item.authorUsername || item.authorId || item.authorName || item.author?.displayName || "").toLowerCase().trim();
-          const symbol = (item.symbol || item.asset || item.ticker || item.targetSymbol || "").toUpperCase().trim();
-          const targetPrice = item.targetPrice !== undefined && item.targetPrice !== null 
-            ? String(item.targetPrice).trim() 
-            : (item.forecast?.targetPrice !== undefined && item.forecast?.targetPrice !== null 
-              ? String(item.forecast.targetPrice).trim() 
-              : (item.tradeIdea?.targetPrice !== undefined && item.tradeIdea?.targetPrice !== null 
-                ? String(item.tradeIdea.targetPrice).trim() 
-                : ""));
+        // 3. Dedupe with dedupeKey
+        const seen = new Set<string>();
+        const deduped: any[] = [];
+        for (const item of sortedItems) {
+          const key = dedupeKey(item);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          deduped.push(item);
+        }
 
-          if (author && symbol) {
-            const key = `${author}|${symbol}|${targetPrice}`;
-            if (!dedupeMap.has(key)) {
-              dedupeMap.set(key, item);
-            } else {
-              const existing = dedupeMap.get(key);
-              // Prefer trade_idea_* over leaderboard_trade_*
-              if (String(item.id).startsWith("trade_idea_") && !String(existing.id).startsWith("trade_idea_")) {
-                dedupeMap.set(key, item);
-              }
-            }
-          } else {
-            const fallbackKey = item.id ? String(item.id) : `feed_item_${idx}`;
-            if (!dedupeMap.has(fallbackKey)) {
-              dedupeMap.set(fallbackKey, item);
-            }
-          }
-        });
-        setFeedItems(Array.from(dedupeMap.values()));
+        setFeedItems(deduped);
       }
     } catch (err) {
       console.error("Failed to load agent feed:", err);
