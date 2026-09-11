@@ -58,6 +58,91 @@ export const fulfilledStripeSessions = new Map<string, {
   fulfilledAt: string;
 }>();
 
+export async function getRecordedStripeSessionAsync(sessionId: string): Promise<any | null> {
+  if (!sessionId) return null;
+  if (recordedStripeSessions.has(sessionId)) {
+    return recordedStripeSessions.get(sessionId);
+  }
+  if (db) {
+    try {
+      const snap = await db.collection('stripe_sessions').doc(sessionId).get();
+      if (snap.exists) {
+        const data = snap.data();
+        recordedStripeSessions.set(sessionId, data);
+        return data;
+      }
+    } catch (_) {}
+  }
+  return null;
+}
+
+export async function setRecordedStripeSessionAsync(sessionId: string, sessionData: any): Promise<void> {
+  if (!sessionId) return;
+  recordedStripeSessions.set(sessionId, sessionData);
+  if (db) {
+    try {
+      await db.collection('stripe_sessions').doc(sessionId).set(sessionData, { merge: true });
+    } catch (_) {}
+  }
+}
+
+export async function getFulfilledStripeSessionAsync(sessionId: string): Promise<{
+  sessionId: string;
+  agentId: string;
+  creditsGranted: number;
+  creditsBalance: number;
+  fulfilledAt: string;
+} | null> {
+  if (!sessionId) return null;
+  if (fulfilledStripeSessions.has(sessionId)) {
+    return fulfilledStripeSessions.get(sessionId)!;
+  }
+  if (db) {
+    try {
+      const snap = await db.collection('fulfilled_stripe_sessions').doc(sessionId).get();
+      if (snap.exists) {
+        const data = snap.data() as any;
+        fulfilledStripeSessions.set(sessionId, data);
+        return data;
+      }
+    } catch (_) {}
+  }
+  return null;
+}
+
+export async function setFulfilledStripeSessionAsync(sessionId: string, fulfillment: {
+  sessionId: string;
+  agentId: string;
+  creditsGranted: number;
+  creditsBalance: number;
+  fulfilledAt: string;
+}): Promise<void> {
+  if (!sessionId) return;
+  fulfilledStripeSessions.set(sessionId, fulfillment);
+  if (db) {
+    try {
+      await db.collection('fulfilled_stripe_sessions').doc(sessionId).set(fulfillment, { merge: true });
+    } catch (_) {}
+  }
+}
+
+export async function isWebhookEventProcessedAsync(eventId: string): Promise<boolean> {
+  if (!eventId) return false;
+  if (processedWebhookEvents.has(eventId)) {
+    return true;
+  }
+  if (db) {
+    try {
+      const snap = await db.collection('processed_webhook_events').doc(eventId).get();
+      if (snap.exists) {
+        processedWebhookEvents.add(eventId);
+        return true;
+      }
+    } catch (_) {}
+  }
+  return false;
+}
+
 export class StripePaymentProvider implements PaymentProvider {
   rail = 'STRIPE' as const;
   name = 'STRIPE';

@@ -604,7 +604,7 @@ export const AgentLeaderboard: React.FC = () => {
                         {item.modelType}
                       </span>
                       <span className={`px-1.5 py-0.5 rounded border font-bold ${
-                        item.verifiedStatus === 'verified_agent' || item.verifiedStatus === 'ARENA CERTIFIED'
+                        item.verifiedStatus === 'verified_agent' || (item.verifiedStatus as string) === 'ARENA CERTIFIED'
                           ? 'text-emerald-300 bg-emerald-950/60 border-emerald-500/40'
                           : 'text-cyan-300 bg-cyan-950/60 border-cyan-500/40'
                       }`}>

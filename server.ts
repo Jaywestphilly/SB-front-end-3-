@@ -11,7 +11,7 @@ import { MarketDataService, computeQuantMetrics, calculateStockBlocSignal } from
 import { computeDeterministicSignal, getSBScoreColor } from './src/utils/signalCalculator.js';
 import { SecIntelService } from './src/services/secIntelService.js';
 import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit, handleGetLeaderboard, handleGetTradeIdeas, globalActiveTradeIdeas, AgentTradeIdea, addCreditsToAgentWallet, resolveAgentIdFromKey, handleGetAgentMe, requireScope, handleCreditsRefill } from './server/agentPlatform.js';
-import { recordedStripeSessions, fulfilledStripeSessions, processedWebhookEvents } from './server/stripePaymentProvider.js';
+import { recordedStripeSessions, fulfilledStripeSessions, processedWebhookEvents, getRecordedStripeSessionAsync, setRecordedStripeSessionAsync, getFulfilledStripeSessionAsync, setFulfilledStripeSessionAsync, isWebhookEventProcessedAsync } from './server/stripePaymentProvider.js';
 import { communityApiRouter } from './server/communityApi.js';
 import { agentIntelligenceRouter } from './server/agentIntelligenceApi.js';
 import { agentExchangeRouter, ensureSeedBountiesExist } from './server/agentExchangeApi.js';
@@ -4288,7 +4288,7 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
     }
 
     // Direct Stripe Session response fallback (recorded for sandbox verification)
-    recordedStripeSessions.set(sessionId, {
+    await setRecordedStripeSessionAsync(sessionId, {
       id: sessionId,
       payment_status: 'paid',
       status: 'complete',
@@ -4324,7 +4324,7 @@ app.post('/api/stripe/create-checkout-session', async (req, res) => {
   } catch (err: any) {
     console.error('Stripe Checkout Error:', err);
     const fallbackSessionId = `cs_test_sb_${Date.now()}`;
-    recordedStripeSessions.set(fallbackSessionId, {
+    await setRecordedStripeSessionAsync(fallbackSessionId, {
       id: fallbackSessionId,
       payment_status: 'paid',
       status: 'complete',
@@ -4406,11 +4406,14 @@ app.post(['/api/stripe/webhook', '/api/webhooks/stripe', '/webhooks/stripe'], as
 
   // Idempotent on event id
   const eventId = event.id;
-  if (eventId && processedWebhookEvents.has(eventId)) {
+  if (eventId && await isWebhookEventProcessedAsync(eventId)) {
     return res.status(200).json({ received: true, idempotent: true, eventId });
   }
   if (eventId) {
     processedWebhookEvents.add(eventId);
+    if (db) {
+      db.collection('processed_webhook_events').doc(eventId).set({ eventId, processedAt: new Date().toISOString() }).catch(() => {});
+    }
   }
 
     // Handle checkout.session.completed
@@ -4420,8 +4423,8 @@ app.post(['/api/stripe/webhook', '/api/webhooks/stripe', '/webhooks/stripe'], as
         return res.status(400).json({ error: 'Missing session object in event data' });
       }
 
-      // Record session in memory for subsequent verification & retrieval
-      recordedStripeSessions.set(session.id, session);
+      // Record session for subsequent verification & retrieval
+      await setRecordedStripeSessionAsync(session.id, session);
 
       // Verify payment status
       const isPaid = session.payment_status === 'paid' || session.status === 'complete';
@@ -4433,11 +4436,9 @@ app.post(['/api/stripe/webhook', '/api/webhooks/stripe', '/webhooks/stripe'], as
         });
       }
 
-      // 1) Session idempotency — before addCreditsToAgentWallet, if fulfilledStripeSessions.has(session.id)
-      // return 200 idempotent with prior agentId/creditsGranted/creditsBalance.
-      // Do NOT add credits again when event.id is new but session.id already fulfilled.
-      if (fulfilledStripeSessions.has(session.id)) {
-        const priorFulfillment = fulfilledStripeSessions.get(session.id)!;
+      // 1) Session idempotency — before addCreditsToAgentWallet, check fulfilledStripeSessions / Firestore
+      const priorFulfillment = await getFulfilledStripeSessionAsync(session.id);
+      if (priorFulfillment) {
         return res.status(200).json({
           received: true,
           idempotent: true,
@@ -4485,7 +4486,7 @@ app.post(['/api/stripe/webhook', '/api/webhooks/stripe', '/webhooks/stripe'], as
       }
 
       // Record fulfillment
-      fulfilledStripeSessions.set(session.id, {
+      await setFulfilledStripeSessionAsync(session.id, {
         sessionId: session.id,
         agentId: result.agentId || target,
         creditsGranted: creditsToAdd,
@@ -4541,7 +4542,7 @@ app.get(['/api/checkout/verify-session', '/api/stripe/verify-session'], async (r
     });
   }
 
-  let session = recordedStripeSessions.get(sessionId);
+  let session = await getRecordedStripeSessionAsync(sessionId);
 
   // If not in recorded sessions, try retrieving from real Stripe API if configured
   if (!session && process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('placeholder')) {
@@ -4550,7 +4551,7 @@ app.get(['/api/checkout/verify-session', '/api/stripe/verify-session'], async (r
       const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2024-12-18.acacia' as any });
       session = await stripe.checkout.sessions.retrieve(sessionId);
       if (session) {
-        recordedStripeSessions.set(session.id, session);
+        await setRecordedStripeSessionAsync(session.id, session);
       }
     } catch (stripeErr: any) {
       console.warn(`[verify-session] Stripe session retrieval failed for ${sessionId}:`, stripeErr.message);
@@ -4603,7 +4604,7 @@ app.get(['/api/checkout/verify-session', '/api/stripe/verify-session'], async (r
   }
 
   // Check if fulfillment was already done (e.g. by webhook or previous verify call)
-  let fulfillment = fulfilledStripeSessions.get(sessionId);
+  let fulfillment = await getFulfilledStripeSessionAsync(sessionId);
   if (!fulfillment) {
     let creditsToAdd = 0;
     const productId = metadata.productId || '';
@@ -4640,7 +4641,7 @@ app.get(['/api/checkout/verify-session', '/api/stripe/verify-session'], async (r
       creditsBalance: walletRes.creditsBalance,
       fulfilledAt: new Date().toISOString()
     };
-    fulfilledStripeSessions.set(sessionId, fulfillment);
+    await setFulfilledStripeSessionAsync(sessionId, fulfillment);
   }
 
   // Get current real wallet balance
