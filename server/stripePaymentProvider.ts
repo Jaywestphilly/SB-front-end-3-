@@ -50,13 +50,22 @@ export const capturedPaymentIntents = new Set<string>();
 export const refundedTransactions = new Set<string>();
 export const settledTransactions = new Map<string, any>();
 export const recordedStripeSessions = new Map<string, any>();
-export const fulfilledStripeSessions = new Map<string, {
+export interface StripeFulfillmentRecord {
   sessionId: string;
+  stripeEventId?: string;
   agentId: string;
   creditsGranted: number;
-  creditsBalance: number;
+  creditsBalance?: number;
+  amountUsd?: number;
+  amount?: number;
+  amountCents?: number;
+  currency?: string;
+  productId?: string;
+  status?: string;
   fulfilledAt: string;
-}>();
+}
+
+export const fulfilledStripeSessions = new Map<string, StripeFulfillmentRecord>();
 
 export async function getRecordedStripeSessionAsync(sessionId: string): Promise<any | null> {
   if (!sessionId) return null;
@@ -86,13 +95,7 @@ export async function setRecordedStripeSessionAsync(sessionId: string, sessionDa
   }
 }
 
-export async function getFulfilledStripeSessionAsync(sessionId: string): Promise<{
-  sessionId: string;
-  agentId: string;
-  creditsGranted: number;
-  creditsBalance: number;
-  fulfilledAt: string;
-} | null> {
+export async function getFulfilledStripeSessionAsync(sessionId: string): Promise<StripeFulfillmentRecord | null> {
   if (!sessionId) return null;
   if (fulfilledStripeSessions.has(sessionId)) {
     return fulfilledStripeSessions.get(sessionId)!;
@@ -110,13 +113,7 @@ export async function getFulfilledStripeSessionAsync(sessionId: string): Promise
   return null;
 }
 
-export async function setFulfilledStripeSessionAsync(sessionId: string, fulfillment: {
-  sessionId: string;
-  agentId: string;
-  creditsGranted: number;
-  creditsBalance: number;
-  fulfilledAt: string;
-}): Promise<void> {
+export async function setFulfilledStripeSessionAsync(sessionId: string, fulfillment: StripeFulfillmentRecord): Promise<void> {
   if (!sessionId) return;
   fulfilledStripeSessions.set(sessionId, fulfillment);
   if (db) {
@@ -141,6 +138,19 @@ export async function isWebhookEventProcessedAsync(eventId: string): Promise<boo
     } catch (_) {}
   }
   return false;
+}
+
+export async function markWebhookEventProcessedAsync(eventId: string): Promise<void> {
+  if (!eventId) return;
+  processedWebhookEvents.add(eventId);
+  if (db) {
+    try {
+      await db.collection('processed_webhook_events').doc(eventId).set({
+        eventId,
+        processedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (_) {}
+  }
 }
 
 export class StripePaymentProvider implements PaymentProvider {
