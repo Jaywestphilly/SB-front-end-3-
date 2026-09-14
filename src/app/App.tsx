@@ -310,7 +310,6 @@ import {
 } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics";
 import { isAgentOrHeadless } from "../utils/agentDetection";
-import { VolcanicMagmaShader } from "../components/ui/VolcanicMagmaShader";
 
 export function App() {
   const { stocks, setStocks } = useMarketStore();
@@ -1516,27 +1515,9 @@ export function App() {
               </div>
             </div>
 
-            {/* Ticker List Container with Volcanic Liquid-Obsidian Hull & Dark Matter Cards */}
-            <div
-              className={`w-full mt-2 relative rounded-2xl overflow-hidden min-h-[140px] transition-all duration-300 ${
-                magmaMode !== "off"
-                  ? "obsidian-magma-panel p-2 sm:p-2.5"
-                  : "border border-cyan-950/40 alien-grid-subtle p-1 sm:p-1.5"
-              }`}
-            >
-              {/* Volcanic Magma WebGL Shader: Domain-warped fBm fluid simulation */}
-              {magmaMode !== "off" && (
-                <VolcanicMagmaShader
-                  speed={
-                    magmaMode === "surge" ? 0.28 : magmaMode === "slow" ? 0.10 : 0.18
-                  }
-                  viscosity={2.8}
-                  crustThreshold={0.58}
-                  heatIntensity={2.2}
-                />
-              )}
-
-              <div className="ui-content relative z-10 w-full">
+            {/* Ticker List Container */}
+            <div className="w-full mt-2 relative rounded-2xl overflow-hidden min-h-[140px] border border-cyan-950/40 alien-grid-subtle p-1 sm:p-1.5 transition-all duration-300">
+              <div className="relative z-10 w-full">
 
               <AnimatePresence mode="popLayout">
                 {filteredStocks.length > 0 ? (

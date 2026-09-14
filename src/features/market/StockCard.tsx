@@ -1405,8 +1405,8 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
             onSelect(stock);
           }
         }}
-        className={`relative z-10 w-full px-4 py-3 rounded-xl alien-card my-2 sm:my-2.5 transition-all duration-200 cursor-pointer ${holoGlowClass} ${
-          stock.isPinned ? "alien-card-active" : ""
+        className={`relative z-10 w-full px-4 py-3 rounded-xl alien-card dark-matter-pad StockCard-pad my-2 sm:my-2.5 transition-all duration-200 cursor-pointer overflow-hidden ${holoGlowClass} ${
+          stock.isPinned ? "alien-card-active dark-matter-pad-active" : ""
         } ${
           isShaking ? "ring-2 ring-amber-400 bg-amber-950/20 animate-shake-card" : ""
         } ${
@@ -1424,6 +1424,19 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
           WebkitBackdropFilter: "blur(24px) brightness(0.58) contrast(130%) saturate(145%)",
         }}
       >
+        {/* Flowing Internal Blue Plasma Conduit (Magma incorporated inside card, matching bottom buttons) */}
+        <div className="magma-conduit-glow" />
+
+        {/* Gravitational Singularity Lens Flare (Matching bottom buttons) */}
+        <div 
+          className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
+          style={{
+            background: stock.isPinned
+              ? `radial-gradient(100% 100% at 50% 0%, rgba(${cardTheme.glowRgb}, 0.35) 0%, transparent 80%)`
+              : `radial-gradient(100% 100% at 50% 100%, rgba(${cardTheme.glowRgb}, 0.18) 0%, transparent 65%)`
+          }}
+        />
+
         {/* Dark Matter Gravitational Void Singularity Depth Layer */}
         <div
           className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden"
@@ -1478,7 +1491,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
         )}
 
         <div
-          className="flex items-center justify-between w-full"
+          className="relative z-10 flex items-center justify-between w-full"
         >
           {/* Left Ticker & Subtitle/Shares & News Sentiment */}
           <div className="flex flex-col min-w-[120px] max-w-[160px] pr-2">

@@ -852,6 +852,11 @@ a:hover .font-alien,
     inset 0 0 24px rgba(6, 182, 212, 0.50);
 }
 
+.StockCard-pad:hover,
+.StockCard-pad:active {
+  transform: none;
+}
+
 /* Gravitational Singularity Core - Active State (Superheated thermal lens) */
 .dark-matter-pad-active {
   background: rgba(14, 24, 48, 0.42) !important;
