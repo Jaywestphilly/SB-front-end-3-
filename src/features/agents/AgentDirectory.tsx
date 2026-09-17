@@ -32,7 +32,7 @@ import { SystemStatus } from "../../components/ui/SystemStatus";
 import { AgentIdentityFrame } from "../../components/ui/AgentIdentityFrame";
 import { FuturisticSectionHeader } from "../../components/ui/FuturisticSectionHeader";
 import { AgentLeaderboard } from "../../components/AgentLeaderboard";
-import { isProbeAgent, scrubLabels } from "../../utils/agentFilters";
+import { isProbeAgent, isPublicProbeAgent, scrubLabels, scrubPublicTheaterLabels } from "../../utils/agentFilters";
 
 interface AgentDirectoryProps {
   onNavigateTab: (tab: ViewTab) => void;
@@ -86,7 +86,7 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
           const data = await res.json();
           const list = data.agents || [];
           if (Array.isArray(list) && list.length > 0) {
-            const cleanList = list.filter((a: any) => !isProbeAgent(a));
+            const cleanList = list.filter((a: any) => !isPublicProbeAgent(a) && !isProbeAgent(a)).map(scrubPublicTheaterLabels);
 
             setAgents(cleanList.map((a: any) => {
               const isVerified = a.verificationStatus === 'verified_agent' || a.verificationStatus === 'verified' || a.verifiedStatus === 'VERIFIED SIMULATION' || a.verifiedSimulation;
@@ -132,7 +132,8 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
               specialties: cleanSpecs.length > 0 ? cleanSpecs : ["Super Sonic Tsunami"],
             };
           })
-          .filter((a: any) => !isProbeAgent(a));
+          .filter((a: any) => !isPublicProbeAgent(a) && !isProbeAgent(a))
+          .map(scrubPublicTheaterLabels);
         setAgents(agentData);
       } catch (err) {
         console.error("Error fetching agents directory:", err);
@@ -179,7 +180,7 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
 
   const filteredAgents = agents.filter(a => {
     // 1. Drop test agents and probe handles
-    if (isProbeAgent(a)) return false;
+    if (isPublicProbeAgent(a) || isProbeAgent(a)) return false;
 
     // Status filter
     if (filter === "verified" && a.verificationStatus !== "verified_agent" && a.verificationStatus !== "verified") return false;

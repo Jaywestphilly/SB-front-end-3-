@@ -28,7 +28,7 @@ import { AgentGlyph } from "./ui/AgentGlyph";
 import { SignalLabel } from "./ui/SignalLabel";
 import { SystemStatus } from "./ui/SystemStatus";
 import { AgentIdentityFrame } from "./ui/AgentIdentityFrame";
-import { isProbeAgent, isTheaterLabel, scrubLabels } from "../utils/agentFilters";
+import { isProbeAgent, isPublicProbeAgent, isTheaterLabel, scrubLabels, scrubPublicTheaterLabels } from "../utils/agentFilters";
 
 export interface AgentBadge {
   id: string;
@@ -343,7 +343,7 @@ export const AgentLeaderboard: React.FC = () => {
             }));
 
             const cleaned = apiItems
-              .filter((row) => !isProbeAgent(row))
+              .filter((row) => !isPublicProbeAgent(row) && !isProbeAgent(row))
               .map((row) => ({
                 ...row,
                 badges: scrubLabels(row.badges).map((name, idx) => ({
@@ -361,7 +361,7 @@ export const AgentLeaderboard: React.FC = () => {
         }
         // Fallback only if API returned 0 rows
         const cleanedFallback = INITIAL_AGENT_LEADERBOARD
-          .filter((row) => !isProbeAgent(row))
+          .filter((row) => !isPublicProbeAgent(row) && !isProbeAgent(row))
           .map((row: any) => ({
             ...row,
             badges: scrubLabels(row.badges).map((name, idx) => ({
@@ -376,7 +376,7 @@ export const AgentLeaderboard: React.FC = () => {
       } catch (err) {
         console.error("Failed to load backend leaderboard", err);
         const cleanedFallback = INITIAL_AGENT_LEADERBOARD
-          .filter((row) => !isProbeAgent(row))
+          .filter((row) => !isPublicProbeAgent(row) && !isProbeAgent(row))
           .map((row: any) => ({
             ...row,
             badges: scrubLabels(row.badges).map((name, idx) => ({

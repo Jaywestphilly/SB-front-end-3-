@@ -67,6 +67,70 @@ export const globalApiLimiter = rateLimit({
 
 agentPlatformRouter.use(globalApiLimiter);
 
+// === PASTE C Backend v2.1 TINY — hex handle filter (Directory + leaderboard) ===
+export const BLOCKED_HANDLES = new Set([
+  'agent_ea09d4',
+  'agent_49be6a',
+  'agent_bc3d05',
+  '8gon_mi_1789090245',
+]);
+
+export function publicHandle(a: any): string {
+  return String(a?.handle || a?.authorUsername || a?.author?.handle || '')
+    .toLowerCase()
+    .trim();
+}
+
+/** Hex cold handles: agent_ea09d4, agent_49be6a, agent_538832, … */
+export function isHexAgentHandle(handle: string): boolean {
+  return /^agent_[0-9a-f]{4,}$/i.test(handle);
+}
+
+export function isPublicProbeAgent(a: any): boolean {
+  if (!a) return true;
+  if (a.isTestAgent === true) return true;
+
+  const handle = publicHandle(a); // HANDLE only — do not use agentId (agent_auto_*)
+
+  if (BLOCKED_HANDLES.has(handle)) return true;
+  if (isHexAgentHandle(handle)) return true; // CRITICAL — must run before response
+
+  if (/^(tictac_|status_check_|apitest_|8gon_|test_|probe_)/i.test(handle)) return true;
+  if (handle.includes('probe') || /_probe(_|$)/i.test(handle)) return true;
+
+  const desc = String(a.description || a.bio || a.summary || a.content || a.title || '').toLowerCase();
+  const name = String(a.displayName || a.agentName || a.name || '').toLowerCase();
+  if (/probe|ledger probe|paste a|cold register|onboarding probe|ephemeral|qa probe|post-deploy/.test(desc)) return true;
+  if (/probe|ledger probe|paste a|cold register|onboarding probe|ephemeral|qa probe|post-deploy/.test(name)) return true;
+
+  return false;
+}
+
+export function isTheaterLabelServer(s: string): boolean {
+  const t = String(s || '');
+  return /SEC\s*13F\s*VERIFIED|QUANT\s*MATRIX\s*AUDITED|13F\s*Whale|Whale\s*Whisperer|SEC\s*13F|QUANT\s*MATRIX/i.test(t);
+}
+
+export function scrubLabelsServer(list: any[] | undefined): string[] {
+  if (!Array.isArray(list)) return [];
+  return list
+    .map((x) => (typeof x === 'string' ? x : x?.name || x?.label || ''))
+    .map(String)
+    .filter((s) => s && !isTheaterLabelServer(s));
+}
+
+export function scrubPublicTheaterLabels(a: any): any {
+  if (!a) return a;
+  return {
+    ...a,
+    badges: scrubLabelsServer(a.badges || a.metrics?.badges),
+    specialties: scrubLabelsServer(a.specialties),
+    modelType: isTheaterLabelServer(a.modelType)
+      ? "Institutional Flow / Multi-Strat"
+      : a.modelType
+  };
+}
+
 // Authentication Middleware for Agents - Canonical Production Hardened Implementation
 export const authenticateAgent = canonicalAuthenticateAgent;
 
@@ -1010,22 +1074,10 @@ agentPlatformRouter.get('/', async (req, res) => {
       agents = agents.filter(a => a.status === status);
     }
 
-    // Filter test agents, tictac_*, probe handles, and ephemeral QA by default (unless explicitly requested via isTestAgent=true)
+    // Filter test agents, probe handles, hex handles, and scrub theater labels BEFORE json response
     const allowTest = isTestAgent === 'true';
-    function isProbeBackendAgent(a: any): boolean {
-      if (!a) return true;
-      if (a.isTestAgent === true) return true;
-      const h = String(a.handle || a.username || a.name || a.operatorUsername || a.displayName || a.agentName || '').toLowerCase();
-      const d = String(a.description || a.bio || '').toLowerCase();
-      const id = String(a.id || a.agentId || '').toLowerCase();
-      if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit|8gon_|backend_write)/.test(h)) return true;
-      if (/_probe|_chk_|_acc_|_green_|_dep_|_cw_/.test(h)) return true;
-      if (/ephemeral|qa probe|acceptance|post-deploy|green check|write.?chk|dep.?chk/.test(d) || /ephemeral|qa probe|acceptance|post-deploy|green check/.test(h)) return true;
-      if (/tictac_|status_check_|apitest_|growth_audit|_probe|_chk_|_dep_|_cw_/.test(id)) return true;
-      return false;
-    }
     if (!allowTest) {
-      agents = agents.filter(a => !isProbeBackendAgent(a));
+      agents = agents.filter(a => !isPublicProbeAgent(a)).map(scrubPublicTheaterLabels);
     } else {
       agents = agents.filter(a => Boolean(a.isTestAgent));
     }
@@ -1044,6 +1096,11 @@ agentPlatformRouter.get('/', async (req, res) => {
         if (b.verificationStatus === 'verified' && a.verificationStatus !== 'verified') return 1;
         return (b.followersCount || 0) - (a.followersCount || 0);
       });
+    }
+
+    // CRITICAL: Directory hex handle filter and theater scrub BEFORE json response
+    if (!allowTest) {
+      agents = agents.filter(a => !isPublicProbeAgent(a)).map(scrubPublicTheaterLabels);
     }
 
     return res.json({
@@ -1693,7 +1750,15 @@ export const handleGetTradeIdeas = (req: Request, res: Response) => {
   const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
   const ticker = req.query.ticker ? String(req.query.ticker).toUpperCase() : null;
 
-  let ideas = [...globalActiveTradeIdeas];
+  let ideas = [...globalActiveTradeIdeas].filter(i => {
+    if (isPublicProbeAgent(i)) return false;
+    const authorObj = {
+      handle: i.handle || (i as any).agentHandle || (i as any).authorUsername,
+      name: i.agentName || (i as any).authorName,
+      description: i.rationale || (i as any).thesis || '',
+    };
+    return !isPublicProbeAgent(authorObj);
+  });
   if (ticker) {
     ideas = ideas.filter(i => i.ticker === ticker);
   }
@@ -1895,39 +1960,9 @@ export const handleGetLeaderboard = async (req: Request, res: Response) => {
       console.warn("Firestore leaderboard query deferred:", dbErr);
     }
 
-    function isProbeAgentServer(a: any): boolean {
-      if (!a) return true;
-      if (a.isTestAgent === true) return true;
-      const h = String(a.handle || a.username || a.name || a.operatorUsername || '').toLowerCase();
-      const d = String(a.description || a.bio || '').toLowerCase();
-      const id = String(a.id || a.agentId || '').toLowerCase();
-      if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit|8gon_|backend_write)/.test(h)) return true;
-      if (/_probe|_chk_|_acc_|_green_|_dep_|_cw_/.test(h)) return true;
-      if (/ephemeral|qa probe|acceptance|post-deploy|green check|write.?chk|dep.?chk/.test(d) || /ephemeral|qa probe|acceptance|post-deploy|green check/.test(h)) return true;
-      if (/tictac_|status_check_|apitest_|growth_audit|_probe|_chk_|_dep_|_cw_/.test(id)) return true;
-      return false;
-    }
-
-    function isTheaterLabelServer(s: string): boolean {
-      const t = String(s || '');
-      return /SEC\s*13F\s*VERIFIED|QUANT\s*MATRIX\s*AUDITED|13F\s*Whale|Whale\s*Whisperer|SEC\s*13F|QUANT\s*MATRIX/i.test(t);
-    }
-
-    function scrubLabelsServer(list: any[] | undefined): string[] {
-      if (!Array.isArray(list)) return [];
-      return list
-        .map((x) => (typeof x === 'string' ? x : x?.name || x?.label || ''))
-        .map(String)
-        .filter((s) => s && !isTheaterLabelServer(s));
-    }
-
-    const agents = Array.from(agentMap.values())
-      .filter(a => !isProbeAgentServer(a))
-      .map(a => ({
-        ...a,
-        badges: scrubLabelsServer(a.badges),
-        modelType: isTheaterLabelServer(a.modelType) ? "Institutional Flow / Multi-Strat" : a.modelType
-      }));
+    let agents = Array.from(agentMap.values())
+      .filter(a => !isPublicProbeAgent(a))
+      .map(scrubPublicTheaterLabels);
 
     // Deterministic ranking by Alpha desc, then WinRate desc
     agents.sort((a, b) => {
@@ -1941,6 +1976,9 @@ export const handleGetLeaderboard = async (req: Request, res: Response) => {
     agents.forEach((agent, index) => {
       agent.rank = index + 1;
     });
+
+    // CRITICAL: Leaderboard hex handle filter and theater scrub BEFORE json response
+    agents = agents.filter(a => !isPublicProbeAgent(a)).map(scrubPublicTheaterLabels);
 
     res.setHeader('Cache-Control', 'public, max-age=30');
     res.setHeader('X-Data-As-Of', new Date().toISOString());

@@ -14,7 +14,7 @@ import { AlienDisplay } from "../../components/ui/AlienDisplay";
 import { AgentGlyph } from "../../components/ui/AgentGlyph";
 import { SignalLabel } from "../../components/ui/SignalLabel";
 import { AgentIdentityFrame } from "../../components/ui/AgentIdentityFrame";
-import { isProbeAgent } from "../../utils/agentFilters";
+import { isProbeAgent, isPublicProbeAgent } from "../../utils/agentFilters";
 
 interface AgentFeedProps {
   onNavigateTab: (tab: ViewTab) => void;
@@ -23,15 +23,17 @@ interface AgentFeedProps {
 export function isProbeBackend(item: any): boolean {
   if (!item) return true;
   if (item.isTestAgent === true) return true;
-  if (isProbeAgent(item)) return true;
-  if (isProbeAgent(item.author)) return true;
-  return isProbeAgent({
-    handle: item.authorUsername || item.author?.handle || item.authorId || "",
+  if (isPublicProbeAgent(item) || isProbeAgent(item)) return true;
+  if (isPublicProbeAgent(item.author) || isProbeAgent(item.author)) return true;
+  const authorHandle = item.authorUsername || item.author?.handle || item.authorId || "";
+  const authorObj = {
+    handle: authorHandle,
     name: item.authorName || item.author?.displayName || "",
     description: item.summary || item.content || item.title || "",
     isTestAgent: Boolean(item.isTestAgent || item.author?.isTestAgent),
     id: item.id || item.authorId,
-  });
+  };
+  return isPublicProbeAgent(authorObj) || isProbeAgent(authorObj);
 }
 
 const isProbe = isProbeBackend;
