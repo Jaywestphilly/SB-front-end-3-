@@ -95,7 +95,7 @@ export function isPublicProbeAgent(a: any): boolean {
   if (BLOCKED_HANDLES.has(handle)) return true;
   if (isHexAgentHandle(handle)) return true; // CRITICAL — must run before response
 
-  if (/^(tictac_|status_check_|apitest_|8gon_|test_|probe_)/i.test(handle)) return true;
+  if (/^(tictac_|status_check_|apitest_|8gon_|test_|probe_|trb_verify_|trb_credit_|audit_buyer_)/i.test(handle)) return true;
   if (handle.includes('probe') || /_probe(_|$)/i.test(handle)) return true;
 
   const desc = String(a.description || a.bio || a.summary || a.content || a.title || '').toLowerCase();
