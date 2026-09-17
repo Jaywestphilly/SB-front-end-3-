@@ -83,7 +83,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             : "fixed bottom-2 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-xl font-mono select-none overflow-hidden"
         }
       >
-        <div className="obsidian-magma-dock alien-block-cut p-1 sm:p-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar overscroll-contain relative sm:grid sm:grid-cols-6">
+        <div className="obsidian-magma-dock alien-block-cut p-1 sm:p-1.5 grid grid-cols-6 gap-0.5 sm:gap-1 relative overflow-hidden">
           {/* Volcanic Magma WebGL Shader: continuous domain-warped molten flow rolling beneath translucent pads */}
           {magmaMode !== "off" && (
             <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -112,7 +112,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* TAB 1: YOUTUBE & INTEL FEED */}
           <button
             onClick={() => handleNavigate("news")}
-            className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[54px] sm:min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
+            className={`min-h-[48px] py-1 px-0.5 sm:py-1.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
               isIntelActive
                 ? "dark-matter-pad-active pad-intel text-cyan-200 font-black"
                 : "text-cyan-300/85 hover:text-white"
@@ -132,7 +132,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <div className="relative z-10 flex items-center justify-center">
               <Globe className={`w-4 h-4 shrink-0 transition-transform ${isIntelActive ? "text-cyan-300 drop-shadow-[0_0_10px_rgba(34,211,238,0.9)] scale-110" : "text-cyan-400 group-hover:scale-105"}`} />
             </div>
-            <span className={`relative z-10 text-[8.5px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${isIntelActive ? "text-cyan-100 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" : "text-cyan-300/90"}`}>
+            <span className={`relative z-10 text-[8px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${isIntelActive ? "text-cyan-100 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" : "text-cyan-300/90"}`}>
               INTEL
             </span>
           </button>
@@ -140,7 +140,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* TAB 2: MARKETS */}
           <button
             onClick={() => handleOpenSheet("markets")}
-            className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[56px] sm:min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
+            className={`min-h-[48px] py-1 px-0.5 sm:py-1.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
               isMarketsActive || activeSheet === "markets"
                 ? "dark-matter-pad-active pad-markets text-cyan-200 font-black"
                 : "text-cyan-300/85 hover:text-white"
@@ -156,7 +156,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               }}
             />
             <TrendingUp className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${(isMarketsActive || activeSheet === "markets") ? "text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,0.9)] scale-110" : "text-cyan-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[8.5px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isMarketsActive || activeSheet === "markets") ? "text-cyan-100 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]" : "text-cyan-300/90"}`}>
+            <span className={`relative z-10 text-[8px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isMarketsActive || activeSheet === "markets") ? "text-cyan-100 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]" : "text-cyan-300/90"}`}>
               MARKETS
             </span>
           </button>
@@ -164,7 +164,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* TAB 3: AI */}
           <button
             onClick={() => handleOpenSheet("ai")}
-            className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[48px] sm:min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
+            className={`min-h-[48px] py-1 px-0.5 sm:py-1.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
               isAiActive || activeSheet === "ai"
                 ? "dark-matter-pad-active pad-ai text-purple-200 font-black"
                 : "text-purple-300/85 hover:text-white"
@@ -180,7 +180,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               }}
             />
             <Cpu className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${(isAiActive || activeSheet === "ai") ? "text-purple-300 drop-shadow-[0_0_10px_rgba(168,85,247,0.9)] scale-110" : "text-purple-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[8.5px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isAiActive || activeSheet === "ai") ? "text-purple-100 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" : "text-purple-300/90"}`}>
+            <span className={`relative z-10 text-[8px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isAiActive || activeSheet === "ai") ? "text-purple-100 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" : "text-purple-300/90"}`}>
               AI
             </span>
           </button>
@@ -188,7 +188,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* TAB 4: REAL ESTATE */}
           <button
             onClick={() => handleNavigate("real_estate")}
-            className={`min-h-[48px] py-1 px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[54px] sm:min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
+            className={`min-h-[48px] py-1 px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
               isRealEstateActive
                 ? "dark-matter-pad-active pad-realestate text-amber-200 font-black"
                 : "text-amber-300/85 hover:text-white"
@@ -204,7 +204,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               }}
             />
             <Building2 className={`relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform ${isRealEstateActive ? "text-amber-300 drop-shadow-[0_0_10px_rgba(245,158,11,0.9)] scale-110" : "text-amber-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[7.5px] sm:text-[9px] font-black uppercase tracking-tight text-center leading-[1.05] flex flex-col items-center ${isRealEstateActive ? "text-amber-100 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" : "text-amber-300/90"}`}>
+            <span className={`relative z-10 text-[7px] sm:text-[9px] font-black uppercase tracking-tight text-center leading-[1.05] flex flex-col items-center ${isRealEstateActive ? "text-amber-100 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" : "text-amber-300/90"}`}>
               <span>REAL</span>
               <span>ESTATE</span>
             </span>
@@ -213,7 +213,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* TAB 5: CREDIT */}
           <button
             onClick={() => handleNavigate("credit")}
-            className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[54px] sm:min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
+            className={`min-h-[48px] py-1 px-0.5 sm:py-1.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
               isCreditActive
                 ? "dark-matter-pad-active pad-credit text-emerald-200 font-black"
                 : "text-emerald-300/85 hover:text-white"
@@ -229,7 +229,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               }}
             />
             <ShieldCheck className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${isCreditActive ? "text-emerald-300 drop-shadow-[0_0_10px_rgba(16,185,129,0.9)] scale-110" : "text-emerald-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[8.5px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${isCreditActive ? "text-emerald-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "text-emerald-300/90"}`}>
+            <span className={`relative z-10 text-[8px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${isCreditActive ? "text-emerald-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "text-emerald-300/90"}`}>
               CREDIT
             </span>
           </button>
@@ -237,7 +237,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* TAB 6: EDUCATION */}
           <button
             onClick={() => handleOpenSheet("education")}
-            className={`min-h-[48px] py-1 px-1 sm:py-1.5 sm:px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer shrink-0 flex-1 min-w-[58px] sm:min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
+            className={`min-h-[48px] py-1 px-0.5 sm:py-1.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
               isEducationActive || activeSheet === "education"
                 ? "dark-matter-pad-active pad-education text-blue-200 font-black"
                 : "text-blue-300/85 hover:text-white"
@@ -253,7 +253,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               }}
             />
             <GraduationCap className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${(isEducationActive || activeSheet === "education") ? "text-blue-300 drop-shadow-[0_0_10px_rgba(59,130,246,0.9)] scale-110" : "text-blue-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[8px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isEducationActive || activeSheet === "education") ? "text-blue-100 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]" : "text-blue-300/90"}`}>
+            <span className={`relative z-10 text-[7.5px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isEducationActive || activeSheet === "education") ? "text-blue-100 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]" : "text-blue-300/90"}`}>
               EDUCATION
             </span>
           </button>

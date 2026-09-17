@@ -1136,7 +1136,7 @@ export function App() {
         isDayMode={isDayMode}
         onToggleDayMode={handleToggleDayMode}
         onOpenMissionHub={() => setIsMissionHubOpen(true)}
-        compact={isAgentRoute}
+        compact={isAgentRoute || isPricingRoute}
       />
 
       {/* Desktop Top Navigation Bar */}
@@ -1693,7 +1693,7 @@ export function App() {
         )}
 
         {activeTab === "pricing" && (
-          <div className="p-3 sm:p-6 pb-[calc(76px+env(safe-area-inset-bottom,16px)+16px)] sm:pb-24">
+          <div className="p-3 sm:p-6 pb-[calc(76px+env(safe-area-inset-bottom,16px)+16px)] sm:pb-24 overflow-x-hidden max-w-full">
             <ProductStorePricing
               onSelectTab={handleSelectTab}
               onSuccessCheckout={(sessionId) => {
