@@ -209,7 +209,10 @@ export const ProductStorePricing: React.FC<Props> = ({
   ];
 
   return (
-    <div className="space-y-10 pb-36 sm:pb-24 font-mono overflow-x-hidden w-full max-w-full">
+    <div
+      className="space-y-10 pb-40 sm:pb-24 font-mono overflow-x-hidden w-full max-w-full"
+      style={{ paddingBottom: "calc(10rem + env(safe-area-inset-bottom, 0px))" }}
+    >
       {/* Top Banner Header */}
       <div className="bg-[#020a16] border-2 border-emerald-500/50 alien-block-cut p-6 sm:p-8 shadow-2xl relative overflow-hidden">
         <div className="hud-corner-tl border-emerald-400" />
