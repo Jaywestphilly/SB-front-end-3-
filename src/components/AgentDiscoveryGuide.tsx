@@ -90,11 +90,11 @@ export const AgentDiscoveryGuide: React.FC = () => {
       description: "Unified pipeline updated_at timestamps and stale boolean flags for market, 13F, dyson, and news feeds.",
     },
     {
-      title: "SEC 13F Institutional Whale Holdings",
+      title: "Institutional Equity Holdings (SEC Form 13F)",
       path: "/api/data/sec",
       type: "CDN Proxy JSON",
       status: "200 OK",
-      description: "Fast local Express CDN proxy endpoint for SEC Form 13F institutional whale holdings & quarter filings.",
+      description: "Fast local Express CDN proxy endpoint for SEC Form 13F institutional equity holdings & quarter filings.",
     },
     {
       title: "LLM Web Context Discovery (/llms.txt)",

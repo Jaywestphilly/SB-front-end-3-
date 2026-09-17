@@ -28,12 +28,14 @@ import { AgentGlyph } from "./ui/AgentGlyph";
 import { SignalLabel } from "./ui/SignalLabel";
 import { SystemStatus } from "./ui/SystemStatus";
 import { AgentIdentityFrame } from "./ui/AgentIdentityFrame";
+import { isProbeAgent, isTheaterLabel, scrubLabels } from "../utils/agentFilters";
 
 export interface AgentBadge {
   id: string;
   name: string;
   description: string;
-  type: "alpha" | "volatility" | "sharpe" | "whale" | "vanguard" | "accuracy" | "simulation";
+  type?: "alpha" | "volatility" | "sharpe" | "vanguard" | "accuracy" | "simulation";
+  label?: string;
 }
 
 export interface AgentLeaderboardItem {
@@ -56,9 +58,11 @@ export interface AgentLeaderboardItem {
   submittedBy: string;
   badges: AgentBadge[];
   verifiedSimulation?: boolean;
+  bio?: string;
+  handle?: string;
 }
 
-export const BADGE_DEFINITIONS: Record<AgentBadge["type"], { name: string; description: string; icon: React.ElementType; style: string }> = {
+export const BADGE_DEFINITIONS: Record<"simulation" | "alpha" | "volatility" | "sharpe" | "vanguard" | "accuracy", { name: string; description: string; icon: React.ElementType; style: string }> = {
   simulation: {
     name: "Verified Simulation",
     description: "Cryptographically authenticated backtest execution on Super Sonic Tsunami quant engine.",
@@ -83,12 +87,6 @@ export const BADGE_DEFINITIONS: Record<AgentBadge["type"], { name: string; descr
     icon: Target,
     style: "bg-purple-950/80 text-purple-300 border-purple-500/50 hover:border-purple-400",
   },
-  whale: {
-    name: "Whale Whisperer",
-    description: "Directly synchronized with verified SEC 13F hedge fund position accumulations.",
-    icon: Flame,
-    style: "bg-emerald-950/80 text-emerald-300 border-emerald-500/50 hover:border-emerald-400",
-  },
   vanguard: {
     name: "Quant Vanguard",
     description: "Top 3 Arena Ranked agent in global autonomous AI backtesting benchmarks.",
@@ -105,25 +103,39 @@ export const BADGE_DEFINITIONS: Record<AgentBadge["type"], { name: string; descr
 
 export function mapPayloadBadges(rawBadges?: any[]): AgentBadge[] {
   if (!Array.isArray(rawBadges)) return [];
-  return rawBadges.map((b, idx) => {
-    const name = typeof b === 'string' ? b : (b.name || b.id || 'Specialist');
+  const cleanNames = scrubLabels(rawBadges);
+  return cleanNames.map((name, idx) => {
     const n = name.toLowerCase();
-    let type: AgentBadge["type"] = "vanguard";
+    let type: "alpha" | "volatility" | "sharpe" | "vanguard" | "accuracy" | "simulation" = "vanguard";
     if (n.includes("alpha") || n.includes("architect")) type = "alpha";
     else if (n.includes("sharpe") || n.includes("sentinel")) type = "sharpe";
-    else if (n.includes("whale") || n.includes("13f")) type = "whale";
     else if (n.includes("accuracy") || n.includes("warlock") || n.includes("prophet")) type = "accuracy";
     else if (n.includes("simulation") || n.includes("verified")) type = "simulation";
     else if (n.includes("volatility") || n.includes("voyager") || n.includes("tsunami")) type = "volatility";
 
     return {
-      id: typeof b === 'object' && b.id ? b.id : `badge_${idx}`,
+      id: `badge_${idx}`,
       name,
-      description: typeof b === 'object' && b.description ? b.description : (BADGE_DEFINITIONS[type]?.description || name),
+      label: name,
+      description: BADGE_DEFINITIONS[type]?.description || name,
       type,
     };
   });
 }
+
+export const resolveBadgeDef = (badge: any) => {
+  if (badge?.type && (BADGE_DEFINITIONS as any)[badge.type]) {
+    return (BADGE_DEFINITIONS as any)[badge.type];
+  }
+  const n = String(badge?.name || badge?.label || "").toLowerCase();
+  let typeKey: keyof typeof BADGE_DEFINITIONS = "vanguard";
+  if (n.includes("alpha") || n.includes("architect")) typeKey = "alpha";
+  else if (n.includes("sharpe") || n.includes("sentinel")) typeKey = "sharpe";
+  else if (n.includes("accuracy") || n.includes("warlock") || n.includes("prophet")) typeKey = "accuracy";
+  else if (n.includes("simulation") || n.includes("verified")) typeKey = "simulation";
+  else if (n.includes("volatility") || n.includes("voyager") || n.includes("tsunami")) typeKey = "volatility";
+  return BADGE_DEFINITIONS[typeKey];
+};
 
 export function computeAgentBadges(item: any): AgentBadge[] {
   // Badges strictly 1:1 from payload badges[]
@@ -164,7 +176,7 @@ const RAW_AGENT_LEADERBOARD: AgentLeaderboardItem[] = isProd ? [] : [
       action: "LONG",
       targetPrice: 148.5,
       timeframe: "30-Day CapEx Breakout",
-      rationale: "SEC 13F whale accumulation by Bridgewater (+14%) & hyperscaler AI GPU demand convergence.",
+      rationale: "Institutional accumulation by Bridgewater (+14%) & hyperscaler AI GPU demand convergence.",
     },
     verifiedStatus: "verified_agent",
     submittedBy: "Jay West Philly Quant Lab",
@@ -173,7 +185,7 @@ const RAW_AGENT_LEADERBOARD: AgentLeaderboardItem[] = isProd ? [] : [
   {
     id: "agent_2",
     rank: 2,
-    agentName: "DeepSeek-R1-MacroWhale",
+    agentName: "DeepSeek-R1-MacroQuant",
     modelType: "DeepSeek-R1 Reasoning",
     winRate: 81.2,
     monthlyAlpha: 29.4,
@@ -287,7 +299,7 @@ export const AgentLeaderboard: React.FC = () => {
   const [simTicker, setSimTicker] = useState("NVDA");
   const [simDirection, setSimDirection] = useState<"LONG" | "CALL" | "BUY" | "SHORT">("LONG");
   const [simTargetPrice, setSimTargetPrice] = useState("150");
-  const [simRationale, setSimRationale] = useState("Momentum breakout based on 14-day RSI and 13F whale data.");
+  const [simRationale, setSimRationale] = useState("Momentum breakout based on 14-day RSI and volume data.");
   const [isSimulating, setIsSimulating] = useState(false);
   const [simSuccessMsg, setSimSuccessMsg] = useState<string | null>(null);
 
@@ -325,18 +337,57 @@ export const AgentLeaderboard: React.FC = () => {
               tradeIdea: ag.tradeIdea || null,
               verifiedStatus: mapVerificationStatus(ag.verificationStatus || ag.verifiedStatus),
               submittedBy: ag.submittedBy || (ag.handle ? `@${ag.handle}` : 'Stock Bloc Autonomous Core'),
-              badges: mapPayloadBadges(ag.badges || ag.metrics?.badges || []),
+              badges: ag.badges || ag.metrics?.badges || [],
+              bio: ag.bio || ag.description || "",
+              handle: ag.handle || "",
             }));
-            setLeaderboard(apiItems);
+
+            const cleaned = apiItems
+              .filter((row) => !isProbeAgent(row))
+              .map((row) => ({
+                ...row,
+                badges: scrubLabels(row.badges).map((name, idx) => ({
+                  id: `badge_${idx}`,
+                  name,
+                  label: name,
+                  description: name,
+                })),
+                bio: isTheaterLabel(row.bio) ? "Quant Agent" : row.bio,
+              }));
+            setLeaderboard(cleaned);
             setIsLoading(false);
             return;
           }
         }
         // Fallback only if API returned 0 rows
-        setLeaderboard(INITIAL_AGENT_LEADERBOARD);
+        const cleanedFallback = INITIAL_AGENT_LEADERBOARD
+          .filter((row) => !isProbeAgent(row))
+          .map((row: any) => ({
+            ...row,
+            badges: scrubLabels(row.badges).map((name, idx) => ({
+              id: `badge_${idx}`,
+              name,
+              label: name,
+              description: name,
+            })),
+            bio: isTheaterLabel(row.bio) ? "Quant Agent" : row.bio,
+          }));
+        setLeaderboard(cleanedFallback);
       } catch (err) {
         console.error("Failed to load backend leaderboard", err);
-        setLeaderboard(INITIAL_AGENT_LEADERBOARD);
+        const cleanedFallback = INITIAL_AGENT_LEADERBOARD
+          .filter((row) => !isProbeAgent(row))
+          .map((row: any) => ({
+            ...row,
+            badges: scrubLabels(row.badges).map((name, idx) => ({
+              id: `badge_${idx}`,
+              name,
+              label: name,
+              description: name,
+            })),
+            bio: isTheaterLabel(row.bio) ? "Quant Agent" : row.bio,
+          }));
+        setLeaderboard(cleanedFallback);
       } finally {
         setIsLoading(false);
       }
@@ -646,13 +697,13 @@ export const AgentLeaderboard: React.FC = () => {
                     <div className="flex items-center gap-1 flex-wrap">
                       {item.badges.length > 0 ? (
                         item.badges.map((badge) => {
-                          const badgeDef = BADGE_DEFINITIONS[badge.type];
+                          const badgeDef = resolveBadgeDef(badge);
                           if (!badgeDef) return null;
                           const BadgeIcon = badgeDef.icon;
                           return (
                             <span
                               key={badge.id}
-                              title={badge.description}
+                              title={badge.description || badgeDef.description}
                               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[9px] font-bold ${badgeDef.style}`}
                             >
                               <BadgeIcon className="w-2.5 h-2.5" />
@@ -756,13 +807,13 @@ export const AgentLeaderboard: React.FC = () => {
                   <div className="flex items-center gap-1.5 flex-wrap mt-2">
                     {item.badges.length > 0 ? (
                       item.badges.map((badge) => {
-                        const badgeDef = BADGE_DEFINITIONS[badge.type];
+                        const badgeDef = resolveBadgeDef(badge);
                         if (!badgeDef) return null;
                         const BadgeIcon = badgeDef.icon;
                         return (
                           <div
                             key={badge.id}
-                            title={badge.description}
+                            title={badge.description || badgeDef.description}
                             className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-mono font-bold transition-all cursor-help ${badgeDef.style}`}
                           >
                             <BadgeIcon className="w-3 h-3" />

@@ -115,7 +115,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
             {getCategoryTitle()}
           </h2>
           <p className="text-[10px] text-cyan-400/70 font-mono">
-            // {itemCount} ASSETS MONITORED IN QUANT MATRIX
+            // {itemCount} ASSETS MONITORED IN BASKET
           </p>
         </div>
       </div>

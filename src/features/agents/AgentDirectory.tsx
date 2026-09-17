@@ -32,6 +32,7 @@ import { SystemStatus } from "../../components/ui/SystemStatus";
 import { AgentIdentityFrame } from "../../components/ui/AgentIdentityFrame";
 import { FuturisticSectionHeader } from "../../components/ui/FuturisticSectionHeader";
 import { AgentLeaderboard } from "../../components/AgentLeaderboard";
+import { isProbeAgent, scrubLabels } from "../../utils/agentFilters";
 
 interface AgentDirectoryProps {
   onNavigateTab: (tab: ViewTab) => void;
@@ -53,19 +54,6 @@ const SPECIALTIES_LIST = [
   "Quantitative Research",
   "Alternative Assets"
 ];
-
-function isProbe(a: any): boolean {
-  if (!a) return true;
-  if (a.isTestAgent) return true;
-  const h = (a.handle || a.authorUsername || a.author?.handle || "").toLowerCase();
-  const d = (a.description || a.summary || a.content || "").toLowerCase();
-  const name = (a.displayName || a.agentName || a.authorName || "").toLowerCase();
-
-  if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit)/.test(h)) return true;
-  if (/_probe|_chk_|_acc_|_green_/.test(h)) return true;
-  if (/ephemeral|qa probe|acceptance|post-deploy|green check/.test(d) || /ephemeral|qa probe|acceptance|post-deploy|green check/.test(name)) return true;
-  return false;
-}
 
 export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
   const [activeSubTab, setActiveSubTab] = useSubTabUrl(
@@ -98,10 +86,12 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
           const data = await res.json();
           const list = data.agents || [];
           if (Array.isArray(list) && list.length > 0) {
-            const cleanList = list.filter((a: any) => !isProbe(a));
+            const cleanList = list.filter((a: any) => !isProbeAgent(a));
 
             setAgents(cleanList.map((a: any) => {
               const isVerified = a.verificationStatus === 'verified_agent' || a.verificationStatus === 'verified' || a.verifiedStatus === 'VERIFIED SIMULATION' || a.verifiedSimulation;
+              const rawSpecs = a.specialties || (a.badges ? a.badges.map((b: any) => typeof b === 'string' ? b : b.name) : ["Super Sonic Tsunami"]);
+              const cleanSpecs = scrubLabels(rawSpecs);
               return {
                 id: a.id || a.agentId,
                 handle: a.handle,
@@ -109,12 +99,12 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
                 description: a.description || a.modelType || "Autonomous quant market intelligence agent.",
                 verificationStatus: isVerified ? 'verified_agent' : 'arena_candidate',
                 isTestAgent: Boolean(a.isTestAgent),
-                specialties: a.specialties || (a.badges ? a.badges.map((b: any) => typeof b === 'string' ? b : b.name) : ["Super Sonic Tsunami"]),
+                specialties: cleanSpecs.length > 0 ? cleanSpecs : ["Super Sonic Tsunami"],
                 metrics: {
                   winRatePercent: a.metrics?.winRatePercent ?? a.metrics?.winRate ?? a.winRatePercent ?? a.winRate ?? null,
                   monthlyAlphaPercent: a.metrics?.monthlyAlphaPercent ?? a.metrics?.monthlyAlpha ?? a.monthlyAlphaPercent ?? a.monthlyAlpha ?? null,
                   sharpeRatio: a.metrics?.sharpeRatio ?? a.sharpeRatio ?? null,
-                  badges: a.badges || a.metrics?.badges || []
+                  badges: scrubLabels(a.badges || a.metrics?.badges || [])
                 },
                 followersCount: a.followersCount || 0,
                 avatar: a.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${a.handle || a.id}`
@@ -132,8 +122,17 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
         );
         const snap = await getDocs(q);
         const agentData = snap.docs
-          .map(doc => ({ id: doc.id, ...doc.data() as any }))
-          .filter((a: any) => !isProbe(a));
+          .map(doc => {
+            const d = doc.data() as any;
+            const rawSpecs = d.specialties || [];
+            const cleanSpecs = scrubLabels(rawSpecs);
+            return {
+              id: doc.id,
+              ...d,
+              specialties: cleanSpecs.length > 0 ? cleanSpecs : ["Super Sonic Tsunami"],
+            };
+          })
+          .filter((a: any) => !isProbeAgent(a));
         setAgents(agentData);
       } catch (err) {
         console.error("Error fetching agents directory:", err);
@@ -180,7 +179,7 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
 
   const filteredAgents = agents.filter(a => {
     // 1. Drop test agents and probe handles
-    if (isProbe(a)) return false;
+    if (isProbeAgent(a)) return false;
 
     // Status filter
     if (filter === "verified" && a.verificationStatus !== "verified_agent" && a.verificationStatus !== "verified") return false;
@@ -571,7 +570,6 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
                       <option value="Super Sonic Tsunami">Super Sonic Tsunami</option>
                       <option value="AI Infrastructure">AI Infrastructure</option>
                       <option value="Energy Microgrids">Energy Microgrids</option>
-                      <option value="13F Whale Tracking">13F Whale Tracking</option>
                       <option value="Breakout Momentum">Breakout Momentum</option>
                     </select>
                   </div>
@@ -663,7 +661,7 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
 
               <div className="p-5 rounded-2xl bg-[#060b14] border border-cyan-500/25 space-y-2">
                 <span className="text-cyan-400 font-mono font-bold text-xs">STEP 02</span>
-                <h4 className="text-sm font-bold text-white font-mono">Market & 13F Discovery (Free Tier)</h4>
+                <h4 className="text-sm font-bold text-white font-mono">Market Discovery (Free Tier)</h4>
                 <p className="text-xs text-neutral-300 font-sans leading-relaxed">
                   Query unmetered endpoints (<code className="text-cyan-300">GET /api/data/market</code>, <code className="text-cyan-300">GET /api/data/sec</code>, <code className="text-cyan-300">GET /api/live-quote/:symbol</code>) with up-to-date timestamps and zero rate-limit friction.
                 </p>

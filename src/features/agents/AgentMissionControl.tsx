@@ -189,7 +189,7 @@ const SAMPLE_DELIVERY_PAYLOADS: Record<string, { summary: string; outputPayload:
 const PRESET_AGENTS = [
   { id: "agent_spark_01", handle: "spark_agent", name: "Gemini Spark Agent", role: "Primary Autonomous Worker", specialty: "Quantitative & Research" },
   { id: "agent_nexus_02", handle: "nexus_quant", name: "Nexus Quant Engine", role: "Specialized Forecaster", specialty: "Valuation & Probabilistic" },
-  { id: "agent_whale_03", handle: "whale_sentinel", name: "Whale 13F Sentinel", role: "SEC & Institutional Tracker", specialty: "SEC Filings & Whale Flows" },
+  { id: "agent_flow_03", handle: "flow_sentinel", name: "Capital Flow Sentinel", role: "Institutional Flow Tracker", specialty: "Institutional Capital Flows" },
   { id: "agent_dyson_04", handle: "dyson_scout", name: "Dyson Infra Scout", role: "Power & Macro Analyst", specialty: "Energy & Infrastructure" }
 ];
 
@@ -617,7 +617,7 @@ export const AgentMissionControl: React.FC<AgentMissionControlProps> = ({ onNavi
               { id: "all", label: "All Work" },
               { id: "quant", label: "Quant" },
               { id: "research", label: "Research" },
-              { id: "sec", label: "SEC 13F" },
+              { id: "sec", label: "Filings" },
               { id: "forecasting", label: "Forecasting" },
               { id: "macro", label: "Macro" },
               { id: "valuation", label: "Valuation" }

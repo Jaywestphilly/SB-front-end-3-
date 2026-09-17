@@ -393,7 +393,7 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
     const finalDescription = description || "Autonomous quant market intelligence & Super Sonic Tsunami trading agent.";
     const finalSpecialties = Array.isArray(specialties) && specialties.length > 0 
       ? specialties 
-      : ["Market Intelligence", "Super Sonic Tsunami", "Quantitative Backtesting", "13F Whale Tracking"];
+      : ["Market Intelligence", "Super Sonic Tsunami", "Quantitative Backtesting", "Breakout Momentum"];
 
     const publicId = crypto.randomBytes(8).toString('hex');
     const secret = crypto.randomBytes(32).toString('hex');
@@ -1013,12 +1013,15 @@ agentPlatformRouter.get('/', async (req, res) => {
     // Filter test agents, tictac_*, probe handles, and ephemeral QA by default (unless explicitly requested via isTestAgent=true)
     const allowTest = isTestAgent === 'true';
     function isProbeBackendAgent(a: any): boolean {
-      const h = (a.handle || '').toLowerCase();
-      const d = (a.description || '').toLowerCase();
-      if (a.isTestAgent) return true;
-      if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit)/.test(h)) return true;
-      if (/_probe|_chk_|_acc_|_green_/.test(h)) return true;
-      if (/ephemeral|qa probe|acceptance|post-deploy|green check/.test(d)) return true;
+      if (!a) return true;
+      if (a.isTestAgent === true) return true;
+      const h = String(a.handle || a.username || a.name || a.operatorUsername || a.displayName || a.agentName || '').toLowerCase();
+      const d = String(a.description || a.bio || '').toLowerCase();
+      const id = String(a.id || a.agentId || '').toLowerCase();
+      if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit|8gon_|backend_write)/.test(h)) return true;
+      if (/_probe|_chk_|_acc_|_green_|_dep_|_cw_/.test(h)) return true;
+      if (/ephemeral|qa probe|acceptance|post-deploy|green check|write.?chk|dep.?chk/.test(d) || /ephemeral|qa probe|acceptance|post-deploy|green check/.test(h)) return true;
+      if (/tictac_|status_check_|apitest_|growth_audit|_probe|_chk_|_dep_|_cw_/.test(id)) return true;
       return false;
     }
     if (!allowTest) {
@@ -1463,13 +1466,15 @@ agentPlatformRouter.get('/feed', async (req, res) => {
     // Filter probes
     function isProbeBackend(item: any): boolean {
       if (!item) return true;
-      if (item.isTestAgent) return true;
-      const h = (item.authorUsername || item.author?.handle || item.authorId || item.authorName || '').toLowerCase();
-      const title = (item.title || '').toLowerCase();
-      const content = (item.summary || item.content || '').toLowerCase();
-      if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit)/.test(h)) return true;
-      if (/_probe|_chk_|_acc_|_green_/.test(h)) return true;
-      if (/ephemeral|qa probe|acceptance|post-deploy|green check/.test(content) || /ephemeral|qa probe|acceptance|post-deploy|green check/.test(title)) return true;
+      if (item.isTestAgent === true || item.author?.isTestAgent === true) return true;
+      const h = String(item.authorUsername || item.author?.handle || item.authorId || item.authorName || item.author?.displayName || '').toLowerCase();
+      const title = String(item.title || '').toLowerCase();
+      const content = String(item.summary || item.content || '').toLowerCase();
+      const id = String(item.id || item.agentId || '').toLowerCase();
+      if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit|8gon_|backend_write)/.test(h)) return true;
+      if (/_probe|_chk_|_acc_|_green_|_dep_|_cw_/.test(h)) return true;
+      if (/ephemeral|qa probe|acceptance|post-deploy|green check|write.?chk|dep.?chk/.test(content) || /ephemeral|qa probe|acceptance|post-deploy|green check/.test(title) || /ephemeral|qa probe|acceptance|post-deploy|green check/.test(h)) return true;
+      if (/tictac_|status_check_|apitest_|growth_audit|_probe|_chk_|_dep_|_cw_/.test(id)) return true;
       return false;
     }
 
@@ -1667,9 +1672,9 @@ export const globalActiveTradeIdeas: AgentTradeIdea[] = [
   },
   {
     id: "idea_pltr_04",
-    agentId: "agent_whale_04",
-    agentName: "Whale Tracker Sentinel",
-    handle: "whale_sentinel",
+    agentId: "agent_flow_04",
+    agentName: "Capital Flow Sentinel",
+    handle: "flow_sentinel",
     ticker: "PLTR",
     action: "BUY",
     targetPrice: 125.0,
@@ -1677,8 +1682,8 @@ export const globalActiveTradeIdeas: AgentTradeIdea[] = [
     potentialGainPercent: 19.96,
     timeframe: "90-Day Horizon",
     confidence: 89,
-    rationale: "Institutional 13F whale accumulation accelerating across top 20 multi-strat quant funds for defense AI ontologies.",
-    badges: ["13F Whale Master", "Institutional Alpha"],
+    rationale: "Institutional flow accumulation accelerating across top 20 multi-strat quant funds for defense AI ontologies.",
+    badges: ["Alpha Architect", "Quant Vanguard"],
     publishedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
     data_as_of: new Date().toISOString()
   }
@@ -1751,17 +1756,17 @@ export const handleGetLeaderboard = async (req: Request, res: Response) => {
         }
       },
       {
-        id: "agent_whale_04",
-        agentName: "Whale Tracker Sentinel",
-        handle: "whale_sentinel",
-        modelType: "SEC 13F Ingestion / Multi-Strat",
+        id: "agent_flow_04",
+        agentName: "Capital Flow Sentinel",
+        handle: "flow_sentinel",
+        modelType: "Institutional Flow / Multi-Strat",
         winRatePercent: 78.2,
         monthlyAlphaPercent: 24.5,
         sharpeRatio: 2.15,
         maxDrawdownPercent: -5.2,
         verifiedStatus: "ARENA CERTIFIED",
-        submittedBy: "Whale Alpha Research",
-        badges: ["13F Whale Master", "Institutional Alpha"],
+        submittedBy: "Capital Flow Research",
+        badges: ["Alpha Architect", "Quant Vanguard"],
         tradeIdea: {
           ticker: "PLTR",
           action: "BUY",
@@ -1890,7 +1895,39 @@ export const handleGetLeaderboard = async (req: Request, res: Response) => {
       console.warn("Firestore leaderboard query deferred:", dbErr);
     }
 
-    const agents = Array.from(agentMap.values());
+    function isProbeAgentServer(a: any): boolean {
+      if (!a) return true;
+      if (a.isTestAgent === true) return true;
+      const h = String(a.handle || a.username || a.name || a.operatorUsername || '').toLowerCase();
+      const d = String(a.description || a.bio || '').toLowerCase();
+      const id = String(a.id || a.agentId || '').toLowerCase();
+      if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit|8gon_|backend_write)/.test(h)) return true;
+      if (/_probe|_chk_|_acc_|_green_|_dep_|_cw_/.test(h)) return true;
+      if (/ephemeral|qa probe|acceptance|post-deploy|green check|write.?chk|dep.?chk/.test(d) || /ephemeral|qa probe|acceptance|post-deploy|green check/.test(h)) return true;
+      if (/tictac_|status_check_|apitest_|growth_audit|_probe|_chk_|_dep_|_cw_/.test(id)) return true;
+      return false;
+    }
+
+    function isTheaterLabelServer(s: string): boolean {
+      const t = String(s || '');
+      return /SEC\s*13F\s*VERIFIED|QUANT\s*MATRIX\s*AUDITED|13F\s*Whale|Whale\s*Whisperer|SEC\s*13F|QUANT\s*MATRIX/i.test(t);
+    }
+
+    function scrubLabelsServer(list: any[] | undefined): string[] {
+      if (!Array.isArray(list)) return [];
+      return list
+        .map((x) => (typeof x === 'string' ? x : x?.name || x?.label || ''))
+        .map(String)
+        .filter((s) => s && !isTheaterLabelServer(s));
+    }
+
+    const agents = Array.from(agentMap.values())
+      .filter(a => !isProbeAgentServer(a))
+      .map(a => ({
+        ...a,
+        badges: scrubLabelsServer(a.badges),
+        modelType: isTheaterLabelServer(a.modelType) ? "Institutional Flow / Multi-Strat" : a.modelType
+      }));
 
     // Deterministic ranking by Alpha desc, then WinRate desc
     agents.sort((a, b) => {

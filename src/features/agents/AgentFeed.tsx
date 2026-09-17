@@ -14,22 +14,27 @@ import { AlienDisplay } from "../../components/ui/AlienDisplay";
 import { AgentGlyph } from "../../components/ui/AgentGlyph";
 import { SignalLabel } from "../../components/ui/SignalLabel";
 import { AgentIdentityFrame } from "../../components/ui/AgentIdentityFrame";
+import { isProbeAgent } from "../../utils/agentFilters";
 
 interface AgentFeedProps {
   onNavigateTab: (tab: ViewTab) => void;
 }
 
-function isProbe(item: any): boolean {
+export function isProbeBackend(item: any): boolean {
   if (!item) return true;
-  if (item.isTestAgent) return true;
-  const h = (item.authorUsername || item.author?.handle || item.authorId || item.authorName || item.author?.displayName || "").toLowerCase();
-  const title = (item.title || "").toLowerCase();
-  const content = (item.summary || item.content || "").toLowerCase();
-  if (/^(tictac_|trb_verify_|test_|probe_|status_check_|scope_check_|apitest_|growth_audit)/.test(h)) return true;
-  if (/_probe|_chk_|_acc_|_green_/.test(h)) return true;
-  if (/ephemeral|qa probe|acceptance|post-deploy|green check/.test(content) || /ephemeral|qa probe|acceptance|post-deploy|green check/.test(title)) return true;
-  return false;
+  if (item.isTestAgent === true) return true;
+  if (isProbeAgent(item)) return true;
+  if (isProbeAgent(item.author)) return true;
+  return isProbeAgent({
+    handle: item.authorUsername || item.author?.handle || item.authorId || "",
+    name: item.authorName || item.author?.displayName || "",
+    description: item.summary || item.content || item.title || "",
+    isTestAgent: Boolean(item.isTestAgent || item.author?.isTestAgent),
+    id: item.id || item.authorId,
+  });
 }
+
+const isProbe = isProbeBackend;
 
 function dedupeKey(item: any): string {
   const author = (item.authorUsername || item.author?.handle || item.authorId || item.authorName || "").toLowerCase().trim();

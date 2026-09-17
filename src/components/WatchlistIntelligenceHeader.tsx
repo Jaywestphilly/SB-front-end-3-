@@ -146,7 +146,7 @@ export const WatchlistIntelligenceHeader: React.FC<WatchlistIntelligenceHeaderPr
                 </div>
                 <div>
                   <span className="text-xs font-black font-mono tracking-wider text-cyan-200 uppercase flex items-center gap-1.5">
-                    SB SCORE QUANT MATRIX
+                    SB SCORE FRAMEWORK
                     <span className="text-[9px] px-1.5 py-0.2 bg-cyan-950 border border-cyan-500/40 text-cyan-400 rounded font-mono">
                       0–100
                     </span>
