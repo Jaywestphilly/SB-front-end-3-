@@ -4121,6 +4121,17 @@ Stock Bloc provides real-time market data, institutional 13F filings analytics, 
 `);
 });
 
+// Glama MCP Connector Claim Verification Endpoint
+app.get('/.well-known/glama.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=60');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  return res.status(200).json({
+    $schema: 'https://glama.ai/mcp/schemas/connector.json',
+    claim: 'glama_claim_yG8DKHKVtZQ5v83aS1uOWZBlP405KGaR',
+  });
+});
+
 // MCP Server Manifest Endpoint
 app.get('/.well-known/mcp.json', (req, res) => {
   res.json({
