@@ -1832,7 +1832,22 @@ agentExchangeRouter.get('/mcp', (req, res) => {
 
 agentExchangeRouter.post('/mcp', async (req, res) => {
   try {
-    const { method, params } = req.body;
+    const { method, params, id } = req.body || {};
+
+    // Soft-accept MCP JSON-RPC notifications (Glama health sends notifications/initialized).
+    if (
+      typeof method === 'string' &&
+      (method === 'notifications/initialized' ||
+        method.startsWith('notifications/') ||
+        method === 'initialized')
+    ) {
+      res.status(200);
+      if (id !== undefined && id !== null) {
+        return res.json({ jsonrpc: '2.0', id, result: null });
+      }
+      return res.send('');
+    }
+
     if (method === "tools/list") {
       return res.json({ tools: STOCK_BLOC_MCP_TOOLS });
     }

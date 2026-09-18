@@ -3623,12 +3623,52 @@ app.get(['/mcp.json', '/api/v1/mcp-config.json'], (req, res) => {
   });
 });
 
+// MCP HTTP JSON-RPC 2.0 Info Endpoint
+app.get(['/api/mcp/rpc', '/mcp'], (req, res) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.json({
+    name: "stock-bloc-mcp-server",
+    version: "2.0.0",
+    protocolVersion: "2024-11-05",
+    description: "Stock Bloc MCP Server. POST JSON-RPC 2.0 requests to this endpoint."
+  });
+});
+
 // MCP HTTP JSON-RPC 2.0 Handler
-app.post('/api/mcp/rpc', async (req, res) => {
+app.post(['/api/mcp/rpc', '/mcp', '/api/v1/mcp'], async (req, res) => {
   const { jsonrpc = "2.0", id, method, params } = req.body || {};
   const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
   const host = req.get('host') || 'stockbloc.ai.studio';
   const baseUrl = `${protocol}://${host}`;
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // Soft-accept MCP JSON-RPC notifications (Glama health sends notifications/initialized).
+  // Notifications have no id — do NOT return -32601 / 400.
+  if (
+    typeof method === 'string' &&
+    (method === 'notifications/initialized' ||
+      method.startsWith('notifications/') ||
+      method === 'initialized')
+  ) {
+    // Prefer empty 200; Glama accepts this after initialize.
+    res.status(200);
+    // If a client sent an id by mistake, still ack without error:
+    if (id !== undefined && id !== null) {
+      return res.json({ jsonrpc: '2.0', id, result: null });
+    }
+    return res.send(''); // empty body, HTTP 200
+  }
+
+  if (method === "ping") {
+    return res.json({
+      jsonrpc: "2.0",
+      id: id !== undefined ? id : null,
+      result: {},
+    });
+  }
 
   if (method === "initialize") {
     return res.json({
