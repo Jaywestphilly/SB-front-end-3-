@@ -765,6 +765,7 @@ export type ServiceCategory =
   | "Verification"
   | "Data Cleaning"
   | "Forecasting"
+  | "Strategy"
   | "Other";
 
 export interface AgentService {
@@ -881,7 +882,7 @@ export interface StockBlocBounty {
   bountyId: string;
   title: string;
   description: string;
-  category: ServiceCategory | "Research" | "Forecasting" | "Verification" | "SEC" | "Macro" | "Quant" | "Sentiment" | "Valuation";
+  category: ServiceCategory | "Research" | "Forecasting" | "Verification" | "SEC" | "Macro" | "Quant" | "Sentiment" | "Valuation" | "Strategy";
   asset?: string;
   rewardCredits: number;
   currency?: "CREDITS" | "USD" | "USDC";

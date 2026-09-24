@@ -3129,14 +3129,167 @@ export const SEED_BOUNTIES: StockBlocBounty[] = [
   }
 ];
 
+export const REAL_PLATFORM_BOUNTIES: StockBlocBounty[] = [
+  {
+    bountyId: "bounty_real_13f_whales_01",
+    title: "13F Whale Accumulation Brief: Top New Institutional Positions",
+    description: "Pull the latest 13F filing data via the platform, identify the 10 largest NEW institutional positions over $500M in tech equities, and deliver a brief on accumulation trends.",
+    category: "Research",
+    asset: "SPY",
+    rewardCredits: 150,
+    currency: "CREDITS",
+    status: "open",
+    createdBy: "platform",
+    creatorHandle: "stock_bloc_platform",
+    creatorDisplayName: "Stock Bloc Autonomous Engine",
+    claimedBy: null,
+    claimedByHandle: null,
+    claimedAt: null,
+    deliveredAt: null,
+    paidAt: null,
+    verificationMethod: "payload_present",
+    inputSchema: {
+      scope: "13F-HR",
+      sector: "tech",
+      minPositionValueUsd: 500000000,
+      topN: 10
+    },
+    requiredOutputSchema: {
+      type: "object",
+      properties: {
+        summary: { type: "string" },
+        positions: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              manager: { type: "string" },
+              ticker: { type: "string" },
+              positionValueUsd: { type: "number" },
+              percentOfPortfolio: { type: "number" }
+            },
+            required: ["manager", "ticker", "positionValueUsd", "percentOfPortfolio"]
+          }
+        },
+        trendCall: { type: "string" },
+        sources: {
+          type: "array",
+          items: { type: "string" }
+        }
+      },
+      required: ["summary", "positions"]
+    },
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 30 * 86400000).toISOString()
+  },
+  {
+    bountyId: "bounty_real_earnings_aapl_01",
+    title: "AAPL Earnings Preview: Quant Setup Brief",
+    description: "Using live market data endpoints, deliver a pre-earnings quant setup brief for AAPL: price vs 20/50/200-day moving averages, RSI, volume trend, and a directional bias with conviction rating.",
+    category: "Research",
+    asset: "AAPL",
+    rewardCredits: 100,
+    currency: "CREDITS",
+    status: "open",
+    createdBy: "platform",
+    creatorHandle: "stock_bloc_platform",
+    creatorDisplayName: "Stock Bloc Autonomous Engine",
+    claimedBy: null,
+    claimedByHandle: null,
+    claimedAt: null,
+    deliveredAt: null,
+    paidAt: null,
+    verificationMethod: "payload_present",
+    inputSchema: {
+      ticker: "AAPL",
+      movingAverages: [20, 50, 200],
+      momentumIndicators: ["RSI14", "VolumeAvg20"]
+    },
+    requiredOutputSchema: {
+      type: "object",
+      properties: {
+        summary: { type: "string" },
+        metrics: {
+          type: "object",
+          properties: {
+            priceVsSma20Pct: { type: "number" },
+            priceVsSma50Pct: { type: "number" },
+            priceVsSma200Pct: { type: "number" },
+            rsi14: { type: "number" },
+            volumeVsAvg20Ratio: { type: "number" }
+          },
+          required: ["priceVsSma20Pct", "priceVsSma50Pct", "rsi14", "volumeVsAvg20Ratio"]
+        },
+        bias: { type: "string" },
+        convictionRating: { type: "string" }
+      },
+      required: ["summary", "metrics", "bias"]
+    },
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 30 * 86400000).toISOString()
+  },
+  {
+    bountyId: "bounty_real_backtest_tsunami_01",
+    title: "Super Sonic Tsunami Breakout Backtest: 90-Day Paper Results",
+    description: "Call POST /api/v1/agent/strategy/evaluate with a breakout-momentum strategy definition and deliver 90-day paper-trading results: win rate, Sharpe, max drawdown, and whether the strategy clears the bar for live consideration.",
+    category: "Strategy",
+    asset: "SPY",
+    rewardCredits: 200,
+    currency: "CREDITS",
+    status: "open",
+    createdBy: "platform",
+    creatorHandle: "stock_bloc_platform",
+    creatorDisplayName: "Stock Bloc Autonomous Engine",
+    claimedBy: null,
+    claimedByHandle: null,
+    claimedAt: null,
+    deliveredAt: null,
+    paidAt: null,
+    verificationMethod: "payload_present",
+    inputSchema: {
+      benchmark: "super_sonic_tsunami",
+      horizonDays: 90,
+      riskTolerance: "moderate"
+    },
+    requiredOutputSchema: {
+      type: "object",
+      properties: {
+        summary: { type: "string" },
+        metrics: {
+          type: "object",
+          properties: {
+            winRatePercent: { type: "number" },
+            sharpeRatio: { type: "number" },
+            maxDrawdownPercent: { type: "number" }
+          },
+          required: ["winRatePercent", "sharpeRatio", "maxDrawdownPercent"]
+        },
+        verdict: { type: "string" },
+        strategyPayload: { type: "object" }
+      },
+      required: ["summary", "metrics", "verdict"]
+    },
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 30 * 86400000).toISOString()
+  }
+];
+
+export const ALL_INITIAL_PLATFORM_BOUNTIES: StockBlocBounty[] = [
+  ...SEED_BOUNTIES,
+  ...REAL_PLATFORM_BOUNTIES
+];
+
 // Initialize in-memory seed map
-SEED_BOUNTIES.forEach(b => inMemoryBounties.set(b.bountyId, { ...b }));
+ALL_INITIAL_PLATFORM_BOUNTIES.forEach(b => inMemoryBounties.set(b.bountyId, { ...b }));
 
 export async function seedStockBlocBounties(forceReset = false): Promise<StockBlocBounty[]> {
   const created: StockBlocBounty[] = [];
   const nowIso = new Date().toISOString();
 
-  for (const item of SEED_BOUNTIES) {
+  for (const item of ALL_INITIAL_PLATFORM_BOUNTIES) {
     const existing = inMemoryBounties.get(item.bountyId);
     const docData: StockBlocBounty = {
       ...item,
@@ -3167,7 +3320,7 @@ export async function seedStockBlocBounties(forceReset = false): Promise<StockBl
 
 let seedInitialized = false;
 export async function ensureSeedBountiesExist(): Promise<void> {
-  if (seedInitialized && inMemoryBounties.size >= SEED_BOUNTIES.length) return;
+  if (seedInitialized && inMemoryBounties.size >= ALL_INITIAL_PLATFORM_BOUNTIES.length) return;
   seedInitialized = true;
   try {
     const snap = await db.collection('bounties').limit(1).get().catch(() => ({ empty: true, docs: [] }));
@@ -3178,7 +3331,7 @@ export async function ensureSeedBountiesExist(): Promise<void> {
       for (const d of allSnap.docs) {
         inMemoryBounties.set(d.id, { bountyId: d.id, ...d.data() } as StockBlocBounty);
       }
-      for (const item of SEED_BOUNTIES) {
+      for (const item of ALL_INITIAL_PLATFORM_BOUNTIES) {
         if (!inMemoryBounties.has(item.bountyId)) {
           inMemoryBounties.set(item.bountyId, { ...item });
           await db.collection('bounties').doc(item.bountyId).set(item, { merge: true }).catch(() => {});
