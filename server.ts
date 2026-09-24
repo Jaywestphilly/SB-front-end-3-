@@ -128,7 +128,7 @@ app.get('/agents/feed', (req, res, next) => {
   next();
 });
 app.use('/api/v1/community', communityApiRouter);
-app.use('/api/v1/intelligence', agentIntelligenceRouter);
+app.use(['/api/v1/intelligence', '/api/v1/intelligence/*', '/api/intelligence', '/api/intelligence/*'], requireX402Payment(), agentIntelligenceRouter);
 app.use('/api/v1/web3', web3DotBtcRouter);
 app.use('/api/web3', web3DotBtcRouter);
 
@@ -1282,7 +1282,7 @@ async function fetchRealStockQuote(symbol: string, forceRefresh = false) {
 }
 
 // 7. Live Real-Time Stock Quote Endpoint
-app.get('/api/live-quote/:symbol', async (req, res) => {
+app.get(['/api/live-quote/:symbol', '/api/v1/market/quote/:symbol', '/api/v1/market/quote'], requireX402Payment(), async (req, res) => {
   const { symbol } = req.params;
   const symUpper = symbol.toUpperCase();
   const force = req.query.force === 'true';
@@ -2033,7 +2033,7 @@ export function computeSuperSonicTsunamiEvaluation(
 app.post(['/api/v1/agent/register', '/api/v1/agents/register'], registerAutonomousAgentHandler);
 
 // 2. Super Sonic Tsunami Strategy Evaluation REST Endpoint: POST /api/v1/agent/strategy/evaluate
-app.post(['/api/v1/agent/strategy/evaluate', '/api/v1/agent/evaluate-strategy'], (req, res) => {
+app.post(['/api/v1/agent/strategy/evaluate', '/api/v1/agent/evaluate-strategy'], requireX402Payment(), (req, res) => {
   try {
     const { 
       agentName = "Autonomous-Agent", 
@@ -3360,7 +3360,7 @@ app.post('/api/intel/youtube-feed/sync', async (req, res) => {
 });
 
 // Proxy Endpoints: Unified Market Data with sbScore, bloc, CSV export and ?bloc= filter
-app.get(['/api/data/market', '/api/data/market.csv'], async (req, res) => {
+app.get(['/api/data/market', '/api/data/market.csv'], requireX402Payment(), async (req, res) => {
   const data = await fetchAndProcessFeed('market');
   const blocQuery = req.query.bloc ? String(req.query.bloc).toLowerCase().trim() : null;
   const isCsv = req.path.endsWith('.csv') || req.query.format === 'csv' || req.headers.accept?.includes('text/csv');
@@ -3442,7 +3442,7 @@ app.get(['/api/data/market', '/api/data/market.csv'], async (req, res) => {
   return res.json(responseData);
 });
 
-app.get('/api/data/sec', async (req, res) => {
+app.get('/api/data/sec', requireX402Payment(), async (req, res) => {
   const data = await fetchAndProcessFeed('sec');
   res.setHeader('Cache-Control', 'public, max-age=180');
   res.setHeader('X-Data-As-Of', data.updated_at || 'unknown');

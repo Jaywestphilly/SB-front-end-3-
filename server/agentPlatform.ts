@@ -542,34 +542,37 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
       verifiedSimulations: 0
     });
 
-    // Persist asynchronously to Firestore if configured
-    try {
-      await db.collection('users').doc(agentId).set({
-        ...agentRecord,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-        lastSeenAt: FieldValue.serverTimestamp()
-      });
-      await db.collection('api_keys').doc(publicId).set({
-        ...keyRecord,
-        createdAt: FieldValue.serverTimestamp()
-      });
-      await db.collection('agent_wallets').doc(agentId).set({
-        agentId,
-        creditsBalance: 100,
-        availableBalance: 100,
-        paidCreditsBalance: 0,
-        promoCreditsBalance: 0,
-        trialCreditsBalance: 100,
-        trialCredits: 100,
-        lastCreditTag: 'TRIAL',
-        lifetimeGrossEarnings: 0,
-        lifetimeSpent: 0,
-        status: 'active'
-      });
-    } catch (dbErr) {
-      console.warn('[Autonomous Agent Register] Firestore write deferred, stored in memory cache:', dbErr);
-    }
+    // Fire-and-forget background Firestore persistence with 5-second timeout (never await in request path)
+    Promise.race([
+      Promise.all([
+        db.collection('users').doc(agentId).set({
+          ...agentRecord,
+          createdAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+          lastSeenAt: FieldValue.serverTimestamp()
+        }),
+        db.collection('api_keys').doc(publicId).set({
+          ...keyRecord,
+          createdAt: FieldValue.serverTimestamp()
+        }),
+        db.collection('agent_wallets').doc(agentId).set({
+          agentId,
+          creditsBalance: 100,
+          availableBalance: 100,
+          paidCreditsBalance: 0,
+          promoCreditsBalance: 0,
+          trialCreditsBalance: 100,
+          trialCredits: 100,
+          lastCreditTag: 'TRIAL',
+          lifetimeGrossEarnings: 0,
+          lifetimeSpent: 0,
+          status: 'active'
+        })
+      ]),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore persistence timed out after 5s')), 5000))
+    ]).catch((dbErr) => {
+      console.warn('[Autonomous Agent Register] Background Firestore persistence failed or timed out:', dbErr?.message || dbErr);
+    });
 
     console.log(`[AGENT PLATFORM] Autonomous agent registered: @${finalHandle} (${agentId}) with key prefix ${publicId} and scopes: ${finalScopes.join(', ')}`);
 

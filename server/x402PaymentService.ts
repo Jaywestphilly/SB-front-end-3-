@@ -224,11 +224,12 @@ export function matchPricedEndpoint(path: string, method: string = 'GET'): X402P
     return PRICED_ENDPOINTS.strategy_eval;
   }
 
-  // Market Data Watchlist (specifically /api/data/market - does NOT block /api/live-quotes/batch or static JSON)
+  // Market Data Watchlist & Live Quotes
   if (
     normalized === '/api/data/market' ||
     normalized === '/api/data/market.csv' ||
-    normalized === '/api/v1/market/quote'
+    normalized.startsWith('/api/v1/market/quote') ||
+    normalized.startsWith('/api/live-quote')
   ) {
     return PRICED_ENDPOINTS.market_data;
   }
@@ -270,21 +271,25 @@ function hasValidCreditPayment(req: Request): boolean {
 
 export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    // 1. Identify priced endpoint configuration
-    const endpointConfig = forcedConfig || matchPricedEndpoint(req.path, req.method);
-    if (!endpointConfig) {
-      return next();
-    }
+    const fullPath = (req.originalUrl || (req.baseUrl ? req.baseUrl + req.path : req.path) || '').split('?')[0];
 
-    // 1b. Allow requests originating from the frontend web browser application
-    if (isFrontendWebRequest(req)) {
+    const forwardNext = () => {
+      if (fullPath && fullPath.includes('/api/')) {
+        console.warn(`[x402 Paywall Audit] next() called on API path: ${req.method} ${fullPath}`);
+      }
       return next();
+    };
+
+    // 1. Identify priced endpoint configuration
+    const endpointConfig = forcedConfig || matchPricedEndpoint(fullPath, req.method) || matchPricedEndpoint(req.path, req.method);
+    if (!endpointConfig) {
+      return forwardNext();
     }
 
     // 2. Allow requests paid through platform credits (Bearer sb_live_ key with credits)
     // "Do not touch the existing Stripe card checkout — x402 sits alongside it for agents, Stripe stays for humans."
     if (hasValidCreditPayment(req)) {
-      return next();
+      return forwardNext();
     }
 
     // 3. Check for x402 payment header
@@ -421,7 +426,7 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
         txHash: (settleResult as any).txHash
       };
 
-      return next();
+      return forwardNext();
     } catch (err: any) {
       console.error('Coinbase x402 facilitator error:', err.message);
       return res.status(402).json({
