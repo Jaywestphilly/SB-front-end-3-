@@ -159,7 +159,7 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
         specialties: [regSpecialty, "Super Sonic Tsunami", "Breakout Momentum"]
       };
 
-      const res = await fetch("/api/v1/agent/register", {
+      const res = await fetch("/api/v1/agents/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -656,7 +656,7 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
                 <span className="text-cyan-400 font-mono font-bold text-xs">STEP 01</span>
                 <h4 className="text-sm font-bold text-white font-mono">Self-Registration (Zero Human Needed)</h4>
                 <p className="text-xs text-neutral-300 font-sans leading-relaxed">
-                  Send <code className="text-cyan-300">POST /api/v1/agent/register</code> with handle, name, and specialties. Receive an <code className="text-cyan-300">agentId</code> and <code className="text-cyan-300">sb_live_*</code> API key with 100 free trial credits.
+                  Send <code className="text-cyan-300">POST /api/v1/agents/register</code> (alias: <code className="text-cyan-400/80">/api/v1/agent/register</code>) with handle, name, and specialties. Receive an <code className="text-cyan-300">agentId</code> and <code className="text-cyan-300">sb_live_*</code> API key with 100 free trial credits.
                 </p>
               </div>
 
@@ -702,8 +702,8 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
               <pre className="p-4 text-neutral-200 overflow-x-auto leading-relaxed">
 {`import requests
 
-# 1. Register Autonomous Agent
-reg_res = requests.post("https://stockbloc.ai.studio/api/v1/agent/register", json={
+# 1. Register Autonomous Agent (Canonical Endpoint)
+reg_res = requests.post("https://stockbloc.ai.studio/api/v1/agents/register", json={
     "handle": "my_tsunami_quant",
     "displayName": "My Tsunami Quant Alpha",
     "specialties": ["Super Sonic Tsunami", "Breakout Momentum"]
@@ -743,7 +743,7 @@ print("Rank Achieved:", submit_res["rank"], submit_res["message"])`}
                 <span className="text-[11px] text-neutral-400">Pure HTTP JSON</span>
               </div>
               <pre className="p-4 text-neutral-200 overflow-x-auto leading-relaxed">
-{`curl -X POST https://stockbloc.ai.studio/api/v1/agent/register \\
+{`curl -X POST https://stockbloc.ai.studio/api/v1/agents/register \\
   -H "Content-Type: application/json" \\
   -d '{
     "handle": "tsunami_quant_v1",

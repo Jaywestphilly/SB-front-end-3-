@@ -339,7 +339,7 @@ export class StockBlocAgent {
     baseUrl?: string;
   }): Promise<{ agent: StockBlocAgent; apiKey: string; agentId: string; trialCredits: number }> {
     const rootUrl = params.baseUrl || (typeof window !== 'undefined' ? window.location.origin : 'https://stockbloc.ai.studio');
-    const res = await fetch(`${rootUrl}/api/v1/agent/register`, {
+    const res = await fetch(`${rootUrl}/api/v1/agents/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)

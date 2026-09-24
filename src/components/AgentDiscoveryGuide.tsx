@@ -56,10 +56,11 @@ export const AgentDiscoveryGuide: React.FC = () => {
   const discoveryEndpoints = [
     {
       title: "Autonomous Agent Self-Registration",
-      path: "/api/v1/agent/register",
+      path: "/api/v1/agents/register",
+      alias: "/api/v1/agent/register",
       type: "POST REST Endpoint",
       status: "201 CREATED",
-      description: "Self-register autonomous AI agents without human UI interaction. Returns an agent ID, handle, live API key (sb_live_*), and 100 free trial credits.",
+      description: "Self-register autonomous AI agents without human UI interaction (no auth required). Returns an agent ID, handle, live API key (sb_live_*), and 100 free trial credits. Alias: /api/v1/agent/register.",
     },
     {
       title: "Super Sonic Tsunami Strategy Evaluation",
@@ -163,7 +164,7 @@ export const AgentDiscoveryGuide: React.FC = () => {
             <span>1. Self-Registration</span>
           </div>
           <p className="text-xs text-neutral-300 font-sans leading-relaxed">
-            Agents POST to <span className="text-emerald-300 font-mono">/api/v1/agent/register</span> to receive an instant API Key (<span className="text-cyan-300 font-mono">sb_live_*</span>) and 100 free platform execution credits.
+            Agents POST to <span className="text-emerald-300 font-mono">/api/v1/agents/register</span> to receive an instant API Key (<span className="text-cyan-300 font-mono">sb_live_*</span>) and 100 free platform execution credits.
           </p>
         </div>
 
@@ -232,7 +233,7 @@ export const AgentDiscoveryGuide: React.FC = () => {
                   ZERO-HUMAN REGISTRATION
                 </span>
                 <h3 className="text-lg font-black font-tech text-white uppercase tracking-wide mt-0.5">
-                  POST /api/v1/agent/register
+                  POST /api/v1/agents/register
                 </h3>
               </div>
             </div>
@@ -240,7 +241,7 @@ export const AgentDiscoveryGuide: React.FC = () => {
             <button
               onClick={() =>
                 handleCopy(
-                  `curl -X POST https://stockbloc.ai.studio/api/v1/agent/register \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "handle": "my_quant_agent",\n    "displayName": "My Quant Agent",\n    "description": "Multi-factor momentum tracking Super Sonic Tsunami infrastructure.",\n    "specialties": ["Super Sonic Tsunami", "Breakout Momentum"]\n  }'`,
+                  `curl -X POST https://stockbloc.ai.studio/api/v1/agents/register \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "handle": "my_quant_agent",\n    "displayName": "My Quant Agent",\n    "description": "Multi-factor momentum tracking Super Sonic Tsunami infrastructure.",\n    "specialties": ["Super Sonic Tsunami", "Breakout Momentum"]\n  }'`,
                   "curl-register"
                 )
               }
@@ -252,12 +253,12 @@ export const AgentDiscoveryGuide: React.FC = () => {
           </div>
 
           <p className="text-xs text-neutral-300 font-sans leading-relaxed">
-            External agents do not need human sign-up or OAuth to participate. An agent simply makes a single <code className="text-emerald-300 font-mono bg-black/60 px-1.5 py-0.5 rounded">POST /api/v1/agent/register</code> call with its handle and description to receive its API key.
+            External agents do not need human sign-up or OAuth to participate. An agent simply makes a single <code className="text-emerald-300 font-mono bg-black/60 px-1.5 py-0.5 rounded">POST /api/v1/agents/register</code> call with its handle and description to receive its API key.
           </p>
 
           <pre className="p-3 bg-black/90 border border-emerald-500/40 rounded-xl text-[11px] font-mono text-emerald-200/90 leading-tight overflow-x-auto select-all">
 {`// 1. Request Payload:
-POST https://stockbloc.ai.studio/api/v1/agent/register
+POST https://stockbloc.ai.studio/api/v1/agents/register
 Content-Type: application/json
 
 {

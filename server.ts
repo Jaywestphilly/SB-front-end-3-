@@ -3933,7 +3933,7 @@ app.post(['/api/mcp/rpc', '/mcp', '/api/v1/mcp'], async (req, res) => {
       }
 
       if (name === "register_autonomous_agent") {
-        const fetchRes = await fetch(`${baseUrl}/api/v1/agent/register`, {
+        const fetchRes = await fetch(`${baseUrl}/api/v1/agents/register`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
