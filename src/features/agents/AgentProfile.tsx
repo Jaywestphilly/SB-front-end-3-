@@ -5,6 +5,8 @@ import { collection, query, where, getDocs, limit, orderBy } from "firebase/fire
 import { AgentBadge, VerifiedOperatorBadge } from "../../components/AgentBadge";
 import { ArrowLeft, Activity, Users, MessageSquare, Clock, FileText, Target, ShieldCheck, TrendingUp, HelpCircle, BarChart3, Layers, Star, CheckCircle2, AlertCircle, X, ShieldAlert, Scale, RefreshCw, UserPlus, UserCheck, Share2, Code, Copy } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { fetchWithPaywallHandling } from "../../utils/apiClient";
+import { PaywallUpsellCard, DataUnavailableState } from "../../components/PaywallGracefulState";
 
 interface AgentProfileProps {
   onNavigateTab: (tab: ViewTab) => void;
@@ -15,6 +17,8 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
   const [forecasts, setForecasts] = useState<any[]>([]);
   const [research, setResearch] = useState<any[]>([]);
   const [performance, setPerformance] = useState<any | null>(null);
+  const [isPerfPaywall, setIsPerfPaywall] = useState<boolean>(false);
+  const [isPerfConfigError, setIsPerfConfigError] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'forecasts' | 'research'>('overview');
   
   const [loading, setLoading] = useState(true);
@@ -103,10 +107,13 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
 
         // Fetch Intelligence Data
         try {
-          const res = await fetch(`/api/v1/intelligence/agents/${agentData.id}/performance`);
-          if (res.ok) {
-            const perfData = await res.json();
-            setPerformance(perfData);
+          const res = await fetchWithPaywallHandling(`/api/v1/intelligence/agents/${agentData.id}/performance`);
+          if (res.ok && res.data) {
+            setPerformance(res.data);
+          } else if (res.isPaywall) {
+            setIsPerfPaywall(true);
+          } else if (res.isConfigError) {
+            setIsPerfConfigError(true);
           }
         } catch (e) {
           console.error("Failed to fetch performance", e);
@@ -453,48 +460,61 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="col-span-1 md:col-span-1 space-y-6">
               {/* Performance Card */}
-              <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl">
-                <h3 className="text-sm font-bold text-neutral-400 uppercase tracking-wider mb-6 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-400" />
-                  Performance Record
-                </h3>
-                
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center pb-4 border-b border-neutral-800/50">
-                    <span className="text-neutral-400 text-sm">Correct Forecasts</span>
-                    <span className="text-white font-bold text-lg">{performance?.forecastRecord?.correct || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-4 border-b border-neutral-800/50">
-                    <span className="text-neutral-400 text-sm">Incorrect Forecasts</span>
-                    <span className="text-neutral-500 font-bold text-lg">{performance?.forecastRecord?.incorrect || 0}</span>
-                  </div>
-                  <div className="flex justify-between items-center pb-4 border-b border-neutral-800/50">
-                    <span className="text-neutral-400 text-sm">Open Forecasts</span>
-                    <span className="text-cyan-400 font-bold text-lg">{performance?.forecastRecord?.open || 0}</span>
-                  </div>
+              {isPerfPaywall ? (
+                <PaywallUpsellCard
+                  compact
+                  title="Unlock Agent Performance Metrics — $5/mo"
+                  description="Real-time accuracy scoring, verified ledger resolution, and quantitative forecast records."
+                />
+              ) : isPerfConfigError ? (
+                <DataUnavailableState
+                  compact
+                  message="Agent performance intelligence is temporarily unavailable."
+                />
+              ) : (
+                <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl">
+                  <h3 className="text-sm font-bold text-neutral-400 uppercase tracking-wider mb-6 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-emerald-400" />
+                    Performance Record
+                  </h3>
                   
-                  {((performance?.forecastRecord?.correct || 0) + (performance?.forecastRecord?.incorrect || 0)) > 0 ? (
-                    <div className="pt-2">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-neutral-300 text-sm font-bold">Accuracy Rate</span>
-                        <span className="text-emerald-400 font-bold">
-                          {Math.round(((performance?.forecastRecord?.correct || 0) / ((performance?.forecastRecord?.correct || 0) + (performance?.forecastRecord?.incorrect || 0))) * 100)}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-neutral-800 h-2 rounded-full overflow-hidden">
-                        <div 
-                          className="bg-emerald-500 h-full rounded-full" 
-                          style={{ width: `${Math.round(((performance?.forecastRecord?.correct || 0) / ((performance?.forecastRecord?.correct || 0) + (performance?.forecastRecord?.incorrect || 0))) * 100)}%` }} 
-                        />
-                      </div>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center pb-4 border-b border-neutral-800/50">
+                      <span className="text-neutral-400 text-sm">Correct Forecasts</span>
+                      <span className="text-white font-bold text-lg">{performance?.forecastRecord?.correct || 0}</span>
                     </div>
-                  ) : (
-                    <div className="pt-2 text-center">
-                      <span className="text-neutral-500 text-sm flex items-center justify-center gap-1.5"><HelpCircle className="w-4 h-4" /> Insufficient data for accuracy</span>
+                    <div className="flex justify-between items-center pb-4 border-b border-neutral-800/50">
+                      <span className="text-neutral-400 text-sm">Incorrect Forecasts</span>
+                      <span className="text-neutral-500 font-bold text-lg">{performance?.forecastRecord?.incorrect || 0}</span>
                     </div>
-                  )}
+                    <div className="flex justify-between items-center pb-4 border-b border-neutral-800/50">
+                      <span className="text-neutral-400 text-sm">Open Forecasts</span>
+                      <span className="text-cyan-400 font-bold text-lg">{performance?.forecastRecord?.open || 0}</span>
+                    </div>
+                    
+                    {((performance?.forecastRecord?.correct || 0) + (performance?.forecastRecord?.incorrect || 0)) > 0 ? (
+                      <div className="pt-2">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-neutral-300 text-sm font-bold">Accuracy Rate</span>
+                          <span className="text-emerald-400 font-bold">
+                            {Math.round(((performance?.forecastRecord?.correct || 0) / ((performance?.forecastRecord?.correct || 0) + (performance?.forecastRecord?.incorrect || 0))) * 100)}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-neutral-800 h-2 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-emerald-500 h-full rounded-full" 
+                            style={{ width: `${Math.round(((performance?.forecastRecord?.correct || 0) / ((performance?.forecastRecord?.correct || 0) + (performance?.forecastRecord?.incorrect || 0))) * 100)}%` }} 
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="pt-2 text-center">
+                        <span className="text-neutral-500 text-sm flex items-center justify-center gap-1.5"><HelpCircle className="w-4 h-4" /> Insufficient data for accuracy</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 shadow-xl">
                  <h3 className="text-sm font-bold text-neutral-400 uppercase tracking-wider mb-6 flex items-center gap-2">

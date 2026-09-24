@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { formatUtcTimestamp, isDataStale } from '../utils/timeUtils';
+import { fetchWithPaywallHandling } from '../utils/apiClient';
 
 export interface SecFiling {
   form_type: string;
@@ -24,6 +25,8 @@ export const useSecIntelData = () => {
   const [data, setData] = useState<SecIntelData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPaywall, setIsPaywall] = useState<boolean>(false);
+  const [isConfigError, setIsConfigError] = useState<boolean>(false);
   const [updatedAtFormatted, setUpdatedAtFormatted] = useState<string>("");
   const [isStale, setIsStale] = useState<boolean>(false);
   const [dataSource, setDataSource] = useState<string>("U.S. SEC EDGAR API");
@@ -32,14 +35,18 @@ export const useSecIntelData = () => {
     const fetchIntel = async () => {
       try {
         setLoading(true);
+        setIsPaywall(false);
+        setIsConfigError(false);
+        setError(null);
+
         // Try live backend first
         let fetchedData: SecIntelData | null = null;
         let sourceName = "U.S. SEC EDGAR API";
 
         try {
-          const apiRes = await fetch("/api/13f/filings");
-          if (apiRes.ok) {
-            const apiJson = await apiRes.json();
+          const apiResult = await fetchWithPaywallHandling("/api/13f/filings");
+          if (apiResult.ok && apiResult.data) {
+            const apiJson = apiResult.data;
             if (apiJson && apiJson.funds) {
               fetchedData = {
                 updated_at: apiJson.timestamp || apiJson.updated_at || new Date().toISOString(),
@@ -57,16 +64,29 @@ export const useSecIntelData = () => {
               };
               sourceName = "Live SEC EDGAR API";
             }
+          } else if (apiResult.isPaywall) {
+            setIsPaywall(true);
+          } else if (apiResult.isConfigError) {
+            setIsConfigError(true);
           }
         } catch {
-          // Ignore and fallback to raw github
+          // Ignore and fallback to raw cdn
         }
 
-        if (!fetchedData) {
-          const res = await fetch("/api/data/sec");
-          if (!res.ok) throw new Error("Failed to fetch SEC Intel data");
-          fetchedData = await res.json();
-          sourceName = "CDN Proxy / SEC Edgar";
+        if (!fetchedData && !isPaywall) {
+          const secResult = await fetchWithPaywallHandling<SecIntelData>("/api/data/sec");
+          if (secResult.ok && secResult.data) {
+            fetchedData = secResult.data;
+            sourceName = "CDN Proxy / SEC Edgar";
+          } else if (secResult.isPaywall) {
+            setIsPaywall(true);
+            setError(secResult.error || "Unlock live data with Quant Suite Pro — $5/mo");
+          } else if (secResult.isConfigError) {
+            setIsConfigError(true);
+            setError("Data temporarily unavailable");
+          } else {
+            throw new Error(secResult.error || "Failed to fetch SEC Intel data");
+          }
         }
 
         if (fetchedData) {
@@ -85,5 +105,6 @@ export const useSecIntelData = () => {
     fetchIntel();
   }, []);
 
-  return { data, loading, error, updatedAtFormatted, isStale, dataSource };
+  return { data, loading, error, isPaywall, isConfigError, updatedAtFormatted, isStale, dataSource };
 };
+

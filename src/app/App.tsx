@@ -27,6 +27,8 @@ import { TsunamiVolatilityTicker } from "../components/TsunamiVolatilityTicker";
 import { Footer } from "../components/Footer";
 import { UsernamePromptModal } from "../components/UsernamePromptModal";
 import { NewUserOnboardingModal } from "../components/NewUserOnboardingModal";
+import { fetchWithPaywallHandling } from "../utils/apiClient";
+import { PaywallUpsellCard, DataUnavailableState } from "../components/PaywallGracefulState";
 
 // Helper function for resilient dynamic imports with automatic retry and error recovery
 function safeLazy<T = any>(
@@ -588,6 +590,9 @@ export function App() {
   const { brokerageStock, setBrokerageStock } = useModalStore();
   const { userPlan, setUserPlan } = useUserStore();
 
+  const [isMarketPaywall, setIsMarketPaywall] = useState<boolean>(false);
+  const [isMarketConfigError, setIsMarketConfigError] = useState<boolean>(false);
+
   const handleOpenBrokerage = (stk?: StockTicker | null) => {
     setBrokerageStock(stk || selectedStock || stocks[0]);
     setIsBrokerageModalOpen(true);
@@ -921,14 +926,28 @@ export function App() {
     triggerHaptic("refresh");
 
     try {
-      let res = await fetch("/api/data/market");
+      let res = await fetchWithPaywallHandling("/api/data/market");
       let sourceName = "Yahoo Finance API";
-      if (!res.ok) {
-        res = await fetch("/market_watchlist_data.json");
-        sourceName = "Local Proxy Fallback";
+      let json = res.data;
+
+      if (res.isPaywall) {
+        setIsMarketPaywall(true);
+      } else if (res.isConfigError) {
+        setIsMarketConfigError(true);
+      } else {
+        setIsMarketPaywall(false);
+        setIsMarketConfigError(false);
       }
-      if (!res.ok) throw new Error("Failed to fetch market watchlist");
-      const json = await res.json();
+
+      if (!res.ok || !json) {
+        const fallbackRes = await fetchWithPaywallHandling("/market_watchlist_data.json");
+        if (fallbackRes.ok && fallbackRes.data) {
+          json = fallbackRes.data;
+          sourceName = "Local Proxy Fallback";
+        }
+      }
+
+      if (!json) throw new Error(res.error || "Failed to fetch market watchlist");
       if (json && json.watchlist && Array.isArray(json.watchlist)) {
         const uniqueMap = new Map<string, any>();
         json.watchlist.forEach((backendStock: any) => {
@@ -1226,6 +1245,27 @@ export function App() {
               marketDataIsStale={useMarketStore.getState().marketDataIsStale}
               totalStocks={stocks.length}
             />
+
+            {/* Graceful Paywall & Availability States */}
+            {isMarketPaywall && (
+              <div className="px-4 py-3">
+                <PaywallUpsellCard
+                  title="Unlock live data with Quant Suite Pro — $5/mo"
+                  description="Real-time live streaming quotes, ultra-low latency volatility indices, and institutional market intelligence."
+                  onSuccess={handleSyncLiveQuotes}
+                />
+              </div>
+            )}
+
+            {isMarketConfigError && (
+              <div className="px-4 py-3">
+                <DataUnavailableState
+                  title="Market Data Stream Unavailable"
+                  message="Live market quotes stream is temporarily unavailable while uplink synchronizes."
+                  onRetry={handleSyncLiveQuotes}
+                />
+              </div>
+            )}
 
             {/* Category Selector Tabs */}
             <CategoryTabs

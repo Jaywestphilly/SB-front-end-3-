@@ -9,6 +9,8 @@ import {
   NonCustodialVaultData,
 } from "../../services/web3DotBtcService";
 import { triggerHaptic } from "../../utils/haptics";
+import { fetchWithPaywallHandling } from "../../utils/apiClient";
+import { PaywallUpsellCard, DataUnavailableState } from "../../components/PaywallGracefulState";
 import {
   Wallet,
   ShieldCheck,
@@ -125,6 +127,8 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
 
   const [isSyncingCrypto, setIsSyncingCrypto] = useState(false);
   const [cryptoSyncTime, setCryptoSyncTime] = useState<string | null>(null);
+  const [cryptoPaywall, setCryptoPaywall] = useState<boolean>(false);
+  const [cryptoConfigError, setCryptoConfigError] = useState<boolean>(false);
 
   // Live Crypto Quote Fetcher (direct Yahoo Finance proxy via /api/live-quote)
   const fetchLiveCryptoQuotes = useCallback(async (isManual = false) => {
@@ -134,13 +138,22 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
     }
 
     try {
-      const [btcRes, dotRes] = await Promise.allSettled([
-        fetch("/api/live-quote/BTC"),
-        fetch("/api/live-quote/DOT"),
+      const [btcRes, dotRes] = await Promise.all([
+        fetchWithPaywallHandling("/api/live-quote/BTC"),
+        fetchWithPaywallHandling("/api/live-quote/DOT"),
       ]);
 
-      if (btcRes.status === "fulfilled" && btcRes.value.ok) {
-        const btcData = await btcRes.value.json();
+      if (btcRes.isPaywall || dotRes.isPaywall) {
+        setCryptoPaywall(true);
+      } else if (btcRes.isConfigError || dotRes.isConfigError) {
+        setCryptoConfigError(true);
+      } else {
+        setCryptoPaywall(false);
+        setCryptoConfigError(false);
+      }
+
+      if (btcRes.ok && btcRes.data) {
+        const btcData = btcRes.data;
         if (btcData && typeof btcData.price === "number" && btcData.price > 1000) {
           setBtcTicker((prev) => {
             const newPrice = Number(btcData.price.toFixed(2));
@@ -165,8 +178,8 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
         }
       }
 
-      if (dotRes.status === "fulfilled" && dotRes.value.ok) {
-        const dotData = await dotRes.value.json();
+      if (dotRes.ok && dotRes.data) {
+        const dotData = dotRes.data;
         if (dotData && typeof dotData.price === "number" && dotData.price > 0 && dotData.price < 50) {
           setDotTicker((prev) => {
             const newPrice = Number(dotData.price.toFixed(3));
@@ -527,6 +540,26 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
               </button>
             </div>
           </div>
+
+          {cryptoPaywall && (
+            <div className="mb-3">
+              <PaywallUpsellCard
+                compact
+                title="Unlock Live Crypto & Market Quotes — $5/mo"
+                description="Real-time BTC, DOT, and equities live streaming feeds with Quant Suite Pro."
+              />
+            </div>
+          )}
+
+          {cryptoConfigError && (
+            <div className="mb-3">
+              <DataUnavailableState
+                compact
+                message="Live market quote feed is temporarily unavailable. Syncing in progress."
+                onRetry={() => fetchLiveCryptoQuotes(true)}
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {/* BTC Ticker Element */}

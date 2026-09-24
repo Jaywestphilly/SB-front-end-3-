@@ -1,9 +1,10 @@
 import React from 'react';
 import { useSecIntelData } from "../hooks/useSecIntelData";
 import { ExternalLink, Database, Loader, Briefcase, FileText } from 'lucide-react';
+import { PaywallUpsellCard, DataUnavailableState } from "./PaywallGracefulState";
 
 export const LiveSecIntelSection: React.FC = () => {
-  const { data, loading, error, updatedAtFormatted, isStale, dataSource } = useSecIntelData();
+  const { data, loading, error, isPaywall, isConfigError, updatedAtFormatted, isStale, dataSource } = useSecIntelData();
 
   if (loading) {
     return (
@@ -11,6 +12,24 @@ export const LiveSecIntelSection: React.FC = () => {
         <Loader className="w-10 h-10 animate-spin" />
         <div className="text-xs uppercase font-black tracking-widest animate-pulse">Initializing Cyber-Terminal SEC Uplink...</div>
       </div>
+    );
+  }
+
+  if (isPaywall) {
+    return (
+      <PaywallUpsellCard
+        title="Unlock Live 13F & SEC Intel with Quant Suite Pro — $5/mo"
+        description="Access live institutional 13F quarterly filings, hedge fund accumulation signals, and SEC EDGAR automated disclosures with zero latency."
+      />
+    );
+  }
+
+  if (isConfigError) {
+    return (
+      <DataUnavailableState
+        title="SEC Intel Uplink Unavailable"
+        message="SEC EDGAR data stream is temporarily unavailable while system uplink re-synchronizes."
+      />
     );
   }
 

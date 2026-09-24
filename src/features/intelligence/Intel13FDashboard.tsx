@@ -41,6 +41,8 @@ import { triggerHaptic } from "../../utils/haptics";
 import { LiveSecIntelSection } from "../../components/LiveSecIntelSection";
 import { WhaleConsensusMatrix } from "./WhaleConsensusMatrix";
 import { MacroEconomicsBriefing } from "./MacroEconomicsBriefing";
+import { fetchWithPaywallHandling } from "../../utils/apiClient";
+import { PaywallUpsellCard, DataUnavailableState } from "../../components/PaywallGracefulState";
 
 export interface Holding13F {
   symbol: string;
@@ -109,6 +111,8 @@ export const Intel13FDashboard: React.FC = () => {
   const [secUpdatedAt, setSecUpdatedAt] = useState<string>(formatUtcTimestamp(new Date()));
   const [secIsStale, setSecIsStale] = useState<boolean>(false);
   const [isUsingLocalFallback, setIsUsingLocalFallback] = useState<boolean>(false);
+  const [isPaywall, setIsPaywall] = useState<boolean>(false);
+  const [isConfigError, setIsConfigError] = useState<boolean>(false);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -117,11 +121,13 @@ export const Intel13FDashboard: React.FC = () => {
 
   const fetchFilings = async () => {
     setLoading(true);
+    setIsPaywall(false);
+    setIsConfigError(false);
     triggerHaptic("light");
     try {
-      const res = await fetch("/api/13f/filings");
-      if (res.ok) {
-        const data = await res.json();
+      const res = await fetchWithPaywallHandling("/api/13f/filings");
+      if (res.ok && res.data) {
+        const data = res.data;
         if (data.funds && data.funds.length > 0) {
           setFunds(data.funds);
           setConsensus(data.consensusHoldings || []);
@@ -132,12 +138,16 @@ export const Intel13FDashboard: React.FC = () => {
           showToast("Live 13F SEC Filings Synchronized!");
           return;
         }
+      } else if (res.isPaywall) {
+        setIsPaywall(true);
+      } else if (res.isConfigError) {
+        setIsConfigError(true);
       }
       
       // Fallback: CDN Proxy automated JSON feed
-      const ghRes = await fetch("/api/data/sec");
-      if (ghRes.ok) {
-        const ghData = await ghRes.json();
+      const ghRes = await fetchWithPaywallHandling("/api/data/sec");
+      if (ghRes.ok && ghRes.data) {
+        const ghData = ghRes.data;
         if (ghData.funds && ghData.funds.length > 0) {
           setFunds(ghData.funds);
           setConsensus(ghData.consensusHoldings || []);
@@ -148,12 +158,16 @@ export const Intel13FDashboard: React.FC = () => {
           showToast("Live 13F SEC Intel Synchronized!");
           return;
         }
+      } else if (ghRes.isPaywall) {
+        setIsPaywall(true);
+      } else if (ghRes.isConfigError) {
+        setIsConfigError(true);
       }
 
       // Local Proxy Endpoint Fallback
-      const localRes = await fetch("/sec_intel_data.json");
-      if (localRes.ok) {
-        const localData = await localRes.json();
+      const localRes = await fetchWithPaywallHandling("/sec_intel_data.json");
+      if (localRes.ok && localRes.data) {
+        const localData = localRes.data;
         if (localData.funds && localData.funds.length > 0) {
           setFunds(localData.funds);
           setConsensus(localData.consensusHoldings || []);
@@ -445,6 +459,21 @@ export const Intel13FDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {isPaywall && funds.length === 0 && (
+        <PaywallUpsellCard
+          title="Unlock Live 13F Institutional Intelligence — $5/mo"
+          description="Track top institutional hedge fund positions, quarterly 13F filings, portfolio overlap, and macro drift signals."
+        />
+      )}
+
+      {isConfigError && funds.length === 0 && (
+        <DataUnavailableState
+          title="13F Intel Stream Unavailable"
+          message="SEC EDGAR data stream is temporarily unavailable while system uplink re-synchronizes."
+          onRetry={fetchFilings}
+        />
+      )}
 
       {activeViewMode === "WHALE_CONSENSUS" && (
         <WhaleConsensusMatrix />

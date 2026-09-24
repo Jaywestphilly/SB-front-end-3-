@@ -286,6 +286,11 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       return forwardNext();
     }
 
+    // Frontend Web Application Carve-out: Allow browser UI terminal requests to access data without x402 paywall
+    if (isFrontendWebRequest(req)) {
+      return next();
+    }
+
     // 2. Allow requests paid through platform credits (Bearer sb_live_ key with credits)
     // "Do not touch the existing Stripe card checkout — x402 sits alongside it for agents, Stripe stays for humans."
     if (hasValidCreditPayment(req)) {
