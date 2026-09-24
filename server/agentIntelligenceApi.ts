@@ -954,3 +954,64 @@ agentIntelligenceRouter.get('/agents/compare', async (req, res) => {
   }
 });
 
+// ==========================================
+// SB SCORE & QUANTITATIVE SIGNAL API
+// ==========================================
+
+// GET /api/v1/intelligence/sb-score and /api/v1/intelligence/signal
+agentIntelligenceRouter.get(['/sb-score', '/signal'], async (req, res) => {
+  try {
+    const rawTicker = String(req.query.ticker || req.query.symbol || 'NVDA').toUpperCase().trim();
+    const { MarketDataService, computeQuantMetrics, calculateStockBlocSignal } = await import('../src/services/marketDataService.js');
+    const { INITIAL_STOCKS } = await import('../src/data/stocks.js');
+
+    const persisted = MarketDataService.loadPersistedData();
+    const found = persisted?.watchlist?.find((s: any) => s.symbol.toUpperCase() === rawTicker) ||
+      INITIAL_STOCKS.find((s: any) => s.symbol.toUpperCase() === rawTicker) || {
+        symbol: rawTicker,
+        name: `${rawTicker} Equity Benchmark`,
+        price: 150.0,
+        changePercent: 1.5,
+        sparkline: [145, 147, 150],
+      };
+
+    const quant = computeQuantMetrics(found as any);
+    const signal = calculateStockBlocSignal(found as any, quant);
+
+    return res.json({
+      status: 'success',
+      queryType: 'sb_score_quant_intelligence',
+      ticker: (found as any).symbol,
+      name: (found as any).name,
+      price: (found as any).price,
+      changePercent: (found as any).changePercent ?? (found as any).percent_change ?? 0,
+      sbScore: signal.signalScore,
+      signalLabel: signal.signalLabel,
+      confidence: signal.signalScore >= 75 || signal.signalScore <= 35 ? 'HIGH' : 'MODERATE',
+      summary: signal.summary,
+      components: signal.components || [],
+      factorBreakdown: {
+        momentum: signal.components?.find((c: any) => c.name.toLowerCase().includes('momentum'))?.score ?? 20,
+        trend: signal.components?.find((c: any) => c.name.toLowerCase().includes('trend'))?.score ?? 22,
+        relativeStrength: signal.components?.find((c: any) => c.name.toLowerCase().includes('strength') || c.name.toLowerCase().includes('rsi'))?.score ?? 18,
+        volume: signal.components?.find((c: any) => c.name.toLowerCase().includes('volume'))?.score ?? 12,
+        volatility: signal.components?.find((c: any) => c.name.toLowerCase().includes('volatility'))?.score ?? 13,
+      },
+      quantMetrics: {
+        rsi14: quant.rsi14,
+        sma20: quant.sma20,
+        sma50: quant.sma50,
+        volumeVsAvg20Ratio: quant.volumeVsAvg20Ratio,
+        volatility: quant.volatility,
+      },
+      settlementType: (req as any).x402Payment ? 'x402_usdc_settled' : 'platform_credits',
+      x402Payment: (req as any).x402Payment || null,
+      calculatedAt: new Date().toISOString(),
+      disclaimer: 'NOT FINANCIAL ADVICE. Machine-readable quantitative research score.'
+    });
+  } catch (err: any) {
+    console.error('Error computing SB Score:', err);
+    return res.status(500).json({ error: 'Failed to compute SB Score', details: err.message });
+  }
+});
+

@@ -14,10 +14,14 @@
     "validate:market": "tsx scripts/validate_market.ts"
   },
   "dependencies": {
+    "@coinbase/x402": "^2.1.0",
     "@google/genai": "^2.4.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
+    "@x402/core": "^2.27.0",
+    "@x402/evm": "^2.27.0",
+    "@x402/express": "^2.27.0",
     "archiver": "^8.0.0",
     "dotenv": "^17.2.3",
     "esbuild": "^0.25.0",

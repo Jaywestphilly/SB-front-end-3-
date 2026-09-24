@@ -53,13 +53,14 @@ export interface AlphaProofData {
 
 export interface X402InvoiceData {
   invoiceId: string;
-  asset: "BTC_LIGHTNING" | "BTC_SATS" | "DOT_CORETIME" | "DOT_PLANCK";
+  asset: "USDC" | "BTC_LIGHTNING" | "BTC_SATS" | "DOT_CORETIME" | "DOT_PLANCK";
+  network?: string;
   amount: number;
   amountDisplay: string;
   status: "pending" | "settled" | "expired";
   endpoint: string;
   recipientAddress: string;
-  paymentPayload: string;
+  paymentPayload?: string;
   createdAt: string;
   expiresAt: string;
   agentId?: string;
@@ -334,27 +335,59 @@ class Web3DotBtcService {
   }
 
   /**
-   * Request x402 Quote for Sats or DOT
+   * Request x402 Payment Challenge & Requirements (Coinbase x402 USDC on Base)
    */
-  public async requestX402Quote(asset: "BTC_LIGHTNING" | "DOT_CORETIME" | "DOT_PLANCK", endpoint?: string): Promise<{ invoice: X402InvoiceData }> {
-    const res = await fetch("/api/v1/web3/x402/quote", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ asset, endpoint }),
-    });
-    return res.json();
+  public async requestX402Quote(asset: string = "USDC", endpoint: string = "/api/v1/intelligence/sb-score"): Promise<{ invoice?: X402InvoiceData; error?: string; status?: number; paymentRequiredHeader?: string; details?: any }> {
+    try {
+      const res = await fetch(endpoint, {
+        method: "GET",
+        headers: { "Accept": "application/json" }
+      });
+      const header = res.headers.get("PAYMENT-REQUIRED") || "";
+      const json = await res.json().catch(() => ({}));
+      if (res.status === 402) {
+        const accepts = json.accepts?.[0] || {};
+        return {
+          status: 402,
+          paymentRequiredHeader: header,
+          details: json,
+          invoice: {
+            invoiceId: "x402_" + Date.now(),
+            asset: "USDC",
+            network: "Base (eip155:8453)",
+            amount: 0.05,
+            amountDisplay: "$0.05 USDC",
+            status: "pending",
+            endpoint,
+            recipientAddress: accepts.payTo || "X402_RECIPIENT_ADDRESS",
+            paymentPayload: header || JSON.stringify(accepts),
+            createdAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 300000).toISOString(),
+          }
+        };
+      }
+      return { status: res.status, details: json };
+    } catch (err: any) {
+      return { error: err.message };
+    }
   }
 
   /**
-   * Settle x402 Invoice
+   * Test x402 Facilitator Settlement
    */
-  public async settleX402Invoice(invoiceId: string): Promise<any> {
-    const res = await fetch("/api/v1/web3/x402/settle", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ invoiceId }),
-    });
-    return res.json();
+  public async settleX402Invoice(invoiceId: string, paymentSignature?: string): Promise<any> {
+    try {
+      const res = await fetch("/api/v1/intelligence/sb-score", {
+        method: "GET",
+        headers: {
+          "Accept": "application/json",
+          "PAYMENT-SIGNATURE": paymentSignature || `mock_sig_for_test_${invoiceId}`
+        }
+      });
+      return await res.json().catch(() => ({ status: res.status }));
+    } catch (err: any) {
+      return { error: err.message };
+    }
   }
 
   /**

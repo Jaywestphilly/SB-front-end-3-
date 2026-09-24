@@ -51,20 +51,6 @@ export interface AlphaPredictionProof {
   }>;
 }
 
-export interface AgentX402Invoice {
-  invoiceId: string;
-  asset: "BTC_LIGHTNING" | "BTC_SATS" | "DOT_CORETIME" | "DOT_PLANCK";
-  amount: number; // sats or DOT (e.g. 50 sats or 0.005 DOT)
-  amountDisplay: string;
-  status: "pending" | "settled" | "expired";
-  endpoint: string;
-  recipientAddress: string;
-  paymentPayload: string; // Lightning bolt11 string or Polkadot transfer extrinsic
-  createdAt: string;
-  expiresAt: string;
-  agentId?: string;
-}
-
 export interface NonCustodialVault {
   id: string;
   asset: "BTC" | "DOT";
@@ -89,7 +75,6 @@ export interface NonCustodialVault {
 
 // In-Memory Storage
 const activeWallets = new Map<string, Web3WalletSession>();
-const activeInvoices = new Map<string, AgentX402Invoice>();
 
 // ==========================================
 // MERKLE TREE & PROOF-OF-ALPHA GENERATION
@@ -353,100 +338,6 @@ web3DotBtcRouter.post("/wallets/connect", (req, res) => {
     res.json({
       status: "success",
       wallet: session,
-    });
-  } catch (err: any) {
-    res.status(500).json({ status: "error", message: err.message });
-  }
-});
-
-// 4. Autonomous Agent x402 Protocol: Generate Invoice for DOT or BTC
-web3DotBtcRouter.post("/x402/quote", (req, res) => {
-  try {
-    const { asset, endpoint, agentId } = req.body;
-    const selectedAsset = asset || "BTC_LIGHTNING";
-
-    if (!["BTC_LIGHTNING", "BTC_SATS", "DOT_CORETIME", "DOT_PLANCK"].includes(selectedAsset)) {
-      return res.status(400).json({
-        status: "error",
-        message: "Invalid asset for x402 protocol. Supported: 'BTC_LIGHTNING', 'DOT_CORETIME', 'DOT_PLANCK'.",
-      });
-    }
-
-    const invoiceId = "x402_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
-    let amount = 50; // 50 sats
-    let amountDisplay = "50 Sats";
-    let recipientAddress = "bc1qstockblocquant764mrl2yq3dxz4x4z0y9tq";
-    let paymentPayload = `lnbc500n1p3stockbloc...mock_lightning_invoice_${invoiceId}`;
-
-    if (selectedAsset.startsWith("DOT")) {
-      amount = 0.005; // 0.005 DOT
-      amountDisplay = "0.005 DOT (50,000,000 Plancks)";
-      recipientAddress = "13UVJyLnbVp9RBZYFwFG8EHFi5aHeC6WzGg5rU7z2Uf7VzQ4";
-      paymentPayload = `0x0400${crypto.randomBytes(32).toString("hex")}`;
-    }
-
-    const invoice: AgentX402Invoice = {
-      invoiceId,
-      asset: selectedAsset,
-      amount,
-      amountDisplay,
-      status: "pending",
-      endpoint: endpoint || "/api/v1/intelligence/signal",
-      recipientAddress,
-      paymentPayload,
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 1000 * 60 * 15).toISOString(),
-      agentId: agentId || "agent_spark_autonomous",
-    };
-
-    activeInvoices.set(invoiceId, invoice);
-
-    res.status(402).json({
-      status: "payment_required",
-      code: 402,
-      protocol: "x402-v1-dot-btc",
-      message: "Payment Required: Agent must settle invoice in Sats or DOT to execute quant query.",
-      invoice,
-      headersRequired: {
-        "X-402-Payment-Proof": `invoice_id=${invoiceId};preimage=<CRYPTO_PREIMAGE>`,
-      },
-    });
-  } catch (err: any) {
-    res.status(500).json({ status: "error", message: err.message });
-  }
-});
-
-// 5. Autonomous Agent x402 Protocol: Settle Invoice & Grant One-Time Execution Token
-web3DotBtcRouter.post("/x402/settle", (req, res) => {
-  try {
-    const { invoiceId, preimage, txHash } = req.body;
-
-    if (!invoiceId) {
-      return res.status(400).json({ status: "error", message: "invoiceId is required" });
-    }
-
-    const invoice = activeInvoices.get(invoiceId);
-    if (!invoice) {
-      return res.status(404).json({ status: "error", message: "Invoice not found or expired" });
-    }
-
-    invoice.status = "settled";
-    activeInvoices.set(invoiceId, invoice);
-
-    const accessToken = "sb_x402_" + crypto.randomBytes(24).toString("hex");
-
-    res.json({
-      status: "success",
-      message: "x402 Micropayment settled on-chain.",
-      settlement: {
-        invoiceId: invoice.invoiceId,
-        asset: invoice.asset,
-        amount: invoice.amountDisplay,
-        settledAt: new Date().toISOString(),
-        txHash: txHash || ("0x" + crypto.randomBytes(32).toString("hex")),
-        accessToken,
-        creditsGranted: 10,
-      },
     });
   } catch (err: any) {
     res.status(500).json({ status: "error", message: err.message });

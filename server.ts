@@ -22,6 +22,7 @@ import { db } from './server/firebaseAdmin.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import { validateProductionStartupSafety, authenticateAgent, getSystemReadinessStatus } from './server/agentSecurity.js';
 import { agentTelemetryRouter, trackAgentVisitMiddleware } from './server/agentTelemetry.js';
+import { requireX402Payment, PRICED_ENDPOINTS, getX402RecipientAddress } from './server/x402PaymentService.js';
 
 const app = express();
 const PORT = 3000;
@@ -79,6 +80,32 @@ app.get(['/api/v1/agents/telemetry/24h', '/api/v1/community/agents-24h'], (_req,
 
 // 1. Autonomous Agent Registration Route (Top Precedence)
 app.post(['/api/v1/agent/register', '/api/v1/agents/register', '/api/agent/register', '/api/agents/register'], registerAutonomousAgentHandler);
+
+// 1b. Coinbase CDP x402 Protocol Pricing & Status Discovery Route
+app.get(['/api/v1/x402/pricing', '/api/x402/pricing', '/api/v1/x402/config'], (req, res) => {
+  const recipientAddress = getX402RecipientAddress();
+  res.json({
+    status: 'ok',
+    protocol: 'x402',
+    network: 'Base',
+    networkCaip2: 'eip155:8453',
+    chainId: 8453,
+    asset: 'USDC',
+    contractAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    facilitator: 'Coinbase Developer Platform (CDP) Facilitator',
+    recipientAddressConfigured: !!recipientAddress,
+    recipientAddress: recipientAddress || 'NOT_CONFIGURED',
+    endpoints: PRICED_ENDPOINTS,
+    howToPay: {
+      step1: 'Call any priced endpoint. Server returns HTTP 402 with PAYMENT-REQUIRED header.',
+      step2: 'Sign a USDC transferWithAuthorization (EIP-3009) or permit2 on Base network for the exact amount.',
+      step3: 'Retry the request with the base64-encoded signed payload in PAYMENT-SIGNATURE header.'
+    }
+  });
+});
+
+// 1c. Real Coinbase CDP x402 Payment Gatekeeper Middleware (for priced endpoints)
+app.use(requireX402Payment());
 
 // 2. Direct Bounties & Marketplace API Routers
 app.use('/api/v1/bounties', agentExchangeRouter);

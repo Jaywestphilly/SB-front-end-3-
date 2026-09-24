@@ -388,7 +388,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
     setIsGeneratingInvoice(true);
     setSettledResult(null);
     try {
-      const res = await web3DotBtcService.requestX402Quote(x402Asset, "/api/v1/intelligence/signal");
+      const res = await web3DotBtcService.requestX402Quote("USDC", "/api/v1/intelligence/sb-score");
       if (res && res.invoice) {
         setActiveInvoice(res.invoice);
       }
@@ -1049,46 +1049,29 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
       )}
 
       {/* ========================================================================= */}
-      {/* SUBTAB 2: AGENT X402 MICROPAYMENTS (DOT & BTC ONLY)                       */}
+      {/* SUBTAB 2: AGENT X402 MICROPAYMENTS (COINBASE CDP ON BASE)                 */}
       {/* ========================================================================= */}
       {activeSubTab === "x402" && (
         <div className="space-y-6">
           <div className="p-5 alien-block-cut bg-[#020b16] border-2 border-amber-500/40 shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-amber-500/30">
               <div>
-                <span className="px-2.5 py-0.5 alien-block-cut-sm bg-amber-500/20 text-amber-300 border border-amber-500/50 text-[10px] font-black uppercase tracking-wider">
-                  HTTP 402 PAYMENT REQUIRED SPEC
+                <span className="px-2.5 py-0.5 alien-block-cut-sm bg-blue-500/20 text-blue-300 border border-blue-500/50 text-[10px] font-black uppercase tracking-wider">
+                  COINBASE CDP X402 PROTOCOL SPEC
                 </span>
                 <h3 className="font-zen text-lg font-black text-white uppercase mt-1">
                   Autonomous Agent x402 Micropayment Engine
                 </h3>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setX402Asset("BTC_LIGHTNING")}
-                  className={`px-3 py-1.5 alien-block-cut-sm text-xs font-bold transition-all cursor-pointer ${
-                    x402Asset === "BTC_LIGHTNING"
-                      ? "bg-orange-500 text-black font-black shadow-md"
-                      : "bg-black/60 text-neutral-400 border border-neutral-800"
-                  }`}
-                >
-                  ⚡ BTC (Sats / Lightning)
-                </button>
-                <button
-                  onClick={() => setX402Asset("DOT_CORETIME")}
-                  className={`px-3 py-1.5 alien-block-cut-sm text-xs font-bold transition-all cursor-pointer ${
-                    x402Asset === "DOT_CORETIME"
-                      ? "bg-purple-500 text-white font-black shadow-md"
-                      : "bg-black/60 text-neutral-400 border border-neutral-800"
-                  }`}
-                >
-                  🟣 DOT (Plancks / JAM)
-                </button>
+                <span className="px-3 py-1.5 alien-block-cut-sm text-xs font-black bg-blue-600 text-white shadow-md flex items-center gap-1.5">
+                  🔵 Base Mainnet (USDC)
+                </span>
               </div>
             </div>
 
             <p className="text-xs text-neutral-300">
-              Autonomous AI agents and LLM swarms can query real-time stock ratings, hedge fund 13F intelligence, and quant models programmatically by paying micro-amounts on the fly via Bitcoin Lightning Satoshis or Polkadot Coretime Plancks.
+              Autonomous AI agents and LLM swarms query real-time stock ratings, hedge fund 13F intelligence, and quant models programmatically using the official Coinbase CDP x402 protocol with native USDC settlement on Base.
             </p>
 
             {/* Interactive Invoice Generator & Simulator */}
@@ -1096,13 +1079,14 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
               <div className="p-4 bg-black/80 border border-cyan-500/30 alien-block-cut-sm space-y-3">
                 <div className="text-xs font-bold text-cyan-300 uppercase flex items-center justify-between">
                   <span>Interactive Agent Query Simulator</span>
-                  <span className="text-[10px] text-neutral-400 font-mono">POST /api/v1/intelligence/signal</span>
+                  <span className="text-[10px] text-neutral-400 font-mono">GET /api/v1/intelligence/sb-score</span>
                 </div>
 
                 <div className="p-2.5 bg-[#010810] border border-cyan-900/60 rounded text-[11px] font-mono text-cyan-200 space-y-1">
-                  <div><span className="text-purple-400">Target Asset:</span> {x402Asset === "BTC_LIGHTNING" ? "Bitcoin Satoshis (Lightning Network)" : "Polkadot Plancks (JAM Coretime)"}</div>
-                  <div><span className="text-purple-400">Cost per Query:</span> {x402Asset === "BTC_LIGHTNING" ? `50 Sats (~$${((50 / 100000000) * btcTicker.price).toFixed(4)} USD)` : `0.005 DOT (~$${(0.005 * dotTicker.price).toFixed(4)} USD)`}</div>
-                  <div><span className="text-purple-400">Protocol Header:</span> <code className="text-amber-300">X-402-Payment-Proof: invoice_id=...</code></div>
+                  <div><span className="text-purple-400">Target Asset:</span> USDC (USD Coin on Base Mainnet)</div>
+                  <div><span className="text-purple-400">Cost per Query:</span> $0.05 USDC (50,000 atomic units)</div>
+                  <div><span className="text-purple-400">Facilitator:</span> Coinbase CDP Facilitator (Base chainId: 8453)</div>
+                  <div><span className="text-purple-400">Protocol Header:</span> <code className="text-amber-300">PAYMENT-REQUIRED / PAYMENT-SIGNATURE</code></div>
                 </div>
 
                 <button
@@ -1111,16 +1095,16 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                   className="w-full py-2.5 alien-block-cut-sm bg-cyan-500 hover:bg-cyan-400 text-black font-black text-xs transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {isGeneratingInvoice ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Zap className="w-3.5 h-3.5" />}
-                  <span>{isGeneratingInvoice ? "Generating x402 Challenge..." : "1. Request x402 Micropayment Quote"}</span>
+                  <span>{isGeneratingInvoice ? "Issuing x402 Challenge..." : "1. Test x402 Payment Challenge"}</span>
                 </button>
               </div>
 
               {/* Invoice Output & Settle Action */}
               <div className="p-4 bg-black/80 border border-cyan-500/30 alien-block-cut-sm space-y-3">
                 <div className="text-xs font-bold text-amber-300 uppercase flex items-center justify-between">
-                  <span>Live Invoice State</span>
+                  <span>Live Challenge State</span>
                   <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${activeInvoice?.status === "settled" ? "bg-emerald-500/20 text-emerald-300" : activeInvoice ? "bg-amber-500/20 text-amber-300" : "text-neutral-500"}`}>
-                    {activeInvoice ? activeInvoice.status.toUpperCase() : "AWAITING QUOTE"}
+                    {activeInvoice ? activeInvoice.status.toUpperCase() : "AWAITING CHALLENGE"}
                   </span>
                 </div>
 
@@ -1128,16 +1112,16 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                   <div className="space-y-2 text-xs">
                     <div className="p-2 bg-[#010810] border border-neutral-800 rounded font-mono text-[11px] space-y-1">
                       <div className="flex justify-between">
-                        <span className="text-neutral-400">Invoice ID:</span>
-                        <span className="text-cyan-300 font-bold">{activeInvoice.invoiceId}</span>
+                        <span className="text-neutral-400">Network:</span>
+                        <span className="text-cyan-300 font-bold">{activeInvoice.network || "Base (eip155:8453)"}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-neutral-400">Amount Due:</span>
                         <span className="text-amber-400 font-bold">{activeInvoice.amountDisplay}</span>
                       </div>
                       <div className="truncate">
-                        <span className="text-neutral-400">Payload: </span>
-                        <span className="text-neutral-300">{activeInvoice.paymentPayload.slice(0, 32)}...</span>
+                        <span className="text-neutral-400">Recipient: </span>
+                        <span className="text-neutral-300">{activeInvoice.recipientAddress}</span>
                       </div>
                     </div>
 
@@ -1145,20 +1129,20 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                       <button
                         onClick={handleSettleInvoice}
                         disabled={isSettlingInvoice}
-                        className="w-full py-2.5 alien-block-cut-sm bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                        className="w-full py-2.5 alien-block-cut-sm bg-blue-500 hover:bg-blue-400 text-white font-black text-xs transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                       >
                         {isSettlingInvoice ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                        <span>{isSettlingInvoice ? "Verifying On-Chain Proof..." : `2. Settle ${activeInvoice.amountDisplay}`}</span>
+                        <span>{isSettlingInvoice ? "Verifying Facilitator..." : `2. Test Facilitator Payment Flow`}</span>
                       </button>
                     ) : (
                       <div className="p-3 bg-emerald-950/60 border border-emerald-500/60 rounded text-emerald-300 font-bold text-center text-xs">
-                        ✓ x402 Payment Settled! Access Token Issued.
+                        ✓ x402 Payment Verified via Coinbase Facilitator.
                       </div>
                     )}
                   </div>
                 ) : (
                   <div className="py-8 text-center text-neutral-500 text-xs">
-                    Click "Request x402 Micropayment Quote" to trigger the HTTP 402 challenge flow.
+                    Click "Test x402 Payment Challenge" to trigger the HTTP 402 challenge flow.
                   </div>
                 )}
               </div>
@@ -1168,18 +1152,16 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
             <div className="mt-4 pt-4 border-t border-cyan-500/20 space-y-2">
               <div className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
                 <Terminal className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Agent Integration Example (Python / cURL):</span>
+                <span>Agent Integration Example (cURL):</span>
               </div>
               <pre className="p-3 bg-black/90 border border-cyan-900/60 rounded text-[11px] font-mono text-cyan-200 overflow-x-auto">
-{`# 1. Agent makes request -> receives HTTP 402 with invoice
-curl -X POST https://stockbloc.ai/api/v1/intelligence/signal \\
-  -H "Content-Type: application/json" \\
-  -d '{"symbol": "NVDA"}'
+{`# 1. Unpaid request triggers HTTP 402 with PAYMENT-REQUIRED header (USDC on Base)
+curl -i -X GET "https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=NVDA"
 
-# 2. Agent settles invoice on Bitcoin Lightning or Polkadot JAM & resends with payment proof:
-curl -X POST https://stockbloc.ai/api/v1/intelligence/signal \\
-  -H "X-402-Payment-Proof: invoice_id=x402_9824;asset=${x402Asset};preimage=7f8a9b..." \\
-  -d '{"symbol": "NVDA"}'`}
+# 2. Agent signs EIP-3009 transferWithAuthorization or permit2 on Base and retries:
+curl -X GET "https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=NVDA" \\
+  -H "Accept: application/json" \\
+  -H "PAYMENT-SIGNATURE: eyJ4NDAyVmVyc2lvbiI6MiwicGF5bWVudFBheWxvYWQiOnsidHhEYXRhIjoie...\"}}"`}
               </pre>
             </div>
           </div>
