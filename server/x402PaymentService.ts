@@ -131,61 +131,104 @@ export function getX402RecipientAddress(): string | null {
   return addr && addr.length > 0 ? addr : null;
 }
 
+// Helper to detect requests originating from the frontend web application (browsers)
+export function isFrontendWebRequest(req: Request): boolean {
+  // If the request explicitly provides an x402 payment header or agent key, treat as agent request
+  if (
+    req.header('payment-signature') ||
+    req.header('PAYMENT-SIGNATURE') ||
+    req.header('x-payment') ||
+    req.header('X-PAYMENT') ||
+    req.header('x-agent-key') ||
+    req.header('X-Agent-Key')
+  ) {
+    return false;
+  }
+
+  // Same-origin browser fetch
+  const secFetchSite = req.header('sec-fetch-site');
+  if (secFetchSite === 'same-origin') {
+    return true;
+  }
+
+  // Browser navigation or document request
+  const secFetchDest = req.header('sec-fetch-dest');
+  if (secFetchDest === 'document') {
+    return true;
+  }
+
+  // Referer matching request host
+  const referer = req.header('referer') || '';
+  const host = req.get('host') || '';
+  if (referer && host && referer.includes(host)) {
+    return true;
+  }
+
+  // Direct browser accept header
+  const accept = req.header('accept') || '';
+  if (accept.includes('text/html')) {
+    return true;
+  }
+
+  // Custom frontend client identifier
+  if (req.header('x-stockbloc-client') === 'web-ui' || req.header('x-requested-with') === 'XMLHttpRequest') {
+    return true;
+  }
+
+  return false;
+}
+
 // Helper to determine priced endpoint configuration for a path
 export function matchPricedEndpoint(path: string, method: string = 'GET'): X402PricedEndpoint | null {
   const normalized = path.split('?')[0].toLowerCase();
 
   // SEC Job
-  if (normalized.includes('/api/v1/sec/job') || normalized.includes('/api/sec/job')) {
+  if (normalized === '/api/v1/sec/job' || normalized === '/api/sec/job') {
     return PRICED_ENDPOINTS.sec_job;
   }
 
-  // SEC & 13F Intel
-  if (
-    normalized.includes('/api/data/sec') ||
-    normalized.includes('/api/13f/filings') ||
-    normalized.includes('/sec_intel_data.json') ||
-    normalized.includes('/api/sec-intel')
-  ) {
+  // SEC & 13F Intel - specifically /api/data/sec (does NOT block /api/13f/filings, /sec_intel_data.json, etc.)
+  if (normalized === '/api/data/sec' || normalized === '/api/v1/data/sec') {
     return PRICED_ENDPOINTS.sec_13f_intel;
   }
 
   // SB Score & Quantitative Signals
   if (
-    normalized.includes('/api/v1/intelligence/sb-score') ||
-    normalized.includes('/api/v1/intelligence/signal') ||
-    normalized.includes('/api/intelligence/sb-score') ||
-    normalized.includes('/api/intelligence/signal')
+    normalized === '/api/v1/intelligence/sb-score' ||
+    normalized === '/api/v1/intelligence/signal' ||
+    normalized === '/api/intelligence/sb-score' ||
+    normalized === '/api/intelligence/signal'
   ) {
     return PRICED_ENDPOINTS.sb_score;
   }
 
-  // Research Endpoints (POST / PUT or premium queries)
-  if (normalized.includes('/api/v1/intelligence/research') || normalized.includes('/api/v1/intelligence/theses')) {
+  // Research Endpoints (POST / PUT)
+  if (
+    (normalized === '/api/v1/intelligence/research' || normalized === '/api/v1/intelligence/theses') &&
+    (method === 'POST' || method === 'PUT')
+  ) {
     return PRICED_ENDPOINTS.research;
   }
 
   // Forecast Endpoints (POST / PUT)
-  if (normalized.includes('/api/v1/intelligence/forecasts')) {
+  if (normalized === '/api/v1/intelligence/forecasts' && (method === 'POST' || method === 'PUT')) {
     return PRICED_ENDPOINTS.forecast;
   }
 
   // Strategy Evaluation / Quant Sim
   if (
-    normalized.includes('/api/v1/agent/strategy/evaluate') ||
-    normalized.includes('/api/v1/agent/quant-sim') ||
-    normalized.includes('/api/v1/agent/submit-performance')
+    normalized === '/api/v1/agent/strategy/evaluate' ||
+    normalized === '/api/v1/agent/quant-sim' ||
+    normalized === '/api/v1/agent/submit-performance'
   ) {
     return PRICED_ENDPOINTS.strategy_eval;
   }
 
-  // Market Data Watchlist
+  // Market Data Watchlist (specifically /api/data/market - does NOT block /api/live-quotes/batch or static JSON)
   if (
-    normalized.includes('/api/data/market') ||
-    normalized.includes('/api/v1/market/quote') ||
-    normalized.includes('/api/live-quotes/batch') ||
-    normalized.includes('/api/live-quote/') ||
-    normalized.includes('/market_watchlist_data.json')
+    normalized === '/api/data/market' ||
+    normalized === '/api/data/market.csv' ||
+    normalized === '/api/v1/market/quote'
   ) {
     return PRICED_ENDPOINTS.market_data;
   }
@@ -230,6 +273,11 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
     // 1. Identify priced endpoint configuration
     const endpointConfig = forcedConfig || matchPricedEndpoint(req.path, req.method);
     if (!endpointConfig) {
+      return next();
+    }
+
+    // 1b. Allow requests originating from the frontend web browser application
+    if (isFrontendWebRequest(req)) {
       return next();
     }
 
