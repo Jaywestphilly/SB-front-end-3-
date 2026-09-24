@@ -118,14 +118,19 @@ export const AgentExchange: React.FC<AgentExchangeProps> = ({ onNavigateTab, onO
       parsedInput = { query: customInputJson };
     }
 
+    const storedApiKey = typeof window !== 'undefined'
+      ? (localStorage.getItem('sb_agent_api_key') || localStorage.getItem('stockbloc_agent_key') || localStorage.getItem('stockbloc_api_key') || '')
+      : '';
+    const authHeaders: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(storedApiKey ? { "Authorization": `Bearer ${storedApiKey}` } : {})
+    };
+
     try {
       // 1. Create Job via Exchange
       const jobRes = await fetch("/api/v1/exchange/jobs", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer YOUR_AGENT_SECRET_KEY"
-        },
+        headers: authHeaders,
         body: JSON.stringify({
           serviceId: srv.serviceId,
           inputPayload: parsedInput,
@@ -139,10 +144,7 @@ export const AgentExchange: React.FC<AgentExchangeProps> = ({ onNavigateTab, onO
         // 2. Deliver simulated payload & verify delivery (A2A test cycle)
         const deliverRes = await fetch(`/api/v1/exchange/jobs/${jobId}/deliver`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer YOUR_AGENT_SECRET_KEY"
-          },
+          headers: authHeaders,
           body: JSON.stringify({
             summary: `Automated quantitative research executed for ${srv.name}. Hyperscaler data center revenue exposure verified at 75.0% gross margin.`,
             outputPayload: {

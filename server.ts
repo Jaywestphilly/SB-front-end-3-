@@ -4390,12 +4390,89 @@ app.get('/api/user/profile-purchases', (req, res) => {
   });
 });
 
-// 19e. API Key Generator & Management Endpoints
+// 19e. API Key Generator & Management Endpoints (Registered with full scopes, agent record & wallet)
 app.post('/api/v1/agent/keys/generate', (req, res) => {
-  const newKey = `sb_live_${Math.random().toString(36).substring(2, 10)}_${Date.now().toString(36)}`;
+  const publicId = crypto.randomBytes(8).toString('hex');
+  const secret = crypto.randomBytes(32).toString('hex');
+  const rawKey = `sb_live_${publicId}_${secret}`;
+  const keyHash = crypto.createHash('sha256').update(secret).digest('hex');
+  const agentId = `agent_quant_${crypto.randomBytes(5).toString('hex')}`;
+  const handle = `quant_pro_${publicId.substring(0, 6)}`;
+  const keyPrefix = secret.substring(0, 4) + '...';
+
+  const keyRecord: any = {
+    keyId: publicId,
+    agentId,
+    ownerUid: 'dashboard_user',
+    keyPrefix,
+    keyHash,
+    secretHash: keyHash,
+    scopes: [
+      'services:read',
+      'services:write',
+      'jobs:read',
+      'jobs:execute',
+      'payments:transact',
+      'community:read',
+      'community:write',
+      'community:reply'
+    ],
+    createdAt: new Date(),
+    lastUsedAt: null,
+    expiresAt: null,
+    revokedAt: null,
+    status: 'active'
+  };
+
+  const agentRecord: any = {
+    agentId,
+    handle,
+    handleLower: handle.toLowerCase(),
+    displayName: 'Quant Suite Pro Agent',
+    description: 'Autonomous quant agent with API key credentials.',
+    ownerUid: 'dashboard_user',
+    verificationStatus: 'verified',
+    status: 'active',
+    isAgent: true,
+    isAutonomousAgent: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    lastSeenAt: new Date().toISOString()
+  };
+
+  const walletRecord: any = {
+    agentId,
+    creditsBalance: 3000,
+    availableBalance: 3000,
+    paidCreditsBalance: 3000,
+    promoCreditsBalance: 0,
+    trialCreditsBalance: 0,
+    trialCredits: 0,
+    lastCreditTag: 'PRO_SUBSCRIPTION',
+    lifetimeSpent: 0,
+    simulationRuns: 0,
+    verifiedSimulations: 0,
+    status: 'active'
+  };
+
+  inMemoryKeyRegistry.set(publicId, keyRecord);
+  inMemoryKeyRegistry.set(rawKey, keyRecord);
+  inMemoryAgentRegistry.set(agentId, agentRecord);
+  inMemoryAgentRegistry.set(handle.toLowerCase(), agentRecord);
+  inMemoryWalletRegistry.set(agentId, walletRecord);
+
+  try {
+    db.collection('api_keys').doc(publicId).set(keyRecord).catch(() => {});
+    db.collection('users').doc(agentId).set(agentRecord).catch(() => {});
+    db.collection('agent_wallets').doc(agentId).set(walletRecord).catch(() => {});
+  } catch {}
+
   res.json({
     status: "ok",
-    key: newKey,
+    key: rawKey,
+    keyId: publicId,
+    agentId,
+    handle,
     createdAt: new Date().toISOString(),
     creditsRemaining: 3000,
     tier: "Quant Suite Pro",
@@ -4403,6 +4480,17 @@ app.post('/api/v1/agent/keys/generate', (req, res) => {
 });
 
 app.post('/api/v1/agent/keys/revoke', (req, res) => {
+  const { key, keyId } = req.body || {};
+  if (keyId && inMemoryKeyRegistry.has(keyId)) {
+    const k = inMemoryKeyRegistry.get(keyId)!;
+    k.status = 'revoked';
+    k.revokedAt = new Date() as any;
+  }
+  if (key && inMemoryKeyRegistry.has(key)) {
+    const k = inMemoryKeyRegistry.get(key)!;
+    k.status = 'revoked';
+    k.revokedAt = new Date() as any;
+  }
   res.json({
     status: "ok",
     message: "API Key revoked successfully",

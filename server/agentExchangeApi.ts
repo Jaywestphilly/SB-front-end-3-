@@ -142,8 +142,8 @@ export class PlatformCreditsProvider implements PaymentProvider {
       const isTreasury = agentId === PLATFORM_TREASURY_ACCOUNT_ID;
       const initialWallet: AgentWalletBalance = {
         agentId,
-        creditsBalance: isTreasury ? 0 : defaultCredits,
-        availableBalance: isTreasury ? 0 : defaultCredits,
+        creditsBalance: isTreasury ? 100000 : defaultCredits,
+        availableBalance: isTreasury ? 100000 : defaultCredits,
         paidCreditsBalance: 0,
         trialCredits: isTreasury ? 0 : defaultCredits,
         usdPendingBalance: 0,
@@ -172,8 +172,8 @@ export class PlatformCreditsProvider implements PaymentProvider {
       const isTreasury = agentId === PLATFORM_TREASURY_ACCOUNT_ID;
       const initialWallet: AgentWalletBalance = {
         agentId,
-        creditsBalance: isTreasury ? 0 : defaultCredits,
-        availableBalance: isTreasury ? 0 : defaultCredits,
+        creditsBalance: isTreasury ? 100000 : defaultCredits,
+        availableBalance: isTreasury ? 100000 : defaultCredits,
         paidCreditsBalance: 0,
         trialCredits: isTreasury ? 0 : defaultCredits,
         usdPendingBalance: 0,
@@ -1129,10 +1129,14 @@ export class PlatformCreditsProvider implements PaymentProvider {
 
         const treasuryData = (treasurySnap.exists ? treasurySnap.data() : null) || {
           agentId: PLATFORM_TREASURY_ACCOUNT_ID,
-          creditsBalance: 0,
+          creditsBalance: 100000,
           totalSettledVolume: 0
         };
-        const treasuryBalance = typeof treasuryData.creditsBalance === 'number' ? treasuryData.creditsBalance : 0;
+        const treasuryBalance = typeof treasuryData.creditsBalance === 'number' ? treasuryData.creditsBalance : 100000;
+        if (treasuryBalance < rewardCredits) {
+          throw new Error(`Treasury balance (${treasuryBalance} credits) is insufficient to fund bounty payout of ${rewardCredits} credits.`);
+        }
+        const newTreasuryBalance = treasuryBalance - rewardCredits;
 
         const agentCreditEntry: LedgerEntry = {
           entryId: 'ent_' + crypto.randomBytes(6).toString('hex'),
@@ -1160,7 +1164,7 @@ export class PlatformCreditsProvider implements PaymentProvider {
           currency: "CREDITS",
           description: `Platform bounty grant funding: ${title || bountyId}`,
           balanceBefore: treasuryBalance,
-          balanceAfter: treasuryBalance,
+          balanceAfter: newTreasuryBalance,
           createdAt: settledAt
         };
 
@@ -1182,9 +1186,9 @@ export class PlatformCreditsProvider implements PaymentProvider {
           status: "SETTLED",
           entries: [agentCreditEntry, treasuryGrantEntry],
           balancesAfter: {
-            buyerBalance: treasuryBalance,
+            buyerBalance: newTreasuryBalance,
             sellerBalance: newAgentBalance,
-            treasuryBalance: treasuryBalance
+            treasuryBalance: newTreasuryBalance
           },
           createdAt: settledAt,
           completedAt: settledAt
@@ -1202,6 +1206,8 @@ export class PlatformCreditsProvider implements PaymentProvider {
         t.set(treasuryRef, {
           ...treasuryData,
           agentId: PLATFORM_TREASURY_ACCOUNT_ID,
+          creditsBalance: newTreasuryBalance,
+          availableBalance: newTreasuryBalance,
           totalSettledVolume: (treasuryData.totalSettledVolume || 0) + rewardCredits,
           updatedAt: settledAt
         }, { merge: true });
@@ -1217,6 +1223,23 @@ export class PlatformCreditsProvider implements PaymentProvider {
         t.set(db.collection('ledger_entries').doc(agentCreditEntry.entryId), agentCreditEntry);
         t.set(db.collection('ledger_entries').doc(treasuryGrantEntry.entryId), treasuryGrantEntry);
 
+        inMemoryWalletRegistry.set(agentId, {
+          ...agentData,
+          creditsBalance: newAgentBalance,
+          availableBalance: newAgentBalance,
+          lifetimeGrossEarnings: (agentData.lifetimeGrossEarnings || 0) + rewardCredits,
+          lifetimeNetEarnings: (agentData.lifetimeNetEarnings || 0) + rewardCredits,
+          updatedAt: settledAt
+        });
+        inMemoryWalletRegistry.set(PLATFORM_TREASURY_ACCOUNT_ID, {
+          ...treasuryData,
+          agentId: PLATFORM_TREASURY_ACCOUNT_ID,
+          creditsBalance: newTreasuryBalance,
+          availableBalance: newTreasuryBalance,
+          totalSettledVolume: (treasuryData.totalSettledVolume || 0) + rewardCredits,
+          updatedAt: settledAt
+        });
+
         return {
           success: true,
           transactionId,
@@ -1231,8 +1254,28 @@ export class PlatformCreditsProvider implements PaymentProvider {
 
       return result;
     } catch (err: any) {
+      if (err.message && err.message.includes('insufficient to fund')) {
+        throw err;
+      }
       // In-memory fallback if Firestore is inaccessible in test mode
       console.warn('Firestore transaction fallback for bounty payout:', err.message);
+
+      const treasuryWallet = inMemoryWalletRegistry.get(PLATFORM_TREASURY_ACCOUNT_ID) || {
+        agentId: PLATFORM_TREASURY_ACCOUNT_ID,
+        creditsBalance: 100000,
+        availableBalance: 100000,
+        totalSettledVolume: 0
+      };
+      const prevTreasuryBal = typeof treasuryWallet.creditsBalance === 'number' ? treasuryWallet.creditsBalance : 100000;
+      if (prevTreasuryBal < rewardCredits) {
+        throw new Error(`Treasury balance (${prevTreasuryBal} credits) is insufficient to fund bounty payout of ${rewardCredits} credits.`);
+      }
+      const newTreasuryBal = prevTreasuryBal - rewardCredits;
+      treasuryWallet.creditsBalance = newTreasuryBal;
+      treasuryWallet.availableBalance = newTreasuryBal;
+      treasuryWallet.totalSettledVolume = (treasuryWallet.totalSettledVolume || 0) + rewardCredits;
+      inMemoryWalletRegistry.set(PLATFORM_TREASURY_ACCOUNT_ID, treasuryWallet);
+
       const currentWallet = inMemoryWalletRegistry.get(agentId) || {
         creditsBalance: PLATFORM_ECONOMICS.defaultTrialCredits,
         lifetimeSpent: 0,
@@ -1258,6 +1301,11 @@ export class PlatformCreditsProvider implements PaymentProvider {
         currency: "CREDITS",
         paymentRail: "PLATFORM_CREDITS",
         status: "SETTLED",
+        balancesAfter: {
+          buyerBalance: newTreasuryBal,
+          sellerBalance: newBal,
+          treasuryBalance: newTreasuryBal
+        },
         createdAt: settledAt,
         completedAt: settledAt
       };
@@ -3455,7 +3503,14 @@ agentExchangeRouter.post(
       await ensureSeedBountiesExist();
       const agent = (req as any).agent;
       const { bountyId } = req.params;
-      const { passed = true, score = 100, notes = 'Verified by platform verifier' } = req.body;
+      const { passed, score = 100, notes = 'Verified by platform verifier' } = req.body;
+
+      if (typeof passed !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          error: "Verification requires an explicit boolean 'passed' in request body."
+        });
+      }
 
       let bounty: StockBlocBounty | null = null;
       try {
@@ -3497,8 +3552,28 @@ agentExchangeRouter.post(
         });
       }
 
-      const targetAgentId = bounty.claimedBy || agent.agentId;
-      const targetAgentHandle = bounty.claimedByHandle || agent.handle;
+      if (!bounty.claimedBy) {
+        return res.status(400).json({
+          success: false,
+          error: 'Cannot verify an unclaimed bounty'
+        });
+      }
+
+      // Reject self-verification: Verifier must never be the claimant
+      const claimantId = bounty.claimedBy;
+      const claimantHandle = (bounty.claimedByHandle || '').toLowerCase().trim();
+      const verifierId = agent?.agentId;
+      const verifierHandle = (agent?.handle || '').toLowerCase().trim();
+
+      if (verifierId === claimantId || (claimantHandle && verifierHandle && verifierHandle === claimantHandle)) {
+        return res.status(403).json({
+          success: false,
+          error: 'Self-verification is strictly prohibited. Verifier cannot be the claimant.'
+        });
+      }
+
+      const targetAgentId = claimantId;
+      const targetAgentHandle = bounty.claimedByHandle || claimantId;
       const nowIso = new Date().toISOString();
 
       if (!passed) {
@@ -3575,7 +3650,11 @@ agentExchangeRouter.post(
       });
     } catch (err: any) {
       console.error('Verify and pay bounty error:', err);
-      return res.status(500).json({ success: false, error: 'Failed to verify and pay bounty' });
+      const isTreasuryError = err.message && err.message.includes('Treasury balance');
+      return res.status(isTreasuryError ? 400 : 500).json({
+        success: false,
+        error: isTreasuryError ? err.message : 'Failed to verify and pay bounty'
+      });
     }
   }
 );

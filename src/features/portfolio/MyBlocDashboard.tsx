@@ -352,18 +352,10 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
         safeStorage.setItem("stockbloc_api_key", data.key);
         safeStorage.setItem("stockbloc_api_credits", String(data.creditsRemaining || 3000));
       } else {
-        const newKey = `sb_live_${Math.random().toString(36).substring(2, 10)}_${Date.now().toString(36)}`;
-        setApiKey(newKey);
-        setApiCredits(3000);
-        safeStorage.setItem("stockbloc_api_key", newKey);
-        safeStorage.setItem("stockbloc_api_credits", "3000");
+        console.error("Failed to generate API key:", data);
       }
-    } catch {
-      const newKey = `sb_live_${Math.random().toString(36).substring(2, 10)}_${Date.now().toString(36)}`;
-      setApiKey(newKey);
-      setApiCredits(3000);
-      safeStorage.setItem("stockbloc_api_key", newKey);
-      safeStorage.setItem("stockbloc_api_credits", "3000");
+    } catch (err) {
+      console.error("API key generation request failed:", err);
     } finally {
       setIsGeneratingKey(false);
     }

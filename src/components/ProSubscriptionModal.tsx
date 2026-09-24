@@ -108,54 +108,54 @@ export const ProSubscriptionModal: React.FC<ProSubscriptionModalProps> = ({
 
             {/* Main PRO Pricing Card & B2B Grid */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-6 relative z-10">
-              {/* Main Stock Bloc PRO Tier ($19/mo) */}
-              <div className="md:col-span-7 bg-[#05111d] border-2 border-cyan-400 p-6 rounded-2xl shadow-2xl relative flex flex-col justify-between space-y-5">
-                <div className="hud-corner-tl border-cyan-400" />
-                <div className="hud-corner-tr border-cyan-400" />
+              {/* Main Stock Bloc PRO Tier ($5/mo Real Product) */}
+              <div className="md:col-span-7 bg-[#05111d] border-2 border-emerald-400 p-6 rounded-2xl shadow-2xl relative flex flex-col justify-between space-y-5">
+                <div className="hud-corner-tl border-emerald-400" />
+                <div className="hud-corner-tr border-emerald-400" />
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-cyan-400 uppercase tracking-widest bg-cyan-950/60 border border-cyan-500/40 px-2.5 py-1 rounded">
-                      INDIVIDUAL QUANT SUITE
+                    <span className="text-xs font-bold text-emerald-400 uppercase tracking-widest bg-emerald-950/60 border border-emerald-500/40 px-2.5 py-1 rounded">
+                      QUANT SUITE PRO
                     </span>
-                    <span className="px-2 py-0.5 bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[10px] font-bold uppercase rounded flex items-center gap-1">
-                      <Lock className="w-3 h-3" /> COMING SOON
+                    <span className="px-2 py-0.5 bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold uppercase rounded flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 text-emerald-400" /> INSTANT ACCESS
                     </span>
                   </div>
 
                   <div>
                     <div className="flex items-baseline gap-2">
-                      <h3 className="text-3xl font-black font-tech text-white uppercase">$19</h3>
+                      <h3 className="text-3xl font-black font-tech text-white uppercase">$5</h3>
                       <span className="text-xs font-bold text-neutral-400">/ month</span>
                     </div>
                     <p className="text-sm text-neutral-300 font-sans mt-1">
-                      Designed for high-frequency retail traders, real estate investors, and credit optimization enthusiasts.
+                      Designed for high-frequency retail traders, real estate investors, and autonomous agent quant builders.
                     </p>
                   </div>
 
-                  <ul className="space-y-2.5 text-xs text-neutral-200 pt-3 border-t border-cyan-500/20 font-sans">
+                  <ul className="space-y-2.5 text-xs text-neutral-200 pt-3 border-t border-emerald-500/20 font-sans">
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span>Saved Custom Watchlists & Cloud Sync</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span>Real-time RSI & Tsunami Stock Volatility Alerts</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span>13F SEC Filing Email Digest (Whale Move Alerts)</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span>Advanced Institutional Data Filters & Heatmaps</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span>Ad-Free Experience & Unrestricted Copilot</span>
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-cyan-400 shrink-0" />
+                      <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                       <span>Priority VIP Access on Stock Bloc X (@thestockbloc)</span>
                     </li>
                   </ul>
@@ -163,7 +163,7 @@ export const ProSubscriptionModal: React.FC<ProSubscriptionModalProps> = ({
 
 
                 {/* Store Action Button */}
-                <div className="pt-4 border-t border-cyan-500/20 space-y-3">
+                <div className="pt-4 border-t border-emerald-500/20 space-y-3">
                   <button
                     onClick={() => {
                       triggerHaptic("success");
@@ -173,14 +173,14 @@ export const ProSubscriptionModal: React.FC<ProSubscriptionModalProps> = ({
                       }
                       onClose();
                     }}
-                    className="w-full py-3.5 bg-cyan-400 text-black font-black font-tech uppercase text-xs sm:text-sm tracking-wider rounded-xl hover:bg-cyan-300 transition-all shadow-lg shadow-cyan-400/30 flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full py-3.5 bg-emerald-400 text-black font-black font-tech uppercase text-xs sm:text-sm tracking-wider rounded-xl hover:bg-emerald-300 transition-all shadow-lg shadow-emerald-400/30 flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Zap className="w-4 h-4 text-black fill-black" />
-                    <span>VIEW PRO STORE & INSTANT ACTIVATION</span>
+                    <span>UNLOCK QUANT SUITE PRO — $5/MO</span>
                     <ArrowRight className="w-4 h-4 text-black" />
                   </button>
                   <p className="text-[10px] text-neutral-400 font-mono text-center">
-                    Instant Stripe checkout, crypto payments & instant digital delivery.
+                    Instant verified Stripe checkout & immediate digital activation.
                   </p>
                 </div>
               </div>

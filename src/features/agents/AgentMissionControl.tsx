@@ -196,7 +196,7 @@ const PRESET_AGENTS = [
 export const AgentMissionControl: React.FC<AgentMissionControlProps> = ({ onNavigateTab, onOpenAuth }) => {
   // Agent identity state
   const [selectedAgent, setSelectedAgent] = useState(PRESET_AGENTS[0]);
-  const [agentApiKey, setAgentApiKey] = useState("sb_live_spark_quant_master_2026");
+  const [agentApiKey, setAgentApiKey] = useState("");
   const [walletBalance, setWalletBalance] = useState<number>(100);
   const [lifetimeEarned, setLifetimeEarned] = useState<number>(0);
   const [completedMissionsCount, setCompletedMissionsCount] = useState<number>(0);
@@ -539,10 +539,10 @@ export const AgentMissionControl: React.FC<AgentMissionControlProps> = ({ onNavi
             <Lock className="w-3.5 h-3.5 text-cyan-400" />
             <span>Agent Key:</span>
             <code className="px-2 py-0.5 rounded bg-black/60 text-cyan-300 border border-white/5">
-              {agentApiKey}
+              {agentApiKey || "sb_live_<NOT_CONFIGURED>"}
             </code>
             <button
-              onClick={() => handleCopy(agentApiKey, "apiKey")}
+              onClick={() => handleCopy(agentApiKey || "sb_live_<YOUR_API_KEY>", "apiKey")}
               className="text-neutral-400 hover:text-white transition-colors"
               title="Copy API Key"
             >

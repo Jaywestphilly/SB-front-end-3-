@@ -255,15 +255,15 @@ export const MissionHubModal: React.FC<MissionHubModalProps> = ({
                   </ul>
                 </div>
 
-                <div className="p-4 bg-neutral-950 border border-amber-500/40 rounded-xl space-y-3">
+                <div className="p-4 bg-neutral-950 border border-emerald-500/40 rounded-xl space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-zen font-bold text-amber-300 text-sm">2. Quant Terminal Pro</span>
-                    <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 rounded text-[10px] font-mono">$19 / MO</span>
+                    <span className="font-zen font-bold text-emerald-300 text-sm">2. Quant Suite Pro</span>
+                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded text-[10px] font-mono">$5 / MO</span>
                   </div>
                   <ul className="text-xs text-neutral-300 space-y-1.5 list-disc list-inside">
                     <li>Institutional Datacenter & Substation Cap-Rate Map</li>
                     <li>Live Bloomberg-style command terminal (`MOST &lt;GO&gt;`, `AI &lt;GO&gt;`)</li>
-                    <li>Real-time whale block accumulation flags</li>
+                    <li>Real-time whale block accumulation flags & volatility alerts</li>
                     <li>Exclusive Discord/Telegram quant syndicate briefings</li>
                   </ul>
                 </div>

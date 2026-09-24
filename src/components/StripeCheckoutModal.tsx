@@ -9,10 +9,6 @@ import {
   ArrowRight,
   BookOpen,
   Zap,
-  Copy,
-  Check,
-  QrCode,
-  DollarSign,
   Smartphone,
   Wallet,
 } from "lucide-react";
@@ -47,38 +43,12 @@ export const StripeCheckoutModal: React.FC<Props> = ({
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(initialPaymentMethod);
   const [email, setEmail] = useState("");
   const [cardName, setCardName] = useState("");
-  const [cardNumber, setCardNumber] = useState("4242 •••• •••• 4242");
-  const [cardExpiry, setCardExpiry] = useState("12/28");
-  const [cardCvc, setCardCvc] = useState("888");
-  
-  // Crypto selection
-  const [cryptoAsset, setCryptoAsset] = useState<"BTC" | "USDC" | "USDT">("USDC");
-  const [cryptoNetwork, setCryptoNetwork] = useState<"SOLANA" | "BASE" | "ETHEREUM">("SOLANA");
-  const [copiedAddress, setCopiedAddress] = useState(false);
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvc, setCardCvc] = useState("");
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const walletAddresses: Record<string, string> = {
-    BTC: "bc1q8sb9quant902834710298374902834790182374981",
-    USDC_SOLANA: "StockBloc39487102983471029834710298347102983",
-    USDC_BASE: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-    USDC_ETHEREUM: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-    USDT_ETHEREUM: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-    USDT_SOLANA: "StockBlocUSDT394871029834710298347102983471029",
-  };
-
-  const currentAddress =
-    cryptoAsset === "BTC"
-      ? walletAddresses.BTC
-      : walletAddresses[`${cryptoAsset}_${cryptoNetwork}`] || walletAddresses.USDC_SOLANA;
-
-  const handleCopyAddress = () => {
-    triggerHaptic("selection");
-    navigator.clipboard.writeText(currentAddress);
-    setCopiedAddress(true);
-    setTimeout(() => setCopiedAddress(false), 2000);
-  };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -107,7 +77,7 @@ export const StripeCheckoutModal: React.FC<Props> = ({
       const data = await res.json();
 
       if (data.status === "error") {
-        setErrorMsg(data.message || "Stripe setup error.");
+        setErrorMsg(data.message || "Payment provider error. Access denied without verified payment.");
         setIsProcessing(false);
         return;
       }
@@ -124,15 +94,16 @@ export const StripeCheckoutModal: React.FC<Props> = ({
           onSuccess(data.sessionId);
         }, 1200);
       } else {
-        throw new Error(data.message || "Failed to create checkout session");
+        throw new Error(data.message || "Failed to create verified checkout session");
       }
     } catch (err: unknown) {
       console.error("Checkout error:", err);
-      const mockSessionId = `cs_test_sb_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      setTimeout(() => {
-        setIsProcessing(false);
-        onSuccess(mockSessionId);
-      }, 1000);
+      setIsProcessing(false);
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : "Checkout payment verification failed. Access denied without verified payment."
+      );
     }
   };
 
@@ -152,7 +123,7 @@ export const StripeCheckoutModal: React.FC<Props> = ({
             <div>
               <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 uppercase font-bold tracking-widest">
                 <Lock className="w-3 h-3 text-emerald-400 inline" />
-                <span>256-BIT ENCRYPTED STRIPE & CRYPTO CHECKOUT</span>
+                <span>256-BIT ENCRYPTED STRIPE CHECKOUT</span>
               </div>
               <h2 className="text-lg font-black font-tech uppercase text-white">
                 STOCK BLOC CHECKOUT
@@ -167,6 +138,14 @@ export const StripeCheckoutModal: React.FC<Props> = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Error Alert Box - Fail Closed Enforcement */}
+        {errorMsg && (
+          <div className="p-3.5 bg-rose-950/80 border border-rose-500/60 rounded-xl text-rose-200 text-xs font-mono flex items-start gap-2.5 animate-in fade-in">
+            <span className="font-bold text-rose-400 shrink-0">PAYMENT ERROR:</span>
+            <span className="leading-relaxed">{errorMsg}</span>
+          </div>
+        )}
 
         {/* Order Summary Box */}
         <div className="bg-black/80 border border-emerald-500/40 rounded-xl p-4 space-y-3">
@@ -281,6 +260,7 @@ export const StripeCheckoutModal: React.FC<Props> = ({
               <div className="relative">
                 <input
                   type="text"
+                  placeholder="•••• •••• •••• ••••"
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
                   className="w-full bg-neutral-950 border border-emerald-500/40 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-400 transition-all"
@@ -296,6 +276,7 @@ export const StripeCheckoutModal: React.FC<Props> = ({
                 </label>
                 <input
                   type="text"
+                  placeholder="MM/YY"
                   value={cardExpiry}
                   onChange={(e) => setCardExpiry(e.target.value)}
                   className="w-full bg-neutral-950 border border-emerald-500/40 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-400 transition-all"
@@ -307,6 +288,7 @@ export const StripeCheckoutModal: React.FC<Props> = ({
                 </label>
                 <input
                   type="text"
+                  placeholder="CVC"
                   value={cardCvc}
                   onChange={(e) => setCardCvc(e.target.value)}
                   className="w-full bg-neutral-950 border border-emerald-500/40 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-400 transition-all"
@@ -382,120 +364,32 @@ export const StripeCheckoutModal: React.FC<Props> = ({
           </div>
         )}
 
-        {/* TAB 3: BTC & STABLECOINS (USDC / USDT) */}
+        {/* TAB 3: CRYPTO PAYMENTS COMING SOON */}
         {selectedMethod === "crypto" && (
-          <div className="space-y-4">
-            <div>
-              <label className="block text-[11px] font-tech text-amber-300 uppercase font-bold mb-1">
-                Email Receipt Address *
-              </label>
-              <input
-                type="email"
-                required
-                placeholder="you@domain.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-neutral-950 border border-amber-500/40 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 transition-all font-sans"
-              />
+          <div className="p-6 bg-black/90 border border-amber-500/40 rounded-xl space-y-4 text-center">
+            <div className="w-12 h-12 mx-auto rounded-2xl bg-amber-500/10 border border-amber-400/40 flex items-center justify-center text-amber-400">
+              <Wallet className="w-6 h-6" />
             </div>
-
-            {/* Crypto Asset Selector */}
-            <div className="space-y-1.5">
-              <label className="block text-[10px] font-tech text-neutral-400 uppercase font-bold">
-                SELECT CRYPTO CURRENCY
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {(["USDC", "BTC", "USDT"] as const).map((asset) => (
-                  <button
-                    key={asset}
-                    type="button"
-                    onClick={() => {
-                      triggerHaptic("selection");
-                      setCryptoAsset(asset);
-                    }}
-                    className={`py-2 px-3 rounded-xl border text-xs font-bold font-mono transition-all cursor-pointer ${
-                      cryptoAsset === asset
-                        ? "bg-amber-400 text-black border-amber-400 font-black"
-                        : "bg-black/60 border-neutral-800 text-neutral-300 hover:border-neutral-700"
-                    }`}
-                  >
-                    ${asset}
-                  </button>
-                ))}
-              </div>
+            <div className="space-y-1">
+              <h3 className="text-sm font-black font-tech uppercase text-amber-300">
+                Crypto Payments Coming Soon
+              </h3>
+              <p className="text-xs text-neutral-300 font-sans max-w-sm mx-auto leading-relaxed">
+                Automated on-chain USDC / BTC settlement with instant webhook verification is currently undergoing final security auditing. Manual deposit addresses and honor-system verifications are disabled.
+              </p>
             </div>
-
-            {/* Network Selector for Stablecoins */}
-            {cryptoAsset !== "BTC" && (
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-tech text-neutral-400 uppercase font-bold">
-                  NETWORK CHAIN
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(["SOLANA", "BASE", "ETHEREUM"] as const).map((net) => (
-                    <button
-                      key={net}
-                      type="button"
-                      onClick={() => {
-                        triggerHaptic("selection");
-                        setCryptoNetwork(net);
-                      }}
-                      className={`py-1.5 px-2 rounded-lg border text-[11px] font-bold font-mono transition-all cursor-pointer ${
-                        cryptoNetwork === net
-                          ? "bg-cyan-500 text-black border-cyan-400 font-black"
-                          : "bg-black/60 border-neutral-800 text-neutral-400 hover:border-neutral-700"
-                      }`}
-                    >
-                      {net}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Deposit Box with QR and Wallet Address */}
-            <div className="p-4 bg-black/90 border border-amber-500/40 rounded-xl space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-neutral-400">Deposit Amount:</span>
-                <span className="text-amber-300 font-bold font-mono text-sm">
-                  {item.displayPrice} {cryptoAsset}
-                </span>
-              </div>
-
-              <div className="space-y-1">
-                <span className="text-[10px] text-neutral-400 uppercase font-bold block">
-                  Deposit Address ({cryptoAsset} on {cryptoAsset === "BTC" ? "Bitcoin Network" : cryptoNetwork}):
-                </span>
-                <div className="p-2.5 bg-neutral-950 border border-neutral-800 rounded-lg flex items-center justify-between gap-2 text-[11px] font-mono text-amber-200 break-all select-all">
-                  <span className="truncate">{currentAddress}</span>
-                  <button
-                    type="button"
-                    onClick={handleCopyAddress}
-                    className="p-1.5 bg-amber-400 text-black rounded hover:bg-amber-300 transition-all shrink-0 cursor-pointer"
-                  >
-                    {copiedAddress ? <Check className="w-3.5 h-3.5 text-black" /> : <Copy className="w-3.5 h-3.5 text-black" />}
-                  </button>
-                </div>
-              </div>
+            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-lg text-[11px] text-neutral-400 font-mono">
+              Please use Card / Stripe or Apple / Google Pay for instant verified access.
             </div>
-
             <button
               type="button"
-              onClick={() => handleSubmit()}
-              disabled={isProcessing}
-              className="w-full py-3.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-black font-tech uppercase text-xs tracking-wider transition-all shadow-xl shadow-amber-400/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              onClick={() => {
+                triggerHaptic("selection");
+                setSelectedMethod("card");
+              }}
+              className="w-full py-3.5 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-black font-black font-tech uppercase text-xs tracking-wider transition-all cursor-pointer shadow-lg shadow-emerald-400/20"
             >
-              {isProcessing ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                  <span>VERIFYING CRYPTO PAYMENT ON-CHAIN...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-black" />
-                  <span>I HAVE SENT {item.displayPrice} {cryptoAsset} — VERIFY ORDER</span>
-                </>
-              )}
+              SWITCH TO CARD / STRIPE CHECKOUT
             </button>
           </div>
         )}
@@ -505,7 +399,7 @@ export const StripeCheckoutModal: React.FC<Props> = ({
           <span className="flex items-center gap-1 text-emerald-400 font-bold">
             <CheckCircle2 className="w-3.5 h-3.5" /> 100% Satisfaction Guarantee
           </span>
-          <span>Powered by Stripe & Crypto Pay</span>
+          <span>Powered by Stripe Verified Payment</span>
         </div>
       </div>
     </div>
