@@ -352,7 +352,8 @@ export function resolveAgentIdFromKey(token?: string): string | null {
 export async function addCreditsToAgentWallet(
   agentIdOrKey: string,
   creditsToAdd: number,
-  reasonTag: string = 'STRIPE_PURCHASE'
+  reasonTag: string = 'STRIPE_PURCHASE',
+  metadata?: { sessionId?: string; [key: string]: any }
 ): Promise<{
   success: boolean;
   agentId?: string;
@@ -458,6 +459,11 @@ export async function addCreditsToAgentWallet(
       currency: 'CREDITS',
       tag: reasonTag,
       description,
+      sessionId: metadata?.sessionId,
+      metadata: {
+        ...(metadata || {}),
+        sessionId: metadata?.sessionId
+      },
       balanceBefore: prevBalance,
       balanceAfter: wallet.creditsBalance,
       createdAt: new Date().toISOString()

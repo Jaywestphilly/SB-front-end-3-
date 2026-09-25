@@ -61,9 +61,12 @@ export interface StripeFulfillmentRecord {
   amountCents?: number;
   currency?: string;
   productId?: string;
-  status?: string;
-  fulfilledAt: string;
+  status?: 'processing' | 'granting' | 'fulfilled' | 'failed' | string;
+  fulfilledAt?: string;
   claimedAt?: string;
+  grantingAt?: string;
+  failedAt?: string;
+  error?: string;
   reclaimed?: boolean;
 }
 

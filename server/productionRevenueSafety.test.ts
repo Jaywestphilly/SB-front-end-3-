@@ -666,8 +666,8 @@ describe('STOCK BLOC PRODUCTION REVENUE SAFETY AUDIT — 16 Verification Tests',
     expect(res.body.sessionId).toBeDefined();
   });
 
-  // TEST 17: Claim-First Idempotency - mid-fulfillment crash recovery
-  it('Test 17: Mid-fulfillment crash and retry (grant succeeds, persist fails) -> credits granted exactly once', async () => {
+  // TEST 17: State Machine & Ledger-backed crash recovery: grant succeeds + fulfilled-write fails + retry after simulated 11 minutes -> credits granted exactly once, record ends 'fulfilled'
+  it('Test 17: (a) grant succeeds + fulfilled-write fails + retry after simulated 11 minutes -> credits granted exactly once, record ends fulfilled', async () => {
     const sessionId = `cs_test_crash_${Date.now()}`;
     const agentId = `agent_crash_${Date.now()}`;
 
@@ -693,7 +693,6 @@ describe('STOCK BLOC PRODUCTION REVENUE SAFETY AUDIT — 16 Verification Tests',
       createdAt: new Date().toISOString()
     });
 
-    // 1. Prepare session payload
     const session = {
       id: sessionId,
       payment_status: 'paid',
@@ -706,56 +705,83 @@ describe('STOCK BLOC PRODUCTION REVENUE SAFETY AUDIT — 16 Verification Tests',
       }
     };
 
-    // 2. Simulate: Atomic claim succeeds, grant succeeds, but we simulate a crash before final fulfillment record write!
+    // 1. Simulate initial execution:
+    // It creates claim with status 'processing', moves to 'granting', writes ledger entry & updates wallet (100 -> 1100),
+    // but crashes BEFORE writing 'fulfilled' (leaving claim doc stuck in 'granting' from 11 minutes ago).
+    const elevenMinsAgo = new Date(Date.now() - 11 * 60 * 1000).toISOString();
     const dbStore = dbStoreInstance.getCollection('fulfilled_stripe_sessions');
     dbStore.set(sessionId, {
       sessionId,
       agentId,
       creditsGranted: 1000,
-      status: 'processing',
-      claimedAt: new Date().toISOString(),
-      fulfilledAt: new Date().toISOString()
+      status: 'granting',
+      claimedAt: elevenMinsAgo,
+      grantingAt: elevenMinsAgo
     });
     fulfilledStripeSessions.set(sessionId, {
       sessionId,
       agentId,
       creditsGranted: 1000,
-      status: 'processing',
-      claimedAt: new Date().toISOString(),
-      fulfilledAt: new Date().toISOString()
+      status: 'granting',
+      claimedAt: elevenMinsAgo,
+      grantingAt: elevenMinsAgo
     });
 
-    // Update wallet to simulate first successful grant
+    // Add the ledger entry that was created when the wallet grant succeeded
+    const ledgerCollection = dbStoreInstance.getCollection('ledger_entries');
+    ledgerCollection.set(`ent_${sessionId}`, {
+      entryId: `ent_${sessionId}`,
+      accountId: agentId,
+      accountType: 'BUYER',
+      entryType: 'CREDIT',
+      amount: 1000,
+      currency: 'CREDITS',
+      tag: 'STRIPE_PURCHASE',
+      sessionId: sessionId,
+      metadata: { sessionId },
+      description: 'Wallet credit purchase (1000 credits) [STRIPE_PURCHASE]',
+      balanceBefore: 100,
+      balanceAfter: 1100,
+      createdAt: elevenMinsAgo
+    });
+
+    // Update wallet balance to simulate successful wallet grant before crash
     const wallet = inMemoryWalletRegistry.get(agentId)!;
     wallet.creditsBalance = 1100;
     wallet.availableBalance = 1100;
 
-    // 3. Webhook retries! Call fulfillAuthoritativePayment again with the same session
-    const res1 = await fulfillAuthoritativePayment({
+    // 2. Retry after 11 minutes!
+    const retryRes = await fulfillAuthoritativePayment({
       session,
-      source: 'verify-session'
+      source: 'webhook'
     });
 
-    // Expect the retry to recognize the existing claim and treat it as alreadyFulfilled: true,
-    // with ZERO additional credits granted, leaving balance at exactly 1100!
-    expect(res1.alreadyFulfilled).toBe(true);
-    expect(res1.creditsGranted).toBe(0);
+    // 3. Verify:
+    // - alreadyFulfilled is true, creditsGranted is 0
+    // - wallet balance remains exactly 1100 (no double grant)
+    // - record in Firestore / memory healed to 'fulfilled'
+    expect(retryRes.alreadyFulfilled).toBe(true);
+    expect(retryRes.creditsGranted).toBe(0);
     expect(inMemoryWalletRegistry.get(agentId)!.creditsBalance).toBe(1100);
+
+    const docAfter = dbStore.get(sessionId);
+    expect(docAfter?.status).toBe('fulfilled');
+    expect(fulfilledStripeSessions.get(sessionId)?.status).toBe('fulfilled');
   });
 
-  // TEST 18: Claim-First Idempotency - mid-fulfillment crash older than 10 minutes -> allows reclaiming
-  it('Test 18: Mid-fulfillment crash older than 10 minutes -> allows reclaiming', async () => {
-    const sessionId = `cs_test_reclaim_${Date.now()}`;
-    const agentId = `agent_reclaim_${Date.now()}`;
+  // TEST 18: Two concurrent fulfillments of the same session -> exactly one grant
+  it('Test 18: (b) two concurrent fulfillments of the same session -> exactly one grant', async () => {
+    const sessionId = `cs_test_concurrent_${Date.now()}`;
+    const agentId = `agent_concurrent_${Date.now()}`;
 
     inMemoryWalletRegistry.set(agentId, {
       agentId,
-      creditsBalance: 100,
-      availableBalance: 100,
+      creditsBalance: 50,
+      availableBalance: 50,
       paidCreditsBalance: 0,
       promoCreditsBalance: 0,
-      trialCreditsBalance: 100,
-      trialCredits: 100,
+      trialCreditsBalance: 50,
+      trialCredits: 50,
       lastCreditTag: 'TRIAL',
       lifetimeSpent: 0,
       simulationRuns: 0,
@@ -763,30 +789,10 @@ describe('STOCK BLOC PRODUCTION REVENUE SAFETY AUDIT — 16 Verification Tests',
     });
     inMemoryAgentRegistry.set(agentId, {
       agentId,
-      handle: `reclaim_bot`,
-      displayName: 'Reclaim Bot',
+      handle: `conc_bot`,
+      displayName: 'Concurrent Bot',
       status: 'active',
       createdAt: new Date().toISOString()
-    });
-
-    // Create an old processing claim (15 minutes old)
-    const tenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-    const dbStore = dbStoreInstance.getCollection('fulfilled_stripe_sessions');
-    dbStore.set(sessionId, {
-      sessionId,
-      agentId,
-      creditsGranted: 1000,
-      status: 'processing',
-      claimedAt: tenMinsAgo,
-      fulfilledAt: tenMinsAgo
-    });
-    fulfilledStripeSessions.set(sessionId, {
-      sessionId,
-      agentId,
-      creditsGranted: 1000,
-      status: 'processing',
-      claimedAt: tenMinsAgo,
-      fulfilledAt: tenMinsAgo
     });
 
     const session = {
@@ -801,14 +807,62 @@ describe('STOCK BLOC PRODUCTION REVENUE SAFETY AUDIT — 16 Verification Tests',
       }
     };
 
+    // Execute two fulfillment calls concurrently
+    const [resA, resB] = await Promise.all([
+      fulfillAuthoritativePayment({ session, source: 'webhook' }),
+      fulfillAuthoritativePayment({ session, source: 'verify-session' })
+    ]);
+
+    // One must have performed the initial grant, one must be alreadyFulfilled
+    const grants = [resA.creditsGranted, resB.creditsGranted];
+    expect(grants.filter(g => g === 1000).length).toBe(1);
+    expect(grants.filter(g => g === 0).length).toBe(1);
+
+    const alreadyFulfilledFlags = [resA.alreadyFulfilled, resB.alreadyFulfilled];
+    expect(alreadyFulfilledFlags.filter(f => f === true).length).toBe(1);
+    expect(alreadyFulfilledFlags.filter(f => f === false).length).toBe(1);
+
+    // Total wallet balance must be 50 + 1000 = 1050 (exactly one grant)
+    expect(inMemoryWalletRegistry.get(agentId)!.creditsBalance).toBe(1050);
+
+    const finalRecord = fulfilledStripeSessions.get(sessionId);
+    expect(finalRecord?.status).toBe('fulfilled');
+  });
+
+  // TEST 19: Grant failure -> 'failed' state and Stripe-retryable error (HTTP 500)
+  it('Test 19: (c) grant failure -> failed state and a Stripe-retryable error', async () => {
+    const sessionId = `cs_test_grant_fail_${Date.now()}`;
+    const agentId = `agent_grant_fail_${Date.now()}`;
+
+    // Agent is NOT in registry, and we pass an invalid state or simulate failure
+    const session = {
+      id: sessionId,
+      payment_status: 'paid',
+      status: 'complete',
+      amount_total: 1000,
+      currency: 'usd',
+      metadata: {
+        productId: 'agent_credits_1000',
+        agentId: 'sb_live_unregisteredpublickey_randomsecret' // will cause addCreditsToAgentWallet to fail
+      }
+    };
+
     const res = await fulfillAuthoritativePayment({
       session,
-      source: 'verify-session'
+      source: 'webhook'
     });
 
-    // Should allow reclaim and succeed with full grant!
-    expect(res.alreadyFulfilled).toBe(false);
-    expect(res.creditsGranted).toBe(1000);
-    expect(inMemoryWalletRegistry.get(agentId)!.creditsBalance).toBe(1100);
+    expect(res.success).toBe(false);
+    expect(res.statusCode).toBe(500);
+    expect(res.creditsGranted).toBe(0);
+
+    // Record in fulfilledStripeSessions and dbStore must be in 'failed' state
+    const record = fulfilledStripeSessions.get(sessionId);
+    expect(record?.status).toBe('failed');
+    expect(record?.error).toBeDefined();
+
+    const dbStore = dbStoreInstance.getCollection('fulfilled_stripe_sessions');
+    const doc = dbStore.get(sessionId);
+    expect(doc?.status).toBe('failed');
   });
 });

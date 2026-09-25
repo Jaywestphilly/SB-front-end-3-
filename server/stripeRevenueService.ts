@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import type { Request, Response } from 'express';
-import { db } from './firebaseAdmin.js';
+import { db, dbStoreInstance } from './firebaseAdmin.js';
 import {
   recordedStripeSessions,
   fulfilledStripeSessions,
@@ -694,9 +694,49 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
 }
 
 /**
+ * Helper to query the double-entry ledger for an existing STRIPE_PURCHASE credit entry for a sessionId
+ */
+export async function findStripePurchaseLedgerEntry(sessionId: string): Promise<any | null> {
+  if (!sessionId) return null;
+  if (db) {
+    try {
+      const snap = await db.collection('ledger_entries').where('sessionId', '==', sessionId).limit(5).get();
+      if (!snap.empty) {
+        for (const doc of snap.docs) {
+          const data = doc.data();
+          if (data && (data.tag === 'STRIPE_PURCHASE' || data.entryType === 'CREDIT')) {
+            return data;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[findStripePurchaseLedgerEntry] Firestore query error:', e);
+    }
+  }
+
+  // Local/in-memory store fallback
+  try {
+    const col = dbStoreInstance?.getCollection('ledger_entries');
+    if (col) {
+      for (const [_, data] of col.entries()) {
+        if (data && (data.sessionId === sessionId || data.metadata?.sessionId === sessionId)) {
+          if (data.tag === 'STRIPE_PURCHASE' || data.entryType === 'CREDIT') {
+            return data;
+          }
+        }
+      }
+    }
+  } catch (_) {}
+
+  return null;
+}
+
+/**
  * Authoritative Core Payment Fulfillment Function
  * Used by both Webhook and verify-session to enforce:
  * - One grant per session (lock-guarded)
+ * - Explicit state machine: 'processing' -> 'granting' -> 'fulfilled' (+ 'failed')
+ * - Ledger-backed idempotency (ledger is the single source of truth for "did money move")
  * - Server catalog validation (amount, currency, productId, status)
  * - Identity mapping from Stripe metadata only
  * - Atomic credit grant + durable record persistence
@@ -838,10 +878,8 @@ export async function fulfillAuthoritativePayment(params: {
       };
     }
 
-    // 4.5 Claim-First Idempotency Authority Check
-    let alreadyFulfilled = false;
+    // 4.5 Claim-First Idempotency Authority Check with Explicit State Machine & Ledger-Backed Single Source of Truth
     let priorFulfillment: any = null;
-    let claimDocCreated = false;
 
     if (db) {
       const docRef = db.collection('fulfilled_stripe_sessions').doc(sessionId);
@@ -851,11 +889,9 @@ export async function fulfillAuthoritativePayment(params: {
           agentId: targetAgentId || 'unassigned_purchaser',
           creditsGranted: creditsToAdd,
           status: 'processing',
-          claimedAt: new Date().toISOString(),
-          fulfilledAt: new Date().toISOString()
+          claimedAt: new Date().toISOString()
         };
         await docRef.create(claimPayload);
-        claimDocCreated = true;
         fulfilledStripeSessions.set(sessionId, claimPayload);
       } catch (createErr: any) {
         const isAlreadyExists = createErr.code === 6 || 
@@ -880,97 +916,133 @@ export async function fulfillAuthoritativePayment(params: {
         if (!priorFulfillment) {
           priorFulfillment = fulfilledStripeSessions.get(sessionId);
         }
-
-        if (priorFulfillment) {
-          const isProcessing = priorFulfillment.status === 'processing';
-          const claimedAtStr = priorFulfillment.claimedAt || priorFulfillment.fulfilledAt;
-          const claimedAtMs = claimedAtStr ? new Date(claimedAtStr).getTime() : 0;
-          const ageMinutes = (Date.now() - claimedAtMs) / (60 * 1000);
-
-          if (isProcessing && ageMinutes > 10) {
-            console.warn(`[fulfillAuthoritativePayment] Session ${sessionId} found in 'processing' state older than 10 minutes. Reclaiming.`);
-            try {
-              const reclaimPayload = {
-                status: 'processing',
-                claimedAt: new Date().toISOString(),
-                reclaimed: true
-              };
-              await docRef.set(reclaimPayload, { merge: true });
-              priorFulfillment = { ...priorFulfillment, ...reclaimPayload };
-              fulfilledStripeSessions.set(sessionId, priorFulfillment);
-              claimDocCreated = true; // Mark as claimed under this execution
-            } catch (reclaimErr) {
-              console.error(`[fulfillAuthoritativePayment] failed to update reclaim for ${sessionId}:`, reclaimErr);
-              throw reclaimErr;
-            }
-          } else {
-            alreadyFulfilled = true;
-          }
-        } else {
-          alreadyFulfilled = true;
-        }
-
-        if (alreadyFulfilled) {
-          logPaymentEvent('duplicate_session', {
-            sessionId,
-            source,
-            priorFulfilledAt: priorFulfillment?.fulfilledAt || priorFulfillment?.claimedAt,
-            agentId: priorFulfillment?.agentId || targetAgentId
-          });
-          return {
-            success: true,
-            alreadyFulfilled: true,
-            creditsGranted: 0,
-            creditsBalance: priorFulfillment?.creditsBalance || 0,
-            agentId: priorFulfillment?.agentId || targetAgentId || undefined,
-            fulfillmentRecord: priorFulfillment
-          };
-        }
       }
     } else {
       // In-memory fallback for testing when Firestore db is not initialized/configured
-      priorFulfillment = fulfilledStripeSessions.get(sessionId);
-      if (priorFulfillment) {
-        const isProcessing = priorFulfillment.status === 'processing';
-        const claimedAtStr = priorFulfillment.claimedAt || priorFulfillment.fulfilledAt;
-        const claimedAtMs = claimedAtStr ? new Date(claimedAtStr).getTime() : 0;
-        const ageMinutes = (Date.now() - claimedAtMs) / (60 * 1000);
-
-        if (isProcessing && ageMinutes > 10) {
-          console.warn(`[fulfillAuthoritativePayment] Sandbox: Reclaiming session ${sessionId}`);
-          priorFulfillment.claimedAt = new Date().toISOString();
-          priorFulfillment.reclaimed = true;
-          fulfilledStripeSessions.set(sessionId, priorFulfillment);
-          claimDocCreated = true;
-        } else {
-          alreadyFulfilled = true;
-        }
-
-        if (alreadyFulfilled) {
-          return {
-            success: true,
-            alreadyFulfilled: true,
-            creditsGranted: 0,
-            creditsBalance: priorFulfillment?.creditsBalance || 0,
-            agentId: priorFulfillment?.agentId || targetAgentId || undefined,
-            fulfillmentRecord: priorFulfillment
-          };
-        }
+      if (fulfilledStripeSessions.has(sessionId)) {
+        priorFulfillment = fulfilledStripeSessions.get(sessionId);
       } else {
         const claimPayload = {
           sessionId,
           agentId: targetAgentId || 'unassigned_purchaser',
           creditsGranted: creditsToAdd,
           status: 'processing',
-          claimedAt: new Date().toISOString(),
-          fulfilledAt: new Date().toISOString()
+          claimedAt: new Date().toISOString()
         };
         fulfilledStripeSessions.set(sessionId, claimPayload);
-        claimDocCreated = true;
       }
     }
 
-    // 5. Grant Credits Once (Atomically into Agent Wallet)
+    // Handle existing claim / recovery path
+    if (priorFulfillment) {
+      if (priorFulfillment.status === 'fulfilled') {
+        logPaymentEvent('duplicate_session', {
+          sessionId,
+          source,
+          priorFulfilledAt: priorFulfillment.fulfilledAt || priorFulfillment.claimedAt,
+          agentId: priorFulfillment.agentId || targetAgentId
+        });
+        return {
+          success: true,
+          alreadyFulfilled: true,
+          creditsGranted: 0,
+          creditsBalance: priorFulfillment.creditsBalance || 0,
+          agentId: priorFulfillment.agentId || targetAgentId || undefined,
+          fulfillmentRecord: priorFulfillment
+        };
+      }
+
+      // Recovery path (any age — no 10-minute blind regrant):
+      // (a) Check the ledger for the session's grant
+      const existingLedger = await findStripePurchaseLedgerEntry(sessionId);
+      if (existingLedger) {
+        // (b) Grant present -> write 'fulfilled', return alreadyFulfilled with 0 new credits
+        let currentBalance = existingLedger.balanceAfter || 0;
+        if (targetAgentId && inMemoryWalletRegistry.has(targetAgentId)) {
+          currentBalance = inMemoryWalletRegistry.get(targetAgentId)!.creditsBalance;
+        }
+        const healedRecord: StripeFulfillmentRecord = {
+          sessionId,
+          stripeEventId: eventId || (source === 'webhook' ? 'unknown_event' : 'verify_session'),
+          agentId: targetAgentId || priorFulfillment.agentId || 'unassigned_purchaser',
+          creditsGranted: creditsToAdd,
+          creditsBalance: currentBalance,
+          amountUsd: catalogItem.priceUsd,
+          amount: catalogItem.priceUsd,
+          amountCents: catalogItem.amountCents,
+          currency: catalogItem.currency,
+          productId: catalogItem.productId,
+          status: 'fulfilled',
+          fulfilledAt: new Date().toISOString()
+        };
+        await setFulfilledStripeSessionAsync(sessionId, healedRecord);
+        await setRecordedStripeSessionAsync(sessionId, session);
+        return {
+          success: true,
+          alreadyFulfilled: true,
+          creditsGranted: 0,
+          creditsBalance: currentBalance,
+          agentId: healedRecord.agentId,
+          fulfillmentRecord: healedRecord
+        };
+      }
+      // (c) Grant absent -> proceed below to perform the grant once, then write 'fulfilled'
+    }
+
+    // Before granting, check the double-entry ledger as single source of truth for "did money move"
+    const preCheckLedger = await findStripePurchaseLedgerEntry(sessionId);
+    if (preCheckLedger) {
+      let currentBalance = preCheckLedger.balanceAfter || 0;
+      if (targetAgentId && inMemoryWalletRegistry.has(targetAgentId)) {
+        currentBalance = inMemoryWalletRegistry.get(targetAgentId)!.creditsBalance;
+      }
+      const healedRecord: StripeFulfillmentRecord = {
+        sessionId,
+        stripeEventId: eventId || (source === 'webhook' ? 'unknown_event' : 'verify_session'),
+        agentId: targetAgentId || 'unassigned_purchaser',
+        creditsGranted: creditsToAdd,
+        creditsBalance: currentBalance,
+        amountUsd: catalogItem.priceUsd,
+        amount: catalogItem.priceUsd,
+        amountCents: catalogItem.amountCents,
+        currency: catalogItem.currency,
+        productId: catalogItem.productId,
+        status: 'fulfilled',
+        fulfilledAt: new Date().toISOString()
+      };
+      await setFulfilledStripeSessionAsync(sessionId, healedRecord);
+      await setRecordedStripeSessionAsync(sessionId, session);
+      return {
+        success: true,
+        alreadyFulfilled: true,
+        creditsGranted: 0,
+        creditsBalance: currentBalance,
+        agentId: healedRecord.agentId,
+        fulfillmentRecord: healedRecord
+      };
+    }
+
+    // Transition state to 'granting' in Firestore and memory BEFORE wallet mutation
+    const grantingPayload = {
+      status: 'granting' as const,
+      grantingAt: new Date().toISOString()
+    };
+    if (db) {
+      try {
+        await db.collection('fulfilled_stripe_sessions').doc(sessionId).set(grantingPayload, { merge: true });
+      } catch (err) {
+        console.error(`[fulfillAuthoritativePayment] failed to set granting state for ${sessionId}:`, err);
+      }
+    }
+    const curMem = fulfilledStripeSessions.get(sessionId) || {
+      sessionId,
+      agentId: targetAgentId || 'unassigned_purchaser',
+      creditsGranted: creditsToAdd,
+      fulfilledAt: new Date().toISOString()
+    };
+    fulfilledStripeSessions.set(sessionId, { ...curMem, ...grantingPayload });
+
+    // 5. Grant Credits Once (Atomically into Agent Wallet with sessionId recorded in ledger)
     let finalBalance = 0;
     try {
       if (creditsToAdd > 0 && targetAgentId) {
@@ -984,7 +1056,7 @@ export async function fulfillAuthoritativePayment(params: {
           });
         }
 
-        const grantResult = await addCreditsToAgentWallet(targetAgentId, creditsToAdd, 'STRIPE_PURCHASE');
+        const grantResult = await addCreditsToAgentWallet(targetAgentId, creditsToAdd, 'STRIPE_PURCHASE', { sessionId });
         if (!grantResult.success) {
           logPaymentEvent('checkout_failed', {
             sessionId,
@@ -992,10 +1064,15 @@ export async function fulfillAuthoritativePayment(params: {
             agentId: targetAgentId,
             error: grantResult.error
           });
-          if (db && claimDocCreated) {
-            await db.collection('fulfilled_stripe_sessions').doc(sessionId).delete().catch(() => {});
+          const failedPayload = {
+            status: 'failed' as const,
+            error: grantResult.error || 'Failed to grant credits to agent wallet',
+            failedAt: new Date().toISOString()
+          };
+          if (db) {
+            await db.collection('fulfilled_stripe_sessions').doc(sessionId).set(failedPayload, { merge: true }).catch(() => {});
           }
-          fulfilledStripeSessions.delete(sessionId);
+          fulfilledStripeSessions.set(sessionId, { ...curMem, ...failedPayload });
           return {
             success: false,
             alreadyFulfilled: false,
@@ -1010,15 +1087,27 @@ export async function fulfillAuthoritativePayment(params: {
         const currentWallet = inMemoryWalletRegistry.get(targetAgentId);
         finalBalance = currentWallet ? currentWallet.creditsBalance : 0;
       }
-    } catch (grantErr) {
-      if (db && claimDocCreated) {
-        await db.collection('fulfilled_stripe_sessions').doc(sessionId).delete().catch(() => {});
+    } catch (grantErr: any) {
+      const failedPayload = {
+        status: 'failed' as const,
+        error: grantErr?.message || String(grantErr),
+        failedAt: new Date().toISOString()
+      };
+      if (db) {
+        await db.collection('fulfilled_stripe_sessions').doc(sessionId).set(failedPayload, { merge: true }).catch(() => {});
       }
-      fulfilledStripeSessions.delete(sessionId);
-      throw grantErr;
+      fulfilledStripeSessions.set(sessionId, { ...curMem, ...failedPayload });
+      return {
+        success: false,
+        alreadyFulfilled: false,
+        creditsGranted: 0,
+        creditsBalance: 0,
+        error: grantErr?.message || 'Error during credit grant',
+        statusCode: 500
+      };
     }
 
-    // 6. Persist Durable Fulfillment Record (FIX 4)
+    // 6. Transition state to 'fulfilled' (Persist Durable Fulfillment Record)
     const fulfillmentRecord: StripeFulfillmentRecord = {
       sessionId,
       stripeEventId: eventId || (source === 'webhook' ? 'unknown_event' : 'verify_session'),
