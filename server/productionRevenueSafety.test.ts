@@ -10,6 +10,7 @@ import {
   fulfillAuthoritativePayment,
   isProductionEnvironment
 } from './stripeRevenueService.js';
+import { requireX402Payment } from './x402PaymentService.js';
 import {
   recordedStripeSessions,
   fulfilledStripeSessions,

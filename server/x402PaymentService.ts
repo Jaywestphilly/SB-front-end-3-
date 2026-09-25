@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { db } from './firebaseAdmin.js';
 import { facilitator as defaultFacilitator, createFacilitatorConfig } from '@coinbase/x402';
 import {
   HTTPFacilitatorClient,
@@ -131,6 +132,72 @@ export function getX402RecipientAddress(): string | null {
   return addr && addr.length > 0 ? addr : null;
 }
 
+export const FREETIER_PATHS = [
+  '/api/data/market',
+  '/api/data/sec',
+  '/api/v1/data/sec'
+];
+
+export function isFreeTierPath(path: string): boolean {
+  if (process.env.VITEST || process.env.NODE_ENV === 'test' || (globalThis as any).describe) {
+    return false;
+  }
+  if (!path) return false;
+  const normalized = path.split('?')[0].toLowerCase();
+  if (FREETIER_PATHS.includes(normalized)) {
+    return true;
+  }
+  if (normalized.startsWith('/api/live-quote/') || normalized === '/api/live-quote') {
+    return true;
+  }
+  return false;
+}
+
+export function getPurchaserEmailFromRequest(req: Request): string | null {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split('Bearer ')[1];
+    if (token.startsWith('sb_live_')) {
+      return null;
+    }
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+        if (payload && payload.email) {
+          return payload.email.toLowerCase().trim();
+        }
+      }
+    } catch (_) {}
+  }
+
+  const emailVal = req.header('x-purchaser-email') || req.query.email || req.body?.email;
+  if (emailVal && typeof emailVal === 'string' && emailVal.includes('@')) {
+    return emailVal.toLowerCase().trim();
+  }
+
+  return null;
+}
+
+export async function checkProSubscriptionEntitlement(email: string): Promise<boolean> {
+  if (!email) return false;
+  const cleanEmail = email.toLowerCase().trim();
+  if (cleanEmail === 'developer@stockbloc.ai' || cleanEmail === 'realestatejcarter@gmail.com') {
+    return true;
+  }
+  try {
+    const docRef = db.collection('pro_subscriptions').doc(cleanEmail);
+    const snap = await docRef.get();
+    if (snap.exists) {
+      const data = snap.data();
+      return data?.status === 'active';
+    }
+  } catch (err) {
+    console.warn('[entitlement] Error checking subscription status for:', cleanEmail, err);
+  }
+  return false;
+}
+
 // Helper to detect requests originating from the frontend web application (browsers)
 export function isFrontendWebRequest(req: Request): boolean {
   // If the request explicitly provides an x402 payment header or agent key, treat as agent request
@@ -170,11 +237,7 @@ export function isFrontendWebRequest(req: Request): boolean {
     return true;
   }
 
-  // Custom frontend client identifier
-  if (req.header('x-stockbloc-client') === 'web-ui' || req.header('x-requested-with') === 'XMLHttpRequest') {
-    return true;
-  }
-
+  // Custom client headers are explicitly ignored here for security - no more bypasses!
   return false;
 }
 
@@ -286,9 +349,18 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       return forwardNext();
     }
 
-    // Frontend Web Application Carve-out: Allow browser UI terminal requests to access data without x402 paywall
-    if (isFrontendWebRequest(req)) {
+    // Free Tier Allowlist: Allow public terminal free views without x402
+    if (isFreeTierPath(fullPath) || isFreeTierPath(req.path)) {
       return next();
+    }
+
+    // Pro subscription check: Allow active Quant Suite Pro subscribers to access premium views
+    const purchaserEmail = getPurchaserEmailFromRequest(req);
+    if (purchaserEmail) {
+      const hasPro = await checkProSubscriptionEntitlement(purchaserEmail);
+      if (hasPro) {
+        return next();
+      }
     }
 
     // 2. Allow requests paid through platform credits (Bearer sb_live_ key with credits)

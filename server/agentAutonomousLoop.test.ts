@@ -6,7 +6,11 @@ import {
   inMemoryAgentRegistry,
   inMemoryKeyRegistry,
   PLATFORM_TREASURY_ACCOUNT_ID,
-  PLATFORM_ECONOMICS
+  PLATFORM_ECONOMICS,
+  inMemorySettlementRegistry,
+  inMemorySettlementLocks,
+  inMemoryLedgerRegistry,
+  inMemoryTransactionRegistry
 } from './agentExchangeApi.js';
 import { generateApiKeyPair, hashSecret, constantTimeCompare } from './agentSecurity.js';
 import { PolkadotUsdcPaymentProvider, clearPolkadotReplayRegistry } from './polkadotPaymentProvider.js';
@@ -35,6 +39,10 @@ describe('Autonomous Agent Marketplace & Economic Network Loop', () => {
     inMemoryWalletRegistry.clear();
     inMemoryAgentRegistry.clear();
     inMemoryKeyRegistry.clear();
+    inMemorySettlementRegistry.clear();
+    inMemorySettlementLocks.clear();
+    inMemoryLedgerRegistry.clear();
+    inMemoryTransactionRegistry.clear();
     clearPolkadotReplayRegistry();
 
     // Fund buyer with 1,000 credits

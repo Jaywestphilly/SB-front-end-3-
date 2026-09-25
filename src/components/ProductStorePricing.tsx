@@ -149,15 +149,15 @@ export const ProductStorePricing: React.FC<Props> = ({
     id: "subscription_pro_yearly",
     title: "Quant Suite Pro Subscription (Yearly)",
     category: "subscription",
-    price: 5,
-    displayPrice: "$5/yr",
+    price: 50,
+    displayPrice: "$50/yr",
     billingPeriod: "yearly",
     features: [
-      "Includes All Monthly Pro Features (Special $5 Flash Pricing!)",
+      "Includes All Monthly Pro Features (Save with Annual Pricing!)",
       "Real-Time RSI & Volatility Alerts",
       "13F Whale Accumulation Webhook Alerts",
       "Unlimited Saved Portfolios in 'My Bloc'",
-      "75,000 Annual API Credits Included for AI Agents",
+      "60,000 Annual API Credits Included for AI Agents",
     ],
   };
 

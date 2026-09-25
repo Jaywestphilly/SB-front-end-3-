@@ -24,7 +24,8 @@ vi.mock('./firebaseAdmin.js', () => {
     users: new Map(),
     api_keys: new Map(),
     chats: new Map(),
-    discussions: new Map()
+    discussions: new Map(),
+    pro_subscriptions: new Map()
   };
 
   const getDoc = vi.fn((collection: string, id: string) => {
@@ -54,7 +55,7 @@ vi.mock('./firebaseAdmin.js', () => {
   return {
     auth: {
       verifyIdToken: vi.fn(async (token) => {
-        if (token === 'valid_human_token') return { uid: 'human_uid_123' };
+        if (token === 'valid_human_token') return { uid: 'human_uid_123', email: 'alice@legit.com' };
         throw new Error('Invalid token');
       })
     },
@@ -97,6 +98,11 @@ describe('Agent Platform API', () => {
   beforeAll(() => {
     dbStore.users.clear();
     dbStore.api_keys.clear();
+    if (!dbStore.pro_subscriptions) {
+      dbStore.pro_subscriptions = new Map();
+    }
+    dbStore.pro_subscriptions.clear();
+    dbStore.pro_subscriptions.set('alice@legit.com', { email: 'alice@legit.com', status: 'active' });
   });
 
   let validAgentId: string;

@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-09-25T02:09:16.086Z",
-  "last_successful_update": "2026-09-25T02:09:16.086Z",
+  "updated_at": "2026-09-25T02:24:50.801Z",
+  "last_successful_update": "2026-09-25T02:24:50.801Z",
   "source": "Yahoo Finance chart API",
   "status_label": "fresh",
   "data_age_seconds": 2,
@@ -31,7 +31,7 @@
       "high52": 553.72,
       "low52": 349.2,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 63.57,
         "sma20": 497.14,
@@ -95,10 +95,10 @@
           "url": "https://finnhub.io/api/news?id=0139f6a53715c422e26d455e46ff2e057dfd1b7261e05451cc15eda021c1a5da"
         },
         {
-          "title": "3 British AI Stocks With Revenue Up To £61 Billion",
-          "source": "Yahoo",
-          "time": "2026-09-24T21:19:57.000Z",
-          "url": "https://finnhub.io/api/news?id=e54a10ce5f96c15c135f6ba12d79adb5efdecae6d279e04bc0ada1614f731569"
+          "title": "Tracking Philippe Laffont's Coatue Management Portfolio - Q2 2026 Update",
+          "source": "SeekingAlpha",
+          "time": "2026-09-24T22:05:11.000Z",
+          "url": "https://finnhub.io/api/news?id=6e9876f8563e7716d589129b891f07e0dbfcf101e3b3323e8ee2a3477ba594bf"
         }
       ],
       "sbScore": 84,
@@ -130,7 +130,7 @@
       "high52": 408.61,
       "low52": 235.84,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 49.24,
         "sma20": 346.58,
@@ -182,6 +182,12 @@
       },
       "news": [
         {
+          "title": "S&P 500, Dow, Nasdaq Futures Ease As Treasury Yields Continue To Spike — ORCL, META, AKAM, GOOGL, MGM In Focus",
+          "source": "Yahoo",
+          "time": "2026-09-25T00:12:54.000Z",
+          "url": "https://finnhub.io/api/news?id=a0179787a69f2d16ac3f59ea2ed64bf8031404848f694df72cc375de35c889f3"
+        },
+        {
           "title": "Waymo Takes On Zoox in Las Vegas. Is Alphabet Winning the Robotaxi Race?",
           "source": "Yahoo",
           "time": "2026-09-24T23:54:09.000Z",
@@ -192,12 +198,6 @@
           "source": "Yahoo",
           "time": "2026-09-24T23:51:17.000Z",
           "url": "https://finnhub.io/api/news?id=e062e276c43be505082fae73ab19e022dae9eb63b7592461814b91ec37bdb8af"
-        },
-        {
-          "title": "Waymo is scaling fast. Here’s what the fleet data shows.",
-          "source": "Yahoo",
-          "time": "2026-09-24T23:24:33.000Z",
-          "url": "https://finnhub.io/api/news?id=4cb0c20138639c800e4daca16ad7935a08caf8e60f6d981890ef0fe7e77465be"
         }
       ],
       "sbScore": 57,
@@ -229,7 +229,7 @@
       "high52": 287.2,
       "low52": 196,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 57.85,
         "sma20": 251.85,
@@ -287,16 +287,16 @@
           "url": "https://finnhub.io/api/news?id=0d2f875883cb21500af2f5eb5ac190c872a9848b563cc6d44b0120bae782aff8"
         },
         {
+          "title": "Tracking Philippe Laffont's Coatue Management Portfolio - Q2 2026 Update",
+          "source": "SeekingAlpha",
+          "time": "2026-09-24T22:05:11.000Z",
+          "url": "https://finnhub.io/api/news?id=6e9876f8563e7716d589129b891f07e0dbfcf101e3b3323e8ee2a3477ba594bf"
+        },
+        {
           "title": "Blue Origin raises $10B as Bezos’ total investment hits $32B - WSJ",
           "source": "Yahoo",
           "time": "2026-09-24T20:55:21.000Z",
           "url": "https://finnhub.io/api/news?id=387f04adb8e8b251f78e1cd3ae316cabd9ce6cb09ff3c39f8604d61347660364"
-        },
-        {
-          "title": "Shopify Opens Its Doors to Muse, Here’s Why Amazon Won’t",
-          "source": "Yahoo",
-          "time": "2026-09-24T20:43:47.000Z",
-          "url": "https://finnhub.io/api/news?id=eb5b47bca844473dc11b95334d38d958a581d02f76656bf9afddcc1219117af6"
         }
       ],
       "sbScore": 61,
@@ -328,7 +328,7 @@
       "high52": 779.82,
       "low52": 520.26,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 85.54,
         "sma20": 717.27,
@@ -380,6 +380,12 @@
       },
       "news": [
         {
+          "title": "PayPal Holdings (PYPL), What Is Behind The Fresh Attention?",
+          "source": "Yahoo",
+          "time": "2026-09-25T01:14:37.000Z",
+          "url": "https://finnhub.io/api/news?id=67d0810c6e025722f5dc614f9fcda5eaa56382eb04eb564ed757548c14638bfb"
+        },
+        {
           "title": "Why Etsy (ETSY) Stock Is Trading Lower Today",
           "source": "Yahoo",
           "time": "2026-09-25T00:40:58.000Z",
@@ -390,12 +396,6 @@
           "source": "Yahoo",
           "time": "2026-09-25T00:24:58.000Z",
           "url": "https://finnhub.io/api/news?id=2fee4a6058cc51539ab2d089035fd0dcd5be83d4d1a61ce5b8fb6dc9e62f11f4"
-        },
-        {
-          "title": "Unity Software (U) Opens Day One VR Glasses Tools For Next Hardware Launch",
-          "source": "Yahoo",
-          "time": "2026-09-25T00:17:55.000Z",
-          "url": "https://finnhub.io/api/news?id=eee037fb99b810f9fa92732e7072fe73fd5b67ba626142e7ac0d0b2fcafd4d32"
         }
       ],
       "sbScore": 76,
@@ -424,7 +424,7 @@
       "avgVolume": 56326792,
       "high52": 322.54,
       "low52": 114.5,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -521,7 +521,7 @@
       "avgVolume": 7356053,
       "high52": 192.67,
       "low52": 91.99,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -618,7 +618,7 @@
       "avgVolume": 396083,
       "high52": 87.68,
       "low52": 52.84,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -718,7 +718,7 @@
       "high52": 153.2,
       "low52": 60.55,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 74.71,
         "sma20": 84.83,
@@ -817,7 +817,7 @@
       "high52": 345.34,
       "low52": 243.42,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 63.59,
         "sma20": 336.74,
@@ -916,7 +916,7 @@
       "high52": 498.83,
       "low52": 297.38,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 85.36,
         "sma20": 371.54,
@@ -1015,7 +1015,7 @@
       "high52": 225.64,
       "low52": 104.83,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 41.34,
         "sma20": 151.62,
@@ -1188,7 +1188,7 @@
       "avgVolume": 1583790,
       "high52": 412.7,
       "low52": 228.63,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -1204,10 +1204,10 @@
           "url": "https://finnhub.io/api/news?id=950c2a8d79dc3a32d3d9247aae2f0615f6ca6e821de1ddd22b6abb5b7a4113b1"
         },
         {
-          "title": "NuScale Power Stock Is Just One Of 3 Top Nuclear Stocks",
-          "source": "Yahoo",
-          "time": "2026-09-24T01:17:15.000Z",
-          "url": "https://finnhub.io/api/news?id=868ce76818f18d69a6444d32c432ca76860b0329f40cdf93752601f763437f05"
+          "title": "Tracking Philippe Laffont's Coatue Management Portfolio - Q2 2026 Update",
+          "source": "SeekingAlpha",
+          "time": "2026-09-24T22:05:11.000Z",
+          "url": "https://finnhub.io/api/news?id=6e9876f8563e7716d589129b891f07e0dbfcf101e3b3323e8ee2a3477ba594bf"
         }
       ],
       "quant": {
@@ -1288,7 +1288,7 @@
       "high52": 217.1,
       "low52": 132.66,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 36.4,
         "sma20": 140.25,
@@ -1340,6 +1340,12 @@
       },
       "news": [
         {
+          "title": "VST Keeps Writing Checks To Its Shareholders",
+          "source": "Yahoo",
+          "time": "2026-09-25T00:30:14.000Z",
+          "url": "https://finnhub.io/api/news?id=5d5515974f544c22621f09b4dc83ffdd92659920af748a088ae26d1b9536ad20"
+        },
+        {
           "title": "Energy Transition Update - Fashion Industry Joins Forces For Renewable Energy Revolution",
           "source": "Yahoo",
           "time": "2026-09-24T11:37:02.000Z",
@@ -1350,12 +1356,6 @@
           "source": "Yahoo",
           "time": "2026-09-23T21:45:06.000Z",
           "url": "https://finnhub.io/api/news?id=52951f15b2ba2d4fb4871c1593173339dc9a7c8d588dc535c216a2f7df7ce6e1"
-        },
-        {
-          "title": "New Era Energy & Digital Is Up by More Than 60% This Month. Here's What's Fueling the Rally.",
-          "source": "Yahoo",
-          "time": "2026-09-23T08:41:00.000Z",
-          "url": "https://finnhub.io/api/news?id=4dc0c9bbe26202a9dae575a88543e2772078335c89e270e9973df8d51e60fc3e"
         }
       ],
       "sbScore": 47,
@@ -1384,7 +1384,7 @@
       "avgVolume": 465217,
       "high52": 451.28,
       "low52": 279.77,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -1484,7 +1484,7 @@
       "high52": 351.28,
       "low52": 66.62,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 46.39,
         "sma20": 272.52,
@@ -1536,6 +1536,12 @@
       },
       "news": [
         {
+          "title": "Bloom Energy's Backlog Is 5 Times This Year's Expected Revenue. Here's How Fast It Can Actually Build.",
+          "source": "Yahoo",
+          "time": "2026-09-25T00:47:01.000Z",
+          "url": "https://finnhub.io/api/news?id=5c725aeec8dcbe92f5c3b808a1ab08f8544712f85fc44a470430a538a438c50d"
+        },
+        {
           "title": "JELD-WEN, Shoals, Advanced Energy, American Superconductor, and Bloom Energy Shares Plummet, What You Need To Know",
           "source": "Yahoo",
           "time": "2026-09-25T00:08:58.000Z",
@@ -1546,12 +1552,6 @@
           "source": "Yahoo",
           "time": "2026-09-24T21:48:51.000Z",
           "url": "https://finnhub.io/api/news?id=78238e26136a0958e886dd7b0985f3367f77c2ddd56135f7b81615238bc1bd03"
-        },
-        {
-          "title": "Oracle’s Data Center Delay Warning Rattles AI Partners Like Bloom Energy",
-          "source": "Yahoo",
-          "time": "2026-09-24T21:12:00.000Z",
-          "url": "https://finnhub.io/api/news?id=dacfce524b5d27dd2e7d5cc0ba1865c689280c0deaec6752f1dd708e8a683b2d"
         }
       ],
       "sbScore": 59,
@@ -1580,7 +1580,7 @@
       "avgVolume": 33434732,
       "high52": 57.42,
       "low52": 7.21,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -1677,7 +1677,7 @@
       "avgVolume": 7327616,
       "high52": 193.84,
       "low52": 34.38,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -1774,9 +1774,15 @@
       "avgVolume": 15060345,
       "high52": 98.75,
       "low52": 73.59,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "VST Keeps Writing Checks To Its Shareholders",
+          "source": "Yahoo",
+          "time": "2026-09-25T00:30:14.000Z",
+          "url": "https://finnhub.io/api/news?id=5d5515974f544c22621f09b4dc83ffdd92659920af748a088ae26d1b9536ad20"
+        },
         {
           "title": "NextEra Energy (NEE) Dips More Than Broader Market: What You Should Know",
           "source": "Yahoo",
@@ -1788,12 +1794,6 @@
           "source": "Yahoo",
           "time": "2026-09-24T16:21:00.000Z",
           "url": "https://finnhub.io/api/news?id=af5ab1a265dbacfe29ed66f0a57b6a58c77f1a33fcde3a58355ceeca34f37b64"
-        },
-        {
-          "title": "NextEra Stock Has Fallen 22% From Its High. Is the Selloff a Buying Opportunity?",
-          "source": "Yahoo",
-          "time": "2026-09-24T15:28:02.000Z",
-          "url": "https://finnhub.io/api/news?id=566e19d9cbed173b0bebb4189d4ad8388e3d16f157bed92f9dc1158c9a65bbf4"
         }
       ],
       "quant": {
@@ -1871,26 +1871,26 @@
       "avgVolume": 1361498,
       "high52": 478,
       "low52": 311.92,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "What Could Go Wrong With Eaton Stock?",
+          "source": "Yahoo",
+          "time": "2026-09-25T00:48:24.000Z",
+          "url": "https://finnhub.io/api/news?id=b3d444233e152c24259d1c1c771d1186b13b45fda25a4a71b8c3aaf0a8adf179"
+        },
+        {
+          "title": "Tracking Philippe Laffont's Coatue Management Portfolio - Q2 2026 Update",
+          "source": "SeekingAlpha",
+          "time": "2026-09-24T22:05:11.000Z",
+          "url": "https://finnhub.io/api/news?id=6e9876f8563e7716d589129b891f07e0dbfcf101e3b3323e8ee2a3477ba594bf"
+        },
         {
           "title": "Could Eaton Corporation (ETN)’s $242 Million Expansion Power its Next Data Center Growth Phase?",
           "source": "Yahoo",
           "time": "2026-09-24T20:30:59.000Z",
           "url": "https://finnhub.io/api/news?id=258b1d0a9627471d10a913c5681b50f7317b85b18102f10dcb8cdaed9793fde1"
-        },
-        {
-          "title": "4 Manufacturing Electronics Stocks to Watch on Promising Industry Trends",
-          "source": "Yahoo",
-          "time": "2026-09-24T13:17:00.000Z",
-          "url": "https://finnhub.io/api/news?id=69871ff9aa690e9cc32230fd8b4bc28a116f75f725f0e7b5b9da012a9e7ed7be"
-        },
-        {
-          "title": "Ampace to Spotlight Modular AI Data Center Power at Data Center World Asia (DCWA)",
-          "source": "Yahoo",
-          "time": "2026-09-24T01:00:00.000Z",
-          "url": "https://finnhub.io/api/news?id=d34d4681dedad437c5dce01dbcbe47e70eb8c93499f3f82a9c03110379018b59"
         }
       ],
       "quant": {
@@ -1968,9 +1968,15 @@
       "avgVolume": 1674455,
       "high52": 1195.94,
       "low52": 530.16,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "Tracking Philippe Laffont's Coatue Management Portfolio - Q2 2026 Update",
+          "source": "SeekingAlpha",
+          "time": "2026-09-24T22:05:11.000Z",
+          "url": "https://finnhub.io/api/news?id=6e9876f8563e7716d589129b891f07e0dbfcf101e3b3323e8ee2a3477ba594bf"
+        },
         {
           "title": "GE Vernova Falls 1.3% as $200 Billion Backlog Test Approaches",
           "source": "Yahoo",
@@ -1982,12 +1988,6 @@
           "source": "Yahoo",
           "time": "2026-09-24T16:45:00.000Z",
           "url": "https://finnhub.io/api/news?id=5a061ec186469f1039331b28882ae06bad0688425dcaf85517d73ff1dfe7afb9"
-        },
-        {
-          "title": "GE Vernova vs. Duke Energy: Which Power Stock Is a Better Pick Today?",
-          "source": "Yahoo",
-          "time": "2026-09-24T15:45:00.000Z",
-          "url": "https://finnhub.io/api/news?id=311d7f66f1c1fdc3cf1d03204df3eac99709268f32c19fc857e6996ce685dd17"
         }
       ],
       "quant": {
@@ -2065,7 +2065,7 @@
       "avgVolume": 794711,
       "high52": 788.75,
       "low52": 399.18,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -2162,7 +2162,7 @@
       "avgVolume": 323852,
       "high52": 951.96,
       "low52": 564.92,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -2259,7 +2259,7 @@
       "avgVolume": 212780,
       "high52": 2073.99,
       "low52": 757,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -2356,7 +2356,7 @@
       "avgVolume": 375876,
       "high52": 565.5,
       "low52": 403.82,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -2456,7 +2456,7 @@
       "high52": 328,
       "low52": 92.59,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 91.89,
         "sma20": 183.08,
@@ -2552,7 +2552,7 @@
       "avgVolume": 2116400,
       "high52": 1073.46,
       "low52": 459.58,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 73.68,
@@ -2607,22 +2607,22 @@
       "bloc": "tsunami",
       "news": [
         {
-          "title": "Barron's 400 ETF (BFOR) Adds Energy and Materials, Reduces Utilities and Consumer Discretionary in Fall Rebalance",
+          "title": "Retired at 67 With $900K? These 3 ETFs Generate Your Tax Bill Without Selling Stock",
           "source": "Yahoo",
-          "time": "2026-09-24T13:45:00.000Z",
-          "url": "https://finnhub.io/api/news?id=de7a7fb8877f3fae14b4e4a574480c5812b0f81795adb3ef7270a6faf7b57bc1"
+          "time": "2026-09-24T22:30:39.000Z",
+          "url": "https://finnhub.io/api/news?id=411cb0ff37f6295e3cd3a90208a5d17b12113b5170b2465d74cc940ef447125e"
         },
         {
-          "title": "UBS sees rising reliance on AI capex as a key growth risk",
-          "source": "Yahoo",
-          "time": "2026-09-24T13:40:45.000Z",
-          "url": "https://finnhub.io/api/news?id=7ad96fc29a5c6f093dae42283774de3bdbcc35b558d8cd7e8fd8411d231e4e0e"
+          "title": "Stay informed with the top movers within the dow jones index on Thursday.",
+          "source": "ChartMill",
+          "time": "2026-09-24T19:10:10.000Z",
+          "url": "https://finnhub.io/api/news?id=39315ae599bd174ef47d4654149a800f3939b9271d7fc496d8612dfacb99059d"
         },
         {
-          "title": "Caterpillar vs. Corning: Which Industrials Stock Is a Better Buy in 2026?",
+          "title": "Is Caterpillar the Best Industrials Stock to Buy Right Now?",
           "source": "Yahoo",
-          "time": "2026-09-24T13:35:01.000Z",
-          "url": "https://finnhub.io/api/news?id=995a7809a88188a458314882b0ddc039e8527089e1ebb79ef2d00f1b996a4d74"
+          "time": "2026-09-24T17:35:00.000Z",
+          "url": "https://finnhub.io/api/news?id=e9b43cffc5aa175fbb0a81780e7edf48c2bdfa9dcb6b96ea9feca15c8d3047aa"
         }
       ]
     },
@@ -2649,9 +2649,15 @@
       "avgVolume": 1181634,
       "high52": 737.76,
       "low52": 400.72,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "What Could Go Wrong With Eaton Stock?",
+          "source": "Yahoo",
+          "time": "2026-09-25T00:48:24.000Z",
+          "url": "https://finnhub.io/api/news?id=b3d444233e152c24259d1c1c771d1186b13b45fda25a4a71b8c3aaf0a8adf179"
+        },
         {
           "title": "Cummins (CMI) Looks Undervalued On Paper, Is The Pullback A Buying Opportunity?",
           "source": "Yahoo",
@@ -2663,12 +2669,6 @@
           "source": "Yahoo",
           "time": "2026-09-24T16:53:38.000Z",
           "url": "https://finnhub.io/api/news?id=496c0372f681b8967995bb75fb9835f26b307ae9694c49ee4930ccb71b117c09"
-        },
-        {
-          "title": "Why Oracle’s Data Center Issue Is a Problem for GE Vernova",
-          "source": "Yahoo",
-          "time": "2026-09-24T16:45:00.000Z",
-          "url": "https://finnhub.io/api/news?id=5a061ec186469f1039331b28882ae06bad0688425dcaf85517d73ff1dfe7afb9"
         }
       ],
       "quant": {
@@ -2746,7 +2746,7 @@
       "avgVolume": 4118862,
       "high52": 379.94,
       "low52": 133.85,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -2846,7 +2846,7 @@
       "high52": 323.25,
       "low52": 111.18,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 83.36,
         "sma20": 188.76,
@@ -2945,7 +2945,7 @@
       "high52": 184.64,
       "low52": 93.22,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 100,
         "sma20": 155.55,
@@ -3041,7 +3041,7 @@
       "avgVolume": 34371470,
       "high52": 58.78,
       "low52": 19.48,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -3138,7 +3138,7 @@
       "avgVolume": 3556081,
       "high52": 214.89,
       "low52": 114.52,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -3235,7 +3235,7 @@
       "avgVolume": 20865350,
       "high52": 495,
       "low52": 289.96,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -3245,16 +3245,16 @@
           "url": "https://finnhub.io/api/news?id=bacbc7bbdfb056628af57fb2c506c3609de6baafa584ca4f0fd3e0b134f7302f"
         },
         {
+          "title": "Tracking Philippe Laffont's Coatue Management Portfolio - Q2 2026 Update",
+          "source": "SeekingAlpha",
+          "time": "2026-09-24T22:05:11.000Z",
+          "url": "https://finnhub.io/api/news?id=6e9876f8563e7716d589129b891f07e0dbfcf101e3b3323e8ee2a3477ba594bf"
+        },
+        {
           "title": "Broadcom (AVGO) Stock May Be 24% Undervalued Following Fresh AI Demand Fears",
           "source": "Yahoo",
           "time": "2026-09-24T21:16:44.000Z",
           "url": "https://finnhub.io/api/news?id=44db05e99983d5ff4a00c64a9fd426a0cf3dc8f281fd14b9afd9d98019532a78"
-        },
-        {
-          "title": "Broadcom's Latest Prediction Makes the Stock a No-Brainer Buy Right Now",
-          "source": "Yahoo",
-          "time": "2026-09-24T20:43:00.000Z",
-          "url": "https://finnhub.io/api/news?id=6afeeb919aaa50f703383f7a42c0fba594aa8b52f15277aeb92ae420d329f8b1"
         }
       ],
       "quant": {
@@ -3332,7 +3332,7 @@
       "avgVolume": 13351419,
       "high52": 329.88,
       "low52": 70.69,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -3429,7 +3429,7 @@
       "avgVolume": 4919511,
       "high52": 440,
       "low52": 104.78,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -3526,7 +3526,7 @@
       "avgVolume": 5770656,
       "high52": 308.67,
       "low52": 86.48,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -3623,7 +3623,7 @@
       "avgVolume": 436348,
       "high52": 155.82,
       "low52": 69.41,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -3711,7 +3711,7 @@
       "high52": 1085.68,
       "low52": 147.81,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 54.3,
         "sma20": 930.02,
@@ -3810,7 +3810,7 @@
       "high52": 233.67,
       "low52": 18.5,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 60.96,
         "sma20": 102.53,
@@ -3909,7 +3909,7 @@
       "high52": 20.81,
       "low52": 3.87,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 60.48,
         "sma20": 7.83,
@@ -3999,7 +3999,7 @@
       "avgVolume": 2274815,
       "high52": 18.71,
       "low52": 2.84,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -4084,7 +4084,7 @@
       "avgVolume": 28879485,
       "high52": 130.37,
       "low52": 66.81,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -4181,7 +4181,7 @@
       "avgVolume": 1398226,
       "high52": 637.51,
       "low52": 138.12,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -4281,7 +4281,7 @@
       "high52": 236.54,
       "low52": 164.27,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 77.73,
         "sma20": 223.12,
@@ -4380,7 +4380,7 @@
       "high52": 630.8,
       "low52": 157.05,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 93.22,
         "sma20": 585.8,
@@ -4479,7 +4479,7 @@
       "high52": 479,
       "low52": 266.82,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 87.74,
         "sma20": 439.64,
@@ -4543,10 +4543,10 @@
           "url": "https://finnhub.io/api/news?id=4a3d6894884d3cb56ff01a9667e356a3e39dab6c0fffed97a8463dcdaf9bd200"
         },
         {
-          "title": "Taiwan Semiconductor: AI Hiccups Lately, But Strong Growth Persists",
+          "title": "Tracking Philippe Laffont's Coatue Management Portfolio - Q2 2026 Update",
           "source": "SeekingAlpha",
-          "time": "2026-09-24T21:31:24.000Z",
-          "url": "https://finnhub.io/api/news?id=4f53e542eff5486f5f698ab1f8c77fe90db812188af813b17d5bd400fab6fb17"
+          "time": "2026-09-24T22:05:11.000Z",
+          "url": "https://finnhub.io/api/news?id=6e9876f8563e7716d589129b891f07e0dbfcf101e3b3323e8ee2a3477ba594bf"
         }
       ],
       "sbScore": 79,
@@ -4578,7 +4578,7 @@
       "high52": 1999.96,
       "low52": 935.41,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 87.38,
         "sma20": 1668.82,
@@ -4630,6 +4630,12 @@
       },
       "news": [
         {
+          "title": "Tracking Philippe Laffont's Coatue Management Portfolio - Q2 2026 Update",
+          "source": "SeekingAlpha",
+          "time": "2026-09-24T22:05:11.000Z",
+          "url": "https://finnhub.io/api/news?id=6e9876f8563e7716d589129b891f07e0dbfcf101e3b3323e8ee2a3477ba594bf"
+        },
+        {
           "title": "Is Taiwan Semiconductor (TSM) Stock a Better Bet than ASML Holding (ASML) as Advanced Chipmaking Accelerates?",
           "source": "Yahoo",
           "time": "2026-09-24T21:05:04.000Z",
@@ -4640,12 +4646,6 @@
           "source": "Yahoo",
           "time": "2026-09-24T19:18:25.000Z",
           "url": "https://finnhub.io/api/news?id=d9165d492964d4c0bd0e85929c12a3770cfd4fb5a94386e5fb6c8d98dd456390"
-        },
-        {
-          "title": "Don’t wait for cheaper stocks — Rebecca Walser on stocks to buy now",
-          "source": "Yahoo",
-          "time": "2026-09-24T17:33:14.000Z",
-          "url": "https://finnhub.io/api/news?id=81a638b66a4e6cdec948a3d00470dd38bc551990abcef6c084f666164be6d0e2"
         }
       ],
       "sbScore": 76,
@@ -4674,7 +4674,7 @@
       "avgVolume": 4154686,
       "high52": 739.67,
       "low52": 196.2,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 99.78,
@@ -4771,7 +4771,7 @@
       "avgVolume": 7551797,
       "high52": 438.5,
       "low52": 126.37,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 91.65,
@@ -4832,16 +4832,16 @@
           "url": "https://finnhub.io/api/news?id=72622cb2bf1789fc02dcaf33d3430fc28b14de55f1257e2cd5e97ebb44168dfa"
         },
         {
+          "title": "Tracking Philippe Laffont's Coatue Management Portfolio - Q2 2026 Update",
+          "source": "SeekingAlpha",
+          "time": "2026-09-24T22:05:11.000Z",
+          "url": "https://finnhub.io/api/news?id=6e9876f8563e7716d589129b891f07e0dbfcf101e3b3323e8ee2a3477ba594bf"
+        },
+        {
           "title": "Richard Ross Names Semiconductor Equipment And Memory Buys",
           "source": "Yahoo",
           "time": "2026-09-24T14:36:30.000Z",
           "url": "https://finnhub.io/api/news?id=eaff5dce19bb5413cb2c8ca2f8714c19d16ceafa62782b76aa620fcb01b2a200"
-        },
-        {
-          "title": "Wondering what's happening in today's S&P500  pre-market session?",
-          "source": "ChartMill",
-          "time": "2026-09-24T12:35:01.000Z",
-          "url": "https://finnhub.io/api/news?id=e36f17a0a336c936e7bcf62e255c87584a2afb5e2fb83f8131263752f543b5ab"
         }
       ]
     },
@@ -4868,7 +4868,7 @@
       "avgVolume": 7779973,
       "high52": 307.37,
       "low52": 98.1,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 93.56,
@@ -4968,7 +4968,7 @@
       "high52": 147.4,
       "low52": 18.7,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 100,
         "sma20": 91.66,
@@ -5064,7 +5064,7 @@
       "avgVolume": 7927868,
       "high52": 595.51,
       "low52": 110.22,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -5161,7 +5161,7 @@
       "avgVolume": 9485249,
       "high52": 452.7,
       "low52": 100.02,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -5258,7 +5258,7 @@
       "avgVolume": 2472557,
       "high52": 416.69,
       "low52": 262.75,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -5355,9 +5355,15 @@
       "avgVolume": 1713296,
       "high52": 539.48,
       "low52": 362.55,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
+        {
+          "title": "How Much Could You Make If Synopsys Stock Rebounds From Here?",
+          "source": "Yahoo",
+          "time": "2026-09-25T00:37:37.000Z",
+          "url": "https://finnhub.io/api/news?id=a447084de4abb1f2958c1c72245a33e9622fe7f0ad9ed2c73b8515bc3435d9cb"
+        },
         {
           "title": "What Could Send Autodesk Stock Higher?",
           "source": "Yahoo",
@@ -5369,12 +5375,6 @@
           "source": "Yahoo",
           "time": "2026-09-23T19:01:00.000Z",
           "url": "https://finnhub.io/api/news?id=b05add188bbb24947755dcc040c2c0770f87297ac5d7f61db04832c41a0e5121"
-        },
-        {
-          "title": "Alchip Collaborates With Synopsys To Address Scale Up And Out Bandwidth Constraints; Collaboration Features High-Speed SerDes, Advanced Packaging And SI/PI Expertise",
-          "source": "Benzinga",
-          "time": "2026-09-23T15:14:05.000Z",
-          "url": "https://finnhub.io/api/news?id=825c51cc2d2e7fc73f379381705f377d23fc97c3cf378c9dc4f25739e3adf4d3"
         }
       ],
       "quant": {
@@ -5455,7 +5455,7 @@
       "high52": 207.52,
       "low52": 106.37,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 100,
         "sma20": 182.95,
@@ -5554,7 +5554,7 @@
       "high52": 1255,
       "low52": 155.18,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 88.01,
         "sma20": 1030.34,
@@ -5606,22 +5606,22 @@
       },
       "news": [
         {
-          "title": "Prediction: Micron Stock Will Double Within 2 Years",
+          "title": "Prediction: $5,000 Invested in Micron Today Will Be Worth This Much by 2030",
           "source": "Yahoo",
-          "time": "2026-09-24T13:50:00.000Z",
-          "url": "https://finnhub.io/api/news?id=432e3b73e100ea8a2ec55e8759bb52507ab7415e0962ce73dd89b825611fa114"
+          "time": "2026-09-25T01:20:00.000Z",
+          "url": "https://finnhub.io/api/news?id=30f602d4bea3180a29f7ade70f7d1a442d861a13b99e9b25547321db3159f627"
         },
         {
-          "title": "Several Factors Supports Micron Technology’s (MU) Strengthening Earnings Outlook",
+          "title": "Forget Betting on Micron Alone: The $26B Memory ETF Owns MU, SK Hynix, and Samsung at a September Discount",
           "source": "Yahoo",
-          "time": "2026-09-24T13:19:47.000Z",
-          "url": "https://finnhub.io/api/news?id=12c85bc7ab81fe043fd6feadbddbb09fc3f64c9df993460c0999d6f50bee548b"
+          "time": "2026-09-24T21:31:56.000Z",
+          "url": "https://finnhub.io/api/news?id=55b5aaac9515ac0c6f45386b7227b66c6a1c108bd7e67be7ba0c3e6e378497a8"
         },
         {
-          "title": "Prediction: The Biggest Opportunity in AI Hardware May Still Be NVIDIA",
+          "title": "Western Digital, FormFactor, Penguin Solutions, Himax, and Power Integrations Shares Are Falling, What You Need To Know",
           "source": "Yahoo",
-          "time": "2026-09-24T13:00:29.000Z",
-          "url": "https://finnhub.io/api/news?id=7783f9804013c3dbe7f4f1fbaf2ac40c96d14e3a3d0a1e7bf9e3c15bc5ed7031"
+          "time": "2026-09-24T21:28:58.000Z",
+          "url": "https://finnhub.io/api/news?id=3955641276e9e9fef3486a14cda396d37f4211c2a49f2a81d75ae81576104bfd"
         }
       ],
       "sbScore": 75,
@@ -5650,7 +5650,7 @@
       "avgVolume": 7119933,
       "high52": 799.87,
       "low52": 105.42,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 70.81,
@@ -5750,7 +5750,7 @@
       "high52": 2354.39,
       "low52": 93.53,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 71.21,
         "sma20": 1735.72,
@@ -5915,7 +5915,7 @@
       "avgVolume": 3061032,
       "high52": 1145,
       "low52": 209,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 89.45,
@@ -6012,7 +6012,7 @@
       "avgVolume": 342047,
       "high52": 66.7,
       "low52": 23,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -6103,7 +6103,7 @@
       "avgVolume": 9106753,
       "high52": 80.24,
       "low52": 35.29,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 83.92,
@@ -6200,7 +6200,7 @@
       "avgVolume": 25020442,
       "high52": 151,
       "low52": 37.57,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 75.09,
@@ -6300,7 +6300,7 @@
       "high52": 133.86,
       "low52": 47.5,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 55.09,
         "sma20": 61.02,
@@ -6399,7 +6399,7 @@
       "high52": 30.46,
       "low52": 13.36,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 90,
         "sma20": 17.52,
@@ -6451,22 +6451,22 @@
       },
       "news": [
         {
-          "title": "Fast-Tracking AI Infrastructure: CoreWeave Partners Deliver Data Center Power Early",
-          "source": "Benzinga",
-          "time": "2026-09-10T10:51:53.000Z",
-          "url": "https://finnhub.io/api/news?id=531b2f2af79ef0f2f39f5a82733208d719adb4a51bc99e82070d04313209fad3"
+          "title": "Core Scientific: Texas Data Center Freeze Puts Its AI Growth Story To Test",
+          "source": "SeekingAlpha",
+          "time": "2026-09-24T11:19:49.000Z",
+          "url": "https://finnhub.io/api/news?id=f721a64f5c8a869315e329fdb5e1ab95a9a5d1bddd1f561ed5e86c282e423ca9"
         },
         {
-          "title": "Core Scientific Provides ERCOT Power Status Update For Texas Data Centers: Denton’s 297 MW Approved As Longstanding Load, Pecos’ 600 MW Under Batch Zero Review, Hunt’s 431 MW Advancing With Construction Underway",
-          "source": "Benzinga",
-          "time": "2026-09-10T07:31:14.000Z",
-          "url": "https://finnhub.io/api/news?id=bc2696097f15051025fc25c5497d8ae96bf7d9d01039f4fa888579f9f482b2a6"
-        },
-        {
-          "title": "Core Scientific Director Purchases 7,000 Shares",
+          "title": "UBS turns bullish on five AI data center stocks",
           "source": "Yahoo",
-          "time": "2026-09-08T21:50:01.000Z",
-          "url": "https://finnhub.io/api/news?id=7732ac845e848e4347c1747ea542634485d0a4c8b669d1f272f2571ec1ae5be9"
+          "time": "2026-09-23T19:30:00.000Z",
+          "url": "https://finnhub.io/api/news?id=414efda0ef86f20f6af9bf86e7d9ee6796c70fa2f5700c3f5c182b935acbff38"
+        },
+        {
+          "title": "Should You Sell Your APLD Stock Now?",
+          "source": "Yahoo",
+          "time": "2026-09-23T17:07:19.000Z",
+          "url": "https://finnhub.io/api/news?id=332e24cc3c59f8bba527b250d7a85ce3c9baed5025b3fbb9ea0fa425b58f25bc"
         }
       ],
       "sbScore": 64,
@@ -6495,7 +6495,7 @@
       "avgVolume": 30279081,
       "high52": 76.87,
       "low52": 28.93,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -6595,7 +6595,7 @@
       "high52": 50.73,
       "low52": 19,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
         "rsi14": 73.71,
         "sma20": 27.13,
@@ -6691,7 +6691,7 @@
       "avgVolume": 25821015,
       "high52": 29.84,
       "low52": 10.47,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 63.98,
@@ -6788,7 +6788,7 @@
       "avgVolume": 39876404,
       "high52": 23.45,
       "low52": 6.66,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 78.48,
@@ -6843,30 +6843,30 @@
       "bloc": "tsunami",
       "news": [
         {
-          "title": "Why Is MARA Stock Falling on Thursday?",
-          "source": "Benzinga",
-          "time": "2026-09-10T10:46:51.000Z",
-          "url": "https://finnhub.io/api/news?id=e20f667fa9553523587d3f49ac7db060da4a31d17f597d0949a0042301c2a8c3"
+          "title": "MSTR Stock Has Become One of the Market’s Most Unusual Bets",
+          "source": "Yahoo",
+          "time": "2026-09-24T16:00:47.000Z",
+          "url": "https://finnhub.io/api/news?id=80dcf0c6491764261005d04ef6b120de4dfd10eaabba0c1f976c486e08962033"
         },
         {
-          "title": "Crypto Mining Stocks Rally While Bitcoin Slips: Cipher Mining Jumps 8%, MARA Climbs 6%",
+          "title": "MARA Holdings CEO Frederick Thiel Sells 27,505 Shares",
           "source": "Yahoo",
-          "time": "2026-09-08T19:00:45.000Z",
-          "url": "https://finnhub.io/api/news?id=5bfe8d820873a367ac1395bd9c651f126197ec23b35ee9f0358c678eaa7e7ea7"
+          "time": "2026-09-24T13:19:01.000Z",
+          "url": "https://finnhub.io/api/news?id=46ffbf4b363aefcf1bff7d40a2e59115eb2ab90c22dafc09dff463e346a71d5c"
         },
         {
-          "title": "Brokers Suggest Investing in Marathon Digital (MARA): Read This Before Placing a Bet",
+          "title": "Is Most-Watched Stock Marathon Digital Holdings, Inc. (MARA) Worth Betting on Now?",
           "source": "Yahoo",
-          "time": "2026-09-08T13:30:03.000Z",
-          "url": "https://finnhub.io/api/news?id=331adb9eedeebf9b0af67916bf15713284c3de450dc8de7733a0b5af1ac9ca92"
+          "time": "2026-09-24T12:00:05.000Z",
+          "url": "https://finnhub.io/api/news?id=43a659e2a8c1af71229c4cce4af671529c2d75567d9f37da2197b53ffa24b3b3"
         }
       ]
     },
     {
       "symbol": "BTC-USD",
       "name": "Bitcoin Benchmark",
-      "price": 84752.85,
-      "change": 369.84,
+      "price": 84757.01,
+      "change": 374,
       "percent_change": 0.44,
       "theme": "orange",
       "cardColor": "orange",
@@ -6882,26 +6882,26 @@
         86602.91,
         86172.28,
         84383.01,
-        84752.85
+        84757.01
       ],
       "pinned": false,
       "previousClose": 84383.01,
-      "volume": 36545835008,
-      "avgVolume": 36545835008,
+      "volume": 36615299072,
+      "avgVolume": 36615299072,
       "high52": 126198.07,
       "low52": 57747.77,
       "source": "Yahoo Finance chart API",
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "quant": {
-        "rsi14": 72.73,
-        "sma20": 83598.4,
-        "sma50": 83598.4,
-        "sma200": 83598.4,
-        "priceVsSma20Pct": 1.38,
-        "priceVsSma50Pct": 1.38,
-        "priceVsSma200Pct": 1.38,
+        "rsi14": 72.74,
+        "sma20": 83598.99,
+        "sma50": 83598.99,
+        "sma200": 83598.99,
+        "priceVsSma20Pct": 1.39,
+        "priceVsSma50Pct": 1.39,
+        "priceVsSma200Pct": 1.39,
         "volumeVsAvg20Ratio": 1,
-        "percentile52Week": 39.45,
+        "percentile52Week": 39.46,
         "volatility": 48.27
       },
       "signal": {
@@ -6912,7 +6912,7 @@
             "name": "Momentum",
             "score": 76,
             "weight": 0.25,
-            "detail": "RSI(14): 72.6 with 1D change of +0.44%"
+            "detail": "RSI(14): 73.0 with 1D change of +0.44%"
           },
           {
             "name": "Trend",
@@ -6966,9 +6966,9 @@
     },
     {
       "symbol": "DOT-USD",
-      "price": 1.16,
-      "change": 0.06,
-      "percent_change": 5.14,
+      "price": 1.15,
+      "change": 0.05,
+      "percent_change": 4.71,
       "sector": "Major Indexes & Crypto",
       "analysis_summary": "Heterogeneous Multi-Chain Protocol: Scalable multi-chain architecture, Polkadot 2.0 Agile Coretime, Elastic Scaling, and Gavin Wood JAM (Join-Accumulate Machine) protocol.",
       "sparkline": [
@@ -6978,38 +6978,38 @@
         1.21,
         1.22,
         1.1,
-        1.16
+        1.15
       ],
       "pinned": false,
       "name": "Polkadot Multi-Chain Protocol",
       "previousClose": 1.1,
-      "volume": 176246608,
-      "avgVolume": 176246608,
+      "volume": 176419536,
+      "avgVolume": 176419536,
       "high52": 4.43,
       "low52": 0.73,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
-        "rsi14": 55.17,
+        "rsi14": 53.57,
         "sma20": 1.15,
         "sma50": 1.15,
         "sma200": 1.15,
-        "priceVsSma20Pct": 0.87,
-        "priceVsSma50Pct": 0.87,
-        "priceVsSma200Pct": 0.87,
+        "priceVsSma20Pct": 0,
+        "priceVsSma50Pct": 0,
+        "priceVsSma200Pct": 0,
         "volumeVsAvg20Ratio": 1,
-        "percentile52Week": 11.62,
-        "volatility": 94.4
+        "percentile52Week": 11.35,
+        "volatility": 92.19
       },
       "signal": {
-        "signalScore": 74,
+        "signalScore": 73,
         "signalLabel": "Bullish",
         "components": [
           {
             "name": "Momentum",
-            "score": 88,
+            "score": 84,
             "weight": 0.25,
-            "detail": "RSI(14): 55.2 with 1D change of +5.14%"
+            "detail": "RSI(14): 53.6 with 1D change of +4.71%"
           },
           {
             "name": "Trend",
@@ -7021,7 +7021,7 @@
             "name": "Relative Strength",
             "score": 30,
             "weight": 0.2,
-            "detail": "12th percentile of 52-week corridor"
+            "detail": "11th percentile of 52-week corridor"
           },
           {
             "name": "Volume",
@@ -7036,9 +7036,9 @@
             "detail": "Sparkline variance ~10.9%"
           }
         ],
-        "summary": "SB Score 74/100 (Moderate Bullish / Accumulation) · MOM 22/25, TREND 23/25, REL_STR 6/20, VOL 10/15, VOLATILITY 13/15"
+        "summary": "SB Score 73/100 (Moderate Bullish / Accumulation) · MOM 21/25, TREND 23/25, REL_STR 6/20, VOL 10/15, VOLATILITY 13/15"
       },
-      "sbScore": 74,
+      "sbScore": 73,
       "bloc": "tsunami"
     },
     {
@@ -7064,7 +7064,7 @@
       "avgVolume": 6667320,
       "high52": 509.7,
       "low52": 345.31,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -7161,7 +7161,7 @@
       "avgVolume": 15730363,
       "high52": 109.83,
       "low52": 41.09,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -7258,7 +7258,7 @@
       "avgVolume": 275701,
       "high52": 41.52,
       "low52": 29.05,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -7355,7 +7355,7 @@
       "avgVolume": 396462,
       "high52": 1128.68,
       "low52": 720.62,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 66.94,
@@ -7452,7 +7452,7 @@
       "avgVolume": 1258165,
       "high52": 208.14,
       "low52": 146.23,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 55.19,
@@ -7549,7 +7549,7 @@
       "avgVolume": 38211168,
       "high52": 8.56,
       "low52": 3.6,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 34.37,
@@ -7646,7 +7646,7 @@
       "avgVolume": 7231546,
       "high52": 15.81,
       "low52": 6.47,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 41.1,
@@ -7743,7 +7743,7 @@
       "avgVolume": 1555159,
       "high52": 603.88,
       "low52": 328.57,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 88.47,
@@ -7840,7 +7840,7 @@
       "avgVolume": 1410368,
       "high52": 87.88,
       "low52": 37.68,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -7937,7 +7937,7 @@
       "avgVolume": 1317439,
       "high52": 487.91,
       "low52": 128.59,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 97.51,
@@ -8034,7 +8034,7 @@
       "avgVolume": 1279038,
       "high52": 72.88,
       "low52": 34.6,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 39.83,
@@ -8131,7 +8131,7 @@
       "avgVolume": 2159612,
       "high52": 63.79,
       "low52": 16.4,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 100,
@@ -8228,7 +8228,7 @@
       "avgVolume": 14733345,
       "high52": 153.86,
       "low52": 63.52,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 85.25,
@@ -8325,7 +8325,7 @@
       "avgVolume": 7339165,
       "high52": 402.16,
       "low52": 139.11,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 92.76,
@@ -8491,7 +8491,7 @@
       "avgVolume": 6001119,
       "high52": 90.44,
       "low52": 42.09,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 47.22,
@@ -8588,7 +8588,7 @@
       "avgVolume": 49735786,
       "high52": 32.73,
       "low52": 14.88,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 48.57,
@@ -8685,7 +8685,7 @@
       "avgVolume": 5117307,
       "high52": 57.95,
       "low52": 23.72,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 37.88,
@@ -8782,7 +8782,7 @@
       "avgVolume": 12237019,
       "high52": 159.47,
       "low52": 49.9,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 84.31,
@@ -8879,7 +8879,7 @@
       "avgVolume": 4626394,
       "high52": 100.25,
       "low52": 37.81,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -8976,26 +8976,26 @@
       "avgVolume": 3402551,
       "high52": 499.48,
       "low52": 97.89,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
-          "title": "MRVL Stock Rises 8.6% Since Q2 Results: Time to Hold or Fold?",
+          "title": "Astera Labs (ALAB), Why Is Fresh Attention Building Now?",
           "source": "Yahoo",
-          "time": "2026-09-10T14:29:00.000Z",
-          "url": "https://finnhub.io/api/news?id=91472b7cba54c848c8bc1a9fa3003ec3bb338a7bf8107e2a9bd39568bace7f54"
+          "time": "2026-09-24T13:15:08.000Z",
+          "url": "https://finnhub.io/api/news?id=f575951d82f73d4b7f792a45b49c789f86fc6d56438eaeaa208b0bd8dc12340f"
         },
         {
-          "title": "Qorvo shares are trading lower after the company reported Q3 financial results and issued Q4 sales guidance below estimates. Also, multiple firms lowered their respective price targets on the stock.",
-          "source": "Benzinga",
-          "time": "2026-09-10T13:09:55.000Z",
-          "url": "https://finnhub.io/api/news?id=f7b503bbcf45e76892e70c769020db75207f83d97e1644e83f0a215a3219a944"
+          "title": "Zacks Investment Ideas feature highlights: Astera Labs, SpaceX, Cloudflare, NVIDIA and Meta Platforms",
+          "source": "Yahoo",
+          "time": "2026-09-23T13:05:00.000Z",
+          "url": "https://finnhub.io/api/news?id=c2fd5efbaf80de9259710f8533e0d5a5e411009a96ef3d87b814c21522f0c1e0"
         },
         {
-          "title": "IMF Cuts Global Growth Forecast Citing Brexit Blowback",
-          "source": "Benzinga",
-          "time": "2026-09-10T13:09:55.000Z",
-          "url": "https://finnhub.io/api/news?id=4cf23c492c5107eb89d10da340bb43dfe7d17b4c7dde7211317302fe9ea40dca"
+          "title": "Why Zacks Rank #1 Astera Labs is Primed for Growth",
+          "source": "Yahoo",
+          "time": "2026-09-22T17:26:00.000Z",
+          "url": "https://finnhub.io/api/news?id=1a00bd51792ad1169b2f34a9c9ad866ccfd4eed73c4e87e35fb5810d68d870f0"
         }
       ],
       "quant": {
@@ -9073,7 +9073,7 @@
       "avgVolume": 985949,
       "high52": 38.11,
       "low52": 19.21,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "news": [
         {
@@ -9164,7 +9164,7 @@
       "avgVolume": 9794562,
       "high52": 25.84,
       "low52": 6.18,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 100,
@@ -9217,22 +9217,22 @@
       },
       "news": [
         {
-          "title": "Rising Losses Weigh on Rigetti's Outlook: Sell or Hold RGTI Stock Now?",
+          "title": "Here's How QUBT's Fab 2 Could Accelerate Quantum Manufacturing",
           "source": "Yahoo",
-          "time": "2026-09-09T17:24:00.000Z",
-          "url": "https://finnhub.io/api/news?id=209d23bec49a3cd05424e47a4b886bdfaed2de00ac31f91d3f9afe67a3c2a481"
+          "time": "2026-09-24T15:46:00.000Z",
+          "url": "https://finnhub.io/api/news?id=b1d2ccbeaf85fa322b6fd7033a1c39aba4c47655c606c223ceae1c5956a2bc03"
         },
         {
-          "title": "Quantum Stocks Fall as Rate-Hike Odds Climb: IonQ Sinks 4%, Rigetti and D-Wave Pull Back",
+          "title": "Here's How QBTS Deepens Quantum Push With Funding and New Deals",
           "source": "Yahoo",
-          "time": "2026-09-09T16:58:35.000Z",
-          "url": "https://finnhub.io/api/news?id=746e06d02f0937143539f905bc36c4c1252fc2a87f1c1b378feb7ee42fcfbbc3"
+          "time": "2026-09-23T15:13:00.000Z",
+          "url": "https://finnhub.io/api/news?id=75799094d5c2a6c2aeac38f65d2b53c13bd24343accb7390aa7696af36d4a81d"
         },
         {
-          "title": "Watching The Frontier",
-          "source": "SeekingAlpha",
-          "time": "2026-09-09T13:05:00.000Z",
-          "url": "https://finnhub.io/api/news?id=c70a6bcef1bdade39e86f8dda68f4c18ce41fec73aec2af4bbd6c2569d8a68db"
+          "title": "IonQ Surges 11% as NVIDIA Research Center Deal Follows Error-Decoder Breakthrough; D-Wave Climbs 5%, Rigetti Rises 4%",
+          "source": "Yahoo",
+          "time": "2026-09-23T13:19:45.000Z",
+          "url": "https://finnhub.io/api/news?id=2ab020bb1d0f32e7a11792b7dd1ba2aa2ce6db9e969dc61a5117d74d2d9a62eb"
         }
       ],
       "sbScore": 61,
@@ -9261,7 +9261,7 @@
       "avgVolume": 116842,
       "high52": 658.14,
       "low52": 280.83,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 97.09,
@@ -9358,7 +9358,7 @@
       "avgVolume": 2542892,
       "high52": 32.15,
       "low52": 13.91,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 76.27,
@@ -9455,7 +9455,7 @@
       "avgVolume": 1000000,
       "high52": 24866.75,
       "low52": 23816.49,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 30.47,
@@ -9552,7 +9552,7 @@
       "avgVolume": 42694185,
       "high52": 779.37,
       "low52": 629.28,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 73.79,
@@ -9649,7 +9649,7 @@
       "avgVolume": 2911730000,
       "high52": 7816.7,
       "low52": 6316.91,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 69.26,
@@ -9746,7 +9746,7 @@
       "avgVolume": 978177,
       "high52": 34.79,
       "low52": 20.65,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 80.8,
@@ -9831,7 +9831,7 @@
       "avgVolume": 28622284,
       "high52": 748.65,
       "low52": 555.6,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 87.05,
@@ -9928,7 +9928,7 @@
       "avgVolume": 7111923000,
       "high52": 27288.79,
       "low52": 20690.25,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 85.84,
@@ -9981,22 +9981,22 @@
       },
       "news": [
         {
-          "title": "S&P 500, Dow, Nasdaq Futures Ease As Treasury Yields Continue To Spike — ORCL, META, AKAM, GOOGL, MGM In Focus",
+          "title": "Update: Rising Treasury Yields, Oil Prices Drag Down US Equity Futures Pre-Bell",
           "source": "Yahoo",
-          "time": "2026-09-25T00:12:54.000Z",
-          "url": "https://finnhub.io/api/news?id=a0179787a69f2d16ac3f59ea2ed64bf8031404848f694df72cc375de35c889f3"
+          "time": "2026-09-24T13:02:00.000Z",
+          "url": "https://finnhub.io/api/news?id=0fc7bb224478d20f62d967b5d3df88cbd625e3661e59c54bbd96ef01d63ee609"
         },
         {
-          "title": "AI Trade Is ‘Dead Money’: Fidelity Strategist Warns $3.3 Trillion Buildout Is Inflationary With ‘Unknown Returns’",
+          "title": "Guaranteed Rate Affinity Welcomes Matthew Falconer as California Branch Manager",
           "source": "Yahoo",
-          "time": "2026-09-24T22:00:24.000Z",
-          "url": "https://finnhub.io/api/news?id=6d6676aed2b3ea278bfb740185f47b9e68e9e4ad0efb0d3e4d24aa646e5153e8"
+          "time": "2026-09-24T13:00:00.000Z",
+          "url": "https://finnhub.io/api/news?id=0c54a7379decef44af385540d13382adc8512baa2355c8dd2b9121a995a8444f"
         },
         {
-          "title": "Exchange-Traded Funds Mixed, US Equities Decline After Midday",
+          "title": "5 Growth ETFs to Own as the Nasdaq Hits All-Time Highs",
           "source": "Yahoo",
-          "time": "2026-09-24T17:13:53.000Z",
-          "url": "https://finnhub.io/api/news?id=56853696bdeebe210fa08df6d709ccb88632a61d73f1863bc7ba14f16c6bc197"
+          "time": "2026-09-24T12:40:00.000Z",
+          "url": "https://finnhub.io/api/news?id=a1d34af9c765c50c282559dec5c54671034deeb35bba89607f494c1e3fd0344b"
         }
       ],
       "sbScore": 80,
@@ -10025,7 +10025,7 @@
       "avgVolume": 118581605,
       "high52": 142.35,
       "low52": 31.21,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 95.01,
@@ -10122,7 +10122,7 @@
       "avgVolume": 1348699,
       "high52": 35.73,
       "low52": 15.45,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 41.97,
@@ -10213,7 +10213,7 @@
       "avgVolume": 5612349,
       "high52": 671.83,
       "low52": 315.05,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 89.92,
@@ -10310,7 +10310,7 @@
       "avgVolume": 4903456,
       "high52": 655.95,
       "low52": 260.44,
-      "last_updated": "2026-09-25T02:09:16.086Z",
+      "last_updated": "2026-09-25T02:24:50.801Z",
       "source": "Yahoo Finance chart API",
       "quant": {
         "rsi14": 90.96,

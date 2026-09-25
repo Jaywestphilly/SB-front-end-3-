@@ -63,6 +63,8 @@ export interface StripeFulfillmentRecord {
   productId?: string;
   status?: string;
   fulfilledAt: string;
+  claimedAt?: string;
+  reclaimed?: boolean;
 }
 
 export const fulfilledStripeSessions = new Map<string, StripeFulfillmentRecord>();

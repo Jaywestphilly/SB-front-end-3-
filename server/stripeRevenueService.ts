@@ -160,10 +160,10 @@ export const SERVER_CATALOG: Record<string, ServerCatalogItem> = {
     productId: 'subscription_pro_yearly',
     name: 'Quant Suite Pro Subscription (Yearly)',
     category: 'subscription',
-    priceUsd: 5,
-    amountCents: 500,
+    priceUsd: 50,
+    amountCents: 5000,
     currency: 'usd',
-    credits: 75000,
+    credits: 60000,
     mode: 'subscription',
     billingPeriod: 'year'
   }
