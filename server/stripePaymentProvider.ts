@@ -80,7 +80,10 @@ export async function getRecordedStripeSessionAsync(sessionId: string): Promise<
         recordedStripeSessions.set(sessionId, data);
         return data;
       }
-    } catch (_) {}
+    } catch (err) {
+      console.error(`[stripePaymentProvider] getRecordedStripeSessionAsync error for ${sessionId}:`, err);
+      throw err;
+    }
   }
   return null;
 }
@@ -91,7 +94,10 @@ export async function setRecordedStripeSessionAsync(sessionId: string, sessionDa
   if (db) {
     try {
       await db.collection('stripe_sessions').doc(sessionId).set(sessionData, { merge: true });
-    } catch (_) {}
+    } catch (err) {
+      console.error(`[stripePaymentProvider] setRecordedStripeSessionAsync error for ${sessionId}:`, err);
+      throw err;
+    }
   }
 }
 
@@ -108,7 +114,10 @@ export async function getFulfilledStripeSessionAsync(sessionId: string): Promise
         fulfilledStripeSessions.set(sessionId, data);
         return data;
       }
-    } catch (_) {}
+    } catch (err) {
+      console.error(`[stripePaymentProvider] getFulfilledStripeSessionAsync error for ${sessionId}:`, err);
+      throw err;
+    }
   }
   return null;
 }
@@ -119,7 +128,10 @@ export async function setFulfilledStripeSessionAsync(sessionId: string, fulfillm
   if (db) {
     try {
       await db.collection('fulfilled_stripe_sessions').doc(sessionId).set(fulfillment, { merge: true });
-    } catch (_) {}
+    } catch (err) {
+      console.error(`[stripePaymentProvider] setFulfilledStripeSessionAsync error for ${sessionId}:`, err);
+      throw err;
+    }
   }
 }
 
@@ -135,7 +147,10 @@ export async function isWebhookEventProcessedAsync(eventId: string): Promise<boo
         processedWebhookEvents.add(eventId);
         return true;
       }
-    } catch (_) {}
+    } catch (err) {
+      console.error(`[stripePaymentProvider] isWebhookEventProcessedAsync error for ${eventId}:`, err);
+      throw err;
+    }
   }
   return false;
 }
@@ -149,7 +164,10 @@ export async function markWebhookEventProcessedAsync(eventId: string): Promise<v
         eventId,
         processedAt: new Date().toISOString()
       }, { merge: true });
-    } catch (_) {}
+    } catch (err) {
+      console.error(`[stripePaymentProvider] markWebhookEventProcessedAsync error for ${eventId}:`, err);
+      throw err;
+    }
   }
 }
 

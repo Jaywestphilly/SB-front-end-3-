@@ -310,6 +310,28 @@ function createDocRef(collectionName: string, docId: string, rawDb?: any) {
         get: (field: string) => data?.[field],
       };
     },
+    create: async (data: any) => {
+      const col = dbStoreInstance.getCollection(collectionName);
+      if (col.has(docId)) {
+        const err = new Error(`Document already exists at ${collectionName}/${docId}`);
+        (err as any).code = 6; // ALREADY_EXISTS code
+        throw err;
+      }
+      col.set(docId, data);
+      dbStoreInstance.saveToDisk();
+
+      if (rawRef && typeof rawRef.create === 'function') {
+        try {
+          await rawRef.create(data);
+        } catch (e: any) {
+          if (e.code === 6 || e.code === 'ALREADY_EXISTS' || (e.message && e.message.toLowerCase().includes('already exists'))) {
+            throw e;
+          }
+          // Swallowing other errors (like offline network/permission errors) to allow fallback to resilient local store
+        }
+      }
+      return { id: docId };
+    },
     set: async (data: any, options?: any) => {
       const col = dbStoreInstance.getCollection(collectionName);
       const current = options?.merge ? (col.get(docId) || {}) : {};

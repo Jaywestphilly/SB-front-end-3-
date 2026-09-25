@@ -720,25 +720,6 @@ export async function fulfillAuthoritativePayment(params: {
   const sessionId = session.id;
 
   return executeSessionFulfillmentWithLock(sessionId, async () => {
-    // 1. Check existing session fulfillment (Anti-double-credit guard)
-    const priorFulfillment = await getFulfilledStripeSessionAsync(sessionId);
-    if (priorFulfillment) {
-      logPaymentEvent('duplicate_session', {
-        sessionId,
-        source,
-        priorFulfilledAt: priorFulfillment.fulfilledAt,
-        agentId: priorFulfillment.agentId
-      });
-      return {
-        success: true,
-        alreadyFulfilled: true,
-        creditsGranted: 0,
-        creditsBalance: priorFulfillment.creditsBalance || 0,
-        agentId: priorFulfillment.agentId,
-        fulfillmentRecord: priorFulfillment
-      };
-    }
-
     // 2. Authoritative Payment Status Check (FIX 6)
     const isPaid = session.payment_status === 'paid' || (session.status === 'complete' && session.payment_status !== 'unpaid');
     if (!isPaid) {
@@ -857,40 +838,184 @@ export async function fulfillAuthoritativePayment(params: {
       };
     }
 
+    // 4.5 Claim-First Idempotency Authority Check
+    let alreadyFulfilled = false;
+    let priorFulfillment: any = null;
+    let claimDocCreated = false;
+
+    if (db) {
+      const docRef = db.collection('fulfilled_stripe_sessions').doc(sessionId);
+      try {
+        const claimPayload = {
+          sessionId,
+          agentId: targetAgentId || 'unassigned_purchaser',
+          creditsGranted: creditsToAdd,
+          status: 'processing',
+          claimedAt: new Date().toISOString(),
+          fulfilledAt: new Date().toISOString()
+        };
+        await docRef.create(claimPayload);
+        claimDocCreated = true;
+        fulfilledStripeSessions.set(sessionId, claimPayload);
+      } catch (createErr: any) {
+        const isAlreadyExists = createErr.code === 6 || 
+                                createErr.code === 'ALREADY_EXISTS' || 
+                                (createErr.message && createErr.message.toLowerCase().includes('already exists'));
+        if (!isAlreadyExists) {
+          console.error(`[fulfillAuthoritativePayment] claim create error for ${sessionId}:`, createErr);
+          throw createErr;
+        }
+
+        // Document already exists! Fetch existing record to check status
+        try {
+          const snap = await docRef.get();
+          if (snap.exists) {
+            priorFulfillment = snap.data();
+          }
+        } catch (getErr) {
+          console.error(`[fulfillAuthoritativePayment] failed to get claim doc for ${sessionId}:`, getErr);
+          throw getErr;
+        }
+
+        if (!priorFulfillment) {
+          priorFulfillment = fulfilledStripeSessions.get(sessionId);
+        }
+
+        if (priorFulfillment) {
+          const isProcessing = priorFulfillment.status === 'processing';
+          const claimedAtStr = priorFulfillment.claimedAt || priorFulfillment.fulfilledAt;
+          const claimedAtMs = claimedAtStr ? new Date(claimedAtStr).getTime() : 0;
+          const ageMinutes = (Date.now() - claimedAtMs) / (60 * 1000);
+
+          if (isProcessing && ageMinutes > 10) {
+            console.warn(`[fulfillAuthoritativePayment] Session ${sessionId} found in 'processing' state older than 10 minutes. Reclaiming.`);
+            try {
+              const reclaimPayload = {
+                status: 'processing',
+                claimedAt: new Date().toISOString(),
+                reclaimed: true
+              };
+              await docRef.set(reclaimPayload, { merge: true });
+              priorFulfillment = { ...priorFulfillment, ...reclaimPayload };
+              fulfilledStripeSessions.set(sessionId, priorFulfillment);
+              claimDocCreated = true; // Mark as claimed under this execution
+            } catch (reclaimErr) {
+              console.error(`[fulfillAuthoritativePayment] failed to update reclaim for ${sessionId}:`, reclaimErr);
+              throw reclaimErr;
+            }
+          } else {
+            alreadyFulfilled = true;
+          }
+        } else {
+          alreadyFulfilled = true;
+        }
+
+        if (alreadyFulfilled) {
+          logPaymentEvent('duplicate_session', {
+            sessionId,
+            source,
+            priorFulfilledAt: priorFulfillment?.fulfilledAt || priorFulfillment?.claimedAt,
+            agentId: priorFulfillment?.agentId || targetAgentId
+          });
+          return {
+            success: true,
+            alreadyFulfilled: true,
+            creditsGranted: 0,
+            creditsBalance: priorFulfillment?.creditsBalance || 0,
+            agentId: priorFulfillment?.agentId || targetAgentId || undefined,
+            fulfillmentRecord: priorFulfillment
+          };
+        }
+      }
+    } else {
+      // In-memory fallback for testing when Firestore db is not initialized/configured
+      priorFulfillment = fulfilledStripeSessions.get(sessionId);
+      if (priorFulfillment) {
+        const isProcessing = priorFulfillment.status === 'processing';
+        const claimedAtStr = priorFulfillment.claimedAt || priorFulfillment.fulfilledAt;
+        const claimedAtMs = claimedAtStr ? new Date(claimedAtStr).getTime() : 0;
+        const ageMinutes = (Date.now() - claimedAtMs) / (60 * 1000);
+
+        if (isProcessing && ageMinutes > 10) {
+          console.warn(`[fulfillAuthoritativePayment] Sandbox: Reclaiming session ${sessionId}`);
+          priorFulfillment.claimedAt = new Date().toISOString();
+          priorFulfillment.reclaimed = true;
+          fulfilledStripeSessions.set(sessionId, priorFulfillment);
+          claimDocCreated = true;
+        } else {
+          alreadyFulfilled = true;
+        }
+
+        if (alreadyFulfilled) {
+          return {
+            success: true,
+            alreadyFulfilled: true,
+            creditsGranted: 0,
+            creditsBalance: priorFulfillment?.creditsBalance || 0,
+            agentId: priorFulfillment?.agentId || targetAgentId || undefined,
+            fulfillmentRecord: priorFulfillment
+          };
+        }
+      } else {
+        const claimPayload = {
+          sessionId,
+          agentId: targetAgentId || 'unassigned_purchaser',
+          creditsGranted: creditsToAdd,
+          status: 'processing',
+          claimedAt: new Date().toISOString(),
+          fulfilledAt: new Date().toISOString()
+        };
+        fulfilledStripeSessions.set(sessionId, claimPayload);
+        claimDocCreated = true;
+      }
+    }
+
     // 5. Grant Credits Once (Atomically into Agent Wallet)
     let finalBalance = 0;
-    if (creditsToAdd > 0 && targetAgentId) {
-      if (!inMemoryAgentRegistry.has(targetAgentId)) {
-        inMemoryAgentRegistry.set(targetAgentId, {
-          agentId: targetAgentId,
-          handle: targetAgentId.replace(/^agent_/, ''),
-          displayName: 'Agent ' + targetAgentId,
-          status: 'active' as const,
-          createdAt: new Date().toISOString()
-        });
-      }
+    try {
+      if (creditsToAdd > 0 && targetAgentId) {
+        if (!inMemoryAgentRegistry.has(targetAgentId)) {
+          inMemoryAgentRegistry.set(targetAgentId, {
+            agentId: targetAgentId,
+            handle: targetAgentId.replace(/^agent_/, ''),
+            displayName: 'Agent ' + targetAgentId,
+            status: 'active' as const,
+            createdAt: new Date().toISOString()
+          });
+        }
 
-      const grantResult = await addCreditsToAgentWallet(targetAgentId, creditsToAdd, 'STRIPE_PURCHASE');
-      if (!grantResult.success) {
-        logPaymentEvent('checkout_failed', {
-          sessionId,
-          reason: 'credit_grant_failed',
-          agentId: targetAgentId,
-          error: grantResult.error
-        });
-        return {
-          success: false,
-          alreadyFulfilled: false,
-          creditsGranted: 0,
-          creditsBalance: 0,
-          error: grantResult.error || 'Failed to grant credits to agent wallet',
-          statusCode: 500
-        };
+        const grantResult = await addCreditsToAgentWallet(targetAgentId, creditsToAdd, 'STRIPE_PURCHASE');
+        if (!grantResult.success) {
+          logPaymentEvent('checkout_failed', {
+            sessionId,
+            reason: 'credit_grant_failed',
+            agentId: targetAgentId,
+            error: grantResult.error
+          });
+          if (db && claimDocCreated) {
+            await db.collection('fulfilled_stripe_sessions').doc(sessionId).delete().catch(() => {});
+          }
+          fulfilledStripeSessions.delete(sessionId);
+          return {
+            success: false,
+            alreadyFulfilled: false,
+            creditsGranted: 0,
+            creditsBalance: 0,
+            error: grantResult.error || 'Failed to grant credits to agent wallet',
+            statusCode: 500
+          };
+        }
+        finalBalance = grantResult.creditsBalance;
+      } else if (targetAgentId) {
+        const currentWallet = inMemoryWalletRegistry.get(targetAgentId);
+        finalBalance = currentWallet ? currentWallet.creditsBalance : 0;
       }
-      finalBalance = grantResult.creditsBalance;
-    } else if (targetAgentId) {
-      const currentWallet = inMemoryWalletRegistry.get(targetAgentId);
-      finalBalance = currentWallet ? currentWallet.creditsBalance : 0;
+    } catch (grantErr) {
+      if (db && claimDocCreated) {
+        await db.collection('fulfilled_stripe_sessions').doc(sessionId).delete().catch(() => {});
+      }
+      fulfilledStripeSessions.delete(sessionId);
+      throw grantErr;
     }
 
     // 6. Persist Durable Fulfillment Record (FIX 4)
