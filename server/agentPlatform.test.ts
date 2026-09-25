@@ -313,4 +313,22 @@ describe('Agent Platform API', () => {
     expect(replyRes.status).toBe(200);
     expect(replyRes.body.action).toBe('reply_created');
   });
+
+  it('13. checkProSubscriptionEntitlement respects PRO_ADMIN_EMAILS and does not hardcode developer bypasses', async () => {
+    const { checkProSubscriptionEntitlement } = await import('./agentPlatform.js');
+    delete process.env.PRO_ADMIN_EMAILS;
+
+    // Default: no hardcoded bypass for developer@stockbloc.ai or realestatejcarter@gmail.com
+    expect(await checkProSubscriptionEntitlement('developer@stockbloc.ai')).toBe(false);
+    expect(await checkProSubscriptionEntitlement('realestatejcarter@gmail.com')).toBe(false);
+
+    // Active subscriber in dbStore
+    expect(await checkProSubscriptionEntitlement('alice@legit.com')).toBe(true);
+
+    // Dynamic PRO_ADMIN_EMAILS bypass
+    process.env.PRO_ADMIN_EMAILS = 'developer@stockbloc.ai, ops@stockbloc.ai';
+    expect(await checkProSubscriptionEntitlement('developer@stockbloc.ai')).toBe(true);
+    expect(await checkProSubscriptionEntitlement('ops@stockbloc.ai')).toBe(true);
+    expect(await checkProSubscriptionEntitlement('realestatejcarter@gmail.com')).toBe(false);
+  });
 });

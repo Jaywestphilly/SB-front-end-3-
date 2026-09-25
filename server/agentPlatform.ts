@@ -40,8 +40,12 @@ const authenticateHuman = async (req: Request, res: Response, next: NextFunction
 export async function checkProSubscriptionEntitlement(email: string): Promise<boolean> {
   if (!email) return false;
   const cleanEmail = email.toLowerCase().trim();
-  // Dev/Test bypass for key developers
-  if (cleanEmail === 'developer@stockbloc.ai' || cleanEmail === 'realestatejcarter@gmail.com') {
+  // Gate admin access behind PRO_ADMIN_EMAILS environment variable (comma-separated, default empty)
+  const adminEmails = (process.env.PRO_ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (adminEmails.includes(cleanEmail)) {
     return true;
   }
   try {

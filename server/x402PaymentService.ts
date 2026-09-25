@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { db } from './firebaseAdmin.js';
+import { db, auth } from './firebaseAdmin.js';
+import { hashSecret, constantTimeCompare } from './agentSecurity.js';
 import { facilitator as defaultFacilitator, createFacilitatorConfig } from '@coinbase/x402';
 import {
   HTTPFacilitatorClient,
@@ -153,27 +154,100 @@ export function isFreeTierPath(path: string): boolean {
   return false;
 }
 
-export function getPurchaserEmailFromRequest(req: Request): string | null {
+export async function getVerifiedPurchaserEmail(req: Request): Promise<string | null> {
+  // (a) req.user.email set by the authenticateHuman JWT middleware or verified JWT
+  const user = (req as any).user;
+  if (user?.email && typeof user.email === 'string' && user.email.includes('@')) {
+    return user.email.toLowerCase().trim();
+  }
+
   const authHeader = req.headers.authorization;
+  const xAgentKeyHeader = (req.headers['x-agent-key'] || req.headers['X-Agent-Key']) as string | undefined;
+
+  // Check Bearer JWT token if user not already set on req
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.split('Bearer ')[1];
-    if (token.startsWith('sb_live_')) {
-      return null;
+    const token = authHeader.substring(7).trim();
+    if (!token.startsWith('sb_live_') && !token.startsWith('sb_test_')) {
+      try {
+        const decoded = await auth.verifyIdToken(token);
+        if (decoded && decoded.email && typeof decoded.email === 'string' && decoded.email.includes('@')) {
+          (req as any).user = decoded;
+          return decoded.email.toLowerCase().trim();
+        }
+      } catch (_) {}
     }
+  }
+
+  // (b) a valid sb_live_/sb_test_ API key (x-agent-key / Authorization Bearer) resolved through the key registry to a registered agent with a verified email on file
+  const rawKey = (xAgentKeyHeader || (authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : authHeader))?.trim();
+  if (rawKey && (rawKey.startsWith('sb_live_') || rawKey.startsWith('sb_test_') || inMemoryKeyRegistry.has(rawKey))) {
     try {
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-        if (payload && payload.email) {
-          return payload.email.toLowerCase().trim();
+      let keyRecord: any;
+      let secret: string | undefined;
+
+      if (inMemoryKeyRegistry.has(rawKey)) {
+        keyRecord = inMemoryKeyRegistry.get(rawKey);
+      } else if (rawKey.startsWith('sb_live_') || rawKey.startsWith('sb_test_')) {
+        const parts = rawKey.split('_');
+        if (parts.length >= 4) {
+          const publicId = parts[2];
+          secret = parts.slice(3).join('_');
+          keyRecord = inMemoryKeyRegistry.get(publicId);
+
+          if (!keyRecord && db) {
+            let snap = await db.collection('api_keys').doc(publicId).get();
+            if (!snap.exists) {
+              snap = await db.collection('agent_api_keys').doc(publicId).get();
+            }
+            if (snap.exists) {
+              keyRecord = snap.data();
+            }
+          }
+        }
+      }
+
+      if (keyRecord && keyRecord.status === 'active') {
+        if (keyRecord.expiresAt) {
+          const expDate = typeof keyRecord.expiresAt?.toDate === 'function'
+            ? keyRecord.expiresAt.toDate()
+            : new Date(keyRecord.expiresAt);
+          if (!isNaN(expDate.getTime()) && expDate.getTime() <= Date.now()) {
+            return null;
+          }
+        }
+
+        if (secret && (keyRecord.keyHash || keyRecord.secretHash)) {
+          const actualHash = hashSecret(secret);
+          const isMatch = constantTimeCompare(keyRecord.keyHash || '', actualHash) ||
+            (keyRecord.secretHash && constantTimeCompare(keyRecord.secretHash, actualHash));
+          if (!isMatch) {
+            return null;
+          }
+        }
+
+        let agent: any = inMemoryAgentRegistry.get(keyRecord.agentId) ||
+          (keyRecord.handle ? inMemoryAgentRegistry.get(keyRecord.handle.toLowerCase()) : undefined);
+
+        if (!agent && db && keyRecord.agentId) {
+          const userDoc = await db.collection('users').doc(keyRecord.agentId).get();
+          if (userDoc.exists) {
+            agent = userDoc.data();
+          } else {
+            const agentDoc = await db.collection('agents').doc(keyRecord.agentId).get();
+            if (agentDoc.exists) {
+              agent = agentDoc.data();
+            }
+          }
+        }
+
+        if (agent && agent.status !== 'suspended' && agent.status !== 'deleted') {
+          const candidateEmail = agent.email || agent.ownerEmail || agent.verifiedEmail || keyRecord.email || keyRecord.ownerEmail;
+          if (candidateEmail && typeof candidateEmail === 'string' && candidateEmail.includes('@')) {
+            return candidateEmail.toLowerCase().trim();
+          }
         }
       }
     } catch (_) {}
-  }
-
-  const emailVal = req.header('x-purchaser-email') || req.query.email || req.body?.email;
-  if (emailVal && typeof emailVal === 'string' && emailVal.includes('@')) {
-    return emailVal.toLowerCase().trim();
   }
 
   return null;
@@ -182,7 +256,12 @@ export function getPurchaserEmailFromRequest(req: Request): string | null {
 export async function checkProSubscriptionEntitlement(email: string): Promise<boolean> {
   if (!email) return false;
   const cleanEmail = email.toLowerCase().trim();
-  if (cleanEmail === 'developer@stockbloc.ai' || cleanEmail === 'realestatejcarter@gmail.com') {
+  // Gate admin access behind PRO_ADMIN_EMAILS environment variable (comma-separated, default empty)
+  const adminEmails = (process.env.PRO_ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (adminEmails.includes(cleanEmail)) {
     return true;
   }
   try {
@@ -355,7 +434,7 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
     }
 
     // Pro subscription check: Allow active Quant Suite Pro subscribers to access premium views
-    const purchaserEmail = getPurchaserEmailFromRequest(req);
+    const purchaserEmail = await getVerifiedPurchaserEmail(req);
     if (purchaserEmail) {
       const hasPro = await checkProSubscriptionEntitlement(purchaserEmail);
       if (hasPro) {
