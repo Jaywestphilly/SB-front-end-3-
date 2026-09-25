@@ -42,10 +42,7 @@ export const StripeCheckoutModal: React.FC<Props> = ({
 }) => {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(initialPaymentMethod);
   const [email, setEmail] = useState("");
-  const [cardName, setCardName] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvc, setCardCvc] = useState("");
+  const [agentId, setAgentId] = useState("");
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -69,6 +66,7 @@ export const StripeCheckoutModal: React.FC<Props> = ({
           title: item.title,
           billingPeriod: item.billingPeriod || "one_time",
           email: userEmail,
+          agentId: agentId.trim() || undefined,
           paymentMethod: selectedMethod,
           credits: item.creditsGranted ? String(item.creditsGranted) : undefined,
         }),
@@ -223,7 +221,7 @@ export const StripeCheckoutModal: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* TAB 1: CREDIT / DEBIT CARD FORM */}
+        {/* TAB 1: CREDIT / DEBIT CARD — REDIRECTS TO STRIPE HOSTED CHECKOUT */}
         {selectedMethod === "card" && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -238,62 +236,36 @@ export const StripeCheckoutModal: React.FC<Props> = ({
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-neutral-950 border border-emerald-500/40 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-400 transition-all font-sans"
               />
+              <p className="text-[10px] text-neutral-400 mt-1 font-sans">
+                License keys, receipts, and order fulfillment will be delivered to this address.
+              </p>
             </div>
 
             <div>
               <label className="block text-[11px] font-tech text-emerald-300 uppercase font-bold mb-1">
-                Cardholder Name
+                Purchaser / Agent ID <span className="text-neutral-500 font-normal lowercase">(optional)</span>
               </label>
               <input
                 type="text"
-                placeholder="Jane Quant"
-                value={cardName}
-                onChange={(e) => setCardName(e.target.value)}
-                className="w-full bg-neutral-950 border border-emerald-500/40 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-400 transition-all font-sans"
+                placeholder="e.g. agent_quant_v1 (or leave blank to auto-provision)"
+                value={agentId}
+                onChange={(e) => setAgentId(e.target.value)}
+                className="w-full bg-neutral-950 border border-emerald-500/40 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-400 transition-all font-mono"
               />
+              <p className="text-[10px] text-neutral-400 mt-1 font-sans">
+                Target account identity to receive purchased credits upon Stripe payment confirmation.
+              </p>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-tech text-emerald-300 uppercase font-bold mb-1">
-                Credit / Debit Card Number
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="•••• •••• •••• ••••"
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
-                  className="w-full bg-neutral-950 border border-emerald-500/40 rounded-xl pl-10 pr-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-400 transition-all"
-                />
-                <CreditCard className="w-4 h-4 text-emerald-400 absolute left-3 top-3" />
+            {/* Hosted Checkout Notice */}
+            <div className="p-3.5 bg-neutral-950 border border-emerald-500/30 rounded-xl space-y-1.5">
+              <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 font-tech uppercase">
+                <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Stripe Hosted Checkout</span>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-tech text-emerald-300 uppercase font-bold mb-1">
-                  Expires (MM/YY)
-                </label>
-                <input
-                  type="text"
-                  placeholder="MM/YY"
-                  value={cardExpiry}
-                  onChange={(e) => setCardExpiry(e.target.value)}
-                  className="w-full bg-neutral-950 border border-emerald-500/40 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-400 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-tech text-emerald-300 uppercase font-bold mb-1">
-                  CVC Code
-                </label>
-                <input
-                  type="text"
-                  placeholder="CVC"
-                  value={cardCvc}
-                  onChange={(e) => setCardCvc(e.target.value)}
-                  className="w-full bg-neutral-950 border border-emerald-500/40 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-emerald-400 transition-all"
-                />
-              </div>
+              <p className="text-[11px] text-neutral-300 font-sans leading-relaxed">
+                Card numbers, expiration dates, and security codes are entered directly on Stripe&apos;s encrypted checkout page. Stock Bloc never collects or handles sensitive cardholder data.
+              </p>
             </div>
 
             <button
@@ -304,12 +276,12 @@ export const StripeCheckoutModal: React.FC<Props> = ({
               {isProcessing ? (
                 <>
                   <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                  <span>AUTHORIZING STRIPE CHECKOUT...</span>
+                  <span>REDIRECTING TO STRIPE CHECKOUT...</span>
                 </>
               ) : (
                 <>
                   <Lock className="w-4 h-4 text-black" />
-                  <span>PAY {item.displayPrice} NOW — INSTANT ACCESS</span>
+                  <span>CONTINUE TO STRIPE CHECKOUT ({item.displayPrice})</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
@@ -334,13 +306,26 @@ export const StripeCheckoutModal: React.FC<Props> = ({
               />
             </div>
 
+            <div>
+              <label className="block text-[11px] font-tech text-cyan-300 uppercase font-bold mb-1">
+                Purchaser / Agent ID <span className="text-neutral-500 font-normal lowercase">(optional)</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. agent_quant_v1 (or leave blank to auto-provision)"
+                value={agentId}
+                onChange={(e) => setAgentId(e.target.value)}
+                className="w-full bg-neutral-950 border border-cyan-500/40 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-cyan-400 transition-all font-mono"
+              />
+            </div>
+
             <div className="p-4 bg-black/90 border border-neutral-700 rounded-xl space-y-3 text-center">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-white text-black font-black font-sans rounded-lg text-sm">
                 <span> Pay</span>
                 <span className="text-neutral-500 font-mono text-xs">/ GPay</span>
               </div>
               <p className="text-xs text-neutral-300 leading-relaxed font-sans">
-                Authorize instant 1-Touch Express Payment using Apple Pay or Google Pay stored wallet credentials.
+                Authorize instant 1-Touch Express Payment using Apple Pay or Google Pay stored wallet credentials via Stripe Hosted Checkout.
               </p>
             </div>
 
@@ -353,11 +338,11 @@ export const StripeCheckoutModal: React.FC<Props> = ({
               {isProcessing ? (
                 <>
                   <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                  <span>AUTHORIZING EXPRESS APPLE PAY...</span>
+                  <span>AUTHORIZING STRIPE CHECKOUT...</span>
                 </>
               ) : (
                 <>
-                  <span> PAY {item.displayPrice} WITH APPLE PAY</span>
+                  <span> PAY {item.displayPrice} WITH APPLE / G PAY</span>
                 </>
               )}
             </button>

@@ -1,0 +1,43 @@
+name: CI & Payment Test Suites
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    name: Run Payment Tests & Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Run TypeScript typecheck / lint
+        run: npm run lint
+
+      - name: Run Acceptance 6 Stripe Credits tests
+        run: npx vitest run server/acceptance6StripeCredits.test.ts
+
+      - name: Run x402 payment tests
+        run: npx vitest run server/x402CoinbasePayments.test.ts server/hardenedPaymentPath.test.ts
+
+      - name: Run Stripe webhook & revenue safety tests
+        run: npx vitest run server/stripeMonetizationLoop.test.ts server/productionRevenueSafety.test.ts server/platformCreditsProvider.test.ts server/agentCreditsSecurity.test.ts
+
+      - name: Run full test suite
+        run: npm run test
+
+      - name: Verify build compilation
+        run: npm run build
