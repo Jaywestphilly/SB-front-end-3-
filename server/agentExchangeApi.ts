@@ -140,10 +140,13 @@ export class PlatformCreditsProvider implements PaymentProvider {
       }
 
       const isTreasury = agentId === PLATFORM_TREASURY_ACCOUNT_ID;
+      const initialBal = isTreasury
+        ? (defaultCredits === PLATFORM_ECONOMICS.defaultTrialCredits ? 0 : defaultCredits)
+        : defaultCredits;
       const initialWallet: AgentWalletBalance = {
         agentId,
-        creditsBalance: isTreasury ? 100000 : defaultCredits,
-        availableBalance: isTreasury ? 100000 : defaultCredits,
+        creditsBalance: initialBal,
+        availableBalance: initialBal,
         paidCreditsBalance: 0,
         trialCredits: isTreasury ? 0 : defaultCredits,
         usdPendingBalance: 0,
@@ -170,10 +173,13 @@ export class PlatformCreditsProvider implements PaymentProvider {
       }
 
       const isTreasury = agentId === PLATFORM_TREASURY_ACCOUNT_ID;
+      const initialBalFallback = isTreasury
+        ? (defaultCredits === PLATFORM_ECONOMICS.defaultTrialCredits ? 0 : defaultCredits)
+        : defaultCredits;
       const initialWallet: AgentWalletBalance = {
         agentId,
-        creditsBalance: isTreasury ? 100000 : defaultCredits,
-        availableBalance: isTreasury ? 100000 : defaultCredits,
+        creditsBalance: initialBalFallback,
+        availableBalance: initialBalFallback,
         paidCreditsBalance: 0,
         trialCredits: isTreasury ? 0 : defaultCredits,
         usdPendingBalance: 0,

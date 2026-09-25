@@ -177,6 +177,190 @@ export const userProfilePurchases: Record<string, {
   linkedAt: string;
 }> = {};
 
+// In-memory active subscription tracking
+export interface ProSubscriptionRecord {
+  email: string;
+  productId: string;
+  status: 'active' | 'canceled' | 'inactive';
+  startedAt: string;
+  updatedAt?: string;
+  agentId?: string;
+  sessionId?: string;
+}
+
+export const proSubscriptionsMap = new Map<string, ProSubscriptionRecord>();
+
+export async function recordProSubscription(params: {
+  email: string;
+  productId: string;
+  agentId?: string;
+  sessionId?: string;
+}): Promise<ProSubscriptionRecord | null> {
+  if (!params.email || typeof params.email !== 'string') return null;
+  const cleanEmail = params.email.toLowerCase().trim();
+  if (!cleanEmail) return null;
+
+  const record: ProSubscriptionRecord = {
+    email: cleanEmail,
+    productId: params.productId,
+    status: 'active',
+    startedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    agentId: params.agentId,
+    sessionId: params.sessionId
+  };
+
+  proSubscriptionsMap.set(cleanEmail, record);
+
+  try {
+    await db.collection('pro_subscriptions').doc(cleanEmail).set(record, { merge: true });
+  } catch (err) {
+    console.warn('[pro_subscriptions] Firestore sync deferred:', err);
+  }
+
+  return record;
+}
+
+/**
+ * Auto-provision an agent identity server-side for human purchasers or unverified agent references.
+ * Reuses public registration logic (mints agentId + sb_live_ API key + 100 trial credits),
+ * keys to purchaser email if present, registers in memory, and persists to Firestore.
+ */
+export function autoProvisionPurchaserAgent(email?: string): {
+  agentId: string;
+  apiKey: string;
+  publicId: string;
+} {
+  const cleanEmail = email ? email.toLowerCase().trim() : '';
+  const emailPrefix = cleanEmail ? cleanEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '') : '';
+  const handleBase = emailPrefix ? `user_${emailPrefix}` : `agent_${crypto.randomBytes(3).toString('hex')}`;
+  const finalHandle = handleBase.length >= 3 ? handleBase.substring(0, 30) : `agent_${crypto.randomBytes(3).toString('hex')}`;
+  const displayName = cleanEmail ? `${cleanEmail} Purchaser Agent` : `${finalHandle.toUpperCase()} Agent`;
+
+  const publicId = crypto.randomBytes(8).toString('hex');
+  const secret = crypto.randomBytes(32).toString('hex');
+  const rawKey = `sb_live_${publicId}_${secret}`;
+  const keyPrefix = secret.substring(0, 4) + '...';
+  const keyHash = crypto.createHash('sha256').update(secret).digest('hex');
+  const agentId = `agent_auto_${crypto.randomBytes(5).toString('hex')}`;
+
+  const agentRecord: any = {
+    agentId,
+    handle: finalHandle,
+    handleLower: finalHandle.toLowerCase(),
+    displayName,
+    description: "Auto-provisioned Stock Bloc purchaser agent identity.",
+    avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${finalHandle}`,
+    ownerUid: cleanEmail || 'stripe_purchaser',
+    email: cleanEmail || undefined,
+    operatorUsername: cleanEmail || 'stripe_purchaser',
+    verificationStatus: 'verified',
+    specialties: ["Market Intelligence", "Quantitative Analytics"],
+    isTestAgent: false,
+    isAutonomousAgent: true,
+    verifiedSimulation: false,
+    followersCount: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    lastSeenAt: new Date().toISOString(),
+    status: 'active',
+    authorType: 'agent',
+    isAgent: true,
+    metrics: {
+      winRatePercent: null,
+      monthlyAlphaPercent: 0,
+      sharpeRatio: 0,
+      maxDrawdownPercent: 0,
+      simulationRuns: 0,
+      forecasts: { total: 0, correct: 0, incorrect: 0 },
+      badges: ["Stock Bloc Purchaser", "Quant Vanguard"]
+    }
+  };
+
+  const allowedScopes = [
+    'services:read',
+    'services:write',
+    'jobs:read',
+    'jobs:execute',
+    'requests:read',
+    'requests:write',
+    'payments:transact'
+  ];
+
+  const keyRecord: any = {
+    keyId: publicId,
+    agentId,
+    ownerUid: cleanEmail || 'stripe_purchaser',
+    keyPrefix,
+    keyHash,
+    secretHash: keyHash,
+    scopes: allowedScopes,
+    createdAt: new Date().toISOString(),
+    lastUsedAt: null,
+    expiresAt: null,
+    revokedAt: null,
+    status: 'active'
+  };
+
+  // Register in memory registries for instant availability
+  inMemoryAgentRegistry.set(agentId, agentRecord);
+  inMemoryAgentRegistry.set(finalHandle.toLowerCase(), agentRecord);
+  inMemoryKeyRegistry.set(publicId, keyRecord);
+  inMemoryKeyRegistry.set(rawKey, keyRecord);
+  inMemoryWalletRegistry.set(agentId, {
+    agentId,
+    creditsBalance: 100,
+    availableBalance: 100,
+    paidCreditsBalance: 0,
+    promoCreditsBalance: 0,
+    trialCreditsBalance: 100,
+    trialCredits: 100,
+    lastCreditTag: 'TRIAL',
+    lifetimeSpent: 0,
+    simulationRuns: 0,
+    verifiedSimulations: 0
+  });
+
+  if (cleanEmail) {
+    userProfilePurchases[cleanEmail] = {
+      email: cleanEmail,
+      purchasedItems: userProfilePurchases[cleanEmail]?.purchasedItems || [],
+      apiKey: rawKey,
+      linkedAt: new Date().toISOString()
+    };
+  }
+
+  // Fire-and-forget background Firestore persistence
+  Promise.race([
+    Promise.all([
+      db.collection('users').doc(agentId).set({
+        ...agentRecord,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }, { merge: true }),
+      db.collection('api_keys').doc(publicId).set(keyRecord, { merge: true }),
+      db.collection('agent_wallets').doc(agentId).set({
+        agentId,
+        creditsBalance: 100,
+        availableBalance: 100,
+        paidCreditsBalance: 0,
+        promoCreditsBalance: 0,
+        trialCreditsBalance: 100,
+        trialCredits: 100,
+        lastCreditTag: 'TRIAL',
+        lifetimeGrossEarnings: 0,
+        lifetimeSpent: 0,
+        status: 'active'
+      }, { merge: true })
+    ]),
+    new Promise((resolve) => setTimeout(resolve, 3000))
+  ]).catch((err) => {
+    console.warn('Background Firestore auto-provision sync deferred:', err);
+  });
+
+  return { agentId, apiKey: rawKey, publicId };
+}
+
 // FIX 7: Structured, secure payment logging (never log secrets, card data, tokens, or client_secrets)
 export type PaymentLogEventType =
   | 'checkout_created'
@@ -314,8 +498,39 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
       }
     }
 
-    // Resolve authenticated or metadata agent identity
-    const resolvedAgentId = agentId || (apiKey ? resolveAgentIdFromKey(apiKey) : undefined);
+    // Resolve and verify authenticated or metadata agent identity.
+    // Do NOT trust client-supplied agentId without verifying it resolves to a real agent in inMemoryAgentRegistry.
+    let resolvedAgentId: string | undefined = undefined;
+    let resolvedApiKey: string | undefined = undefined;
+
+    if (apiKey && typeof apiKey === 'string' && apiKey.trim()) {
+      const keyTrimmed = apiKey.trim();
+      const agentFromKey = resolveAgentIdFromKey(keyTrimmed);
+      if (agentFromKey && inMemoryAgentRegistry.has(agentFromKey)) {
+        resolvedAgentId = agentFromKey;
+        resolvedApiKey = keyTrimmed;
+      }
+    }
+
+    if (!resolvedAgentId && agentId && typeof agentId === 'string' && agentId.trim()) {
+      const idTrimmed = agentId.trim();
+      if (inMemoryAgentRegistry.has(idTrimmed)) {
+        resolvedAgentId = idTrimmed;
+        for (const [key, rec] of inMemoryKeyRegistry.entries()) {
+          if (rec.agentId === idTrimmed && rec.status === 'active' && key.startsWith('sb_live_')) {
+            resolvedApiKey = key;
+            break;
+          }
+        }
+      }
+    }
+
+    // When no agentId/apiKey is provided or client agentId is invalid, auto-provision server-side!
+    if (!resolvedAgentId) {
+      const provisioned = autoProvisionPurchaserAgent(email);
+      resolvedAgentId = provisioned.agentId;
+      resolvedApiKey = provisioned.apiKey;
+    }
 
     // Production check: require valid sk_live_* key
     if (isProd) {
@@ -344,8 +559,8 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
           priceUsd: String(catalogItem.priceUsd),
           amountCents: String(catalogItem.amountCents),
           currency: catalogItem.currency,
-          agentId: resolvedAgentId || '',
-          apiKey: apiKey || '',
+          agentId: resolvedAgentId,
+          apiKey: resolvedApiKey || '',
           email: email || ''
         },
         line_items: [
@@ -397,8 +612,8 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
           priceUsd: String(catalogItem.priceUsd),
           amountCents: String(catalogItem.amountCents),
           currency: catalogItem.currency,
-          agentId: resolvedAgentId || '',
-          apiKey: apiKey || '',
+          agentId: resolvedAgentId,
+          apiKey: resolvedApiKey || '',
           email: email || ''
         },
         line_items: [
@@ -444,8 +659,8 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
         priceUsd: String(catalogItem.priceUsd),
         amountCents: String(catalogItem.amountCents),
         currency: catalogItem.currency,
-        agentId: resolvedAgentId || '',
-        apiKey: apiKey || '',
+        agentId: resolvedAgentId,
+        apiKey: resolvedApiKey || '',
         email: email || ''
       }
     });
@@ -608,6 +823,19 @@ export async function fulfillAuthoritativePayment(params: {
       targetAgentId = resolveAgentIdFromKey(metadata.apiKey);
     } else if (authenticatedAgentId && authenticatedAgentId.trim()) {
       targetAgentId = authenticatedAgentId.trim();
+    }
+
+    // For subscription-mode products, record email -> active subscription in pro_subscriptions
+    if (catalogItem.mode === 'subscription' || catalogItem.category === 'subscription') {
+      const purchaserEmail = metadata.email || session.customer_details?.email || session.customer_email;
+      if (purchaserEmail) {
+        await recordProSubscription({
+          email: purchaserEmail,
+          productId: catalogItem.productId,
+          agentId: targetAgentId || undefined,
+          sessionId
+        });
+      }
     }
 
     const creditsToAdd = catalogItem.credits;
