@@ -10,6 +10,7 @@ jobs:
   test:
     name: Run Payment Tests & Verification
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
@@ -27,16 +28,10 @@ jobs:
       - name: Run TypeScript typecheck / lint
         run: npm run lint
 
-      - name: Run Acceptance 6 Stripe Credits tests
-        run: npx vitest run server/acceptance6StripeCredits.test.ts
+      - name: Run Payment Test Suites
+        run: npx vitest run server/acceptance6StripeCredits.test.ts server/x402CoinbasePayments.test.ts server/hardenedPaymentPath.test.ts server/stripeMonetizationLoop.test.ts server/productionRevenueSafety.test.ts server/platformCreditsProvider.test.ts server/agentCreditsSecurity.test.ts
 
-      - name: Run x402 payment tests
-        run: npx vitest run server/x402CoinbasePayments.test.ts server/hardenedPaymentPath.test.ts
-
-      - name: Run Stripe webhook & revenue safety tests
-        run: npx vitest run server/stripeMonetizationLoop.test.ts server/productionRevenueSafety.test.ts server/platformCreditsProvider.test.ts server/agentCreditsSecurity.test.ts
-
-      - name: Run full test suite
+      - name: Run Full Test Suite
         run: npm run test
 
       - name: Verify build compilation
