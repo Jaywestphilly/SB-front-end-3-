@@ -498,7 +498,18 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
       }
     }
 
-    // Resolve and verify authenticated or metadata agent identity.
+    // (2) Production check: immediately require valid sk_live_* key before identity resolution or auto-provisioning
+    if (isProd) {
+      if (!stripeKey || !stripeKey.startsWith('sk_live_')) {
+        logPaymentEvent('checkout_failed', { reason: 'missing_live_secret_key' });
+        return res.status(500).json({
+          status: 'error',
+          error: 'Stripe checkout unavailable'
+        });
+      }
+    }
+
+    // (3) Resolve and verify authenticated or metadata agent identity.
     // Do NOT trust client-supplied agentId without verifying it resolves to a real agent in inMemoryAgentRegistry.
     let resolvedAgentId: string | undefined = undefined;
     let resolvedApiKey: string | undefined = undefined;
@@ -525,25 +536,17 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
       }
     }
 
-    // When no agentId/apiKey is provided or client agentId is invalid, auto-provision server-side!
+    // (4) Auto-provision only when checkout can actually proceed (no junk accounts on early failure)
     if (!resolvedAgentId) {
       const provisioned = autoProvisionPurchaserAgent(email);
       resolvedAgentId = provisioned.agentId;
       resolvedApiKey = provisioned.apiKey;
     }
 
-    // Production check: require valid sk_live_* key
+    // Production check passed: create hosted Stripe checkout session
     if (isProd) {
-      if (!stripeKey || !stripeKey.startsWith('sk_live_')) {
-        logPaymentEvent('checkout_failed', { reason: 'missing_live_secret_key' });
-        return res.status(500).json({
-          status: 'error',
-          error: 'Stripe checkout unavailable'
-        });
-      }
-
       const { default: Stripe } = await import('stripe');
-      const stripe = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia' as any });
+      const stripe = new Stripe(stripeKey!, { apiVersion: '2024-12-18.acacia' as any });
 
       const paymentTypes: any[] = catalogItem.mode === 'subscription'
         ? ['card', 'link']

@@ -536,14 +536,18 @@ describe('STOCK BLOC PRODUCTION REVENUE SAFETY AUDIT — 16 Verification Tests',
     expect(unmappedRes.body.creditsGranted).toBe(0);
   });
 
-  // TEST 12: Missing Stripe creds in production → checkout error, not mock success
-  it('Test 12: Missing Stripe creds in production → checkout error, not mock success', async () => {
+  // TEST 12: Missing Stripe creds in production → checkout error, not mock success (and no junk agent provisioned)
+  it('Test 12: Missing Stripe creds in production → checkout error, not mock success and 0 registry writes', async () => {
     process.env.NODE_ENV = 'production';
     delete process.env.STRIPE_SECRET_KEY;
 
+    inMemoryAgentRegistry.clear();
+    inMemoryKeyRegistry.clear();
+
     const req: any = {
       body: {
-        productId: 'agent_credits_1000'
+        productId: 'agent_credits_1000',
+        email: 'prospective_buyer@example.com'
       }
     };
     const res = createMockResponse();
@@ -555,6 +559,10 @@ describe('STOCK BLOC PRODUCTION REVENUE SAFETY AUDIT — 16 Verification Tests',
     expect(res.body.error).toBe('Stripe checkout unavailable');
     expect(res.body.mockMode).toBeUndefined();
     expect(res.body.sandboxMode).toBeUndefined();
+
+    // Verify no junk agent or key was provisioned into registries on the early failure path
+    expect(inMemoryAgentRegistry.size).toBe(0);
+    expect(inMemoryKeyRegistry.size).toBe(0);
   });
 
   // TEST 13: Stripe API failure in production → checkout error, not mock success
