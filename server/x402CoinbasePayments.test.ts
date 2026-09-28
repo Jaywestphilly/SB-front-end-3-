@@ -6,7 +6,8 @@ import {
   PRICED_ENDPOINTS,
   BASE_CAIP2,
   BASE_USDC_CONTRACT,
-  getX402RecipientAddress
+  getX402RecipientAddress,
+  X402_ROUTE_PATHS
 } from './x402PaymentService.js';
 import { decodePaymentRequiredHeader } from '@x402/core/http';
 
@@ -434,6 +435,37 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
 
       expect(resCarter.status).toBe(402);
       expect(resCarter.body.status).toBe('payment_required');
+    });
+
+    it('includes Bazaar discovery extensions in the 402 challenge header with resource description under 500 chars', async () => {
+      process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
+      const app = createTestApp();
+
+      const res = await request(app).get('/api/data/market');
+      expect(res.status).toBe(402);
+
+      const headerObj = decodePaymentRequiredHeader(res.headers['payment-required']);
+      expect(headerObj.extensions).toBeDefined();
+      expect(headerObj.extensions?.bazaar).toEqual({ discoverable: true });
+      expect(headerObj.resource?.url).toBeTruthy();
+      expect(headerObj.resource?.description?.length).toBeLessThan(500);
+
+      expect(res.body.extensions?.bazaar).toEqual({ discoverable: true });
+    });
+
+    it('exports X402_ROUTE_PATHS covering all 7 priced endpoints with valid routes', () => {
+      const endpointIds = Object.keys(PRICED_ENDPOINTS);
+      expect(endpointIds).toHaveLength(7);
+
+      for (const id of endpointIds) {
+        const paths = X402_ROUTE_PATHS[id];
+        expect(paths).toBeDefined();
+        expect(Array.isArray(paths)).toBe(true);
+        expect(paths.length).toBeGreaterThan(0);
+        for (const p of paths) {
+          expect(p.startsWith('/api/')).toBe(true);
+        }
+      }
     });
   });
 });

@@ -104,6 +104,49 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
   }
 };
 
+// Programmatically verify every resource description is under 500 characters
+Object.values(PRICED_ENDPOINTS).forEach((ep) => {
+  if (ep.description.length > 500) {
+    throw new Error(`Endpoint ${ep.id} description exceeds 500 characters: ${ep.description.length}`);
+  }
+});
+
+// Canonical HTTP route paths matched by each priced endpoint
+export const X402_ROUTE_PATHS: Record<string, string[]> = {
+  market_data: [
+    '/api/data/market',
+    '/api/data/market.csv',
+    '/api/v1/market/quote',
+    '/api/live-quote/:symbol'
+  ],
+  sb_score: [
+    '/api/v1/intelligence/sb-score',
+    '/api/v1/intelligence/signal',
+    '/api/intelligence/sb-score',
+    '/api/intelligence/signal'
+  ],
+  sec_13f_intel: [
+    '/api/data/sec',
+    '/api/v1/data/sec'
+  ],
+  sec_job: [
+    '/api/v1/sec/job',
+    '/api/sec/job'
+  ],
+  research: [
+    '/api/v1/intelligence/research',
+    '/api/v1/intelligence/theses'
+  ],
+  forecast: [
+    '/api/v1/intelligence/forecasts'
+  ],
+  strategy_eval: [
+    '/api/v1/agent/strategy/evaluate',
+    '/api/v1/agent/quant-sim',
+    '/api/v1/agent/submit-performance'
+  ]
+};
+
 // ============================================================================
 // FACILITATOR CLIENT INITIALIZATION
 // ============================================================================
@@ -496,6 +539,11 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
         url: `${req.protocol}://${req.get('host') || 'stockbloc.ai.studio'}${req.originalUrl || req.url}`,
         description: endpointConfig.description,
         mimeType: 'application/json'
+      },
+      extensions: {
+        bazaar: {
+          discoverable: true
+        }
       }
     };
 

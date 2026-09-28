@@ -22,7 +22,7 @@ import { db } from './server/firebaseAdmin.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import { validateProductionStartupSafety, authenticateAgent, getSystemReadinessStatus } from './server/agentSecurity.js';
 import { agentTelemetryRouter, trackAgentVisitMiddleware } from './server/agentTelemetry.js';
-import { requireX402Payment, PRICED_ENDPOINTS, getX402RecipientAddress } from './server/x402PaymentService.js';
+import { requireX402Payment, PRICED_ENDPOINTS, getX402RecipientAddress, X402_ROUTE_PATHS } from './server/x402PaymentService.js';
 
 const app = express();
 const PORT = 3000;
@@ -143,6 +143,31 @@ app.get(['/agents/skill.md', '/skill.md', '/agents/skill'], (req, res) => {
 
 app.get('/.well-known/stock-bloc-agent.json', (req, res) => {
   res.redirect('/api/v1/.well-known/stock-bloc-agent.json');
+});
+
+// agent402.tools and x402scan crawler discovery endpoint
+app.get('/.well-known/x402', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Cache-Control', 'no-store');
+  const recipient = getX402RecipientAddress();
+  const endpoints = Object.values(PRICED_ENDPOINTS).map((ep) => ({
+    id: ep.id,
+    name: ep.name,
+    paths: X402_ROUTE_PATHS[ep.id] || [],
+    priceUsd: ep.priceUsd,
+    priceDisplay: ep.priceDisplay,
+    atomicAmount: ep.atomicAmount,
+    description: ep.description
+  }));
+
+  return res.status(200).json({
+    x402Version: 2,
+    network: 'eip155:8453',
+    asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+    payTo: recipient,
+    facilitator: 'https://api.cdp.coinbase.com/platform/v2/x402',
+    endpoints
+  });
 });
 
 // Agent REST API Route: /api/agent/post
