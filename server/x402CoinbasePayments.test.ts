@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import request from 'supertest';
 import express from 'express';
+import crypto from 'crypto';
+import fs from 'fs';
 import {
   requireX402Payment,
   PRICED_ENDPOINTS,
@@ -15,6 +17,11 @@ import {
   setFacilitatorVerifyHandler,
   setFacilitatorSettleHandler
 } from './testSetup/facilitatorMock.js';
+import {
+  inMemoryAgentRegistry,
+  inMemoryKeyRegistry,
+  inMemoryWalletRegistry
+} from './agentPlatform.js';
 
 describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
   const originalEnv = { ...process.env };
@@ -518,6 +525,120 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
         for (const p of paths) {
           expect(p.startsWith('/api/')).toBe(true);
         }
+      }
+    });
+
+    it('double-mount regression: paid request with double-mounted middleware calls settle exactly once and returns 200', async () => {
+      process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
+      const app = express();
+      app.use(express.json());
+      // Explicitly simulate double-mounting requireX402Payment
+      app.use(requireX402Payment());
+      app.use('/api/v1/intelligence', requireX402Payment());
+      app.get('/api/v1/intelligence/sb-score', (req, res) => {
+        res.json({ status: 'success', ticker: 'NVDA', sbScore: 88 });
+      });
+
+      const settleSpy = vi.fn().mockResolvedValue({
+        success: true,
+        payer: '0xBuyer',
+        txHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
+      });
+      setFacilitatorVerifyHandler(async () => ({ isValid: true }));
+      setFacilitatorSettleHandler(settleSpy);
+
+      const paymentHeader = Buffer.from(
+        JSON.stringify({
+          x402Version: 2,
+          authorization: { from: '0xBuyer', to: TEST_RECIPIENT_ADDRESS, value: '50000' }
+        })
+      ).toString('base64');
+
+      const res = await request(app)
+        .get('/api/v1/intelligence/sb-score')
+        .set('PAYMENT-SIGNATURE', paymentHeader);
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.sbScore).toBe(88);
+      // Settle must be executed exactly once
+      expect(settleSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('credit debit: agent balance drops by endpoint price in credits, subsequent call with 0 balance gets 402', async () => {
+      process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
+      const agentId = 'agent_test_debit_regression';
+      const publicId = 'debitpub123';
+      const secret = 'debitsecret123456789012345678901234567890123456789012345678901234';
+      const rawApiKey = `sb_live_${publicId}_${secret}`;
+      const secretHash = crypto.createHash('sha256').update(secret).digest('hex');
+
+      inMemoryAgentRegistry.set(agentId, {
+        agentId,
+        handle: 'debit_bot',
+        displayName: 'Debit Bot',
+        status: 'active'
+      });
+      inMemoryKeyRegistry.set(publicId, {
+        keyId: publicId,
+        agentId,
+        secretHash,
+        status: 'active',
+        scopes: ['services:read', 'payments:transact'] as any,
+        createdAt: new Date().toISOString()
+      });
+      // Initial balance: exactly 5 credits (cost of sb_score: $0.05 = 5 credits)
+      inMemoryWalletRegistry.set(agentId, {
+        agentId,
+        creditsBalance: 5,
+        availableBalance: 5,
+        paidCreditsBalance: 5,
+        lifetimeSpent: 0
+      });
+
+      const app = createTestApp();
+
+      // First call: spends 5 credits, drops balance to 0, succeeds with 200
+      const res1 = await request(app)
+        .get('/api/v1/intelligence/sb-score')
+        .set('Authorization', `Bearer ${rawApiKey}`);
+
+      expect(res1.status).toBe(200);
+      expect(res1.body.status).toBe('success');
+      expect(inMemoryWalletRegistry.get(agentId)!.creditsBalance).toBe(0);
+
+      // Second call: 0 credits remaining, must be rejected with 402 Payment Required
+      const res2 = await request(app)
+        .get('/api/v1/intelligence/sb-score')
+        .set('Authorization', `Bearer ${rawApiKey}`);
+
+      expect(res2.status).toBe(402);
+      expect(res2.body.error).toContain('Trial credit balance exhausted');
+    });
+
+    it('manifest parity: every priced endpoint in manifest.json returns 402 for unauthenticated requests with no free-tier bypass', async () => {
+      process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
+      const manifest = JSON.parse(fs.readFileSync('public/agents/manifest.json', 'utf8'));
+      const app = createTestApp();
+
+      // Find all priced endpoints with x402 blocks in manifest
+      const pricedEntries = Object.entries(manifest.endpoints).filter(([, ep]: [string, any]) => !!ep.x402);
+      expect(pricedEntries.length).toBeGreaterThanOrEqual(7);
+
+      for (const [name, ep] of pricedEntries as [string, any][]) {
+        const method = (ep.method || 'GET').toUpperCase();
+        const path = ep.path;
+
+        let reqBuilder: request.Test;
+        if (method === 'POST') {
+          reqBuilder = request(app).post(path).send({ ticker: 'NVDA' });
+        } else {
+          reqBuilder = request(app).get(path);
+        }
+
+        const res = await reqBuilder;
+        expect(res.status, `Endpoint ${name} at ${path} must require payment (HTTP 402)`).toBe(402);
+        expect(res.body.status).toBe('payment_required');
       }
     });
   });

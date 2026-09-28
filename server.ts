@@ -128,7 +128,7 @@ app.get('/agents/feed', (req, res, next) => {
   next();
 });
 app.use('/api/v1/community', communityApiRouter);
-app.use(['/api/v1/intelligence', '/api/v1/intelligence/*', '/api/intelligence', '/api/intelligence/*'], requireX402Payment(), agentIntelligenceRouter);
+app.use(['/api/v1/intelligence', '/api/v1/intelligence/*', '/api/intelligence', '/api/intelligence/*'], agentIntelligenceRouter);
 app.use('/api/v1/web3', web3DotBtcRouter);
 app.use('/api/web3', web3DotBtcRouter);
 

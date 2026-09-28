@@ -421,17 +421,26 @@ export async function addCreditsToAgentWallet(
   }
 
   const prevBalance = wallet.creditsBalance || 0;
+  const prevAvailable = wallet.availableBalance || 0;
+  const prevPaid = wallet.paidCreditsBalance || 0;
+  const prevTrial = wallet.trialCreditsBalance || 0;
+  const prevPromo = wallet.promoCreditsBalance || 0;
+  const prevLastTag = wallet.lastCreditTag;
+  const prevLastAmount = wallet.lastCreditAmount;
+  const prevLastCreditedAt = wallet.lastCreditedAt;
+  const prevUpdatedAt = wallet.updatedAt;
+
   wallet.creditsBalance = prevBalance + creditsToAdd;
-  wallet.availableBalance = (wallet.availableBalance || 0) + creditsToAdd;
+  wallet.availableBalance = prevAvailable + creditsToAdd;
   
   if (reasonTag === 'STRIPE_PURCHASE') {
-    wallet.paidCreditsBalance = (wallet.paidCreditsBalance || 0) + creditsToAdd;
+    wallet.paidCreditsBalance = prevPaid + creditsToAdd;
   } else if (reasonTag === 'TRIAL') {
-    wallet.trialCreditsBalance = (wallet.trialCreditsBalance || 0) + creditsToAdd;
+    wallet.trialCreditsBalance = prevTrial + creditsToAdd;
   } else if (reasonTag.startsWith('COMMUNITY_')) {
-    wallet.promoCreditsBalance = (wallet.promoCreditsBalance || 0) + creditsToAdd;
+    wallet.promoCreditsBalance = prevPromo + creditsToAdd;
   } else {
-    wallet.promoCreditsBalance = (wallet.promoCreditsBalance || 0) + creditsToAdd;
+    wallet.promoCreditsBalance = prevPromo + creditsToAdd;
   }
   
   wallet.lastCreditTag = reasonTag;
@@ -441,7 +450,7 @@ export async function addCreditsToAgentWallet(
 
   inMemoryWalletRegistry.set(resolvedAgentId, wallet);
 
-  // Write ledger entry for audit trail
+  // Write ledger entry for audit trail - fail-closed
   try {
     const entryId = 'ent_credit_' + crypto.randomBytes(6).toString('hex');
     const description = reasonTag.startsWith('COMMUNITY_')
@@ -469,7 +478,26 @@ export async function addCreditsToAgentWallet(
       createdAt: new Date().toISOString()
     };
     await db.collection('ledger_entries').doc(entryId).set(creditEntry);
-  } catch (_) {}
+  } catch (err: any) {
+    // Roll back in-memory wallet mutation
+    wallet.creditsBalance = prevBalance;
+    wallet.availableBalance = prevAvailable;
+    wallet.paidCreditsBalance = prevPaid;
+    wallet.trialCreditsBalance = prevTrial;
+    wallet.promoCreditsBalance = prevPromo;
+    wallet.lastCreditTag = prevLastTag;
+    wallet.lastCreditAmount = prevLastAmount;
+    wallet.lastCreditedAt = prevLastCreditedAt;
+    wallet.updatedAt = prevUpdatedAt;
+    inMemoryWalletRegistry.set(resolvedAgentId, wallet);
+
+    console.error('Ledger write failed, rolled back in-memory wallet balance:', err.message);
+    return {
+      success: false,
+      creditsBalance: prevBalance,
+      error: 'LEDGER_WRITE_FAILED'
+    };
+  }
 
   try {
     await db.collection('agent_wallets').doc(resolvedAgentId).set(wallet, { merge: true });

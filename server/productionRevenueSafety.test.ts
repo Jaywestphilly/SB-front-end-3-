@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import crypto from 'crypto';
 import type { Request, Response } from 'express';
-import { dbStoreInstance } from './firebaseAdmin.js';
+import { db, dbStoreInstance } from './firebaseAdmin.js';
 import {
   SERVER_CATALOG,
   createCheckoutSessionHandler,
@@ -22,7 +22,8 @@ import {
 import {
   inMemoryWalletRegistry,
   inMemoryAgentRegistry,
-  inMemoryKeyRegistry
+  inMemoryKeyRegistry,
+  addCreditsToAgentWallet
 } from './agentPlatform.js';
 
 // Helper mock HTTP response
@@ -872,5 +873,73 @@ describe('STOCK BLOC PRODUCTION REVENUE SAFETY AUDIT — 16 Verification Tests',
     const dbStore = dbStoreInstance.getCollection('fulfilled_stripe_sessions');
     const doc = dbStore.get(sessionId);
     expect(doc?.status).toBe('failed');
+  });
+
+  // TEST 20: Stripe Checkout Session metadata never exposes raw apiKey or secrets
+  it('Test 20: Checkout session metadata never exposes apiKey or secret fields', async () => {
+    process.env.NODE_ENV = 'development';
+    delete process.env.STRIPE_SECRET_KEY;
+
+    const req: any = {
+      body: {
+        productId: 'agent_credits_1000',
+        email: 'buyer@example.com'
+      },
+      protocol: 'https',
+      get: (header: string) => (header === 'host' ? 'stockbloc.ai.studio' : undefined)
+    };
+    const res = createMockResponse();
+
+    await createCheckoutSessionHandler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    const session = recordedStripeSessions.get(res.body.sessionId);
+    expect(session).toBeDefined();
+    expect(session.metadata).toBeDefined();
+
+    // Assert no secret apiKey field appears in metadata
+    expect(session.metadata.apiKey).toBeUndefined();
+    for (const [key, value] of Object.entries(session.metadata)) {
+      if (typeof value === 'string') {
+        expect(value).not.toContain('sb_live_');
+      }
+    }
+    expect(session.metadata.agentId).toBeDefined();
+    expect(session.metadata.keyId || session.metadata.publicId).toBeDefined();
+  });
+
+  // TEST 21: Credit ledger persistence fails closed if Firestore write fails
+  it('Test 21: Credit ledger persistence fails closed if Firestore write fails', async () => {
+    const agentId = 'agent_ledger_fail_test';
+    inMemoryWalletRegistry.set(agentId, {
+      agentId,
+      creditsBalance: 100,
+      availableBalance: 100,
+      paidCreditsBalance: 100
+    });
+
+    // Stub db.collection('ledger_entries').doc().set to throw
+    const originalCollection = db.collection.bind(db);
+    const docSpy = vi.spyOn(db, 'collection').mockImplementation((colName: string) => {
+      if (colName === 'ledger_entries') {
+        return {
+          doc: () => ({
+            set: vi.fn().mockRejectedValue(new Error('Simulated Firestore ledger write crash'))
+          })
+        } as any;
+      }
+      return originalCollection(colName);
+    });
+
+    try {
+      const res = await addCreditsToAgentWallet(agentId, 50, 'STRIPE_PURCHASE');
+      expect(res.success).toBe(false);
+      expect(res.error).toBe('LEDGER_WRITE_FAILED');
+      // Wallet balance must remain unchanged at 100!
+      const wallet = inMemoryWalletRegistry.get(agentId);
+      expect(wallet?.creditsBalance).toBe(100);
+    } finally {
+      docSpy.mockRestore();
+    }
   });
 });

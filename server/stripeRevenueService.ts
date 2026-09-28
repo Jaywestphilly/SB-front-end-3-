@@ -512,14 +512,19 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
     // (3) Resolve and verify authenticated or metadata agent identity.
     // Do NOT trust client-supplied agentId without verifying it resolves to a real agent in inMemoryAgentRegistry.
     let resolvedAgentId: string | undefined = undefined;
-    let resolvedApiKey: string | undefined = undefined;
+    let resolvedKeyId: string | undefined = undefined;
+    let resolvedPublicId: string | undefined = undefined;
 
     if (apiKey && typeof apiKey === 'string' && apiKey.trim()) {
       const keyTrimmed = apiKey.trim();
       const agentFromKey = resolveAgentIdFromKey(keyTrimmed);
       if (agentFromKey && inMemoryAgentRegistry.has(agentFromKey)) {
         resolvedAgentId = agentFromKey;
-        resolvedApiKey = keyTrimmed;
+        if (keyTrimmed.startsWith('sb_live_')) {
+          const parts = keyTrimmed.split('_');
+          resolvedPublicId = parts[2];
+          resolvedKeyId = parts[2];
+        }
       }
     }
 
@@ -528,8 +533,9 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
       if (inMemoryAgentRegistry.has(idTrimmed)) {
         resolvedAgentId = idTrimmed;
         for (const [key, rec] of inMemoryKeyRegistry.entries()) {
-          if (rec.agentId === idTrimmed && rec.status === 'active' && key.startsWith('sb_live_')) {
-            resolvedApiKey = key;
+          if (rec.agentId === idTrimmed && rec.status === 'active') {
+            resolvedKeyId = rec.keyId || (rec as any).publicId;
+            resolvedPublicId = rec.keyId || (rec as any).publicId;
             break;
           }
         }
@@ -540,7 +546,8 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
     if (!resolvedAgentId) {
       const provisioned = autoProvisionPurchaserAgent(email);
       resolvedAgentId = provisioned.agentId;
-      resolvedApiKey = provisioned.apiKey;
+      resolvedKeyId = provisioned.publicId;
+      resolvedPublicId = provisioned.publicId;
     }
 
     // Production check passed: create hosted Stripe checkout session
@@ -563,7 +570,8 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
           amountCents: String(catalogItem.amountCents),
           currency: catalogItem.currency,
           agentId: resolvedAgentId,
-          apiKey: resolvedApiKey || '',
+          keyId: resolvedKeyId || resolvedPublicId || '',
+          publicId: resolvedPublicId || resolvedKeyId || '',
           email: email || ''
         },
         line_items: [
@@ -616,7 +624,8 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
           amountCents: String(catalogItem.amountCents),
           currency: catalogItem.currency,
           agentId: resolvedAgentId,
-          apiKey: resolvedApiKey || '',
+          keyId: resolvedKeyId || resolvedPublicId || '',
+          publicId: resolvedPublicId || resolvedKeyId || '',
           email: email || ''
         },
         line_items: [
@@ -663,7 +672,8 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
         amountCents: String(catalogItem.amountCents),
         currency: catalogItem.currency,
         agentId: resolvedAgentId,
-        apiKey: resolvedApiKey || '',
+        keyId: resolvedKeyId || resolvedPublicId || '',
+        publicId: resolvedPublicId || resolvedKeyId || '',
         email: email || ''
       }
     });
@@ -843,6 +853,12 @@ export async function fulfillAuthoritativePayment(params: {
 
     if (metadata.agentId && typeof metadata.agentId === 'string' && metadata.agentId.trim()) {
       targetAgentId = metadata.agentId.trim();
+    } else if (metadata.keyId || metadata.publicId) {
+      const keyId = (metadata.keyId || metadata.publicId).trim();
+      const rec = inMemoryKeyRegistry.get(keyId);
+      if (rec?.agentId) {
+        targetAgentId = rec.agentId;
+      }
     } else if (metadata.apiKey && typeof metadata.apiKey === 'string') {
       targetAgentId = resolveAgentIdFromKey(metadata.apiKey);
     } else if (authenticatedAgentId && authenticatedAgentId.trim()) {
@@ -1262,7 +1278,7 @@ export async function stripeWebhookHandler(req: any, res: Response) {
         userProfilePurchases[userEmail] = {
           email: userEmail,
           purchasedItems: currentItems,
-          apiKey: metadata.apiKey || userProfilePurchases[userEmail]?.apiKey,
+          apiKey: userProfilePurchases[userEmail]?.apiKey,
           linkedAt: new Date().toISOString()
         };
       }
@@ -1430,10 +1446,10 @@ export async function verifySessionHandler(req: Request, res: Response) {
     }
   ];
 
-  // Provide or find real active API key
+  // Provide or find real active API key server-side from inMemoryKeyRegistry
   const metadata = session.metadata || {};
-  let activeApiKey: string | undefined = metadata.apiKey;
-  if (!activeApiKey && targetAgentId) {
+  let activeApiKey: string | undefined = undefined;
+  if (targetAgentId) {
     for (const [key, rec] of inMemoryKeyRegistry.entries()) {
       if (rec.agentId === targetAgentId && rec.status === 'active' && key.startsWith('sb_live_')) {
         activeApiKey = key;

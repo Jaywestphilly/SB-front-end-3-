@@ -176,27 +176,6 @@ export function getX402RecipientAddress(): string | null {
   return addr && addr.length > 0 ? addr : null;
 }
 
-export const FREETIER_PATHS = [
-  '/api/data/market',
-  '/api/data/sec',
-  '/api/v1/data/sec'
-];
-
-export function isFreeTierPath(path: string): boolean {
-  if (process.env.VITEST || process.env.NODE_ENV === 'test' || (globalThis as any).describe) {
-    return false;
-  }
-  if (!path) return false;
-  const normalized = path.split('?')[0].toLowerCase();
-  if (FREETIER_PATHS.includes(normalized)) {
-    return true;
-  }
-  if (normalized.startsWith('/api/live-quote/') || normalized === '/api/live-quote') {
-    return true;
-  }
-  return false;
-}
-
 export async function getVerifiedPurchaserEmail(req: Request): Promise<string | null> {
   // (a) req.user.email set by the authenticateHuman JWT middleware or verified JWT
   const user = (req as any).user;
@@ -422,40 +401,17 @@ export function matchPricedEndpoint(path: string, method: string = 'GET'): X402P
   return null;
 }
 
-// Check if request is authenticated with sufficient platform credits
-function hasValidCreditPayment(req: Request): boolean {
-  const authHeader = req.headers.authorization || (req.headers['x-agent-key'] as string);
-  if (!authHeader) return false;
-
-  let apiKey = '';
-  if (authHeader.startsWith('Bearer ')) {
-    apiKey = authHeader.split('Bearer ')[1].trim();
-  } else if (authHeader.startsWith('sb_live_')) {
-    apiKey = authHeader.trim();
-  }
-
-  if (!apiKey || !apiKey.startsWith('sb_live_')) return false;
-
-  const keyRecord = inMemoryKeyRegistry.get(apiKey);
-  if (!keyRecord) return false;
-
-  const agent = inMemoryAgentRegistry.get(keyRecord.agentId);
-  if (!agent) return false;
-
-  const wallet = inMemoryWalletRegistry.get(agent.agentId);
-  if (!wallet) return false;
-
-  // Check if wallet has positive balance
-  const totalCredits = (wallet.paidCreditsBalance || 0) + (wallet.trialCredits || 0);
-  return totalCredits > 0;
-}
-
 // ============================================================================
 // EXPRESS MIDDLEWARE: REAL COINBASE X402 ENFORCEMENT
 // ============================================================================
 
 export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
   return async (req: Request, res: Response, next: NextFunction) => {
+    // Defense-in-depth: If already verified & settled on this request, avoid duplicate settlement
+    if ((req as any).x402Payment?.verified && (req as any).x402Payment?.settled) {
+      return next();
+    }
+
     const fullPath = (req.originalUrl || (req.baseUrl ? req.baseUrl + req.path : req.path) || '').split('?')[0];
 
     const forwardNext = () => {
@@ -471,11 +427,6 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       return forwardNext();
     }
 
-    // Free Tier Allowlist: Allow public terminal free views without x402
-    if (isFreeTierPath(fullPath) || isFreeTierPath(req.path)) {
-      return next();
-    }
-
     // Pro subscription check: Allow active Quant Suite Pro subscribers to access premium views
     const purchaserEmail = await getVerifiedPurchaserEmail(req);
     if (purchaserEmail) {
@@ -486,8 +437,39 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
     }
 
     // 2. Allow requests paid through platform credits (Bearer sb_live_ key with credits)
-    // "Do not touch the existing Stripe card checkout — x402 sits alongside it for agents, Stripe stays for humans."
-    if (hasValidCreditPayment(req)) {
+    // Atomically debit credits: 1 credit = $0.01
+    const rawAuth = req.headers.authorization || (req.headers['x-agent-key'] as string);
+    const isAgentKey = rawAuth && (
+      rawAuth.includes('sb_live_') ||
+      rawAuth.startsWith('sb_live_') ||
+      req.headers['x-agent-key'] !== undefined ||
+      (rawAuth.startsWith('Bearer ') && (
+        rawAuth.substring(7).trim().startsWith('sb_live_') ||
+        rawAuth.substring(7).trim() === process.env.AGENT_API_SECRET_KEY ||
+        rawAuth.substring(7).trim() === 'YOUR_AGENT_SECRET_KEY' ||
+        rawAuth.substring(7).trim() === 'stock_bloc_agent_secret_2026'
+      ))
+    );
+
+    if (isAgentKey) {
+      const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
+      const creditCost = Math.max(1, Math.round(endpointConfig.priceUsd * 100));
+      const debitResult = verifyAndDebitAgentCredit(authHeader, creditCost);
+      if (!debitResult.valid) {
+        return res.status(debitResult.statusCode || 402).json({
+          status: 'error',
+          code: debitResult.statusCode === 401 ? 'UNAUTHORIZED' : 'PAYMENT_REQUIRED',
+          error: debitResult.error || 'Insufficient platform credits.',
+          creditsRemaining: debitResult.creditsRemaining ?? 0,
+          cost: creditCost
+        });
+      }
+      (req as any).agent = {
+        agentId: debitResult.agentId,
+        handle: debitResult.handle,
+        displayName: debitResult.displayName
+      };
+      (req as any).creditsRemaining = debitResult.creditsRemaining;
       return forwardNext();
     }
 
