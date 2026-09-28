@@ -536,8 +536,8 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       x402Version: 2 as const,
       accepts: [paymentRequirement],
       resource: {
-        url: `${req.protocol}://${req.get('host') || 'stockbloc.ai.studio'}${req.originalUrl || req.url}`,
-        description: endpointConfig.description,
+        url: `${req.protocol}://${req.get('host') || 'stockbloc.ai.studio'}${req.originalUrl || req.url || '/'}` || 'https://stockbloc.ai.studio',
+        description: (endpointConfig.description || '').slice(0, 500),
         mimeType: 'application/json'
       },
       extensions: {
