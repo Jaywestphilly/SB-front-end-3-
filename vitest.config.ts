@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
-    setupFiles: ['./src/setupTests.ts', './server/testSetup/firestoreMock.ts'],
+    setupFiles: ['./src/setupTests.ts', './server/testSetup/firestoreMock.ts', './server/testSetup/facilitatorMock.ts'],
     globals: true,
     exclude: ['tests/**/*', 'node_modules/**/*'],
   },

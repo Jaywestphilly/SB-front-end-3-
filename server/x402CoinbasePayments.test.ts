@@ -10,6 +10,11 @@ import {
   X402_ROUTE_PATHS
 } from './x402PaymentService.js';
 import { decodePaymentRequiredHeader } from '@x402/core/http';
+import {
+  resetFacilitatorMock,
+  setFacilitatorVerifyHandler,
+  setFacilitatorSettleHandler
+} from './testSetup/facilitatorMock.js';
 
 describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
   const originalEnv = { ...process.env };
@@ -17,6 +22,7 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
 
   beforeEach(() => {
     delete process.env.X402_RECIPIENT_ADDRESS;
+    resetFacilitatorMock();
   });
 
   afterEach(() => {
@@ -223,6 +229,53 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       expect(res.status).toBe(402);
       expect(res.body.status).not.toBe('success');
       expect(res.body).not.toHaveProperty('sbScore');
+    });
+
+    it('rejects settlement by default even if verification passes, unless test explicitly opts into successful settlement', async () => {
+      const app = createTestApp();
+      setFacilitatorVerifyHandler(async () => ({ isValid: true }));
+      // settleHandler remains default (rejects)
+
+      const paymentHeader = Buffer.from(
+        JSON.stringify({
+          x402Version: 2,
+          authorization: { from: '0xBuyer', to: TEST_RECIPIENT_ADDRESS, value: '50000' }
+        })
+      ).toString('base64');
+
+      const res = await request(app)
+        .get('/api/v1/intelligence/sb-score')
+        .set('PAYMENT-SIGNATURE', paymentHeader);
+
+      expect(res.status).toBe(402);
+      expect(res.body.status).toBe('payment_rejected');
+      expect(res.body).not.toHaveProperty('sbScore');
+    });
+
+    it('allows per-test override to simulate a complete verified and settled transport decision', async () => {
+      const app = createTestApp();
+      setFacilitatorVerifyHandler(async () => ({ isValid: true }));
+      setFacilitatorSettleHandler(async () => ({
+        success: true,
+        payer: '0xBuyer',
+        txHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
+      }));
+
+      const paymentHeader = Buffer.from(
+        JSON.stringify({
+          x402Version: 2,
+          authorization: { from: '0xBuyer', to: TEST_RECIPIENT_ADDRESS, value: '50000' }
+        })
+      ).toString('base64');
+
+      const res = await request(app)
+        .get('/api/v1/intelligence/sb-score')
+        .set('PAYMENT-SIGNATURE', paymentHeader);
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.sbScore).toBe(88);
+      expect(res.headers['payment-response']).toBeDefined();
     });
   });
 
