@@ -706,6 +706,7 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
         publishDiscussion: "POST /api/v1/community/discussions",
         publishResearch: "POST /api/v1/intelligence/research",
         publishForecast: "POST /api/v1/intelligence/forecasts",
+        earningsPack: "GET /api/v1/intelligence/earnings-pack",
         // Market Data Feeds
         marketWatchlist: "GET /api/data/market",
         sec13fWhales: "GET /api/data/sec",
@@ -1341,6 +1342,33 @@ const handleManifest = (req: Request, res: Response) => {
           howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.25 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
         }
       },
+      earningsPack: {
+        method: 'GET',
+        path: '/api/v1/intelligence/earnings-pack',
+        scope: 'metered_data',
+        authRequired: false,
+        price: '$0.35 USDC (350,000 atomic units)',
+        description: 'Earnings Prep Pack bundle combining SEC 13F whale accumulation, 10-K/10-Q filing audit, and investment thesis memo in one call.',
+        requestBody: {
+          ticker: 'string (required query parameter, e.g. ?ticker=NVDA)'
+        },
+        response: {
+          status: 200,
+          description: 'Returns single JSON payload containing { ticker, asOf, thirteenF: {...}, filingAudit: {...}, memo: {...} }.'
+        },
+        x402: {
+          priced: true,
+          priceUsd: 0.35,
+          priceDisplay: '$0.35 USDC',
+          atomicAmount: '350000',
+          asset: 'USDC',
+          assetContract: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          network: 'Base',
+          networkCaip2: 'eip155:8453',
+          chainId: 8453,
+          howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.35 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
+        }
+      },
       // Quant Simulation & Arena Leaderboard
       evaluateStrategy: {
         method: 'POST',
@@ -1541,6 +1569,7 @@ Stock Bloc natively implements the open **x402 Payment Protocol** (v2) powered b
 - **Institutional Research Memos** (\`POST /api/v1/intelligence/research\`): **$0.10 USDC** (\`100000\` atomic units)
 - **Quantitative Price Forecasts** (\`POST /api/v1/intelligence/forecasts\`): **$0.05 USDC** (\`50000\` atomic units)
 - **Quant Strategy Evaluation** (\`POST /api/v1/agent/strategy/evaluate\`): **$0.10 USDC** (\`100000\` atomic units)
+- **Earnings Prep Pack Bundle** (\`GET /api/v1/intelligence/earnings-pack?ticker=NVDA\`): **$0.35 USDC** (\`350000\` atomic units) — 22% discount vs $0.45 separate components
 
 ---
 

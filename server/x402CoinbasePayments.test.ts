@@ -79,6 +79,10 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       res.json({ status: 'success', annualizedReturn: 0.42, sharpeRatio: 2.5 });
     });
 
+    app.get('/api/v1/intelligence/earnings-pack', (req, res) => {
+      res.json({ status: 'success', ticker: 'NVDA', bundle: 'earnings_pack' });
+    });
+
     return app;
   };
 
@@ -188,6 +192,18 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       const headerObj = decodePaymentRequiredHeader(res.headers['payment-required']);
       expect(headerObj.accepts[0].amount).toBe('250000'); // $0.25
       expect(headerObj.accepts[0].network).toBe(BASE_CAIP2);
+    });
+
+    it('returns HTTP 402 with real x402 Base USDC requirements for Earnings Prep Pack ($0.35)', async () => {
+      const app = createTestApp();
+      const res = await request(app).get('/api/v1/intelligence/earnings-pack?ticker=NVDA');
+
+      expect(res.status).toBe(402);
+      const headerObj = decodePaymentRequiredHeader(res.headers['payment-required']);
+      expect(headerObj.accepts[0].amount).toBe('350000'); // $0.35
+      expect(headerObj.accepts[0].asset).toBe(BASE_USDC_CONTRACT);
+      expect(headerObj.accepts[0].network).toBe(BASE_CAIP2);
+      expect(headerObj.accepts[0].extra.priceUsd).toBe('$0.35');
     });
 
     it('returns HTTP 402 with real x402 Base USDC requirements for Research ($0.10) & Forecast ($0.05)', async () => {
@@ -317,6 +333,7 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       expect(manifest.endpoints.publishResearch.x402.priceDisplay).toBe('$0.10 USDC');
       expect(manifest.endpoints.publishForecast.x402.priceDisplay).toBe('$0.05 USDC');
       expect(manifest.endpoints.evaluateStrategy.x402.priceDisplay).toBe('$0.10 USDC');
+      expect(manifest.endpoints.earningsPack.x402.priceDisplay).toBe('$0.35 USDC');
     });
 
     it('verifies skill.md contains Paying with x402 section and full flow curl examples', async () => {
@@ -329,6 +346,8 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       expect(skillMd).toContain('PAYMENT-REQUIRED');
       expect(skillMd).toContain('PAYMENT-SIGNATURE');
       expect(skillMd).toContain('curl -i -X GET');
+      expect(skillMd).toContain('## Earnings Prep Pack Bundle');
+      expect(skillMd).toContain('$0.35 USDC');
     });
   });
 
@@ -513,9 +532,9 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       expect(res.body.extensions?.bazaar).toEqual({ discoverable: true });
     });
 
-    it('exports X402_ROUTE_PATHS covering all 7 priced endpoints with valid routes', () => {
+    it('exports X402_ROUTE_PATHS covering all priced endpoints with valid routes', () => {
       const endpointIds = Object.keys(PRICED_ENDPOINTS);
-      expect(endpointIds).toHaveLength(7);
+      expect(endpointIds).toHaveLength(8);
 
       for (const id of endpointIds) {
         const paths = X402_ROUTE_PATHS[id];
@@ -640,6 +659,49 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
         expect(res.status, `Endpoint ${name} at ${path} must require payment (HTTP 402)`).toBe(402);
         expect(res.body.status).toBe('payment_required');
       }
+    });
+
+    it('serves complete Earnings Prep Pack payload with thirteenF, filingAudit, and memo upon verified settlement', async () => {
+      process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
+      const { agentIntelligenceRouter } = await import('./agentIntelligenceApi.js');
+      const testApp = express();
+      testApp.use(express.json());
+      testApp.use(requireX402Payment());
+      testApp.use('/api/v1/intelligence', agentIntelligenceRouter);
+
+      setFacilitatorVerifyHandler(async () => ({ isValid: true }));
+      setFacilitatorSettleHandler(async () => ({
+        success: true,
+        payer: '0xBuyer',
+        txHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef'
+      }));
+
+      const paymentHeader = Buffer.from(
+        JSON.stringify({
+          x402Version: 2,
+          authorization: { from: '0xBuyer', to: TEST_RECIPIENT_ADDRESS, value: '350000' }
+        })
+      ).toString('base64');
+
+      const res = await request(testApp)
+        .get('/api/v1/intelligence/earnings-pack?ticker=NVDA')
+        .set('PAYMENT-SIGNATURE', paymentHeader);
+
+      expect(res.status).toBe(200);
+      expect(res.body.ticker).toBe('NVDA');
+      expect(res.body.asOf).toBeDefined();
+      expect(res.body.thirteenF).toBeDefined();
+      expect(res.body.thirteenF.quarterCycle).toBeDefined();
+      expect(res.body.filingAudit).toBeDefined();
+      expect(res.body.filingAudit.executiveSummary).toBeDefined();
+      expect(res.body.memo).toBeDefined();
+      expect(res.body.memo.title).toContain('NVDA');
+      expect(res.body.memo.thesis).toBeDefined();
+      expect(res.body.memo.bullCase).toBeDefined();
+      expect(res.body.memo.bearCase).toBeDefined();
+      expect(Array.isArray(res.body.memo.catalysts)).toBe(true);
+      expect(Array.isArray(res.body.memo.risks)).toBe(true);
+      expect(Array.isArray(res.body.memo.evidence)).toBe(true);
     });
   });
 });

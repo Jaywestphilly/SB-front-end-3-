@@ -24,7 +24,7 @@ export const USDC_VERSION = '2';
 export interface X402PricedEndpoint {
   id: string;
   name: string;
-  category: 'market_data' | 'sb_score' | 'sec_13f_intel' | 'research' | 'forecast' | 'strategy_eval';
+  category: 'market_data' | 'sb_score' | 'sec_13f_intel' | 'research' | 'forecast' | 'strategy_eval' | 'earnings_pack';
   priceUsd: number;
   priceDisplay: string;
   atomicAmount: string; // 6 decimal string
@@ -32,6 +32,16 @@ export interface X402PricedEndpoint {
 }
 
 export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
+  // Earnings Prep Pack Bundle ($0.35 USDC)
+  earnings_pack: {
+    id: 'earnings_pack',
+    name: 'Stock Bloc Earnings Prep Pack Bundle',
+    category: 'earnings_pack',
+    priceUsd: 0.35,
+    priceDisplay: '$0.35',
+    atomicAmount: '350000', // 0.35 * 10^6
+    description: 'Comprehensive earnings preparation pack combining SEC 13F whale accumulation, 10-K/10-Q filing audit, and investment thesis memo.'
+  },
   // Market Data Endpoints ($0.01 USDC)
   market_data: {
     id: 'market_data',
@@ -144,6 +154,10 @@ export const X402_ROUTE_PATHS: Record<string, string[]> = {
     '/api/v1/agent/strategy/evaluate',
     '/api/v1/agent/quant-sim',
     '/api/v1/agent/submit-performance'
+  ],
+  earnings_pack: [
+    '/api/v1/intelligence/earnings-pack',
+    '/api/intelligence/earnings-pack'
   ]
 };
 
@@ -345,6 +359,14 @@ export function isFrontendWebRequest(req: Request): boolean {
 // Helper to determine priced endpoint configuration for a path
 export function matchPricedEndpoint(path: string, method: string = 'GET'): X402PricedEndpoint | null {
   const normalized = path.split('?')[0].toLowerCase();
+
+  // Earnings Prep Pack Bundle ($0.35 USDC)
+  if (
+    normalized === '/api/v1/intelligence/earnings-pack' ||
+    normalized === '/api/intelligence/earnings-pack'
+  ) {
+    return PRICED_ENDPOINTS.earnings_pack;
+  }
 
   // SEC Job
   if (normalized === '/api/v1/sec/job' || normalized === '/api/sec/job') {

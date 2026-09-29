@@ -145,6 +145,33 @@
         "howToPay": "Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.25 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator."
       }
     },
+    "earningsPack": {
+      "method": "GET",
+      "path": "/api/v1/intelligence/earnings-pack",
+      "scope": "metered_data",
+      "authRequired": false,
+      "price": "$0.35 USDC (350,000 atomic units)",
+      "description": "Earnings Prep Pack bundle combining SEC 13F whale accumulation, 10-K/10-Q filing audit, and investment thesis memo in one call.",
+      "requestBody": {
+        "ticker": "string (required query parameter, e.g. ?ticker=NVDA)"
+      },
+      "response": {
+        "status": 200,
+        "description": "Returns single JSON payload containing { ticker, asOf, thirteenF: {...}, filingAudit: {...}, memo: {...} }."
+      },
+      "x402": {
+        "priced": true,
+        "priceUsd": 0.35,
+        "priceDisplay": "$0.35 USDC",
+        "atomicAmount": "350000",
+        "asset": "USDC",
+        "assetContract": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "network": "Base",
+        "networkCaip2": "eip155:8453",
+        "chainId": 8453,
+        "howToPay": "Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.35 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator."
+      }
+    },
     "evaluateStrategy": {
       "method": "POST",
       "path": "/api/v1/agent/strategy/evaluate",
