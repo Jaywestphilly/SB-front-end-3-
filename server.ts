@@ -25,7 +25,12 @@ import { agentTelemetryRouter, trackAgentVisitMiddleware } from './server/agentT
 import { requireX402Payment, PRICED_ENDPOINTS, getX402RecipientAddress, X402_ROUTE_PATHS } from './server/x402PaymentService.js';
 
 const app = express();
-const PORT = 3000;
+const portArgIndex = process.argv.indexOf('--port');
+const portFromArg = portArgIndex !== -1 && process.argv[portArgIndex + 1] ? parseInt(process.argv[portArgIndex + 1], 10) : null;
+const isProductionMode = process.env.NODE_ENV === 'production' || 
+  (typeof __filename !== 'undefined' && __filename.includes('dist')) ||
+  (!process.env.CONTROL_PLANE_PORT && Boolean(process.env.PORT));
+const PORT = portFromArg || (isProductionMode ? (Number(process.env.PORT) || 8080) : 3000);
 
 // Run production startup safety audit
 try {
@@ -2058,7 +2063,7 @@ export function computeSuperSonicTsunamiEvaluation(
 app.post(['/api/v1/agent/register', '/api/v1/agents/register'], registerAutonomousAgentHandler);
 
 // 2. Super Sonic Tsunami Strategy Evaluation REST Endpoint: POST /api/v1/agent/strategy/evaluate
-app.post(['/api/v1/agent/strategy/evaluate', '/api/v1/agent/evaluate-strategy'], requireX402Payment(), (req, res) => {
+app.post(['/api/v1/agent/strategy/evaluate', '/api/v1/agent/evaluate-strategy'], requireX402Payment(), async (req, res) => {
   try {
     const { 
       agentName = "Autonomous-Agent", 
@@ -2087,7 +2092,7 @@ app.post(['/api/v1/agent/strategy/evaluate', '/api/v1/agent/evaluate-strategy'],
     }
 
     // Track usage/credits
-    const authResult = verifyAndDebitAgentCredit(req.headers.authorization, 1);
+    const authResult = await verifyAndDebitAgentCredit(req.headers.authorization, 1);
     if (!authResult.valid) {
       return res.status(authResult.statusCode || 401).json({
         error: authResult.error,
@@ -2128,7 +2133,7 @@ app.post(['/api/v1/agent/strategy/evaluate', '/api/v1/agent/evaluate-strategy'],
 });
 
 // 3. Agent Performance & Trade Thesis Submission Endpoint: POST /api/v1/agent/submit-performance
-app.post(['/api/v1/agent/submit-performance', '/api/v1/agent/submit-trade', '/api/v1/agent/submit-thesis'], (req, res) => {
+app.post(['/api/v1/agent/submit-performance', '/api/v1/agent/submit-trade', '/api/v1/agent/submit-thesis'], async (req, res) => {
   try {
     const body = req.body || {};
     const {
@@ -2171,7 +2176,7 @@ app.post(['/api/v1/agent/submit-performance', '/api/v1/agent/submit-trade', '/ap
     }
 
     // Authenticate and debit 1 credit
-    const authResult = verifyAndDebitAgentCredit(req.headers.authorization, 1);
+    const authResult = await verifyAndDebitAgentCredit(req.headers.authorization, 1);
     if (!authResult.valid) {
       return res.status(authResult.statusCode || 401).json({
         error: authResult.error,

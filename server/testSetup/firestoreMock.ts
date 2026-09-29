@@ -216,6 +216,8 @@ vi.mock('../firebaseAdmin.js', () => {
     return queryObj;
   };
 
+  let txQueue: Promise<void> = Promise.resolve();
+
   const db = {
     collection: (name: string) => {
       const query = createQueryObj(name);
@@ -233,24 +235,42 @@ vi.mock('../firebaseAdmin.js', () => {
       };
     },
     runTransaction: async (updateFunction: any) => {
-      const transaction = {
-        get: async (docRef: any) => {
-          return await docRef.get();
-        },
-        set: (docRef: any, data: any, options?: any) => {
-          docRef.set(data, options);
-          return transaction;
-        },
-        update: (docRef: any, data: any) => {
-          docRef.update(data);
-          return transaction;
-        },
-        delete: (docRef: any) => {
-          docRef.delete();
-          return transaction;
-        }
-      };
-      return await updateFunction(transaction);
+      let releaseLock: () => void;
+      const nextLock = new Promise<void>((resolve) => {
+        releaseLock = resolve;
+      });
+      const previousLock = txQueue;
+      txQueue = (async () => {
+        try {
+          await previousLock;
+        } catch (_) {}
+        await nextLock;
+      })();
+
+      await previousLock.catch(() => {});
+
+      try {
+        const transaction = {
+          get: async (docRef: any) => {
+            return await docRef.get();
+          },
+          set: (docRef: any, data: any, options?: any) => {
+            docRef.set(data, options);
+            return transaction;
+          },
+          update: (docRef: any, data: any) => {
+            docRef.update(data);
+            return transaction;
+          },
+          delete: (docRef: any) => {
+            docRef.delete();
+            return transaction;
+          }
+        };
+        return await updateFunction(transaction);
+      } finally {
+        releaseLock!();
+      }
     }
   };
 

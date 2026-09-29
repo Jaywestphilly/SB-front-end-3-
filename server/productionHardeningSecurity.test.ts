@@ -174,7 +174,7 @@ describe('STOCK BLOC — PRODUCTION HARDENING SECURITY TEST SUITE', () => {
     expect(res.status).toBe(401);
     expect(res.body.error).toMatch(/Unauthorized|Invalid Agent API key|Unknown/);
 
-    const debitResult = verifyAndDebitAgentCredit(`Bearer ${unknownKey}`, 1);
+    const debitResult = await verifyAndDebitAgentCredit(`Bearer ${unknownKey}`, 1);
     expect(debitResult.valid).toBe(false);
     expect(debitResult.statusCode).toBe(401);
   });

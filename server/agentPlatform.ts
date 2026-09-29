@@ -11,7 +11,8 @@ import {
   requireScope as canonicalRequireScope,
   inMemoryKeyRegistry,
   inMemoryAgentRegistry,
-  DEFAULT_AUTONOMOUS_SCOPES
+  DEFAULT_AUTONOMOUS_SCOPES,
+  constantTimeCompare
 } from './agentSecurity.js';
 import { recordAgentVisit } from './agentTelemetry.js';
 
@@ -175,8 +176,130 @@ export const requireScope = canonicalRequireScope;
 
 export const inMemoryWalletRegistry = new Map<string, any>();
 
+/**
+ * Contextual metadata for agent credit debits.
+ */
+export interface DebitCreditContext {
+  endpoint?: string;
+  method?: string;
+  description?: string;
+  tag?: string;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Atomically debits credits from an agent's durable wallet via Firestore transaction.
+ * Reads agent_wallets/{agentId}, fails if missing or balance < cost,
+ * decrements creditsBalance/availableBalance by cost, increments lifetimeSpent,
+ * and writes a matching debit record to ledger_entries — all inside a single transaction.
+ * Fails closed on any error (throws).
+ */
+export async function debitAgentCredits(
+  agentId: string,
+  cost = 1,
+  context?: DebitCreditContext
+): Promise<{
+  success: boolean;
+  agentId: string;
+  creditsBalance: number;
+  availableBalance: number;
+  cost: number;
+  entryId: string;
+  transactedWallet: any;
+}> {
+  if (!agentId) {
+    throw new Error('agentId is required for credit debit.');
+  }
+  if (typeof cost !== 'number' || cost <= 0 || !Number.isFinite(cost)) {
+    throw new Error(`Invalid debit cost: ${cost}. Must be a positive finite number.`);
+  }
+
+  const walletRef = db.collection('agent_wallets').doc(agentId);
+
+  const result = await db.runTransaction(async (tx: any) => {
+    const walletSnap = await tx.get(walletRef);
+    const walletData = (walletSnap && walletSnap.exists) ? walletSnap.data() : inMemoryWalletRegistry.get(agentId);
+    if (!walletData) {
+      const err: any = new Error(`Agent wallet not found for ${agentId}.`);
+      err.code = 'WALLET_NOT_FOUND';
+      throw err;
+    }
+    const currentBalance = typeof walletData.creditsBalance === 'number' ? walletData.creditsBalance : 0;
+    const currentAvailable = typeof walletData.availableBalance === 'number' ? walletData.availableBalance : currentBalance;
+
+    if (currentBalance < cost || currentAvailable < cost) {
+      const err: any = new Error(`Trial credit balance exhausted (${currentBalance} credits remaining). Contact support or upgrade at https://stockbloc.ai.studio/pricing`);
+      err.code = 'INSUFFICIENT_FUNDS';
+      err.creditsRemaining = currentBalance;
+      throw err;
+    }
+
+    const newCreditsBalance = currentBalance - cost;
+    const newAvailableBalance = Math.max(0, currentAvailable - cost);
+    const newLifetimeSpent = (typeof walletData.lifetimeSpent === 'number' ? walletData.lifetimeSpent : 0) + cost;
+    const newPaidBalance = typeof walletData.paidCreditsBalance === 'number' ? Math.max(0, walletData.paidCreditsBalance - cost) : 0;
+    const newSimRuns = (typeof walletData.simulationRuns === 'number' ? walletData.simulationRuns : 0) + 1;
+    const nowIso = new Date().toISOString();
+
+    const updatedWallet = {
+      ...walletData,
+      agentId,
+      creditsBalance: newCreditsBalance,
+      availableBalance: newAvailableBalance,
+      paidCreditsBalance: newPaidBalance,
+      lifetimeSpent: newLifetimeSpent,
+      simulationRuns: newSimRuns,
+      updatedAt: nowIso
+    };
+
+    tx.set(walletRef, updatedWallet, { merge: true });
+
+    const entryId = 'led_' + crypto.randomBytes(8).toString('hex');
+    const ledgerEntry = {
+      entryId,
+      accountId: agentId,
+      accountType: 'BUYER',
+      entryType: 'DEBIT',
+      amount: cost,
+      currency: 'CREDITS',
+      tag: context?.tag || 'METERED_API',
+      description: context?.description || `Debit ${cost} credit(s) for ${context?.endpoint || 'API request'}`,
+      balanceBefore: currentBalance,
+      balanceAfter: newCreditsBalance,
+      metadata: {
+        ...(context?.metadata || {}),
+        endpoint: context?.endpoint,
+        method: context?.method
+      },
+      createdAt: nowIso
+    };
+
+    const ledgerRef = db.collection('ledger_entries').doc(entryId);
+    tx.set(ledgerRef, ledgerEntry);
+
+    return {
+      success: true,
+      agentId,
+      creditsBalance: newCreditsBalance,
+      availableBalance: newAvailableBalance,
+      cost,
+      entryId,
+      transactedWallet: updatedWallet
+    };
+  });
+
+  // Treat in-memory Maps as read cache only: update cached wallet to transacted values
+  inMemoryWalletRegistry.set(agentId, result.transactedWallet);
+
+  return result;
+}
+
 // Helper to authenticate and debit credits from an agent for quant simulation & evaluation calls
-export function verifyAndDebitAgentCredit(authHeader: string | undefined, cost = 1): {
+export async function verifyAndDebitAgentCredit(
+  authHeader: string | undefined,
+  cost = 1,
+  context?: DebitCreditContext
+): Promise<{
   valid: boolean;
   agentId?: string;
   handle?: string;
@@ -186,7 +309,7 @@ export function verifyAndDebitAgentCredit(authHeader: string | undefined, cost =
   isUnmetered?: boolean;
   error?: string;
   statusCode?: number;
-} {
+}> {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     if (AGENT_ENV === 'production' || process.env.NODE_ENV === 'production') {
       return {
@@ -254,7 +377,26 @@ export function verifyAndDebitAgentCredit(authHeader: string | undefined, cost =
   const publicId = parts[2];
   const secret = parts[3];
 
-  const cachedKey = inMemoryKeyRegistry.get(publicId);
+  let cachedKey = inMemoryKeyRegistry.get(publicId);
+  // Cache-miss hydration: load from Firestore api_keys by publicId if not in memory
+  if (!cachedKey && db) {
+    try {
+      let snap = await db.collection('api_keys').doc(publicId).get();
+      if (!snap.exists) {
+        snap = await db.collection('agent_api_keys').doc(publicId).get();
+      }
+      if (snap.exists) {
+        cachedKey = snap.data();
+        inMemoryKeyRegistry.set(publicId, cachedKey);
+        if (cachedKey?.keyId) {
+          inMemoryKeyRegistry.set(cachedKey.keyId, cachedKey);
+        }
+      }
+    } catch (err: any) {
+      console.warn('[verifyAndDebitAgentCredit] Key hydration error:', err?.message || err);
+    }
+  }
+
   if (!cachedKey) {
     // Strictly reject unknown keys in all modes; no synthetic agent fallback
     return {
@@ -283,9 +425,10 @@ export function verifyAndDebitAgentCredit(authHeader: string | undefined, cost =
     }
   }
 
-  // Key found in memory - verify cryptographic hash
+  // Key found - verify cryptographic hash exactly as in-memory path does
   const actualHash = crypto.createHash('sha256').update(secret).digest('hex');
-  if (cachedKey.secretHash && cachedKey.secretHash !== actualHash && cachedKey.keyHash !== actualHash) {
+  const expectedHash = cachedKey.secretHash || cachedKey.keyHash;
+  if (!expectedHash || (expectedHash !== actualHash && !constantTimeCompare(expectedHash, actualHash))) {
     return {
       valid: false,
       error: 'Unauthorized: API key secret signature mismatch.',
@@ -293,7 +436,25 @@ export function verifyAndDebitAgentCredit(authHeader: string | undefined, cost =
     };
   }
 
-  const agent = inMemoryAgentRegistry.get(cachedKey.agentId) || (cachedKey.handle ? inMemoryAgentRegistry.get(cachedKey.handle.toLowerCase()) : undefined);
+  const agentId = cachedKey.agentId;
+  let agent = inMemoryAgentRegistry.get(agentId) || (cachedKey.handle ? inMemoryAgentRegistry.get(cachedKey.handle.toLowerCase()) : undefined);
+
+  // Cache-miss hydration: load agent from Firestore users by agentId
+  if (!agent && db) {
+    try {
+      const agentSnap = await db.collection('users').doc(agentId).get();
+      if (agentSnap.exists) {
+        agent = agentSnap.data();
+        inMemoryAgentRegistry.set(agentId, agent);
+        if (agent?.handle) {
+          inMemoryAgentRegistry.set(agent.handle.toLowerCase(), agent);
+        }
+      }
+    } catch (err: any) {
+      console.warn('[verifyAndDebitAgentCredit] Agent hydration error:', err?.message || err);
+    }
+  }
+
   if (!agent || (agent.status && agent.status !== 'active')) {
     return {
       valid: false,
@@ -301,34 +462,45 @@ export function verifyAndDebitAgentCredit(authHeader: string | undefined, cost =
       statusCode: 401
     };
   }
-  const agentId = cachedKey.agentId;
 
-  let wallet = inMemoryWalletRegistry.get(agentId);
-  if (!wallet) {
-    wallet = { creditsBalance: 100, lifetimeSpent: 0, simulationRuns: 0, verifiedSimulations: 0 };
-    inMemoryWalletRegistry.set(agentId, wallet);
-  }
-
-  if (wallet.creditsBalance < cost) {
+  // Durable transactional debit via Firestore
+  try {
+    const debitRes = await debitAgentCredits(agentId, cost, context);
+    return {
+      valid: true,
+      agentId,
+      handle: agent?.handle || cachedKey.handle || `agent_${publicId.substring(0, 6)}`,
+      displayName: agent?.displayName || 'Autonomous Agent',
+      creditsRemaining: debitRes.creditsBalance
+    };
+  } catch (debitErr: any) {
+    if (
+      debitErr.code === 'INSUFFICIENT_FUNDS' ||
+      debitErr.message?.includes('exhausted') ||
+      debitErr.message?.includes('Insufficient balance') ||
+      debitErr.message?.includes('Trial credit balance')
+    ) {
+      return {
+        valid: false,
+        error: debitErr.message || 'Trial credit balance exhausted (0 credits remaining). Contact support or upgrade at https://stockbloc.ai.studio/pricing',
+        statusCode: 402,
+        creditsRemaining: debitErr.creditsRemaining ?? 0
+      };
+    }
+    if (debitErr.code === 'WALLET_NOT_FOUND' || debitErr.message?.includes('not found')) {
+      return {
+        valid: false,
+        error: 'Unauthorized: Agent wallet not found.',
+        statusCode: 401
+      };
+    }
+    console.error('[verifyAndDebitAgentCredit] Transactional debit failed:', debitErr.message);
     return {
       valid: false,
-      error: 'Trial credit balance exhausted (0 credits remaining). Contact support or upgrade at https://stockbloc.ai.studio/pricing',
-      statusCode: 402,
-      creditsRemaining: 0
+      error: 'Payment processing error: Unable to debit platform credits.',
+      statusCode: 500
     };
   }
-
-  wallet.creditsBalance -= cost;
-  wallet.lifetimeSpent += cost;
-  wallet.simulationRuns += 1;
-
-  return {
-    valid: true,
-    agentId,
-    handle: agent?.handle || `agent_${publicId.substring(0, 6)}`,
-    displayName: agent?.displayName || 'Autonomous Agent',
-    creditsRemaining: wallet.creditsBalance
-  };
 }
 
 // Helper to resolve an agentId from an API key or public ID
@@ -380,9 +552,17 @@ export async function addCreditsToAgentWallet(
         resolvedAgentId = registeredAgent.agentId;
       } else {
         try {
-          const snap = await db.collection('agent_api_keys').where('publicId', '==', publicId).limit(1).get();
-          if (!snap.empty) {
-            resolvedAgentId = snap.docs[0].data().agentId;
+          let snap = await db.collection('api_keys').doc(publicId).get();
+          if (!snap.exists) {
+            snap = await db.collection('agent_api_keys').doc(publicId).get();
+          }
+          if (snap.exists && snap.data()?.agentId) {
+            resolvedAgentId = snap.data().agentId;
+          } else {
+            const querySnap = await db.collection('agent_api_keys').where('publicId', '==', publicId).limit(1).get();
+            if (!querySnap.empty) {
+              resolvedAgentId = querySnap.docs[0].data().agentId;
+            }
           }
         } catch (_) {}
       }
@@ -612,37 +792,52 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
       verifiedSimulations: 0
     });
 
-    // Fire-and-forget background Firestore persistence with 5-second timeout (never await in request path)
-    Promise.race([
-      Promise.all([
-        db.collection('users').doc(agentId).set({
-          ...agentRecord,
-          createdAt: FieldValue.serverTimestamp(),
-          updatedAt: FieldValue.serverTimestamp(),
-          lastSeenAt: FieldValue.serverTimestamp()
-        }),
-        db.collection('api_keys').doc(publicId).set({
-          ...keyRecord,
-          createdAt: FieldValue.serverTimestamp()
-        }),
-        db.collection('agent_wallets').doc(agentId).set({
-          agentId,
-          creditsBalance: 100,
-          availableBalance: 100,
-          paidCreditsBalance: 0,
-          promoCreditsBalance: 0,
-          trialCreditsBalance: 100,
-          trialCredits: 100,
-          lastCreditTag: 'TRIAL',
-          lifetimeGrossEarnings: 0,
-          lifetimeSpent: 0,
-          status: 'active'
+    // Await Firestore persistence with 5-second timeout — a returned key must be durable
+    let timeoutTimer: NodeJS.Timeout | undefined;
+    try {
+      await Promise.race([
+        Promise.all([
+          db.collection('users').doc(agentId).set({
+            ...agentRecord,
+            createdAt: FieldValue.serverTimestamp(),
+            updatedAt: FieldValue.serverTimestamp(),
+            lastSeenAt: FieldValue.serverTimestamp()
+          }),
+          db.collection('api_keys').doc(publicId).set({
+            ...keyRecord,
+            secretHash: keyHash,
+            createdAt: FieldValue.serverTimestamp()
+          }),
+          db.collection('agent_wallets').doc(agentId).set({
+            agentId,
+            creditsBalance: 100,
+            availableBalance: 100,
+            paidCreditsBalance: 0,
+            promoCreditsBalance: 0,
+            trialCreditsBalance: 100,
+            trialCredits: 100,
+            lastCreditTag: 'TRIAL',
+            lifetimeGrossEarnings: 0,
+            lifetimeSpent: 0,
+            status: 'active'
+          })
+        ]),
+        new Promise((_, reject) => {
+          timeoutTimer = setTimeout(() => reject(new Error('Firestore persistence timed out after 5s')), 5000);
         })
-      ]),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Firestore persistence timed out after 5s')), 5000))
-    ]).catch((dbErr) => {
-      console.warn('[Autonomous Agent Register] Background Firestore persistence failed or timed out:', dbErr?.message || dbErr);
-    });
+      ]);
+    } catch (dbErr: any) {
+      console.error('[Autonomous Agent Register] Durable Firestore persistence failed or timed out:', dbErr?.message || dbErr);
+      // Clean up in-memory maps if persistence fails so invalid state is not retained
+      inMemoryAgentRegistry.delete(agentId);
+      inMemoryAgentRegistry.delete(finalHandle.toLowerCase());
+      inMemoryKeyRegistry.delete(publicId);
+      inMemoryKeyRegistry.delete(rawKey);
+      inMemoryWalletRegistry.delete(agentId);
+      return res.status(500).json({ error: 'Registration failed: Unable to persist durable agent credentials.' });
+    } finally {
+      if (timeoutTimer) clearTimeout(timeoutTimer);
+    }
 
     console.log(`[AGENT PLATFORM] Autonomous agent registered: @${finalHandle} (${agentId}) with key prefix ${publicId} and scopes: ${finalScopes.join(', ')}`);
 

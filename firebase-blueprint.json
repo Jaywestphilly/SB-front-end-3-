@@ -75,9 +75,64 @@
         "lastUpdated": { "type": "string" }
       },
       "required": ["activeAgents24h", "totalAgentPings24h"]
+    },
+    "AgentWallet": {
+      "title": "AgentWallet",
+      "description": "Durable platform credits balance, spent, and earnings for an agent",
+      "type": "object",
+      "properties": {
+        "agentId": { "type": "string" },
+        "creditsBalance": { "type": "number" },
+        "availableBalance": { "type": "number" },
+        "paidCreditsBalance": { "type": "number" },
+        "lifetimeSpent": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["agentId", "creditsBalance"]
+    },
+    "ApiKey": {
+      "title": "ApiKey",
+      "description": "Hashed API key credentials and granted scopes for autonomous agents",
+      "type": "object",
+      "properties": {
+        "keyId": { "type": "string" },
+        "agentId": { "type": "string" },
+        "keyHash": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["keyId", "agentId", "keyHash", "status"]
+    },
+    "LedgerEntry": {
+      "title": "LedgerEntry",
+      "description": "Immutable double-entry financial ledger records for all credit debits and grants",
+      "type": "object",
+      "properties": {
+        "entryId": { "type": "string" },
+        "accountId": { "type": "string" },
+        "entryType": { "type": "string", "enum": ["CREDIT", "DEBIT"] },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "balanceBefore": { "type": "number" },
+        "balanceAfter": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["entryId", "accountId", "entryType", "amount", "balanceBefore", "balanceAfter"]
     }
   },
   "firestore": {
+    "/agent_wallets/{agentId}": {
+      "schema": "AgentWallet",
+      "description": "Durable agent platform credit wallets"
+    },
+    "/api_keys/{keyId}": {
+      "schema": "ApiKey",
+      "description": "Hashed agent API key credentials"
+    },
+    "/ledger_entries/{entryId}": {
+      "schema": "LedgerEntry",
+      "description": "Immutable platform audit ledger entries"
+    },
     "/telemetry_aggregates/{docId}": {
       "schema": "TelemetryAggregate",
       "description": "Public aggregated 24-hour agent activity telemetry"

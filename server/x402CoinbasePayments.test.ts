@@ -9,9 +9,11 @@ import {
   BASE_CAIP2,
   BASE_USDC_CONTRACT,
   getX402RecipientAddress,
-  X402_ROUTE_PATHS
+  X402_ROUTE_PATHS,
+  BAZAAR_DISCOVERY_EXTENSIONS
 } from './x402PaymentService.js';
 import { decodePaymentRequiredHeader } from '@x402/core/http';
+import { validateDiscoveryExtension } from '@x402/extensions';
 import {
   resetFacilitatorMock,
   setFacilitatorVerifyHandler,
@@ -516,7 +518,7 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       expect(resCarter.body.status).toBe('payment_required');
     });
 
-    it('includes Bazaar discovery extensions in the 402 challenge header with resource description under 500 chars', async () => {
+    it('includes Bazaar discovery extensions in the 402 challenge header and body with info, schema, and enriched resource', async () => {
       process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
       const app = createTestApp();
 
@@ -525,11 +527,49 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
 
       const headerObj = decodePaymentRequiredHeader(res.headers['payment-required']);
       expect(headerObj.extensions).toBeDefined();
-      expect(headerObj.extensions?.bazaar).toEqual({ discoverable: true });
+      const bazaarHeader = headerObj.extensions?.bazaar as any;
+      expect(bazaarHeader).toBeDefined();
+      expect(bazaarHeader.info).toBeDefined();
+      expect(bazaarHeader.schema).toBeDefined();
+
+      // Validate decoded header Bazaar extension via validateDiscoveryExtension
+      const headerValidation = validateDiscoveryExtension(bazaarHeader);
+      expect(headerValidation.valid).toBe(true);
+
+      // Verify enriched resource
       expect(headerObj.resource?.url).toBeTruthy();
       expect(headerObj.resource?.description?.length).toBeLessThan(500);
+      expect((headerObj.resource as any)?.serviceName).toBe('Stock Bloc');
+      expect((headerObj.resource as any)?.tags).toEqual(['stocks', 'sec', '13f', 'quant', 'forecasting']);
 
-      expect(res.body.extensions?.bazaar).toEqual({ discoverable: true });
+      // Verify 402 body carries extensions.bazaar.info + extensions.bazaar.schema
+      const bazaarBody = res.body.extensions?.bazaar as any;
+      expect(bazaarBody).toBeDefined();
+      expect(bazaarBody.info).toBeDefined();
+      expect(bazaarBody.schema).toBeDefined();
+      const bodyValidation = validateDiscoveryExtension(bazaarBody);
+      expect(bodyValidation.valid).toBe(true);
+    });
+
+    it('asserts Bazaar discovery extension validation passes for all 8 priced endpoints', () => {
+      const endpointIds = Object.keys(PRICED_ENDPOINTS);
+      expect(endpointIds).toHaveLength(8);
+
+      for (const id of endpointIds) {
+        const ext = BAZAAR_DISCOVERY_EXTENSIONS[id];
+        expect(ext).toBeDefined();
+        expect(ext.bazaar).toBeDefined();
+        expect(ext.bazaar.info).toBeDefined();
+        expect(ext.bazaar.schema).toBeDefined();
+        expect(ext.bazaar.info.input).toBeDefined();
+        expect(ext.bazaar.info.input.type).toBe('http');
+        expect(ext.bazaar.info.output).toBeDefined();
+        expect(ext.bazaar.info.output.type).toBe('json');
+        expect(ext.bazaar.info.output.example).toBeDefined();
+
+        const validation = validateDiscoveryExtension(ext.bazaar);
+        expect(validation.valid).toBe(true);
+      }
     });
 
     it('exports X402_ROUTE_PATHS covering all priced endpoints with valid routes', () => {

@@ -204,6 +204,9 @@ class LocalDbStore {
 
     // Initialize collections
     if (!this.collections.has('users')) this.collections.set('users', new Map());
+    if (!this.collections.has('api_keys')) this.collections.set('api_keys', new Map());
+    if (!this.collections.has('agent_wallets')) this.collections.set('agent_wallets', new Map());
+    if (!this.collections.has('ledger_entries')) this.collections.set('ledger_entries', new Map());
     if (!this.collections.has('discussions')) this.collections.set('discussions', new Map());
     if (!this.collections.has('posts')) this.collections.set('posts', new Map());
     if (!this.collections.has('api_keys')) this.collections.set('api_keys', new Map());
@@ -258,6 +261,8 @@ export const dbStoreInstance = new LocalDbStore();
 export const dbStore: Record<string, Map<string, any>> = {
   users: dbStoreInstance.getCollection('users'),
   api_keys: dbStoreInstance.getCollection('api_keys'),
+  agent_wallets: dbStoreInstance.getCollection('agent_wallets'),
+  ledger_entries: dbStoreInstance.getCollection('ledger_entries'),
   discussions: dbStoreInstance.getCollection('discussions'),
   posts: dbStoreInstance.getCollection('posts'),
   chats: dbStoreInstance.getCollection('chats'),
@@ -512,6 +517,8 @@ try {
   console.warn('Note: Firebase Admin gRPC initialization skipped or restricted; using Resilient Hybrid Store.');
 }
 
+let localTxQueue = Promise.resolve();
+
 export const db: any = {
   collection: (name: string) => createCollectionRef(name, rawAdminDb),
   runTransaction: async (updateFunction: (transaction: any) => Promise<any>) => {
@@ -519,10 +526,13 @@ export const db: any = {
     if (rawAdminDb) {
       try {
         return await rawAdminDb.runTransaction(async (rawTx) => {
+          const pendingLocalWrites: Array<() => void> = [];
           const txAdapter = {
             get: async (docRef: any) => {
               if (docRef._rawDocRef) {
-                return await rawTx.get(docRef._rawDocRef);
+                const snap = await rawTx.get(docRef._rawDocRef);
+                console.log('rawTx.get:', docRef.id, 'exists:', (snap as any)?.exists, 'data:', (snap as any)?.data?.());
+                return snap;
               }
               return await docRef.get();
             },
@@ -530,63 +540,99 @@ export const db: any = {
               if (docRef._rawDocRef) {
                 rawTx.set(docRef._rawDocRef, data, options);
               }
-              docRef.set(data, options);
+              pendingLocalWrites.push(() => {
+                docRef.set(data, options);
+              });
               return txAdapter;
             },
             update: (docRef: any, data: any) => {
               if (docRef._rawDocRef) {
                 rawTx.update(docRef._rawDocRef, data);
               }
-              docRef.update(data);
+              pendingLocalWrites.push(() => {
+                docRef.update(data);
+              });
               return txAdapter;
             },
             delete: (docRef: any) => {
               if (docRef._rawDocRef) {
                 rawTx.delete(docRef._rawDocRef);
               }
-              docRef.delete();
+              pendingLocalWrites.push(() => {
+                docRef.delete();
+              });
               return txAdapter;
             }
           };
-          return await updateFunction(txAdapter);
+          const res = await updateFunction(txAdapter);
+          for (const applyWrite of pendingLocalWrites) {
+            applyWrite();
+          }
+          return res;
         });
       } catch (err: any) {
+        // If the error was thrown intentionally by the updateFunction (e.g. INSUFFICIENT_FUNDS, WALLET_NOT_FOUND), rethrow it
+        if (
+          err.code === 'INSUFFICIENT_FUNDS' ||
+          err.code === 'WALLET_NOT_FOUND' ||
+          err.message?.includes('Insufficient balance') ||
+          err.message?.includes('exhausted') ||
+          err.message?.includes('not found') ||
+          err.message?.includes('Trial credit balance')
+        ) {
+          throw err;
+        }
         console.warn('Firestore runTransaction fallback to resilient local transaction:', err.message);
       }
     }
 
-    // Resilient atomic in-memory transactional execution
-    const pendingWrites: Array<() => Promise<void> | void> = [];
-    const tx = {
-      get: async (docRef: any) => {
-        return await docRef.get();
-      },
-      set: (docRef: any, data: any, options?: any) => {
-        pendingWrites.push(async () => {
-          await docRef.set(data, options);
-        });
-        return tx;
-      },
-      update: (docRef: any, data: any) => {
-        pendingWrites.push(async () => {
-          await docRef.update(data);
-        });
-        return tx;
-      },
-      delete: (docRef: any) => {
-        pendingWrites.push(async () => {
-          await docRef.delete();
-        });
-        return tx;
+    // Resilient atomic in-memory transactional execution serialized via queue
+    const runLocalTx = async () => {
+      const pendingWrites: Array<() => Promise<void> | void> = [];
+      const tx = {
+        get: async (docRef: any) => {
+          const snap = await docRef.get();
+          console.log('[runLocalTx get]', docRef.id, snap.data());
+          return snap;
+        },
+        set: (docRef: any, data: any, options?: any) => {
+          pendingWrites.push(async () => {
+            console.log('[runLocalTx set]', docRef.id, data);
+            await docRef.set(data, options);
+          });
+          return tx;
+        },
+        update: (docRef: any, data: any) => {
+          pendingWrites.push(async () => {
+            await docRef.update(data);
+          });
+          return tx;
+        },
+        delete: (docRef: any) => {
+          pendingWrites.push(async () => {
+            await docRef.delete();
+          });
+          return tx;
+        }
+      };
+
+      const result = await updateFunction(tx);
+      // Apply pending writes atomically
+      for (const write of pendingWrites) {
+        await write();
       }
+      return result;
     };
 
-    const result = await updateFunction(tx);
-    // Apply pending writes atomically
-    for (const write of pendingWrites) {
-      await write();
+    const currentLock = localTxQueue;
+    let release: () => void;
+    localTxQueue = new Promise((resolve) => { release = resolve; });
+    await currentLock;
+    try {
+      return await runLocalTx();
+    } finally {
+      release!();
     }
-    return result;
   }
 };
 

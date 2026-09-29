@@ -8,6 +8,7 @@ import {
   decodePaymentSignatureHeader,
   encodePaymentResponseHeader,
 } from '@x402/core/http';
+import { declareDiscoveryExtension, validateDiscoveryExtension } from '@x402/extensions';
 import { inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit } from './agentPlatform.js';
 
 // ============================================================================
@@ -29,6 +30,7 @@ export interface X402PricedEndpoint {
   priceDisplay: string;
   atomicAmount: string; // 6 decimal string
   description: string;
+  discoveryExtension?: any;
 }
 
 export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
@@ -118,6 +120,167 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
 Object.values(PRICED_ENDPOINTS).forEach((ep) => {
   if (ep.description.length > 500) {
     throw new Error(`Endpoint ${ep.id} description exceeds 500 characters: ${ep.description.length}`);
+  }
+});
+
+// ============================================================================
+// BAZAAR DISCOVERY EXTENSIONS (@x402/extensions v2)
+// Spec-compliant declaration helpers per priced endpoint
+// ============================================================================
+
+const declareDiscovery = declareDiscoveryExtension as (config: any) => { bazaar: any };
+
+export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
+  earnings_pack: declareDiscovery({
+    method: 'GET',
+    input: { ticker: 'NVDA' },
+    output: {
+      example: {
+        ticker: 'NVDA',
+        asOf: '2026-09-29T00:00:00.000Z',
+        thirteenF: {
+          quarterCycle: 'Q1/Q2 2026 SEC Form 13F Filings',
+          consensus: { fundCount: 6, totalValueMillions: 2240, overallSentiment: 'STRONG ACCUMULATION' }
+        },
+        filingAudit: {
+          accessionNumber: '0001045810-26-000075',
+          filingType: '10-Q',
+          companyName: 'NVIDIA CORP',
+          managementTone: 'BULLISH',
+          executiveSummary: 'Form 10-Q filed with SEC EDGAR. Datacenter revenue accelerated.'
+        },
+        memo: {
+          title: 'Earnings Prep & Institutional Positioning: NVDA',
+          thesis: 'NVDA displays STRONG ACCUMULATION with BULLISH management tone.'
+        }
+      }
+    }
+  }),
+
+  market_data: declareDiscovery({
+    method: 'GET',
+    input: { bloc: 'super_sonic_tsunami' },
+    output: {
+      example: {
+        status: 'success',
+        feed: 'market',
+        updated_at: '2026-09-29T00:00:00.000Z',
+        total_assets: 20,
+        watchlist: [
+          { symbol: 'NVDA', price: 138.25, changePercent: 2.45, sbScore: 88, action: 'ACCUMULATE' }
+        ]
+      }
+    }
+  }),
+
+  sb_score: declareDiscovery({
+    method: 'GET',
+    input: { ticker: 'NVDA' },
+    output: {
+      example: {
+        status: 'success',
+        ticker: 'NVDA',
+        price: 138.25,
+        sbScore: 88,
+        signalLabel: 'STRONG BUY',
+        confidence: 'HIGH',
+        factorBreakdown: { momentum: 24, trend: 24, relativeStrength: 18, volume: 12, volatility: 10 }
+      }
+    }
+  }),
+
+  sec_13f_intel: declareDiscovery({
+    method: 'GET',
+    input: { symbol: 'NVDA' },
+    output: {
+      example: {
+        status: 'success',
+        quarterCycle: 'Q1/Q2 2026 SEC Form 13F Filings',
+        totalFundsTracked: 13,
+        consensusHoldings: [
+          { symbol: 'NVDA', fundCount: 6, totalValueMillions: 2240, overallSentiment: 'STRONG ACCUMULATION' }
+        ]
+      }
+    }
+  }),
+
+  sec_job: declareDiscovery({
+    method: 'POST',
+    bodyType: 'json',
+    input: { ticker: 'NVDA', filingType: '10-Q' },
+    output: {
+      example: {
+        success: true,
+        jobId: 'job_sec_1790616000000_a1b2',
+        output: {
+          ticker: 'NVDA',
+          filingType: '10-Q',
+          companyName: 'NVIDIA CORP',
+          managementTone: 'BULLISH',
+          executiveSummary: 'Form 10-Q filed with SEC EDGAR. Datacenter revenue accelerated.'
+        }
+      }
+    }
+  }),
+
+  research: declareDiscovery({
+    method: 'POST',
+    bodyType: 'json',
+    input: { title: 'NVDA Thesis', summary: 'AI Compute expansion', thesis: 'Hyperscale demand acceleration' },
+    output: {
+      example: {
+        id: 'res_1790616000000',
+        status: 'created',
+        version: 1,
+        title: 'NVDA Thesis',
+        publishedAt: '2026-09-29T00:00:00.000Z'
+      }
+    }
+  }),
+
+  forecast: declareDiscovery({
+    method: 'POST',
+    bodyType: 'json',
+    input: { symbol: 'NVDA', targetPrice: 160, probability: 75 },
+    output: {
+      example: {
+        id: 'fc_1790616000000',
+        status: 'OPEN',
+        symbol: 'NVDA',
+        targetPrice: 160,
+        probability: 75,
+        currentPrice: 138.25,
+        createdAt: '2026-09-29T00:00:00.000Z'
+      }
+    }
+  }),
+
+  strategy_eval: declareDiscovery({
+    method: 'POST',
+    bodyType: 'json',
+    input: { allocations: { NVDA: 0.5, VST: 0.5 }, lookbackDays: 90 },
+    output: {
+      example: {
+        status: 'success',
+        annualizedReturn: 0.428,
+        sharpeRatio: 2.65,
+        maxDrawdown: -0.092,
+        benchmarkReturn: 0.312,
+        alpha: 0.116,
+        evaluatedAt: '2026-09-29T00:00:00.000Z'
+      }
+    }
+  })
+};
+
+// Validate all discovery extensions locally and attach to PRICED_ENDPOINTS
+Object.entries(BAZAAR_DISCOVERY_EXTENSIONS).forEach(([id, ext]) => {
+  const result = validateDiscoveryExtension(ext.bazaar);
+  if (!result.valid) {
+    throw new Error(`Bazaar discovery extension validation failed for endpoint ${id}: ${result.errors?.join(', ')}`);
+  }
+  if (PRICED_ENDPOINTS[id]) {
+    PRICED_ENDPOINTS[id].discoveryExtension = ext.bazaar;
   }
 });
 
@@ -476,7 +639,11 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
     if (isAgentKey) {
       const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
       const creditCost = Math.max(1, Math.round(endpointConfig.priceUsd * 100));
-      const debitResult = verifyAndDebitAgentCredit(authHeader, creditCost);
+      const debitResult = await verifyAndDebitAgentCredit(authHeader, creditCost, {
+        endpoint: fullPath,
+        method: req.method,
+        description: `x402 credit access to ${endpointConfig.name} (${req.method} ${fullPath})`
+      });
       if (!debitResult.valid) {
         return res.status(debitResult.statusCode || 402).json({
           status: 'error',
@@ -536,18 +703,20 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       }
     };
 
+    const discoveryExt = BAZAAR_DISCOVERY_EXTENSIONS[endpointConfig.id]?.bazaar || endpointConfig.discoveryExtension;
+
     const paymentRequiredPayload = {
       x402Version: 2 as const,
       accepts: [paymentRequirement],
       resource: {
         url: `${req.protocol}://${req.get('host') || 'stockbloc.ai.studio'}${req.originalUrl || req.url || '/'}` || 'https://stockbloc.ai.studio',
         description: (endpointConfig.description || '').slice(0, 500),
-        mimeType: 'application/json'
+        mimeType: 'application/json',
+        serviceName: 'Stock Bloc',
+        tags: ['stocks', 'sec', '13f', 'quant', 'forecasting']
       },
       extensions: {
-        bazaar: {
-          discoverable: true
-        }
+        bazaar: discoveryExt
       }
     };
 

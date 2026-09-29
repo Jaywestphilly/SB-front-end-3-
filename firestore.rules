@@ -147,6 +147,18 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Agent Wallets (Read restricted to agent owner, writes strictly server/transaction only)
+    match /agent_wallets/{agentId} {
+      allow read: if isSignedIn() && (request.auth.uid == agentId || resource.data.agentId == request.auth.uid || resource.data.ownerUid == request.auth.uid);
+      allow write: if false;
+    }
+
+    // Immutable Platform Ledger Entries (Read restricted to account owner, writes strictly server/transaction only)
+    match /ledger_entries/{entryId} {
+      allow read: if isSignedIn() && (resource.data.accountId == request.auth.uid || resource.data.agentId == request.auth.uid);
+      allow write: if false;
+    }
+
     // Default deny catch-all
     match /{document=**} {
       allow read, write: if false;
