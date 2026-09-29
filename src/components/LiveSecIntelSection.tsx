@@ -15,15 +15,6 @@ export const LiveSecIntelSection: React.FC = () => {
     );
   }
 
-  if (isPaywall) {
-    return (
-      <PaywallUpsellCard
-        title="Unlock Live 13F & SEC Intel with Quant Suite Pro — $5/mo"
-        description="Access live institutional 13F quarterly filings, hedge fund accumulation signals, and SEC EDGAR automated disclosures with zero latency."
-      />
-    );
-  }
-
   if (isConfigError) {
     return (
       <DataUnavailableState

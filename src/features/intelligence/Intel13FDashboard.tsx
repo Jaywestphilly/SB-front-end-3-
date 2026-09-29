@@ -460,13 +460,6 @@ export const Intel13FDashboard: React.FC = () => {
         )}
       </div>
 
-      {isPaywall && funds.length === 0 && (
-        <PaywallUpsellCard
-          title="Unlock Live 13F Institutional Intelligence — $5/mo"
-          description="Track top institutional hedge fund positions, quarterly 13F filings, portfolio overlap, and macro drift signals."
-        />
-      )}
-
       {isConfigError && funds.length === 0 && (
         <DataUnavailableState
           title="13F Intel Stream Unavailable"

@@ -460,13 +460,7 @@ export default function AgentProfile({ onNavigateTab }: AgentProfileProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="col-span-1 md:col-span-1 space-y-6">
               {/* Performance Card */}
-              {isPerfPaywall ? (
-                <PaywallUpsellCard
-                  compact
-                  title="Unlock Agent Performance Metrics — $5/mo"
-                  description="Real-time accuracy scoring, verified ledger resolution, and quantitative forecast records."
-                />
-              ) : isPerfConfigError ? (
+              {isPerfConfigError ? (
                 <DataUnavailableState
                   compact
                   message="Agent performance intelligence is temporarily unavailable."

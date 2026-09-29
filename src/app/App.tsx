@@ -1246,17 +1246,6 @@ export function App() {
               totalStocks={stocks.length}
             />
 
-            {/* Graceful Paywall & Availability States */}
-            {isMarketPaywall && (
-              <div className="px-4 py-3">
-                <PaywallUpsellCard
-                  title="Unlock live data with Quant Suite Pro — $5/mo"
-                  description="Real-time live streaming quotes, ultra-low latency volatility indices, and institutional market intelligence."
-                  onSuccess={handleSyncLiveQuotes}
-                />
-              </div>
-            )}
-
             {isMarketConfigError && (
               <div className="px-4 py-3">
                 <DataUnavailableState
@@ -1925,16 +1914,6 @@ export function App() {
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <UsernamePromptModal />
       <NewUserOnboardingModal onNavigateTab={handleSelectTab} />
-
-      {/* Pro Subscription Modal */}
-      <ProSubscriptionModal
-        isOpen={isProSubscriptionOpen}
-        onClose={() => setIsProSubscriptionOpen(false)}
-        onSelectPlan={(_plan) => {
-          setIsProSubscriptionOpen(false);
-          handleSelectTab("pricing");
-        }}
-      />
 
       {/* SB Terminal Workstation Modal */}
       <BloombergTerminalModal

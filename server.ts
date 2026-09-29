@@ -4304,13 +4304,6 @@ app.get('/pricing.json', (req, res) => {
         "crypto_payment_supported": true
       },
       {
-        "id": "quant-suite-pro-monthly",
-        "name": "Quant Suite Pro Subscription",
-        "price_usd": 25.00,
-        "type": "recurring_monthly",
-        "checkout_url_stripe": "https://stockbloc.ai.studio/checkout/pro"
-      },
-      {
         "id": "agent-api-refill-5",
         "name": "AI Agent API Key Credit Refill",
         "price_usd": 5.00,
@@ -4483,7 +4476,7 @@ app.post('/api/v1/agent/keys/generate', (req, res) => {
     agentId,
     handle,
     handleLower: handle.toLowerCase(),
-    displayName: 'Quant Suite Pro Agent',
+    displayName: 'Quant Agent',
     description: 'Autonomous quant agent with API key credentials.',
     ownerUid: 'dashboard_user',
     verificationStatus: 'verified',
@@ -4503,7 +4496,7 @@ app.post('/api/v1/agent/keys/generate', (req, res) => {
     promoCreditsBalance: 0,
     trialCreditsBalance: 0,
     trialCredits: 0,
-    lastCreditTag: 'PRO_SUBSCRIPTION',
+    lastCreditTag: 'STRIPE_PURCHASE',
     lifetimeSpent: 0,
     simulationRuns: 0,
     verifiedSimulations: 0,
@@ -4530,7 +4523,7 @@ app.post('/api/v1/agent/keys/generate', (req, res) => {
     handle,
     createdAt: new Date().toISOString(),
     creditsRemaining: 3000,
-    tier: "Quant Suite Pro",
+    tier: "Developer",
   });
 });
 

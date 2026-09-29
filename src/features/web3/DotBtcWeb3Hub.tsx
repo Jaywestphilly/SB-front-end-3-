@@ -541,16 +541,6 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
             </div>
           </div>
 
-          {cryptoPaywall && (
-            <div className="mb-3">
-              <PaywallUpsellCard
-                compact
-                title="Unlock Live Crypto & Market Quotes — $5/mo"
-                description="Real-time BTC, DOT, and equities live streaming feeds with Quant Suite Pro."
-              />
-            </div>
-          )}
-
           {cryptoConfigError && (
             <div className="mb-3">
               <DataUnavailableState

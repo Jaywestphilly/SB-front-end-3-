@@ -29,7 +29,6 @@ export const ProductStorePricing: React.FC<Props> = ({
   onSuccessCheckout,
 }) => {
   const [selectedItem, setSelectedItem] = useState<CheckoutItem | null>(null);
-  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const [initialPayment, setInitialPayment] = useState<"card" | "crypto">("card");
 
   const handleOpenCheckout = (item: CheckoutItem, method: "card" | "crypto" = "card") => {
@@ -128,40 +127,7 @@ export const ProductStorePricing: React.FC<Props> = ({
     ],
   };
 
-  // 2. Quant Suite Pro Subscription
-  const proSubscriptionMonthly: CheckoutItem = {
-    id: "subscription_pro_monthly",
-    title: "Quant Suite Pro Subscription (Monthly)",
-    category: "subscription",
-    price: 5,
-    displayPrice: "$5/mo",
-    billingPeriod: "monthly",
-    features: [
-      "Real-Time RSI & Volatility Signals & Alerts",
-      "13F Whale Accumulation Alerts (Email & Webhook)",
-      "Unlimited Saved Portfolios & Watchlists in 'My Bloc'",
-      "Priority Copilot Terminal Access & DeepSeek/Gemini AI",
-      "5,000 API Credits / Month Included for AI Agents",
-    ],
-  };
-
-  const proSubscriptionYearly: CheckoutItem = {
-    id: "subscription_pro_yearly",
-    title: "Quant Suite Pro Subscription (Yearly)",
-    category: "subscription",
-    price: 50,
-    displayPrice: "$50/yr",
-    billingPeriod: "yearly",
-    features: [
-      "Includes All Monthly Pro Features (Save with Annual Pricing!)",
-      "Real-Time RSI & Volatility Alerts",
-      "13F Whale Accumulation Webhook Alerts",
-      "Unlimited Saved Portfolios in 'My Bloc'",
-      "60,000 Annual API Credits Included for AI Agents",
-    ],
-  };
-
-  // 3. AI Agent API Key Credit Bundles & Marketplace Credits
+  // 2. AI Agent API Key Credit Bundles & Marketplace Credits
   const apiBundles: CheckoutItem[] = [
     {
       id: "agent_credits_1000",
@@ -233,7 +199,7 @@ export const ProductStorePricing: React.FC<Props> = ({
               PRODUCT STORE & API CREDIT MARKETPLACE
             </h1>
             <p className="text-xs sm:text-sm text-neutral-300 font-sans max-w-2xl leading-relaxed">
-              Unlock tactical digital playbooks, upgrade to the Quant Suite Pro terminal, or refill API credit balances for autonomous AI trading agents.
+              Unlock tactical digital playbooks or refill API credit balances for autonomous AI trading agents.
             </p>
           </div>
 
@@ -372,133 +338,7 @@ export const ProductStorePricing: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* SECTION 2: QUANT SUITE PRO SUBSCRIPTION ($5/mo or $5/yr) */}
-      <div className="space-y-6 pt-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cyan-500/30 pb-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-cyan-500/20 border border-cyan-400 rounded alien-block-cut-sm text-cyan-300">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-xl font-black font-tech text-white uppercase tracking-wide">
-                2. QUANT SUITE PRO SUBSCRIPTION
-              </h2>
-              <p className="text-xs text-neutral-300 font-sans">
-                Institutional market workstation, real-time RSI alerts, and 13F whale webhooks.
-              </p>
-            </div>
-          </div>
-
-          {/* Monthly vs Yearly Toggle */}
-          <div className="flex items-center bg-black/80 border border-cyan-500/40 rounded-xl p-1 text-xs font-mono shrink-0">
-            <button
-              onClick={() => setBillingCycle("monthly")}
-              className={`px-3 py-1.5 rounded-lg font-bold uppercase transition-all cursor-pointer ${
-                billingCycle === "monthly"
-                  ? "bg-cyan-400 text-black shadow-md shadow-cyan-400/20"
-                  : "text-neutral-400 hover:text-white"
-              }`}
-            >
-              Monthly ($5/mo)
-            </button>
-            <button
-              onClick={() => setBillingCycle("yearly")}
-              className={`px-3 py-1.5 rounded-lg font-bold uppercase transition-all cursor-pointer flex items-center gap-1 ${
-                billingCycle === "yearly"
-                  ? "bg-cyan-400 text-black shadow-md shadow-cyan-400/20"
-                  : "text-neutral-400 hover:text-white"
-              }`}
-            >
-              <span>Yearly ($5/yr)</span>
-              <span className="text-[9px] bg-emerald-500 text-black font-black px-1.5 py-0.2 rounded">
-                $5 DEAL
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Pro Card */}
-        <div className="bg-[#020d1c] border-2 border-cyan-500/50 alien-block-cut p-6 sm:p-8 shadow-2xl relative space-y-6">
-          <div className="hud-corner-tl border-cyan-400" />
-          <div className="hud-corner-tr border-cyan-400" />
-
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-cyan-500/30 pb-6">
-            <div>
-              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-[10px] text-cyan-300 uppercase font-bold mb-2">
-                <Sparkles className="w-3 h-3 text-cyan-400" />
-                RECURRING STRIPE BILLING
-              </div>
-              <h3 className="text-2xl font-black font-tech text-white uppercase tracking-wide">
-                QUANT SUITE PRO TERMINAL & WHALE RADAR
-              </h3>
-              <p className="text-xs text-neutral-300 font-sans max-w-xl mt-1">
-                Full real-time workstation access with zero delayed quotes, priority copilot agent processing, and instant webhook alerts.
-              </p>
-            </div>
-
-            <div className="text-left md:text-right shrink-0">
-              <div className="text-3xl font-black font-tech text-cyan-300">
-                $5
-                <span className="text-xs font-normal text-neutral-400">
-                  {billingCycle === "monthly" ? "/month" : "/year"}
-                </span>
-              </div>
-              <div className="text-[10px] text-emerald-400 font-mono mt-0.5">
-                {billingCycle === "yearly" ? "Billed annually ($5/yr special)" : "Cancel anytime in 1 click"}
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[
-              "Real-Time RSI & Volatility Alerts on All Stocks",
-              "13F Whale Accumulation Email & Webhook Alerts",
-              "Unlimited Saved Portfolios & Watchlists in 'My Bloc'",
-              "Priority Copilot Terminal Access (Gemini & DeepSeek)",
-              "5,000 Included Monthly API Credits for AI Agents",
-              "Level 2 Order Book Depth & Market Flow Metrics",
-            ].map((feat, idx) => (
-              <div key={idx} className="flex items-center gap-2.5 text-xs text-neutral-200 font-sans">
-                <div className="p-1 rounded bg-cyan-500/20 text-cyan-400">
-                  <Check className="w-3.5 h-3.5" />
-                </div>
-                <span>{feat}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button
-              onClick={() =>
-                handleOpenCheckout(
-                  billingCycle === "monthly" ? proSubscriptionMonthly : proSubscriptionYearly,
-                  "card"
-                )
-              }
-              data-testid="upgrade-pro-btn-card"
-              className="w-full py-4 bg-cyan-400 text-black font-black font-tech uppercase text-xs sm:text-sm tracking-wider alien-block-cut-sm hover:bg-cyan-300 shadow-xl shadow-cyan-400/20 transition-all flex flex-col sm:flex-row items-center justify-center gap-2 cursor-pointer active:scale-95"
-            >
-              <CreditCard className="w-4 h-4 text-black" />
-              <span>CARD/USDC ({billingCycle === "monthly" ? "$5/mo" : "$5/yr"})</span>
-            </button>
-            <button
-              onClick={() =>
-                handleOpenCheckout(
-                  billingCycle === "monthly" ? proSubscriptionMonthly : proSubscriptionYearly,
-                  "crypto"
-                )
-              }
-              data-testid="upgrade-pro-btn-crypto"
-              className="w-full py-4 bg-neutral-900 border-2 border-cyan-500/50 text-cyan-400 font-black font-tech uppercase text-xs sm:text-sm tracking-wider alien-block-cut-sm hover:bg-neutral-800 transition-all flex flex-col sm:flex-row items-center justify-center gap-2 cursor-pointer active:scale-95"
-            >
-              <Wallet className="w-4 h-4" />
-              <span>BTC/CRYPTO ({billingCycle === "monthly" ? "$5/mo" : "$5/yr"})</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* SECTION 3: AI AGENT API KEY CREDIT REFILL BUNDLES ($5 ALL) */}
+      {/* SECTION 2: AI AGENT API KEY CREDIT REFILL BUNDLES */}
       <div className="space-y-6 pt-4">
         <div className="flex items-center justify-between border-b border-emerald-500/30 pb-3">
           <div className="flex items-center gap-3">
@@ -507,7 +347,7 @@ export const ProductStorePricing: React.FC<Props> = ({
             </div>
             <div>
               <h2 className="text-xl font-black font-tech text-white uppercase tracking-wide">
-                3. AI AGENT API KEY CREDIT REFILL BUNDLES
+                2. AI AGENT API KEY CREDIT REFILL BUNDLES
               </h2>
               <p className="text-xs text-neutral-300 font-sans">
                 Metered API credits for autonomous trading subagents calling <span className="text-emerald-300 font-mono">/api/v1/sec/job</span> and <span className="text-emerald-300 font-mono">/api/v1/agent/quant-sim</span>.

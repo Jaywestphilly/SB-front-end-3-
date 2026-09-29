@@ -280,7 +280,7 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
     return val ? parseInt(val, 10) : 2850;
   });
   const [apiTotalCredits, setApiTotalCredits] = useState<number>(3000);
-  const [subscriptionTier, setSubscriptionTier] = useState<"Quant Suite Pro" | "Free Tier" | "Institutional">("Quant Suite Pro");
+  const [subscriptionTier, setSubscriptionTier] = useState<"Free Terminal" | "Developer" | "Institutional">("Free Terminal");
   const [copiedKey, setCopiedKey] = useState(false);
   const [isGeneratingKey, setIsGeneratingKey] = useState(false);
 
@@ -1021,14 +1021,14 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
                   Developer & Agent Access
                 </span>
                 <span className="text-[10px] font-mono text-cyan-300 bg-cyan-950/60 border border-cyan-500/40 px-2 py-0.5 rounded">
-                  Tier: {subscriptionTier}
+                  Status: Free Human Terminal
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black font-tech text-white uppercase tracking-wide mt-1">
-                API KEYS & SUBSCRIPTION MANAGER
+                API KEYS & CREDITS MANAGER
               </h2>
               <p className="text-xs text-neutral-300 font-sans max-w-2xl mt-0.5">
-                Generate production API keys (<span className="text-emerald-300 font-mono">sb_live_...</span>), monitor remaining credit balances, and manage your Quant Suite Pro subscription.
+                Generate production API keys (<span className="text-emerald-300 font-mono">sb_live_...</span>), monitor remaining credit balances, and query autonomous agent endpoints.
               </p>
             </div>
           </div>

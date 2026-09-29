@@ -45,7 +45,7 @@ export async function fetchWithPaywallHandling<T = any>(
         ok: false,
         status: 402,
         data: null,
-        error: errBody?.message || "Unlock live data with Quant Suite Pro — $5/mo",
+        error: errBody?.message || "Payment required (x402 protocol)",
         isPaywall: true,
         isConfigError: false,
         rawResponse: res,

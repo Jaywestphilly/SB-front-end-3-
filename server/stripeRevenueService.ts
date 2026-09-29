@@ -28,13 +28,12 @@ export const CANONICAL_HOST = 'https://stockbloc.ai.studio';
 export interface ServerCatalogItem {
   productId: string;
   name: string;
-  category: 'playbook' | 'subscription' | 'api_bundle';
+  category: 'playbook' | 'api_bundle';
   priceUsd: number;
   amountCents: number;
   currency: string;
   credits: number;
-  mode: 'payment' | 'subscription';
-  billingPeriod?: 'month' | 'year';
+  mode: 'payment';
 }
 
 export const SERVER_CATALOG: Record<string, ServerCatalogItem> = {
@@ -142,30 +141,6 @@ export const SERVER_CATALOG: Record<string, ServerCatalogItem> = {
     currency: 'usd',
     credits: 0,
     mode: 'payment'
-  },
-
-  // 4. Subscriptions
-  subscription_pro_monthly: {
-    productId: 'subscription_pro_monthly',
-    name: 'Quant Suite Pro Subscription (Monthly)',
-    category: 'subscription',
-    priceUsd: 5,
-    amountCents: 500,
-    currency: 'usd',
-    credits: 5000,
-    mode: 'subscription',
-    billingPeriod: 'month'
-  },
-  subscription_pro_yearly: {
-    productId: 'subscription_pro_yearly',
-    name: 'Quant Suite Pro Subscription (Yearly)',
-    category: 'subscription',
-    priceUsd: 50,
-    amountCents: 5000,
-    currency: 'usd',
-    credits: 60000,
-    mode: 'subscription',
-    billingPeriod: 'year'
   }
 };
 
@@ -176,50 +151,6 @@ export const userProfilePurchases: Record<string, {
   apiKey?: string;
   linkedAt: string;
 }> = {};
-
-// In-memory active subscription tracking
-export interface ProSubscriptionRecord {
-  email: string;
-  productId: string;
-  status: 'active' | 'canceled' | 'inactive';
-  startedAt: string;
-  updatedAt?: string;
-  agentId?: string;
-  sessionId?: string;
-}
-
-export const proSubscriptionsMap = new Map<string, ProSubscriptionRecord>();
-
-export async function recordProSubscription(params: {
-  email: string;
-  productId: string;
-  agentId?: string;
-  sessionId?: string;
-}): Promise<ProSubscriptionRecord | null> {
-  if (!params.email || typeof params.email !== 'string') return null;
-  const cleanEmail = params.email.toLowerCase().trim();
-  if (!cleanEmail) return null;
-
-  const record: ProSubscriptionRecord = {
-    email: cleanEmail,
-    productId: params.productId,
-    status: 'active',
-    startedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    agentId: params.agentId,
-    sessionId: params.sessionId
-  };
-
-  proSubscriptionsMap.set(cleanEmail, record);
-
-  try {
-    await db.collection('pro_subscriptions').doc(cleanEmail).set(record, { merge: true });
-  } catch (err) {
-    console.warn('[pro_subscriptions] Firestore sync deferred:', err);
-  }
-
-  return record;
-}
 
 /**
  * Auto-provision an agent identity server-side for human purchasers or unverified agent references.
@@ -555,9 +486,7 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
       const { default: Stripe } = await import('stripe');
       const stripe = new Stripe(stripeKey!, { apiVersion: '2024-12-18.acacia' as any });
 
-      const paymentTypes: any[] = catalogItem.mode === 'subscription'
-        ? ['card', 'link']
-        : ['card', 'link', 'cashapp', 'klarna', 'afterpay_clearpay', 'affirm'];
+      const paymentTypes: any[] = ['card', 'link', 'cashapp', 'klarna', 'afterpay_clearpay', 'affirm'];
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: paymentTypes,
@@ -583,13 +512,6 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
                 description: `Stock Bloc ${catalogItem.category} - Instant Digital Delivery`,
               },
               unit_amount: catalogItem.amountCents,
-              ...(catalogItem.mode === 'subscription'
-                ? {
-                    recurring: {
-                      interval: catalogItem.billingPeriod || 'month',
-                    },
-                  }
-                : {}),
             },
             quantity: 1,
           },
@@ -865,22 +787,9 @@ export async function fulfillAuthoritativePayment(params: {
       targetAgentId = authenticatedAgentId.trim();
     }
 
-    // For subscription-mode products, record email -> active subscription in pro_subscriptions
-    if (catalogItem.mode === 'subscription' || catalogItem.category === 'subscription') {
-      const purchaserEmail = metadata.email || session.customer_details?.email || session.customer_email;
-      if (purchaserEmail) {
-        await recordProSubscription({
-          email: purchaserEmail,
-          productId: catalogItem.productId,
-          agentId: targetAgentId || undefined,
-          sessionId
-        });
-      }
-    }
-
     const creditsToAdd = catalogItem.credits;
 
-    // For agent credits or subscription products that grant credits, targetAgentId MUST be resolved
+    // For agent credits products that grant credits, targetAgentId MUST be resolved
     if (creditsToAdd > 0 && !targetAgentId) {
       logPaymentEvent('payment_mismatch', {
         sessionId,
@@ -1458,11 +1367,11 @@ export async function verifySessionHandler(req: Request, res: Response) {
     }
   }
 
-  // Only provision an API key if this is an API bundle or subscription and no key exists
-  const isApiOrSubscription = metadata.productId?.includes('bundle') ||
-                              metadata.productType === 'subscription' ||
-                              creditsGranted > 0;
-  if (!activeApiKey && isApiOrSubscription && targetAgentId) {
+  // Only provision an API key if this is an API bundle and no key exists
+  const isApiBundle = metadata.productId?.includes('bundle') ||
+                      metadata.productId?.includes('credits') ||
+                      creditsGranted > 0;
+  if (!activeApiKey && isApiBundle && targetAgentId) {
     const publicId = crypto.randomBytes(6).toString('hex');
     const secret = crypto.randomBytes(12).toString('hex');
     activeApiKey = `sb_live_${publicId}_${secret}`;

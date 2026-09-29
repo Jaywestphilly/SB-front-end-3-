@@ -38,42 +38,6 @@ const authenticateHuman = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-export async function checkProSubscriptionEntitlement(email: string): Promise<boolean> {
-  if (!email) return false;
-  const cleanEmail = email.toLowerCase().trim();
-  // Gate admin access behind PRO_ADMIN_EMAILS environment variable (comma-separated, default empty)
-  const adminEmails = (process.env.PRO_ADMIN_EMAILS || '')
-    .split(',')
-    .map(e => e.trim().toLowerCase())
-    .filter(Boolean);
-  if (adminEmails.includes(cleanEmail)) {
-    return true;
-  }
-  try {
-    const docRef = db.collection('pro_subscriptions').doc(cleanEmail);
-    const snap = await docRef.get();
-    if (snap.exists) {
-      const data = snap.data();
-      return data?.status === 'active';
-    }
-  } catch (err) {
-    console.warn('[entitlement] Error checking subscription status for:', cleanEmail, err);
-  }
-  return false;
-}
-
-export const requireProSubscription = async (req: Request, res: Response, next: NextFunction) => {
-  const user = (req as any).user;
-  if (!user || !user.email) {
-    return res.status(403).json({ error: 'Pro subscription required: missing purchaser identity' });
-  }
-  const hasPro = await checkProSubscriptionEntitlement(user.email);
-  if (!hasPro) {
-    return res.status(403).json({ error: 'Quant Suite Pro subscription required — $5/mo' });
-  }
-  next();
-};
-
 // Rate limiting
 export const chatRateLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
@@ -975,8 +939,8 @@ agentPlatformRouter.post('/register', async (req, res, next) => {
   return registerAutonomousAgentHandler(req, res);
 });
 
-// POST /api/v1/agents/keys (Requires human auth + Pro subscription)
-agentPlatformRouter.post('/keys', authenticateHuman, requireProSubscription, async (req, res) => {
+// POST /api/v1/agents/keys (Requires human auth)
+agentPlatformRouter.post('/keys', authenticateHuman, async (req, res) => {
   try {
     const { agentId, scopes } = req.body;
     const ownerUid = (req as any).user.uid;
@@ -1027,8 +991,8 @@ agentPlatformRouter.post('/keys', authenticateHuman, requireProSubscription, asy
   }
 });
 
-// GET /api/v1/agents/keys (Requires human auth + Pro subscription)
-agentPlatformRouter.get('/keys', authenticateHuman, requireProSubscription, async (req, res) => {
+// GET /api/v1/agents/keys (Requires human auth)
+agentPlatformRouter.get('/keys', authenticateHuman, async (req, res) => {
   try {
     const ownerUid = (req as any).user.uid;
     const agentId = req.query.agentId as string;
@@ -1053,8 +1017,8 @@ agentPlatformRouter.get('/keys', authenticateHuman, requireProSubscription, asyn
   }
 });
 
-// POST /api/v1/agents/keys/:keyId/revoke (Requires human auth + Pro subscription)
-agentPlatformRouter.post('/keys/:keyId/revoke', authenticateHuman, requireProSubscription, async (req, res) => {
+// POST /api/v1/agents/keys/:keyId/revoke (Requires human auth)
+agentPlatformRouter.post('/keys/:keyId/revoke', authenticateHuman, async (req, res) => {
   try {
     const { keyId } = req.params;
     const ownerUid = (req as any).user.uid;
@@ -1087,8 +1051,8 @@ agentPlatformRouter.post('/keys/:keyId/revoke', authenticateHuman, requireProSub
   }
 });
 
-// POST /api/v1/agents/keys/:keyId/rotate (Requires human auth + Pro subscription)
-agentPlatformRouter.post('/keys/:keyId/rotate', authenticateHuman, requireProSubscription, async (req, res) => {
+// POST /api/v1/agents/keys/:keyId/rotate (Requires human auth)
+agentPlatformRouter.post('/keys/:keyId/rotate', authenticateHuman, async (req, res) => {
     try {
         const { keyId } = req.params;
         const ownerUid = (req as any).user.uid;

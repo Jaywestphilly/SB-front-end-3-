@@ -353,82 +353,62 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
     });
   });
 
-  describe('Verified Purchaser Identity & Pro Subscription Entitlement Security', () => {
-    const SUBSCRIBER_EMAIL = 'pro.subscriber@example.com';
-    const TEST_ADMIN_EMAIL = 'admin.operator@stockbloc.ai';
-    const createMockJwt = (email: string, uid = 'usr_' + Math.random().toString(36).slice(2)) => {
-      const header = Buffer.from(JSON.stringify({ alg: 'none', typ: 'JWT' })).toString('base64');
-      const payload = Buffer.from(JSON.stringify({ uid, sub: uid, email })).toString('base64');
-      return `${header}.${payload}.sig`;
-    };
-
+  describe('Free Human Browser UI Access & Programmatic Enforcement Security', () => {
     beforeEach(async () => {
       process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
-      delete process.env.PRO_ADMIN_EMAILS;
-      const { db } = await import('./firebaseAdmin.js');
-      // Set active Pro subscription for legitimate subscriber
-      await db.collection('pro_subscriptions').doc(SUBSCRIBER_EMAIL).set({
-        email: SUBSCRIBER_EMAIL,
-        status: 'active'
-      });
-      // Ensure inactive/no subscription for other test emails
-      await db.collection('pro_subscriptions').doc('developer@stockbloc.ai').set({
-        email: 'developer@stockbloc.ai',
-        status: 'inactive'
-      });
-      await db.collection('pro_subscriptions').doc('realestatejcarter@gmail.com').set({
-        email: 'realestatejcarter@gmail.com',
-        status: 'inactive'
-      });
-      await db.collection('pro_subscriptions').doc('attacker@evil.com').set({
-        email: 'attacker@evil.com',
-        status: 'inactive'
-      });
     });
 
-    it('spoofed x-purchaser-email header carrying a real subscriber email must NOT skip x402 (expect 402)', async () => {
+    it('browser-style request with sec-fetch-site same-origin returns 200 with no key on free UI paths', async () => {
       const app = createTestApp();
-
-      // Attempt spoof via x-purchaser-email header
-      const resHeader = await request(app)
-        .get('/api/v1/intelligence/sb-score')
-        .set('x-purchaser-email', SUBSCRIBER_EMAIL);
-
-      expect(resHeader.status).toBe(402);
-      expect(resHeader.body.status).toBe('payment_required');
-
-      // Attempt spoof via query param ?email=
-      const resQuery = await request(app)
-        .get(`/api/v1/intelligence/sb-score?email=${encodeURIComponent(SUBSCRIBER_EMAIL)}`);
-
-      expect(resQuery.status).toBe(402);
-      expect(resQuery.body.status).toBe('payment_required');
-
-      // Attempt spoof via body.email
-      const resBody = await request(app)
-        .post('/api/v1/sec/job')
-        .send({ ticker: 'NVDA', email: SUBSCRIBER_EMAIL });
-
-      expect(resBody.status).toBe(402);
-      expect(resBody.body.status).toBe('payment_required');
-    });
-
-    it('verified JWT for an active subscriber must skip x402 payment challenge', async () => {
-      const app = createTestApp();
-      const subscriberJwt = createMockJwt(SUBSCRIBER_EMAIL, 'uid_subscriber_01');
 
       const res = await request(app)
         .get('/api/v1/intelligence/sb-score')
-        .set('Authorization', `Bearer ${subscriberJwt}`);
+        .set('sec-fetch-site', 'same-origin');
 
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('success');
-      expect(res.body.ticker).toBe('NVDA');
       expect(res.body.sbScore).toBe(88);
     });
 
-    it('verified API key linked to registered agent with verified email on file skips x402', async () => {
-      const { inMemoryKeyRegistry, inMemoryAgentRegistry } = await import('./agentPlatform.js');
+    it('browser-style request with matching Referer header returns 200 with no key on free UI paths', async () => {
+      const app = createTestApp();
+
+      const res = await request(app)
+        .get('/api/data/market')
+        .set('referer', 'https://stockbloc.ai.studio/')
+        .set('host', 'stockbloc.ai.studio');
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('success');
+      expect(res.body.watchlist).toBeDefined();
+    });
+
+    it('plain programmatic request with no browser headers to priced endpoint returns 402 with x402 challenge', async () => {
+      const app = createTestApp();
+
+      const res = await request(app)
+        .get('/api/v1/intelligence/sb-score');
+
+      expect(res.status).toBe(402);
+      expect(res.body.status).toBe('payment_required');
+      expect(res.body.accepts).toBeDefined();
+      expect(res.headers['payment-required']).toBeDefined();
+    });
+
+    it('spoofed client headers (e.g. x-stockbloc-client, x-purchaser-email) must NOT skip x402 on programmatic calls', async () => {
+      const app = createTestApp();
+
+      const res = await request(app)
+        .get('/api/v1/intelligence/sb-score')
+        .set('x-stockbloc-client', 'web-ui')
+        .set('x-purchaser-email', 'anyone@example.com');
+
+      expect(res.status).toBe(402);
+      expect(res.body.status).toBe('payment_required');
+    });
+
+    it('plain programmatic request with valid agent key debits credits and returns 200', async () => {
+      const { inMemoryKeyRegistry, inMemoryAgentRegistry, inMemoryWalletRegistry } = await import('./agentPlatform.js');
       const crypto = await import('crypto');
 
       const publicId = crypto.randomBytes(8).toString('hex');
@@ -450,7 +430,15 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
         agentId,
         handle: 'subscriber_bot',
         displayName: 'Subscriber Bot',
-        email: SUBSCRIBER_EMAIL,
+        status: 'active'
+      });
+
+      inMemoryWalletRegistry.set(agentId, {
+        agentId,
+        creditsBalance: 50,
+        availableBalance: 50,
+        paidCreditsBalance: 50,
+        lifetimeSpent: 0,
         status: 'active'
       });
 
@@ -458,64 +446,11 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
 
       const res = await request(app)
         .get('/api/v1/intelligence/sb-score')
-        .set('x-agent-key', rawKey);
+        .set('Authorization', `Bearer ${rawKey}`);
 
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('success');
       expect(res.body.sbScore).toBe(88);
-    });
-
-    it('the two formerly hard-coded emails must NOT bypass with PRO_ADMIN_EMAILS unset', async () => {
-      delete process.env.PRO_ADMIN_EMAILS;
-      const app = createTestApp();
-
-      const devJwt = createMockJwt('developer@stockbloc.ai', 'uid_dev');
-      const resDev = await request(app)
-        .get('/api/v1/intelligence/sb-score')
-        .set('Authorization', `Bearer ${devJwt}`);
-
-      expect(resDev.status).toBe(402);
-      expect(resDev.body.status).toBe('payment_required');
-
-      const carterJwt = createMockJwt('realestatejcarter@gmail.com', 'uid_carter');
-      const resCarter = await request(app)
-        .get('/api/v1/intelligence/sb-score')
-        .set('Authorization', `Bearer ${carterJwt}`);
-
-      expect(resCarter.status).toBe(402);
-      expect(resCarter.body.status).toBe('payment_required');
-    });
-
-    it('allows admin bypass only when email is explicitly present in PRO_ADMIN_EMAILS', async () => {
-      process.env.PRO_ADMIN_EMAILS = `developer@stockbloc.ai, ${TEST_ADMIN_EMAIL}`;
-      const app = createTestApp();
-
-      // developer@stockbloc.ai is in PRO_ADMIN_EMAILS -> allowed
-      const devJwt = createMockJwt('developer@stockbloc.ai', 'uid_dev');
-      const resDev = await request(app)
-        .get('/api/v1/intelligence/sb-score')
-        .set('Authorization', `Bearer ${devJwt}`);
-
-      expect(resDev.status).toBe(200);
-      expect(resDev.body.status).toBe('success');
-
-      // admin.operator@stockbloc.ai is in PRO_ADMIN_EMAILS -> allowed
-      const adminJwt = createMockJwt(TEST_ADMIN_EMAIL, 'uid_admin');
-      const resAdmin = await request(app)
-        .get('/api/v1/intelligence/sb-score')
-        .set('Authorization', `Bearer ${adminJwt}`);
-
-      expect(resAdmin.status).toBe(200);
-      expect(resAdmin.body.status).toBe('success');
-
-      // realestatejcarter@gmail.com is NOT in PRO_ADMIN_EMAILS -> 402
-      const carterJwt = createMockJwt('realestatejcarter@gmail.com', 'uid_carter');
-      const resCarter = await request(app)
-        .get('/api/v1/intelligence/sb-score')
-        .set('Authorization', `Bearer ${carterJwt}`);
-
-      expect(resCarter.status).toBe(402);
-      expect(resCarter.body.status).toBe('payment_required');
     });
 
     it('includes Bazaar discovery extensions in the 402 challenge header and body with info, schema, and enriched resource', async () => {

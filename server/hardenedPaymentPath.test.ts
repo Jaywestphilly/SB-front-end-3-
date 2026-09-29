@@ -60,7 +60,7 @@ describe('HARDENED PAYMENT PATH & UNIFIED PRICING AUDIT', () => {
         agentId,
         handle,
         handleLower: handle.toLowerCase(),
-        displayName: 'Quant Suite Pro Agent',
+        displayName: 'Quant Agent',
         description: 'Autonomous quant agent with API key credentials.',
         ownerUid: 'dashboard_user',
         verificationStatus: 'verified',
@@ -80,7 +80,7 @@ describe('HARDENED PAYMENT PATH & UNIFIED PRICING AUDIT', () => {
         promoCreditsBalance: 0,
         trialCreditsBalance: 0,
         trialCredits: 0,
-        lastCreditTag: 'PRO_SUBSCRIPTION',
+        lastCreditTag: 'STRIPE_PURCHASE',
         lifetimeSpent: 0,
         status: 'active'
       };
@@ -99,7 +99,7 @@ describe('HARDENED PAYMENT PATH & UNIFIED PRICING AUDIT', () => {
         handle,
         createdAt: new Date().toISOString(),
         creditsRemaining: 3000,
-        tier: 'Quant Suite Pro'
+        tier: 'Developer'
       });
     });
 

@@ -80,7 +80,7 @@ export const useSecIntelData = () => {
             sourceName = "CDN Proxy / SEC Edgar";
           } else if (secResult.isPaywall) {
             setIsPaywall(true);
-            setError(secResult.error || "Unlock live data with Quant Suite Pro — $5/mo");
+            setError(secResult.error || "Failed to fetch SEC Intel data");
           } else if (secResult.isConfigError) {
             setIsConfigError(true);
             setError("Data temporarily unavailable");

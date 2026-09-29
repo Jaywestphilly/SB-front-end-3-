@@ -353,125 +353,29 @@ export function getX402RecipientAddress(): string | null {
   return addr && addr.length > 0 ? addr : null;
 }
 
-export async function getVerifiedPurchaserEmail(req: Request): Promise<string | null> {
-  // (a) req.user.email set by the authenticateHuman JWT middleware or verified JWT
-  const user = (req as any).user;
-  if (user?.email && typeof user.email === 'string' && user.email.includes('@')) {
-    return user.email.toLowerCase().trim();
-  }
+// Server-side allowlist of the web terminal human UI data-fetch paths
+export const HUMAN_UI_FREE_PATHS = new Set([
+  '/api/data/market',
+  '/api/data/market.csv',
+  '/api/live-quote',
+  '/api/data/sec',
+  '/api/13f/filings',
+  '/api/v1/market/quote',
+  '/api/v1/intelligence/sb-score',
+  '/api/v1/intelligence/signal',
+  '/api/v1/intelligence/earnings-pack',
+  '/api/intelligence/sb-score',
+  '/api/intelligence/signal',
+  '/api/intelligence/earnings-pack',
+  '/api/sec/job',
+  '/api/v1/sec/job'
+]);
 
-  const authHeader = req.headers.authorization;
-  const xAgentKeyHeader = (req.headers['x-agent-key'] || req.headers['X-Agent-Key']) as string | undefined;
-
-  // Check Bearer JWT token if user not already set on req
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7).trim();
-    if (!token.startsWith('sb_live_') && !token.startsWith('sb_test_')) {
-      try {
-        const decoded = await auth.verifyIdToken(token);
-        if (decoded && decoded.email && typeof decoded.email === 'string' && decoded.email.includes('@')) {
-          (req as any).user = decoded;
-          return decoded.email.toLowerCase().trim();
-        }
-      } catch (_) {}
-    }
-  }
-
-  // (b) a valid sb_live_/sb_test_ API key (x-agent-key / Authorization Bearer) resolved through the key registry to a registered agent with a verified email on file
-  const rawKey = (xAgentKeyHeader || (authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : authHeader))?.trim();
-  if (rawKey && (rawKey.startsWith('sb_live_') || rawKey.startsWith('sb_test_') || inMemoryKeyRegistry.has(rawKey))) {
-    try {
-      let keyRecord: any;
-      let secret: string | undefined;
-
-      if (inMemoryKeyRegistry.has(rawKey)) {
-        keyRecord = inMemoryKeyRegistry.get(rawKey);
-      } else if (rawKey.startsWith('sb_live_') || rawKey.startsWith('sb_test_')) {
-        const parts = rawKey.split('_');
-        if (parts.length >= 4) {
-          const publicId = parts[2];
-          secret = parts.slice(3).join('_');
-          keyRecord = inMemoryKeyRegistry.get(publicId);
-
-          if (!keyRecord && db) {
-            let snap = await db.collection('api_keys').doc(publicId).get();
-            if (!snap.exists) {
-              snap = await db.collection('agent_api_keys').doc(publicId).get();
-            }
-            if (snap.exists) {
-              keyRecord = snap.data();
-            }
-          }
-        }
-      }
-
-      if (keyRecord && keyRecord.status === 'active') {
-        if (keyRecord.expiresAt) {
-          const expDate = typeof keyRecord.expiresAt?.toDate === 'function'
-            ? keyRecord.expiresAt.toDate()
-            : new Date(keyRecord.expiresAt);
-          if (!isNaN(expDate.getTime()) && expDate.getTime() <= Date.now()) {
-            return null;
-          }
-        }
-
-        if (secret && (keyRecord.keyHash || keyRecord.secretHash)) {
-          const actualHash = hashSecret(secret);
-          const isMatch = constantTimeCompare(keyRecord.keyHash || '', actualHash) ||
-            (keyRecord.secretHash && constantTimeCompare(keyRecord.secretHash, actualHash));
-          if (!isMatch) {
-            return null;
-          }
-        }
-
-        let agent: any = inMemoryAgentRegistry.get(keyRecord.agentId) ||
-          (keyRecord.handle ? inMemoryAgentRegistry.get(keyRecord.handle.toLowerCase()) : undefined);
-
-        if (!agent && db && keyRecord.agentId) {
-          const userDoc = await db.collection('users').doc(keyRecord.agentId).get();
-          if (userDoc.exists) {
-            agent = userDoc.data();
-          } else {
-            const agentDoc = await db.collection('agents').doc(keyRecord.agentId).get();
-            if (agentDoc.exists) {
-              agent = agentDoc.data();
-            }
-          }
-        }
-
-        if (agent && agent.status !== 'suspended' && agent.status !== 'deleted') {
-          const candidateEmail = agent.email || agent.ownerEmail || agent.verifiedEmail || keyRecord.email || keyRecord.ownerEmail;
-          if (candidateEmail && typeof candidateEmail === 'string' && candidateEmail.includes('@')) {
-            return candidateEmail.toLowerCase().trim();
-          }
-        }
-      }
-    } catch (_) {}
-  }
-
-  return null;
-}
-
-export async function checkProSubscriptionEntitlement(email: string): Promise<boolean> {
-  if (!email) return false;
-  const cleanEmail = email.toLowerCase().trim();
-  // Gate admin access behind PRO_ADMIN_EMAILS environment variable (comma-separated, default empty)
-  const adminEmails = (process.env.PRO_ADMIN_EMAILS || '')
-    .split(',')
-    .map(e => e.trim().toLowerCase())
-    .filter(Boolean);
-  if (adminEmails.includes(cleanEmail)) {
+export function isHumanUiFreePath(path: string): boolean {
+  const normalized = path.split('?')[0].toLowerCase();
+  if (HUMAN_UI_FREE_PATHS.has(normalized)) return true;
+  if (normalized.startsWith('/api/live-quote/') || normalized.startsWith('/api/v1/market/quote/')) {
     return true;
-  }
-  try {
-    const docRef = db.collection('pro_subscriptions').doc(cleanEmail);
-    const snap = await docRef.get();
-    if (snap.exists) {
-      const data = snap.data();
-      return data?.status === 'active';
-    }
-  } catch (err) {
-    console.warn('[entitlement] Error checking subscription status for:', cleanEmail, err);
   }
   return false;
 }
@@ -485,8 +389,15 @@ export function isFrontendWebRequest(req: Request): boolean {
     req.header('x-payment') ||
     req.header('X-PAYMENT') ||
     req.header('x-agent-key') ||
-    req.header('X-Agent-Key')
+    req.header('X-Agent-Key') ||
+    req.header('x-402-payment-proof') ||
+    req.header('X-402-Payment-Proof')
   ) {
+    return false;
+  }
+
+  const rawAuth = req.headers.authorization;
+  if (rawAuth && (rawAuth.includes('sb_live_') || rawAuth.startsWith('sb_live_'))) {
     return false;
   }
 
@@ -505,7 +416,7 @@ export function isFrontendWebRequest(req: Request): boolean {
   // Referer matching request host
   const referer = req.header('referer') || '';
   const host = req.get('host') || '';
-  if (referer && host && referer.includes(host)) {
+  if (referer && host && (referer.includes(host) || referer.includes('localhost') || referer.includes('127.0.0.1'))) {
     return true;
   }
 
@@ -515,7 +426,7 @@ export function isFrontendWebRequest(req: Request): boolean {
     return true;
   }
 
-  // Custom client headers are explicitly ignored here for security - no more bypasses!
+  // Custom client headers (e.g. x-stockbloc-client) are strictly ignored for security
   return false;
 }
 
@@ -615,16 +526,13 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       return forwardNext();
     }
 
-    // Pro subscription check: Allow active Quant Suite Pro subscribers to access premium views
-    const purchaserEmail = await getVerifiedPurchaserEmail(req);
-    if (purchaserEmail) {
-      const hasPro = await checkProSubscriptionEntitlement(purchaserEmail);
-      if (hasPro) {
-        return next();
-      }
+    // 2. Free Human Browser UI Access (Server-side allowlist for web terminal frontend)
+    // Server decides based on authentic browser request headers matching UI free paths (never trusts client bypass headers)
+    if (isFrontendWebRequest(req) && isHumanUiFreePath(fullPath)) {
+      return forwardNext();
     }
 
-    // 2. Allow requests paid through platform credits (Bearer sb_live_ key with credits)
+    // 3. Allow requests paid through platform credits (Bearer sb_live_ key with credits)
     // Atomically debit credits: 1 credit = $0.01
     const rawAuth = req.headers.authorization || (req.headers['x-agent-key'] as string);
     const isAgentKey = rawAuth && (

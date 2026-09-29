@@ -244,40 +244,27 @@ export const MissionHubModal: React.FC<MissionHubModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-4 bg-neutral-950 border border-cyan-500/40 rounded-xl space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-zen font-bold text-cyan-300 text-sm">1. Open Terminal (Free Tier)</span>
-                    <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded text-[10px] font-mono">FOREVER FREE</span>
+                    <span className="font-zen font-bold text-cyan-300 text-sm">1. Open Human Terminal</span>
+                    <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded text-[10px] font-mono">100% FREE</span>
                   </div>
                   <ul className="text-xs text-neutral-300 space-y-1.5 list-disc list-inside">
                     <li>Real-time stock ticker quotes & options skew charts</li>
-                    <li>Community discussion board & clickable profiles</li>
-                    <li>13F Hedge Fund Tracker & Investopedia Game</li>
-                    <li>Basic Agent telemetry & educational crisis simulators</li>
+                    <li>13F Whale Tracking & SEC EDGAR disclosures</li>
+                    <li>Global Infrastructure, Datacenter & Substation maps</li>
+                    <li>Interactive Bloomberg workstation terminal</li>
                   </ul>
                 </div>
 
                 <div className="p-4 bg-neutral-950 border border-emerald-500/40 rounded-xl space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-zen font-bold text-emerald-300 text-sm">2. Quant Suite Pro</span>
-                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded text-[10px] font-mono">$5 / MO</span>
+                    <span className="font-zen font-bold text-emerald-300 text-sm">2. Developer API & Agent Infrastructure</span>
+                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded text-[10px] font-mono">PAY-PER-CALL (x402)</span>
                   </div>
                   <ul className="text-xs text-neutral-300 space-y-1.5 list-disc list-inside">
-                    <li>Institutional Datacenter & Substation Cap-Rate Map</li>
-                    <li>Live Bloomberg-style command terminal (`MOST &lt;GO&gt;`, `AI &lt;GO&gt;`)</li>
-                    <li>Real-time whale block accumulation flags & volatility alerts</li>
-                    <li>Exclusive Discord/Telegram quant syndicate briefings</li>
-                  </ul>
-                </div>
-
-                <div className="p-4 bg-neutral-950 border border-emerald-500/40 rounded-xl space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-zen font-bold text-emerald-300 text-sm">3. Developer API & Node Bounties</span>
-                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded text-[10px] font-mono">PAY-PER-CALL & EARNINGS</span>
-                  </div>
-                  <ul className="text-xs text-neutral-300 space-y-1.5 list-disc list-inside">
+                    <li>Autonomous agent micropayments via x402 USDC on Base</li>
                     <li>REST & WebSocket endpoints for autonomous AI agents</li>
+                    <li>Double-entry ledger verified platform credit accounting</li>
                     <li>Bounties paid to quant developers for verified alpha models</li>
-                    <li>Cryptographic Brier score calibration verification</li>
-                    <li>Automated settlement to developer wallets</li>
                   </ul>
                 </div>
 

@@ -24,8 +24,7 @@ vi.mock('./firebaseAdmin.js', () => {
     users: new Map(),
     api_keys: new Map(),
     chats: new Map(),
-    discussions: new Map(),
-    pro_subscriptions: new Map()
+    discussions: new Map()
   };
 
   const getDoc = vi.fn((collection: string, id: string) => {
@@ -98,11 +97,6 @@ describe('Agent Platform API', () => {
   beforeAll(() => {
     dbStore.users.clear();
     dbStore.api_keys.clear();
-    if (!dbStore.pro_subscriptions) {
-      dbStore.pro_subscriptions = new Map();
-    }
-    dbStore.pro_subscriptions.clear();
-    dbStore.pro_subscriptions.set('alice@legit.com', { email: 'alice@legit.com', status: 'active' });
   });
 
   let validAgentId: string;
@@ -314,21 +308,17 @@ describe('Agent Platform API', () => {
     expect(replyRes.body.action).toBe('reply_created');
   });
 
-  it('13. checkProSubscriptionEntitlement respects PRO_ADMIN_EMAILS and does not hardcode developer bypasses', async () => {
-    const { checkProSubscriptionEntitlement } = await import('./agentPlatform.js');
-    delete process.env.PRO_ADMIN_EMAILS;
+  it('13. key generation succeeds for authenticated human with no pro subscription required', async () => {
+    const res = await request(app)
+      .post('/api/v1/agents/keys')
+      .set('Authorization', 'Bearer valid_human_token')
+      .send({
+        agentId: validAgentId,
+        scopes: ['services:read']
+      });
 
-    // Default: no hardcoded bypass for developer@stockbloc.ai or realestatejcarter@gmail.com
-    expect(await checkProSubscriptionEntitlement('developer@stockbloc.ai')).toBe(false);
-    expect(await checkProSubscriptionEntitlement('realestatejcarter@gmail.com')).toBe(false);
-
-    // Active subscriber in dbStore
-    expect(await checkProSubscriptionEntitlement('alice@legit.com')).toBe(true);
-
-    // Dynamic PRO_ADMIN_EMAILS bypass
-    process.env.PRO_ADMIN_EMAILS = 'developer@stockbloc.ai, ops@stockbloc.ai';
-    expect(await checkProSubscriptionEntitlement('developer@stockbloc.ai')).toBe(true);
-    expect(await checkProSubscriptionEntitlement('ops@stockbloc.ai')).toBe(true);
-    expect(await checkProSubscriptionEntitlement('realestatejcarter@gmail.com')).toBe(false);
+    expect(res.status).toBe(201);
+    expect(res.body.key).toBeDefined();
+    expect(res.body.key.startsWith('sb_live_')).toBe(true);
   });
 });
