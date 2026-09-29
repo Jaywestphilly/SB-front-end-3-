@@ -217,6 +217,10 @@ vi.mock('../firebaseAdmin.js', () => {
   };
 
   let txQueue: Promise<void> = Promise.resolve();
+  let customTransactionRunner: ((updateFunction: any) => Promise<any>) | null = null;
+  const setCustomTransactionRunner = (runner: ((updateFunction: any) => Promise<any>) | null) => {
+    customTransactionRunner = runner;
+  };
 
   const db = {
     collection: (name: string) => {
@@ -235,6 +239,9 @@ vi.mock('../firebaseAdmin.js', () => {
       };
     },
     runTransaction: async (updateFunction: any) => {
+      if (customTransactionRunner) {
+        return await customTransactionRunner(updateFunction);
+      }
       let releaseLock: () => void;
       const nextLock = new Promise<void>((resolve) => {
         releaseLock = resolve;
@@ -320,6 +327,7 @@ vi.mock('../firebaseAdmin.js', () => {
     db,
     auth,
     dbStoreInstance: fakeStore,
-    dbStore: dbStoreProxy
+    dbStore: dbStoreProxy,
+    setCustomTransactionRunner
   };
 });

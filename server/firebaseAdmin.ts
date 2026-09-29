@@ -518,20 +518,28 @@ try {
 }
 
 let localTxQueue = Promise.resolve();
+export let customTransactionRunner: ((updateFunction: any) => Promise<any>) | null = null;
+export function setCustomTransactionRunner(runner: any) {
+  customTransactionRunner = runner;
+}
 
 export const db: any = {
   collection: (name: string) => createCollectionRef(name, rawAdminDb),
   runTransaction: async (updateFunction: (transaction: any) => Promise<any>) => {
+    if (customTransactionRunner) {
+      return await customTransactionRunner(updateFunction);
+    }
     // If rawAdminDb is available and working, use Firestore runTransaction
     if (rawAdminDb) {
       try {
-        return await rawAdminDb.runTransaction(async (rawTx) => {
-          const pendingLocalWrites: Array<() => void> = [];
+        const mirrorWrites: Array<() => void> = [];
+        const result = await rawAdminDb.runTransaction(async (rawTx) => {
+          // Reset mirror writes on each callback attempt in case of transaction retry
+          mirrorWrites.length = 0;
           const txAdapter = {
             get: async (docRef: any) => {
               if (docRef._rawDocRef) {
                 const snap = await rawTx.get(docRef._rawDocRef);
-                console.log('rawTx.get:', docRef.id, 'exists:', (snap as any)?.exists, 'data:', (snap as any)?.data?.());
                 return snap;
               }
               return await docRef.get();
@@ -540,8 +548,11 @@ export const db: any = {
               if (docRef._rawDocRef) {
                 rawTx.set(docRef._rawDocRef, data, options);
               }
-              pendingLocalWrites.push(() => {
-                docRef.set(data, options);
+              mirrorWrites.push(() => {
+                const col = dbStoreInstance.getCollection(docRef.collectionName);
+                const current = options?.merge ? (col.get(docRef.id) || {}) : {};
+                col.set(docRef.id, { ...current, ...data });
+                dbStoreInstance.saveToDisk();
               });
               return txAdapter;
             },
@@ -549,8 +560,11 @@ export const db: any = {
               if (docRef._rawDocRef) {
                 rawTx.update(docRef._rawDocRef, data);
               }
-              pendingLocalWrites.push(() => {
-                docRef.update(data);
+              mirrorWrites.push(() => {
+                const col = dbStoreInstance.getCollection(docRef.collectionName);
+                const current = col.get(docRef.id) || {};
+                col.set(docRef.id, { ...current, ...data });
+                dbStoreInstance.saveToDisk();
               });
               return txAdapter;
             },
@@ -558,18 +572,24 @@ export const db: any = {
               if (docRef._rawDocRef) {
                 rawTx.delete(docRef._rawDocRef);
               }
-              pendingLocalWrites.push(() => {
-                docRef.delete();
+              mirrorWrites.push(() => {
+                const col = dbStoreInstance.getCollection(docRef.collectionName);
+                col.delete(docRef.id);
+                dbStoreInstance.saveToDisk();
               });
               return txAdapter;
             }
           };
-          const res = await updateFunction(txAdapter);
-          for (const applyWrite of pendingLocalWrites) {
-            applyWrite();
-          }
-          return res;
+          return await updateFunction(txAdapter);
         });
+
+        // Mirror writes execute ONCE after rawAdminDb.runTransaction successfully commits
+        for (const applyMirror of mirrorWrites) {
+          try {
+            applyMirror();
+          } catch (_) {}
+        }
+        return result;
       } catch (err: any) {
         // If the error was thrown intentionally by the updateFunction (e.g. INSUFFICIENT_FUNDS, WALLET_NOT_FOUND), rethrow it
         if (

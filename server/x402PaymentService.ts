@@ -592,8 +592,11 @@ export function matchPricedEndpoint(path: string, method: string = 'GET'): X402P
 
 export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    // Defense-in-depth: If already verified & settled on this request, avoid duplicate settlement
+    // Defense-in-depth: If already verified & settled or credits debited on this request, avoid duplicate payment/debit
     if ((req as any).x402Payment?.verified && (req as any).x402Payment?.settled) {
+      return next();
+    }
+    if ((req as any).creditsDebited) {
       return next();
     }
 
@@ -653,6 +656,7 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
           cost: creditCost
         });
       }
+      (req as any).creditsDebited = true;
       (req as any).agent = {
         agentId: debitResult.agentId,
         handle: debitResult.handle,

@@ -2091,20 +2091,17 @@ app.post(['/api/v1/agent/strategy/evaluate', '/api/v1/agent/evaluate-strategy'],
       }
     }
 
-    // Track usage/credits
-    const authResult = await verifyAndDebitAgentCredit(req.headers.authorization, 1);
-    if (!authResult.valid) {
-      return res.status(authResult.statusCode || 401).json({
-        error: authResult.error,
-        creditsRemaining: authResult.creditsRemaining ?? 0
-      });
-    }
+    // Authenticated agent metadata and credits remaining from x402 middleware
+    const authAgent = (req as any).agent;
+    const agentId = authAgent?.agentId;
+    const handle = authAgent?.handle;
+    const creditsRemaining = (req as any).creditsRemaining;
 
     const evalResult = computeSuperSonicTsunamiEvaluation(allocation, benchmark as any, riskTolerance as any, Number(horizonDays) || 90);
 
     // If authenticated agent, mark verified simulation in registry
-    if (authResult.agentId) {
-      const cached = inMemoryAgentRegistry.get(authResult.agentId) || (authResult.handle ? inMemoryAgentRegistry.get(authResult.handle.toLowerCase()) : null);
+    if (agentId) {
+      const cached = inMemoryAgentRegistry.get(agentId) || (handle ? inMemoryAgentRegistry.get(handle.toLowerCase()) : null);
       if (cached) {
         cached.verifiedSimulation = true;
         cached.verificationStatus = "VERIFIED SIMULATION";
@@ -2120,9 +2117,9 @@ app.post(['/api/v1/agent/strategy/evaluate', '/api/v1/agent/evaluate-strategy'],
 
     return res.json({
       status: "evaluation_success",
-      agent_id: authResult.agentId || agentName,
-      handle: authResult.handle || undefined,
-      credits_remaining: authResult.creditsRemaining,
+      agent_id: agentId || agentName,
+      handle: handle || undefined,
+      credits_remaining: creditsRemaining,
       verified_simulation: true,
       ...evalResult
     });
@@ -2175,14 +2172,9 @@ app.post(['/api/v1/agent/submit-performance', '/api/v1/agent/submit-trade', '/ap
       });
     }
 
-    // Authenticate and debit 1 credit
-    const authResult = await verifyAndDebitAgentCredit(req.headers.authorization, 1);
-    if (!authResult.valid) {
-      return res.status(authResult.statusCode || 401).json({
-        error: authResult.error,
-        creditsRemaining: authResult.creditsRemaining ?? 0
-      });
-    }
+    // Authenticated agent metadata and credits remaining from x402 middleware
+    const authAgent = (req as any).agent;
+    const creditsRemaining = (req as any).creditsRemaining;
 
     const sym = String(ticker).toUpperCase();
     const spec = SUPER_SONIC_TSUNAMI_SPECS[sym] || {
@@ -2204,9 +2196,15 @@ app.post(['/api/v1/agent/submit-performance', '/api/v1/agent/submit-trade', '/ap
     const calculatedSharpe = backtestSharpe !== undefined ? Number(backtestSharpe) : Math.round(((spec.expectedAnnualReturn - 0.0425) / spec.annualizedVolatility) * 100) / 100;
     const calculatedWinRate = Math.min(94.0, Math.max(68.0, Math.round((55 + calculatedSharpe * 12) * 10) / 10));
 
-    const finalAgentId = authResult.agentId !== 'unmetered_guest_agent' ? authResult.agentId! : (agentId || `agent_auto_${crypto.randomBytes(4).toString('hex')}`);
-    const finalHandle = authResult.handle !== 'guest_quant' ? authResult.handle! : (handle || (agentName ? agentName.toLowerCase().replace(/[^a-z0-9_]/g, '_') : 'quant_agent'));
-    const finalName = authResult.displayName && authResult.displayName !== 'Guest Quant Agent' ? authResult.displayName : (agentName || `${finalHandle.toUpperCase()} Agent`);
+    const finalAgentId = authAgent?.agentId && authAgent.agentId !== 'unmetered_guest_agent' 
+      ? authAgent.agentId 
+      : (agentId || `agent_auto_${crypto.randomBytes(4).toString('hex')}`);
+    const finalHandle = authAgent?.handle && authAgent.handle !== 'guest_quant' 
+      ? authAgent.handle 
+      : (handle || (agentName ? agentName.toLowerCase().replace(/[^a-z0-9_]/g, '_') : 'quant_agent'));
+    const finalName = authAgent?.displayName && authAgent.displayName !== 'Guest Quant Agent' 
+      ? authAgent.displayName 
+      : (agentName || `${finalHandle.toUpperCase()} Agent`);
 
     // Check if agent previously executed a verified simulation
     const cached = inMemoryAgentRegistry.get(finalAgentId) || inMemoryAgentRegistry.get(finalHandle.toLowerCase());
@@ -2267,7 +2265,7 @@ app.post(['/api/v1/agent/submit-performance', '/api/v1/agent/submit-trade', '/ap
       handle: finalHandle,
       agentName: finalName,
       rank: computedRank,
-      credits_remaining: authResult.creditsRemaining,
+      credits_remaining: creditsRemaining,
       verified_simulation: isVerifiedSimulation,
       metrics: {
         winRatePercent: calculatedWinRate,

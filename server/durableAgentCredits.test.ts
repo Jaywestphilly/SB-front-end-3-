@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import crypto from 'crypto';
-import { db, dbStoreInstance } from './firebaseAdmin.js';
+import { db, dbStoreInstance, setCustomTransactionRunner } from './firebaseAdmin.js';
 import {
   debitAgentCredits,
   verifyAndDebitAgentCredit,
@@ -19,6 +19,7 @@ describe('Durable Firestore Agent Credit Accounting', () => {
     inMemoryKeyRegistry.clear();
     inMemoryAgentRegistry.clear();
     inMemoryWalletRegistry.clear();
+    setCustomTransactionRunner(null);
   });
 
   // (a) Debit reduces the Firestore balance and writes a ledger entry
@@ -328,5 +329,231 @@ describe('Durable Firestore Agent Credit Accounting', () => {
     // Verify Firestore wallet balance is exactly 5
     const finalWallet = await db.collection('agent_wallets').doc(agentId).get();
     expect(finalWallet.data().creditsBalance).toBe(5);
+  });
+
+  // (g) Transaction retry idempotency: mock rawTx aborting 1st commit reflects exactly ONE debit
+  it('(g) transaction retry idempotency: mock rawTx aborting 1st commit reflects exactly ONE debit', async () => {
+    const agentId = 'agent_abort_test_' + crypto.randomBytes(4).toString('hex');
+    const initialBalance = 100;
+    const debitCost = 30;
+
+    await db.collection('agent_wallets').doc(agentId).set({
+      agentId,
+      creditsBalance: initialBalance,
+      availableBalance: initialBalance,
+      paidCreditsBalance: 0,
+      lifetimeSpent: 0,
+      status: 'active',
+      updatedAt: new Date().toISOString()
+    });
+
+    let callbackAttempts = 0;
+
+    // Simulate real Firestore transaction manager with contention retry on first attempt:
+    setCustomTransactionRunner(async (updateFunction: any) => {
+      let lastErr: any;
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        callbackAttempts++;
+        const stagedWrites = new Map<string, any>();
+        const mockRawTx = {
+          get: async (docRef: any) => {
+            return await docRef.get();
+          },
+          set: (docRef: any, data: any, options?: any) => {
+            stagedWrites.set(docRef.id, {
+              colName: docRef.collectionName || (docRef.id.startsWith('led_') ? 'ledger_entries' : 'agent_wallets'),
+              data,
+              options
+            });
+            return mockRawTx;
+          },
+          update: (docRef: any, data: any) => {
+            stagedWrites.set(docRef.id, {
+              colName: docRef.collectionName || (docRef.id.startsWith('led_') ? 'ledger_entries' : 'agent_wallets'),
+              data,
+              options: { merge: true }
+            });
+            return mockRawTx;
+          },
+          delete: (docRef: any) => {
+            stagedWrites.set(docRef.id, { delete: true });
+            return mockRawTx;
+          }
+        };
+
+        try {
+          const res = await updateFunction(mockRawTx);
+          if (attempt === 1) {
+            // Simulate Firestore ABORT on first commit: discard staged writes and retry callback
+            throw new Error('10 ABORTED: Transaction was aborted due to contention');
+          }
+          // Attempt 2 succeeds: commit staged writes to document store
+          for (const [id, item] of stagedWrites.entries()) {
+            await db.collection(item.colName).doc(id).set(item.data, item.options);
+          }
+          return res;
+        } catch (err: any) {
+          lastErr = err;
+          if (attempt === 1 && err.message?.includes('ABORTED')) {
+            continue; // Retry callback from scratch
+          }
+          throw err;
+        }
+      }
+      throw lastErr;
+    });
+
+    const debitResult = await debitAgentCredits(agentId, debitCost, {
+      endpoint: '/api/v1/intelligence/sb-score',
+      description: 'Single score evaluation'
+    });
+
+    // Callback ran twice due to retry
+    expect(callbackAttempts).toBe(2);
+    // But final committed balance reflects exactly ONE debit: 100 - 30 = 70 (NOT 40!)
+    expect(debitResult.creditsBalance).toBe(70);
+
+    const walletSnap = await db.collection('agent_wallets').doc(agentId).get();
+    expect(walletSnap.data().creditsBalance).toBe(70);
+    expect(walletSnap.data().availableBalance).toBe(70);
+    expect(walletSnap.data().lifetimeSpent).toBe(30);
+
+    // Ledger entries should have exactly ONE entry for this transaction
+    const ledgerSnap = await db.collection('ledger_entries').doc(debitResult.entryId).get();
+    expect(ledgerSnap.exists).toBe(true);
+    expect(ledgerSnap.data().amount).toBe(30);
+  });
+
+  // (h) Two sequential middleware executions on one mock request debit exactly once
+  it('(h) two sequential middleware executions on one mock request debit exactly once', async () => {
+    const agentId = 'agent_double_mid_' + crypto.randomBytes(4).toString('hex');
+    const { rawKey, keyRecord, keyId } = generateApiKeyPair(agentId, 'double_mid_agent');
+
+    await db.collection('users').doc(agentId).set({ agentId, handle: 'double_mid_agent', status: 'active' });
+    await db.collection('api_keys').doc(keyId).set({ ...keyRecord, secretHash: keyRecord.keyHash, status: 'active' });
+    await db.collection('agent_wallets').doc(agentId).set({
+      agentId,
+      creditsBalance: 100,
+      availableBalance: 100,
+      paidCreditsBalance: 0,
+      lifetimeSpent: 0,
+      status: 'active',
+      updatedAt: new Date().toISOString()
+    });
+
+    // 1. Direct sequential middleware invocation on identical request object
+    const req: any = {
+      method: 'GET',
+      originalUrl: '/api/v1/intelligence/sb-score',
+      path: '/api/v1/intelligence/sb-score',
+      header: (name: string) => (name.toLowerCase() === 'authorization' ? `Bearer ${rawKey}` : undefined),
+      headers: { authorization: `Bearer ${rawKey}` },
+      get: (name: string) => (name.toLowerCase() === 'authorization' ? `Bearer ${rawKey}` : undefined),
+    };
+    const res: any = {
+      status: () => res,
+      json: () => res,
+      setHeader: () => {}
+    };
+
+    let nextCalls = 0;
+    const next = () => { nextCalls++; };
+
+    const middleware = requireX402Payment();
+
+    // 1st middleware execution (e.g. global app.use)
+    await middleware(req, res, next);
+    expect(nextCalls).toBe(1);
+    expect(req.creditsDebited).toBe(true);
+    expect(req.creditsRemaining).toBe(95); // 100 - 5 = 95
+
+    const walletAfterFirst = await db.collection('agent_wallets').doc(agentId).get();
+    expect(walletAfterFirst.data().creditsBalance).toBe(95);
+
+    // 2nd middleware execution on the same request (e.g. per-route mount)
+    await middleware(req, res, next);
+    expect(nextCalls).toBe(2);
+
+    const walletAfterSecond = await db.collection('agent_wallets').doc(agentId).get();
+    // Must remain exactly 95 — no second debit!
+    expect(walletAfterSecond.data().creditsBalance).toBe(95);
+    expect(walletAfterSecond.data().lifetimeSpent).toBe(5);
+
+    // 2. Full HTTP test on double-mounted Express route (global app.use + route mount)
+    const app = express();
+    app.use(requireX402Payment()); // Global mount
+    app.get(
+      '/api/v1/intelligence/sb-score',
+      requireX402Payment(), // Per-route mount
+      (req, res) => {
+        res.json({
+          status: 'success',
+          creditsRemaining: (req as any).creditsRemaining
+        });
+      }
+    );
+
+    const httpRes = await request(app)
+      .get('/api/v1/intelligence/sb-score')
+      .set('Authorization', `Bearer ${rawKey}`);
+
+    expect(httpRes.status).toBe(200);
+    expect(httpRes.body.status).toBe('success');
+    expect(httpRes.body.creditsRemaining).toBe(90); // 95 - 5 = 90
+
+    const finalWallet = await db.collection('agent_wallets').doc(agentId).get();
+    expect(finalWallet.data().creditsBalance).toBe(90); // Exactly one debit for this request (total spent: 10)
+    expect(finalWallet.data().lifetimeSpent).toBe(10);
+  });
+
+  // (i) Strategy evaluate endpoint debits exactly the endpoint price with no duplicate 1-credit charge
+  it('(i) strategy evaluate endpoint debits exactly the endpoint price with no duplicate 1-credit charge', async () => {
+    const agentId = 'agent_strat_single_' + crypto.randomBytes(4).toString('hex');
+    const { rawKey, keyRecord, keyId } = generateApiKeyPair(agentId, 'strat_agent');
+
+    await db.collection('users').doc(agentId).set({ agentId, handle: 'strat_agent', status: 'active' });
+    await db.collection('api_keys').doc(keyId).set({ ...keyRecord, secretHash: keyRecord.keyHash, status: 'active' });
+    await db.collection('agent_wallets').doc(agentId).set({
+      agentId,
+      creditsBalance: 50,
+      availableBalance: 50,
+      paidCreditsBalance: 0,
+      lifetimeSpent: 0,
+      status: 'active',
+      updatedAt: new Date().toISOString()
+    });
+
+    const app = express();
+    app.use(express.json());
+    app.use(requireX402Payment()); // Global mount
+    app.post(
+      ['/api/v1/agent/strategy/evaluate', '/api/v1/agent/evaluate-strategy'],
+      requireX402Payment(), // Route mount
+      async (req, res) => {
+        const authAgent = (req as any).agent;
+        res.json({
+          status: 'evaluation_success',
+          agent_id: authAgent?.agentId,
+          credits_remaining: (req as any).creditsRemaining
+        });
+      }
+    );
+
+    // Call /api/v1/agent/strategy/evaluate (price $0.10 = 10 credits)
+    const res = await request(app)
+      .post('/api/v1/agent/strategy/evaluate')
+      .set('Authorization', `Bearer ${rawKey}`)
+      .send({
+        allocation: { NVDA: 0.5, SPCX: 0.5 },
+        benchmark: 'super_sonic_tsunami'
+      });
+
+    expect(res.status).toBe(200);
+    // Cost must be exactly 10 credits (50 - 10 = 40), NEVER 40 - 1 = 39 or 50 - 20 = 30
+    expect(res.body.credits_remaining).toBe(40);
+
+    const wallet = await db.collection('agent_wallets').doc(agentId).get();
+    expect(wallet.data().creditsBalance).toBe(40);
+    expect(wallet.data().lifetimeSpent).toBe(10);
   });
 });
