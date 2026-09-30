@@ -140,7 +140,7 @@ export const ProductStorePricing: React.FC<Props> = ({
         "1,000 Autonomous Agent Platform Credits ($0.01 / credit)",
         "Fund 40 Complete SEC Filing Analysis Jobs (25 credits each)",
         "Double-Entry Ledger Verified Settlement on Platform",
-        "Instant Wallet Credit on Stripe Payment (STRIPE_PURCHASE)",
+        "Instant Wallet Credit Settlement",
         "Zero Expiration — Works Across All Stock Bloc Market Services",
       ],
     },

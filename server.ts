@@ -12,7 +12,7 @@ import { computeDeterministicSignal, getSBScoreColor } from './src/utils/signalC
 import { SecIntelService } from './src/services/secIntelService.js';
 import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit, handleGetLeaderboard, handleGetTradeIdeas, globalActiveTradeIdeas, AgentTradeIdea, addCreditsToAgentWallet, resolveAgentIdFromKey, handleGetAgentMe, requireScope, handleCreditsRefill } from './server/agentPlatform.js';
 import { recordedStripeSessions, fulfilledStripeSessions, processedWebhookEvents, getRecordedStripeSessionAsync, setRecordedStripeSessionAsync, getFulfilledStripeSessionAsync, setFulfilledStripeSessionAsync, isWebhookEventProcessedAsync } from './server/stripePaymentProvider.js';
-import { createCheckoutSessionHandler, stripeWebhookHandler, verifySessionHandler, userProfilePurchases } from './server/stripeRevenueService.js';
+import { userProfilePurchases } from './server/stripeRevenueService.js';
 import { communityApiRouter } from './server/communityApi.js';
 import { agentIntelligenceRouter } from './server/agentIntelligenceApi.js';
 import { agentExchangeRouter, ensureSeedBountiesExist } from './server/agentExchangeApi.js';
@@ -4197,7 +4197,7 @@ Stock Bloc provides real-time market data, institutional 13F filings analytics, 
 ## 2. Monetization & API Access
 - Free Endpoints: ${baseUrl}/api/v1/agent/leaderboard (Public read-only)
 - Metered Endpoints: ${baseUrl}/api/v1/agent/quant-sim (Requires X-StockBloc-API-Key)
-- Purchase API Key: ${baseUrl}/ (Stripe automated checkout)
+- Purchase API Key: ${baseUrl}/api/v1/agent/keys/generate (Platform credits & x402 USDC)
 - Playbooks & Downloads: ${baseUrl}/
 
 ## 3. API Endpoints for AI Agents
@@ -4292,7 +4292,6 @@ app.get('/pricing.json', (req, res) => {
         "price_usd": 10.00,
         "credits": 1000,
         "type": "api_credits",
-        "checkout_url_stripe": "https://stockbloc.ai.studio/pricing",
         "crypto_payment_supported": true
       },
       {
@@ -4300,28 +4299,17 @@ app.get('/pricing.json', (req, res) => {
         "name": "Stock Bloc Wealth Playbook Trilogy",
         "price_usd": 97.00,
         "type": "digital_download",
-        "checkout_url_stripe": "https://stockbloc.ai.studio/checkout/trilogy",
         "crypto_payment_supported": true
       },
       {
         "id": "agent-api-refill-5",
         "name": "AI Agent API Key Credit Refill",
         "price_usd": 5.00,
-        "type": "api_credits",
-        "checkout_url_stripe": "https://stockbloc.ai.studio/checkout/api-5"
+        "type": "api_credits"
       }
     ]
   });
 });
-
-// 19c. Stripe Checkout Session Endpoint (Authoritative Server Catalog & Price Hardening)
-app.post('/api/stripe/create-checkout-session', createCheckoutSessionHandler);
-
-// 19d. Stripe Webhook Endpoint (checkout.session.completed)
-app.post(['/api/stripe/webhook', '/api/webhooks/stripe', '/webhooks/stripe'], stripeWebhookHandler);
-
-// 19e. Post-Checkout Session Verification & Provisioning Endpoint
-app.get(['/api/checkout/verify-session', '/api/stripe/verify-session'], verifySessionHandler);
 
 // Direct Agent Wallet Credit Refill Endpoint - Platform Admin Authority Required
 // Requires authenticated platform admin (master admin key or admin scope). Normal agents with payments:transact are rejected with 403 Forbidden.
@@ -4496,7 +4484,7 @@ app.post('/api/v1/agent/keys/generate', (req, res) => {
     promoCreditsBalance: 0,
     trialCreditsBalance: 0,
     trialCredits: 0,
-    lastCreditTag: 'STRIPE_PURCHASE',
+    lastCreditTag: 'PLATFORM_CREDITS',
     lifetimeSpent: 0,
     simulationRuns: 0,
     verifiedSimulations: 0,
