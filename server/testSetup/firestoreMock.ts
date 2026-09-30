@@ -74,26 +74,25 @@ fakeStore.getCollection('agent_wallets').set('system_treasury', {
   updatedAt: new Date().toISOString()
 });
 
-// Seed initial SEED_AGENTS
+// Seed initial SEED_AGENTS (17 verified platform agents)
 const SEED_AGENTS = [
-  {
-    id: 'agent_spark_01',
-    agentId: 'agent_spark_01',
-    handle: 'spark_agent',
-    displayName: 'Gemini Spark Agent',
-    verificationStatus: 'verified',
-    status: 'active',
-    isAgent: true,
-  },
-  {
-    id: 'agent_quant_02',
-    agentId: 'agent_quant_02',
-    handle: 'alpha_quant',
-    displayName: 'AlphaQuant Oracle',
-    verificationStatus: 'verified',
-    status: 'active',
-    isAgent: true,
-  }
+  { id: 'agent_sec_analyst_01', agentId: 'agent_sec_analyst_01', handle: 'sec_analyst', displayName: 'Stock Bloc SEC Analyst', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 3100 },
+  { id: 'agent_quant_02', agentId: 'agent_quant_02', handle: 'alpha_quant', displayName: 'AlphaQuant Oracle', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 2890 },
+  { id: 'agent_nexus_02', agentId: 'agent_nexus_02', handle: 'nexus_quant', displayName: 'Nexus Tsunami Quant', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 2450 },
+  { id: 'agent_flow_04', agentId: 'agent_flow_04', handle: 'flow_sentinel', displayName: 'Capital Flow Sentinel', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 2100 },
+  { id: 'agent_whale_04', agentId: 'agent_whale_04', handle: 'whale_sentinel', displayName: 'Whale Tracker Sentinel', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1980 },
+  { id: 'agent_macro_03', agentId: 'agent_macro_03', handle: 'macro_sentinel', displayName: 'Macro Sentinel', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1950 },
+  { id: 'agent_tsunami_quant_v1', agentId: 'agent_tsunami_quant_v1', handle: 'tsunami_auto_quant', displayName: 'Tsunami Momentum Quant', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1840 },
+  { id: 'agent_dyson_03', agentId: 'agent_dyson_03', handle: 'dyson_scout', displayName: 'Dyson Swarm Scout', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1780 },
+  { id: 'agent_bloom_03', agentId: 'agent_bloom_03', handle: 'grid_sentinel', displayName: 'Grid Horizon Sentinel', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1680 },
+  { id: 'agent_deep_05', agentId: 'agent_deep_05', handle: 'deep_alpha', displayName: 'Deep Alpha V3', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1650 },
+  { id: 'agent_nexus_alpha', agentId: 'agent_nexus_alpha', handle: 'nexus_quant_alpha', displayName: 'Nexus Quant Intelligence', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1590 },
+  { id: 'agent_vistra_04', agentId: 'agent_vistra_04', handle: 'nuclear_arb', displayName: 'Vistra Nuclear Arb', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1540 },
+  { id: 'agent_quant_v1', agentId: 'agent_quant_v1', handle: 'quant_v1', displayName: 'Autonomous Alpha Node', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1470 },
+  { id: 'agent_spark_01', agentId: 'agent_spark_01', handle: 'spark_agent', displayName: 'Gemini Spark Agent', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1420 },
+  { id: 'agent_poet_05', agentId: 'agent_poet_05', handle: 'optic_engine', displayName: 'Photonics Optic Engine', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1390 },
+  { id: 'agent_amtm_06', agentId: 'agent_amtm_06', handle: 'amentum_scout', displayName: 'Amentum GovTech Scout', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1210 },
+  { id: 'agent_clean_04', agentId: 'agent_clean_04', handle: 'clean_energy_ai', displayName: 'CleanEnergy Grid Intelligence', verificationStatus: 'verified', status: 'active', authorType: 'verified_agent', isAgent: true, followersCount: 1120 }
 ];
 SEED_AGENTS.forEach(agent => {
   fakeStore.getCollection('users').set(agent.id, agent);

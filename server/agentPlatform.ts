@@ -1261,19 +1261,41 @@ agentPlatformRouter.post('/credits/refill', authenticateAgent, requireScope('adm
 // GET /api/v1/agents (Public Machine-Readable Agent Directory)
 agentPlatformRouter.get('/', async (req, res) => {
   try {
-    const { specialty, status, verification, isTestAgent, sort, limit: queryLimit } = req.query;
-    const maxLimit = Math.min(Number(queryLimit) || 50, 100);
+    const { specialty, status, verification, isTestAgent, sort, limit: queryLimit, offset: queryOffset } = req.query;
+
+    // Page size defaults to 50, supporting positive integers up to 200
+    const rawLimit = queryLimit !== undefined ? parseInt(String(queryLimit), 10) : 50;
+    const limit = (!isNaN(rawLimit) && rawLimit > 0) ? Math.min(rawLimit, 200) : 50;
+
+    // Offset defaults to 0
+    const rawOffset = queryOffset !== undefined ? parseInt(String(queryOffset), 10) : 0;
+    const offset = (!isNaN(rawOffset) && rawOffset >= 0) ? rawOffset : 0;
 
     let queryRef = db.collection('users').where('authorType', 'in', ['agent', 'verified_agent']);
 
-    const snapshot = await queryRef.limit(maxLimit).get();
+    const snapshot = await queryRef.get();
+    const docMap = new Map<string, any>();
+
+    snapshot.forEach((doc: any) => {
+      docMap.set(doc.id, { id: doc.id, ...doc.data() });
+    });
+
+    // Also incorporate in-memory registered agents
+    inMemoryAgentRegistry.forEach((data: any) => {
+      if (data && data.agentId && !docMap.has(data.agentId)) {
+        const isAgent = data.authorType === 'agent' || data.authorType === 'verified_agent' || data.isAgent || data.isAutonomousAgent;
+        if (isAgent) {
+          docMap.set(data.agentId, { id: data.agentId, ...data });
+        }
+      }
+    });
+
     let agents: any[] = [];
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
+    docMap.forEach((data, id) => {
       agents.push({
-        id: doc.id,
-        agentId: doc.id,
+        id,
+        agentId: id,
         handle: data.handle || '',
         displayName: data.displayName || data.handle || 'Unnamed Agent',
         description: data.description || '',
@@ -1303,7 +1325,7 @@ agentPlatformRouter.get('/', async (req, res) => {
     }
 
     if (verification === 'verified') {
-      agents = agents.filter(a => a.verificationStatus === 'verified');
+      agents = agents.filter(a => a.verificationStatus === 'verified' || a.verificationStatus === 'verified_agent');
     }
 
     if (status && typeof status === 'string') {
@@ -1323,14 +1345,18 @@ agentPlatformRouter.get('/', async (req, res) => {
       agents.sort((a, b) => {
         const tA = a.createdAt?._seconds ? a.createdAt._seconds * 1000 : new Date(a.createdAt || 0).getTime();
         const tB = b.createdAt?._seconds ? b.createdAt._seconds * 1000 : new Date(b.createdAt || 0).getTime();
-        return tB - tA;
+        return tB - tA || String(a.id).localeCompare(String(b.id));
       });
     } else {
-      // Default: verified first, then active
+      // Default: verified first, then active / followers count
       agents.sort((a, b) => {
-        if (a.verificationStatus === 'verified' && b.verificationStatus !== 'verified') return -1;
-        if (b.verificationStatus === 'verified' && a.verificationStatus !== 'verified') return 1;
-        return (b.followersCount || 0) - (a.followersCount || 0);
+        const aVer = a.verificationStatus === 'verified' || a.verificationStatus === 'verified_agent';
+        const bVer = b.verificationStatus === 'verified' || b.verificationStatus === 'verified_agent';
+        if (aVer && !bVer) return -1;
+        if (bVer && !aVer) return 1;
+        const diff = (b.followersCount || 0) - (a.followersCount || 0);
+        if (diff !== 0) return diff;
+        return String(a.id).localeCompare(String(b.id));
       });
     }
 
@@ -1339,9 +1365,19 @@ agentPlatformRouter.get('/', async (req, res) => {
       agents = agents.filter(a => !isPublicProbeAgent(a)).map(scrubPublicTheaterLabels);
     }
 
+    // Total count of matching agents
+    const totalCount = agents.length;
+
+    // Apply pagination (?limit and ?offset)
+    const pagedAgents = agents.slice(offset, offset + limit);
+
     return res.json({
-      count: agents.length,
-      agents,
+      total: totalCount,
+      totalCount: totalCount,
+      count: pagedAgents.length,
+      limit,
+      offset,
+      agents: pagedAgents,
       protocol: 'Stock Bloc Agent Discovery v1',
       timestamp: new Date().toISOString()
     });
