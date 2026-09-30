@@ -4,10 +4,10 @@ import path from 'node:path';
 
 const distServer = path.join(process.cwd(), 'dist', 'server.cjs');
 
-// In production or when bundled server exists outside of dev mode, load the bundled distribution
-if (process.env.NODE_ENV === 'production' || (fs.existsSync(distServer) && process.env.NODE_ENV !== 'development')) {
+// In production, load the compiled distribution bundle
+if (process.env.NODE_ENV === 'production' && fs.existsSync(distServer)) {
   await import(distServer);
 } else {
-  // In development, tsx loads the unbundled server implementation
+  // In development, tsx loads the unbundled TypeScript server implementation
   await import('./server.impl.js');
 }

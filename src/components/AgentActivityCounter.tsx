@@ -21,6 +21,8 @@ export const AgentActivityCounter: React.FC<AgentActivityCounterProps> = ({
     setIsPrivacyModalOpen(true);
   };
 
+  const isActive = telemetry.activeAgents24h > 0;
+
   return (
     <>
       {variant === 'compact' && (
@@ -28,14 +30,24 @@ export const AgentActivityCounter: React.FC<AgentActivityCounterProps> = ({
           type="button"
           onClick={handleClick}
           title="Click to view 24h Autonomous Agent Network Telemetry & Privacy Safeguards"
-          className={`group px-2 py-0.5 rounded border text-[9px] font-martian font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer bg-cyan-950/40 text-cyan-300 border-cyan-500/40 hover:bg-cyan-900/50 hover:border-cyan-400 ${className}`}
+          className={`group px-2 py-0.5 rounded border text-[9px] font-martian font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
+            isActive
+              ? 'bg-cyan-950/40 text-cyan-300 border-cyan-500/40 hover:bg-cyan-900/50 hover:border-cyan-400'
+              : 'bg-neutral-900/40 text-neutral-400 border-neutral-700/40 hover:bg-neutral-800/50 hover:border-neutral-500'
+          } ${className}`}
         >
           <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400" />
+            {isActive ? (
+              <>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400" />
+              </>
+            ) : (
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-neutral-500" />
+            )}
           </span>
-          <Bot className="w-3 h-3 text-cyan-400 group-hover:rotate-12 transition-transform" />
-          <span>{telemetry.activeAgents24h} AGENTS (24H)</span>
+          <Bot className={`w-3 h-3 ${isActive ? 'text-cyan-400 group-hover:rotate-12' : 'text-neutral-400'} transition-transform`} />
+          <span>{telemetry.activeAgents24h} {telemetry.activeAgents24h === 1 ? 'AGENT' : 'AGENTS'} (24H)</span>
         </button>
       )}
 
@@ -47,13 +59,21 @@ export const AgentActivityCounter: React.FC<AgentActivityCounterProps> = ({
           className={`group alien-block-cut-sm px-2.5 py-1 text-[10px] font-alien-hud font-bold tracking-wider flex items-center gap-2 transition-all cursor-pointer bg-gradient-to-r from-cyan-950/80 to-[#02182b] text-cyan-300 border border-cyan-500/50 hover:border-cyan-300 shadow-md shadow-cyan-950/40 hover:scale-[1.02] ${className}`}
         >
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+            {isActive ? (
+              <>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+              </>
+            ) : (
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-neutral-500" />
+            )}
           </span>
           <div className="flex items-center gap-1">
-            <Zap className="w-3 h-3 text-cyan-400 fill-cyan-400" />
+            <Zap className={`w-3 h-3 ${isActive ? 'text-cyan-400 fill-cyan-400' : 'text-neutral-500'}`} />
             <span className="text-white font-black">{telemetry.activeAgents24h}</span>
-            <span className="text-cyan-400/90 font-normal">AGENTS ACTIVE</span>
+            <span className="text-cyan-400/90 font-normal">
+              {telemetry.activeAgents24h === 1 ? 'AGENT ACTIVE' : 'AGENTS ACTIVE'}
+            </span>
             <span className="text-[9px] text-neutral-400 font-martian font-normal">(24H)</span>
           </div>
           <Info className="w-2.5 h-2.5 text-cyan-500/80 group-hover:text-cyan-300 ml-0.5" />
@@ -77,9 +97,9 @@ export const AgentActivityCounter: React.FC<AgentActivityCounterProps> = ({
                 </span>
               </div>
               <div className="text-sm font-zen font-black text-white mt-0.5">
-                {telemetry.activeAgents24h} Unique Agents Visited
+                {telemetry.activeAgents24h} {telemetry.activeAgents24h === 1 ? 'Unique Agent Visited' : 'Unique Agents Visited'}
                 <span className="text-xs font-martian text-neutral-400 font-normal ml-2">
-                  ({telemetry.totalAgentPings24h} network interactions)
+                  ({telemetry.totalAgentPings24h} {telemetry.totalAgentPings24h === 1 ? 'network interaction' : 'network interactions'})
                 </span>
               </div>
             </div>
@@ -107,7 +127,7 @@ export const AgentActivityCounter: React.FC<AgentActivityCounterProps> = ({
                     24-Hour Agent Counter
                   </h3>
                   <p className="text-[11px] font-martian text-cyan-300/80">
-                    Privacy-Preserving Network Telemetry
+                    Privacy-Preserving Real-Time Network Telemetry
                   </p>
                 </div>
               </div>
@@ -127,7 +147,9 @@ export const AgentActivityCounter: React.FC<AgentActivityCounterProps> = ({
                 </div>
                 <div className="text-2xl font-zen font-black text-cyan-300 mt-1 flex items-baseline gap-1.5">
                   <span>{telemetry.activeAgents24h}</span>
-                  <span className="text-[10px] font-martian text-emerald-400 font-bold uppercase">Active</span>
+                  <span className={`text-[10px] font-martian font-bold uppercase ${isActive ? 'text-emerald-400' : 'text-neutral-400'}`}>
+                    {isActive ? 'Active' : 'Standby'}
+                  </span>
                 </div>
                 <div className="text-[10px] font-martian text-neutral-400 mt-0.5">
                   Deduplicated over rolling 24h
@@ -179,7 +201,7 @@ export const AgentActivityCounter: React.FC<AgentActivityCounterProps> = ({
                 onClick={() => setIsPrivacyModalOpen(false)}
                 className="px-4 py-1 alien-block-cut-sm bg-cyan-500 hover:bg-cyan-400 text-black font-alien-hud font-bold text-xs cursor-pointer transition-all"
               >
-                CLOSE
+                Close
               </button>
             </div>
           </div>

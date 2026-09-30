@@ -34,16 +34,20 @@ describe('FINAL PRODUCTION-READINESS PASS — Verification Suite', () => {
     it('throws error immediately in production when critical credentials are missing', () => {
       const origEnv = process.env.AGENT_ENV;
       const origNodeEnv = process.env.NODE_ENV;
+      const origSecret = process.env.AGENT_API_SECRET_KEY;
       const origKey = process.env.AGENT_PLATFORM_MASTER_KEY;
 
       try {
         process.env.AGENT_ENV = 'production';
+        process.env.NODE_ENV = 'production';
+        process.env.AGENT_API_SECRET_KEY = '';
         process.env.AGENT_PLATFORM_MASTER_KEY = 'insecure_default_key';
 
         expect(() => validateProductionStartupSafety()).toThrow(/Production Startup Safety Check Failed|CRITICAL/);
       } finally {
         process.env.AGENT_ENV = origEnv;
         process.env.NODE_ENV = origNodeEnv;
+        process.env.AGENT_API_SECRET_KEY = origSecret;
         process.env.AGENT_PLATFORM_MASTER_KEY = origKey;
       }
     });

@@ -10,8 +10,8 @@ export interface AgentTelemetryData {
 }
 
 const DEFAULT_TELEMETRY: AgentTelemetryData = {
-  activeAgents24h: 18,
-  totalAgentPings24h: 64,
+  activeAgents24h: 0,
+  totalAgentPings24h: 0,
   windowHours: 24,
   privacyGuaranteed: true,
   privacyNotice: 'Zero-knowledge rolling 24-hour counter. No agent identities, keys, IP addresses, or payloads are logged.',

@@ -5,15 +5,16 @@ import {
   recordAgentVisit,
   getAgentTelemetry24h,
   agentTelemetryRouter,
-  trackAgentVisitMiddleware
+  trackAgentVisitMiddleware,
+  clearTelemetryState
 } from './agentTelemetry.js';
 
-describe('Zero-Knowledge 24-Hour Agent Telemetry Counter', () => {
+describe('Zero-Knowledge 24-Hour Agent Telemetry Counter (Honest Metrics)', () => {
   beforeEach(() => {
-    // Fresh test state
+    clearTelemetryState();
   });
 
-  it('1. Returns valid public aggregate payload with privacy guarantee', () => {
+  it('1. Returns valid public aggregate payload with true tracked count and privacy guarantee', () => {
     const telemetry = getAgentTelemetry24h();
     expect(telemetry).toHaveProperty('activeAgents24h');
     expect(telemetry).toHaveProperty('totalAgentPings24h');
@@ -21,10 +22,32 @@ describe('Zero-Knowledge 24-Hour Agent Telemetry Counter', () => {
     expect(telemetry.privacyGuaranteed).toBe(true);
     expect(telemetry.privacyNotice).toContain('Zero-knowledge');
     expect(typeof telemetry.activeAgents24h).toBe('number');
-    expect(telemetry.activeAgents24h).toBeGreaterThanOrEqual(18); // Baseline minimum
+    // Pure real metric: starts at exactly 0 when clean
+    expect(telemetry.activeAgents24h).toBe(0);
+    expect(telemetry.totalAgentPings24h).toBe(0);
   });
 
-  it('2. Zero-Knowledge: Anonymizes identifiers and does not expose raw keys or agent IDs', () => {
+  it('2. Exactly tracks true active agent set size with zero manufactured baselines', () => {
+    expect(getAgentTelemetry24h().activeAgents24h).toBe(0);
+    expect(getAgentTelemetry24h().totalAgentPings24h).toBe(0);
+
+    // Track 1st real agent
+    recordAgentVisit('agent_alpha_quant_01');
+    expect(getAgentTelemetry24h().activeAgents24h).toBe(1);
+    expect(getAgentTelemetry24h().totalAgentPings24h).toBe(1);
+
+    // Track 2nd real agent
+    recordAgentVisit('agent_beta_quant_02');
+    expect(getAgentTelemetry24h().activeAgents24h).toBe(2);
+    expect(getAgentTelemetry24h().totalAgentPings24h).toBe(2);
+
+    // Track 3rd real agent
+    recordAgentVisit('agent_gamma_quant_03');
+    expect(getAgentTelemetry24h().activeAgents24h).toBe(3);
+    expect(getAgentTelemetry24h().totalAgentPings24h).toBe(3);
+  });
+
+  it('3. Zero-Knowledge: Anonymizes identifiers and does not expose raw keys or agent IDs', () => {
     const rawSecretAgentId = 'agent_top_secret_quant_fund_987';
     recordAgentVisit(rawSecretAgentId, 'api_access');
 
@@ -35,25 +58,29 @@ describe('Zero-Knowledge 24-Hour Agent Telemetry Counter', () => {
     expect(serialized).not.toContain(rawSecretAgentId);
     expect(serialized).not.toContain('top_secret');
     expect(serialized).not.toContain('quant_fund');
+    expect(telemetry.activeAgents24h).toBe(1);
   });
 
-  it('3. Repeated visits by same agent increment ping count while preserving unique count', () => {
+  it('4. Repeated visits by same agent increment ping count while preserving unique count', () => {
     const agentId = 'agent_repeating_oracle_555';
-    const before = getAgentTelemetry24h();
 
     recordAgentVisit(agentId);
     const afterFirst = getAgentTelemetry24h();
+    expect(afterFirst.activeAgents24h).toBe(1);
+    expect(afterFirst.totalAgentPings24h).toBe(1);
 
     recordAgentVisit(agentId);
     recordAgentVisit(agentId);
     const afterRepeats = getAgentTelemetry24h();
 
-    // Total pings increase, unique agent count doesn't artificially inflate
-    expect(afterRepeats.totalAgentPings24h).toBeGreaterThanOrEqual(afterFirst.totalAgentPings24h);
-    expect(afterRepeats.activeAgents24h).toBe(afterFirst.activeAgents24h);
+    // Total pings increase to 3, unique agent count remains exactly 1
+    expect(afterRepeats.totalAgentPings24h).toBe(3);
+    expect(afterRepeats.activeAgents24h).toBe(1);
   });
 
-  it('4. Public Express API route serves 24h count without authentication', async () => {
+  it('5. Public Express API route serves 24h count without authentication', async () => {
+    recordAgentVisit('agent_live_query_001');
+
     const app = express();
     app.use('/api/v1/telemetry', agentTelemetryRouter);
 
@@ -63,17 +90,18 @@ describe('Zero-Knowledge 24-Hour Agent Telemetry Counter', () => {
 
     expect(res.body).toHaveProperty('activeAgents24h');
     expect(res.body).toHaveProperty('totalAgentPings24h');
+    expect(res.body.activeAgents24h).toBe(1);
     expect(res.body.windowHours).toBe(24);
     expect(res.body.privacyGuaranteed).toBe(true);
     expect(res.headers['cache-control']).toBeDefined();
   });
 
-  it('5. Middleware automatically detects agent authorization headers', async () => {
+  it('6. Middleware automatically detects agent authorization headers and tracks true pings', async () => {
     const app = express();
     app.use(trackAgentVisitMiddleware);
     app.use('/api/v1/telemetry', agentTelemetryRouter);
 
-    const before = getAgentTelemetry24h();
+    expect(getAgentTelemetry24h().activeAgents24h).toBe(0);
 
     // Call with simulated agent key
     await request(app)
@@ -82,6 +110,7 @@ describe('Zero-Knowledge 24-Hour Agent Telemetry Counter', () => {
       .expect(200);
 
     const after = getAgentTelemetry24h();
-    expect(after.totalAgentPings24h).toBeGreaterThanOrEqual(before.totalAgentPings24h);
+    expect(after.activeAgents24h).toBe(1);
+    expect(after.totalAgentPings24h).toBe(1);
   });
 });

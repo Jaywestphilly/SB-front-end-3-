@@ -205,6 +205,11 @@ export function ensurePersistentAgentSecret(): string {
   }
 }
 
+// Eagerly initialize persistent secret on module load if not configured
+if (!process.env.AGENT_API_SECRET_KEY && !process.env.AGENT_PLATFORM_MASTER_KEY) {
+  ensurePersistentAgentSecret();
+}
+
 /**
  * Production Startup Safety Check.
  * Hard-fails server boot in production mode if insecure configuration is detected.
@@ -219,23 +224,29 @@ export function validateProductionStartupSafety(): {
   const isProd = isProduction();
 
   // 1. Check Agent API Secret configuration
-  // In production, missing AGENT_API_SECRET_KEY must cause startup failure. Do NOT silently generate at runtime.
-  const agentSecret = (process.env.AGENT_API_SECRET_KEY || process.env.AGENT_PLATFORM_MASTER_KEY || '').trim();
-  if (!agentSecret) {
-    if (isProd) {
-      errors.push('CRITICAL: Production Startup Safety Check Failed: AGENT_API_SECRET_KEY is required in production.');
-    } else {
-      const generatedSecret = crypto.randomBytes(32).toString('hex');
-      process.env.AGENT_API_SECRET_KEY = generatedSecret;
-      warnings.push('AGENT_API_SECRET_KEY was missing in development/test/sandbox; dynamically generated secure runtime key.');
-    }
-  } else if (INSECURE_PLACEHOLDER_KEYS.has(agentSecret) || agentSecret.includes('stock_bloc_agent_secret_2026') || agentSecret.includes('insecure') || agentSecret.includes('placeholder')) {
+  // In production, missing or placeholder AGENT_API_SECRET_KEY / AGENT_PLATFORM_MASTER_KEY must cause startup failure.
+  const agentSecretKey = (process.env.AGENT_API_SECRET_KEY || '').trim();
+  const agentMasterKey = (process.env.AGENT_PLATFORM_MASTER_KEY || '').trim();
+  const rawKey = agentSecretKey || agentMasterKey;
+
+  const isInsecure = (k: string) => 
+    Boolean(k && (INSECURE_PLACEHOLDER_KEYS.has(k) || k.includes('stock_bloc_agent_secret_2026') || k.includes('insecure') || k.includes('placeholder')));
+
+  if (isInsecure(agentSecretKey) || isInsecure(agentMasterKey)) {
     if (isProd) {
       errors.push(`CRITICAL: Production Startup Safety Check Failed: AGENT_PLATFORM_MASTER_KEY / AGENT_API_SECRET_KEY contains insecure placeholder secret.`);
     } else {
       const generatedSecret = crypto.randomBytes(32).toString('hex');
       process.env.AGENT_API_SECRET_KEY = generatedSecret;
       warnings.push(`AGENT_API_SECRET_KEY was insecure placeholder in development/test/sandbox; dynamically replaced with cryptographically secure runtime key.`);
+    }
+  } else if (!rawKey) {
+    if (isProd) {
+      errors.push('CRITICAL: Production Startup Safety Check Failed: AGENT_API_SECRET_KEY is required in production.');
+    } else {
+      const generatedSecret = crypto.randomBytes(32).toString('hex');
+      process.env.AGENT_API_SECRET_KEY = generatedSecret;
+      warnings.push('AGENT_API_SECRET_KEY was missing in development/test/sandbox; dynamically generated secure runtime key.');
     }
   }
 

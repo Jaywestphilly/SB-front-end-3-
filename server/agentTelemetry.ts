@@ -28,13 +28,17 @@ const activeAgentHashes = new Map<string, number>();
 // Array of ping timestamps within rolling 24-hour window
 let recentPingTimestamps: number[] = [];
 
-// Minimum baseline of active autonomous agents in the Stock Bloc network
-// to ensure cold server starts immediately reflect verified network capacity
-const BASELINE_AGENT_COUNT = 18;
-
 // Flag to track initial database hydration
 let hasHydratedFromDb = false;
 let lastFirestoreSyncTime = 0;
+
+/**
+ * Clear in-memory active agents and pings (used in testing and clean resets).
+ */
+export function clearTelemetryState(): void {
+  activeAgentHashes.clear();
+  recentPingTimestamps = [];
+}
 
 /**
  * Prune timestamps and agent entries older than 24 hours.
@@ -84,6 +88,7 @@ export function recordAgentVisit(rawIdentifier?: string, _visitType: string = 'a
 
 /**
  * Hydrate telemetry aggregates from Firestore if server recently rebooted.
+ * Ensures zero manufactured data is restored or seeded.
  */
 export async function hydrateTelemetryFromFirestore(): Promise<void> {
   if (hasHydratedFromDb) return;
@@ -91,38 +96,27 @@ export async function hydrateTelemetryFromFirestore(): Promise<void> {
 
   try {
     if (!db) return;
-    const docSnap = await db.collection('telemetry_aggregates').doc('agents_24h').get();
+    const docRef = db.collection('telemetry_aggregates').doc('agents_24h');
+    const docSnap = await docRef.get();
     if (docSnap.exists) {
       const data = docSnap.data();
-      const lastUpdated = data?.lastUpdated ? new Date(data.lastUpdated).getTime() : 0;
-      const now = Date.now();
 
-      // If data was saved within the past 24 hours, seed baseline active count
-      if (now - lastUpdated < TWENTY_FOUR_HOURS_MS && typeof data?.activeAgents24h === 'number') {
-        const persistedCount = Math.max(BASELINE_AGENT_COUNT, data.activeAgents24h);
-        const salt = getDailySalt();
-        for (let i = 0; i < persistedCount; i++) {
-          const pseudoHash = crypto.createHmac('sha256', salt).update(`seeded_${i}`).digest('hex').substring(0, 16);
-          activeAgentHashes.set(pseudoHash, now - Math.floor(Math.random() * 3600 * 1000));
-        }
-        const pingsCount = typeof data?.totalAgentPings24h === 'number' ? data.totalAgentPings24h : persistedCount * 3;
-        recentPingTimestamps = Array.from({ length: Math.min(pingsCount, 500) }, () => now - Math.floor(Math.random() * 7200 * 1000));
+      // If the persisted store contains legacy seeded fake baseline counts, reset it immediately
+      if (!data?.isPureReal || data?.activeAgents24h === 18) {
+        await docRef.set({
+          activeAgents24h: activeAgentHashes.size,
+          totalAgentPings24h: recentPingTimestamps.length,
+          windowHours: 24,
+          privacyGuaranteed: true,
+          isPureReal: true,
+          lastUpdated: new Date().toISOString()
+        });
+        return;
       }
     }
   } catch (err) {
     // Non-blocking fallback
     console.warn('[TELEMETRY] Hydration from Firestore deferred:', err);
-  }
-
-  // Ensure minimum baseline agents seeded if brand new instance
-  if (activeAgentHashes.size === 0) {
-    const salt = getDailySalt();
-    const now = Date.now();
-    for (let i = 0; i < BASELINE_AGENT_COUNT; i++) {
-      const pseudoHash = crypto.createHmac('sha256', salt).update(`baseline_agent_${i}`).digest('hex').substring(0, 16);
-      activeAgentHashes.set(pseudoHash, now - Math.floor(Math.random() * 12 * 3600 * 1000));
-      recentPingTimestamps.push(now - Math.floor(Math.random() * 12 * 3600 * 1000));
-    }
   }
 }
 
@@ -138,6 +132,7 @@ async function syncAggregatesToFirestore(): Promise<void> {
       totalAgentPings24h: payload.totalAgentPings24h,
       windowHours: 24,
       privacyGuaranteed: true,
+      isPureReal: true,
       lastUpdated: payload.lastUpdated
     }, { merge: true });
   } catch {
@@ -146,14 +141,14 @@ async function syncAggregatesToFirestore(): Promise<void> {
 }
 
 /**
- * Returns current rolling 24-hour agent telemetry.
+ * Returns current rolling 24-hour agent telemetry with true tracked count.
  */
 export function getAgentTelemetry24h(): AgentTelemetry24h {
   const now = Date.now();
   pruneExpiredEntries(now);
 
-  const activeCount = Math.max(activeAgentHashes.size, BASELINE_AGENT_COUNT);
-  const totalPings = Math.max(recentPingTimestamps.length, activeCount * 3);
+  const activeCount = activeAgentHashes.size;
+  const totalPings = recentPingTimestamps.length;
 
   return {
     activeAgents24h: activeCount,
