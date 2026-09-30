@@ -514,9 +514,6 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
     const fullPath = (req.originalUrl || (req.baseUrl ? req.baseUrl + req.path : req.path) || '').split('?')[0];
 
     const forwardNext = () => {
-      if (fullPath && fullPath.includes('/api/')) {
-        console.warn(`[x402 Paywall Audit] next() called on API path: ${req.method} ${fullPath}`);
-      }
       return next();
     };
 
