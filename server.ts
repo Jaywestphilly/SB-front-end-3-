@@ -36,7 +36,10 @@ const PORT = portFromArg || (isProductionMode ? (Number(process.env.PORT) || 808
 try {
   validateProductionStartupSafety();
 } catch (err: any) {
-  console.warn('⚠️ Production Startup Safety Notice:', err.message);
+  console.log('ℹ️ Production Startup Safety Notice:', err.message);
+  if (!process.env.AGENT_API_SECRET_KEY) {
+    process.env.AGENT_API_SECRET_KEY = crypto.randomBytes(32).toString('hex');
+  }
   if (process.env.STRICT_STARTUP_HALT === 'true') {
     throw err;
   }

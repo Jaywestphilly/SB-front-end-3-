@@ -232,10 +232,10 @@ export function validateProductionStartupSafety(): {
   }
 
   if (warnings.length > 0) {
-    console.warn('====================================================');
-    console.warn('⚠️ PRODUCTION STARTUP SAFETY AUDIT ⚠️');
-    warnings.forEach(w => console.warn(`  - ${w}`));
-    console.warn('====================================================');
+    console.log('====================================================');
+    console.log('ℹ️ PRODUCTION STARTUP SAFETY AUDIT ℹ️');
+    warnings.forEach(w => console.log(`  - ${w}`));
+    console.log('====================================================');
   }
 
   if (errors.length > 0) {

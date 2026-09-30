@@ -575,7 +575,7 @@ class LocalDbStore {
         }
         loaded = true;
       } catch (e) {
-        console.warn('[LocalDbStore] Could not read persisted_db.json, seeding fresh store.');
+        console.log('[LocalDbStore] Could not read persisted_db.json, seeding fresh store.');
       }
     }
 
@@ -891,7 +891,7 @@ try {
     console.log('Firebase Admin initialized successfully');
   }
 } catch (error) {
-  console.warn('Note: Firebase Admin gRPC initialization skipped or restricted; using Resilient Hybrid Store.');
+  console.log('Note: Firebase Admin gRPC initialization skipped or restricted; using Resilient Hybrid Store.');
 }
 
 let localTxQueue = Promise.resolve();
