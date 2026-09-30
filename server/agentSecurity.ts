@@ -21,6 +21,9 @@ export const DEFAULT_AUTONOMOUS_SCOPES: AgentApiScope[] = [
 
 export type AgentEnvironment = 'development' | 'staging' | 'production';
 
+export const isProduction = (): boolean =>
+  process.env.NODE_ENV === 'production' || process.env.AGENT_ENV === 'production';
+
 export const AGENT_ENV: AgentEnvironment = (process.env.AGENT_ENV as AgentEnvironment) || 
   (process.env.NODE_ENV === 'production' ? 'production' : 'development');
 
@@ -96,7 +99,7 @@ export function logSecurityAudit(entry: Omit<AuditLogEntry, 'timestamp'>): void 
     }
   }
 
-  if (AGENT_ENV !== 'production' || entry.status >= 400) {
+  if (!isProduction() || entry.status >= 400) {
     console.log(`[SECURITY AUDIT] ${logRecord.timestamp} [${logRecord.method}] ${logRecord.path} - ${logRecord.action} (${logRecord.status})`);
   }
 }
@@ -181,7 +184,7 @@ export function validateProductionStartupSafety(): {
 } {
   const errors: string[] = [];
   const warnings: string[] = [];
-  const isProd = process.env.AGENT_ENV === 'production';
+  const isProd = isProduction();
 
   // 1. Check Agent API Secret configuration
   // In production, missing AGENT_API_SECRET_KEY must cause startup failure. Do NOT silently generate at runtime.
@@ -307,7 +310,7 @@ export const authenticateAgent = async (
     (process.env.ADMIN_KEY || '').trim(),
     (process.env.ADMIN_SECRET || '').trim(),
     (process.env.ADMIN_TOKEN || '').trim(),
-    (AGENT_ENV !== 'production' && process.env.NODE_ENV !== 'production' ? 'stock_bloc_agent_secret_2026' : '')
+    (!isProduction() ? 'stock_bloc_agent_secret_2026' : '')
   ].filter(k => k && !INSECURE_PLACEHOLDER_KEYS.has(k));
 
   if (internalAdminKeys.length > 0 && internalAdminKeys.includes(token)) {
@@ -865,7 +868,7 @@ export function getSystemReadinessStatus(): {
   };
   timestamp: string;
 } {
-  const isProd = AGENT_ENV === 'production' || process.env.NODE_ENV === 'production' || process.env.PAYMENT_MODE === 'production';
+  const isProd = isProduction() || process.env.PAYMENT_MODE === 'production';
   const hasDb = Boolean(db);
 
   const stripeKey = process.env.STRIPE_SECRET_KEY || '';

@@ -36,13 +36,8 @@ const PORT = portFromArg || (isProductionMode ? (Number(process.env.PORT) || 808
 try {
   validateProductionStartupSafety();
 } catch (err: any) {
-  console.log('ℹ️ Production Startup Safety Notice:', err.message);
-  if (!process.env.AGENT_API_SECRET_KEY) {
-    process.env.AGENT_API_SECRET_KEY = crypto.randomBytes(32).toString('hex');
-  }
-  if (process.env.STRICT_STARTUP_HALT === 'true') {
-    throw err;
-  }
+  console.error('CRITICAL: Production startup safety check failed:', err?.message || err);
+  process.exit(1);
 }
 
 // Auto-seed bounties and services on server startup
