@@ -23,6 +23,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { validateProductionStartupSafety, authenticateAgent, getSystemReadinessStatus, ensurePersistentAgentSecret } from './server/agentSecurity.js';
 import { agentTelemetryRouter, trackAgentVisitMiddleware } from './server/agentTelemetry.js';
 import { requireX402Payment, PRICED_ENDPOINTS, getX402RecipientAddress, X402_ROUTE_PATHS } from './server/x402PaymentService.js';
+import { fetchRealStockQuote, fetchYahooQuote } from './server/marketQuoteService.js';
 
 const app = express();
 const portArgIndex = process.argv.indexOf('--port');
@@ -1198,127 +1199,29 @@ interface CachedQuoteEntry {
   cachedAt: number;
 }
 
-const dailyQuoteCache = new Map<string, CachedQuoteEntry>();
-const QUOTE_CACHE_DURATION_MS = 30 * 1000; // 30 seconds for live market quotes
 
-// Real-time stock quote fetcher using Yahoo Finance API with fast failover and live refresh
-async function fetchYahooQuote(symbol: string): Promise<any | null> {
-  const symUpper = symbol.toUpperCase();
-    const cryptoMap: Record<string, string> = {
-    BTC: 'BTC-USD',
-    ETH: 'ETH-USD',
-    SOL: 'SOL-USD',
-    DOGE: 'DOGE-USD',
-    DOT: 'DOT-USD',
-  };
-  const yahooSym = cryptoMap[symUpper] || symUpper;
-  const urls = [
-    `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSym)}?interval=1d&range=5d`,
-    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSym)}?interval=1d&range=5d`
-  ];
-
-  for (const url of urls) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
-      const res = await fetch(url, {
-        signal: controller.signal,
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-      });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        const data = await res.json();
-        const meta = data.chart?.result?.[0]?.meta;
-        if (meta && typeof meta.regularMarketPrice === 'number') {
-          const price = meta.regularMarketPrice;
-          const prevClose = meta.chartPreviousClose || meta.previousClose || price;
-          const change = Number((price - prevClose).toFixed(2));
-          const changePercent = Number(((change / prevClose) * 100).toFixed(2));
-          const vol = meta.regularMarketVolume;
-          const volumeFormatted = vol 
-            ? (vol > 1e9 ? `$${(vol/1e9).toFixed(1)}B` : vol > 1e6 ? `$${(vol/1e6).toFixed(1)}M` : `${vol}`)
-            : 'N/A';
-          return {
-            symbol: symUpper,
-            name: meta.longName || meta.shortName || symUpper,
-            price: Number(price.toFixed(2)),
-            change,
-            changePercent,
-            high52: meta.fiftyTwoWeekHigh ? Number(meta.fiftyTwoWeekHigh.toFixed(2)) : undefined,
-            low52: meta.fiftyTwoWeekLow ? Number(meta.fiftyTwoWeekLow.toFixed(2)) : undefined,
-            volume: volumeFormatted,
-            lastUpdated: new Date().toISOString(),
-            isRealTime: true,
-            refreshSchedule: "Real-Time Live Streaming"
-          };
-        }
-      }
-    } catch (err) {
-      // Try next endpoint URL
-    }
-  }
-  return null;
-}
-
-// Real-time stock quote fetcher using Yahoo Finance API with verified dataset failover
-async function fetchRealStockQuote(symbol: string, forceRefresh = false) {
-  const symUpper = symbol.toUpperCase();
-  const now = Date.now();
-
-  // Check 30-second cache
-  const cached = dailyQuoteCache.get(symUpper);
-  if (!forceRefresh && cached && (now - cached.cachedAt < QUOTE_CACHE_DURATION_MS)) {
-    return {
-      ...cached.quote,
-      dataAgeHours: Number(((now - cached.cachedAt) / 3600000).toFixed(2)),
-      refreshSchedule: "Real-Time Live Streaming"
-    };
-  }
-
-  // Tier 1: Try Yahoo Finance direct lookup
-  let resultQuote = await fetchYahooQuote(symUpper);
-
-  // Tier 2: Check persisted verified dataset
-  if (!resultQuote) {
-    const persisted = MarketDataService.loadPersistedData();
-    const found = persisted?.watchlist?.find((s) => s.symbol.toUpperCase() === symUpper || (symUpper === 'SPACEX' && s.symbol === 'SPCX'));
-    if (found && typeof found.price === 'number' && found.price > 0) {
-      resultQuote = {
-        symbol: symUpper,
-        name: found.name || symUpper,
-        price: found.price,
-        change: found.change || 0,
-        changePercent: found.percent_change || 0,
-        high52: found.high52,
-        low52: found.low52,
-        volume: found.volume ? String(found.volume) : "N/A",
-        lastUpdated: found.last_updated || persisted?.updated_at || new Date().toISOString(),
-        isRealTime: false,
-        isStale: true,
-        staleReason: "Live feed unavailable. Displaying last verified dataset snapshot."
-      };
-    }
-  }
-
-  if (resultQuote) {
-    dailyQuoteCache.set(symUpper, { quote: resultQuote, cachedAt: now });
-  }
-
-  return resultQuote;
-}
 
 // 7. Live Real-Time Stock Quote Endpoint
 app.get(['/api/live-quote/:symbol', '/api/v1/market/quote/:symbol', '/api/v1/market/quote'], requireX402Payment(), async (req, res) => {
-  const { symbol } = req.params;
-  const symUpper = symbol.toUpperCase();
+  const rawSymbol = req.params.symbol || (req.query.symbol as string) || (req.query.ticker as string);
+  if (!rawSymbol || typeof rawSymbol !== 'string' || !rawSymbol.trim()) {
+    return res.status(400).json({
+      error: 'invalid_symbol',
+      message: 'Query parameter "symbol" or "ticker" (or URL path /:symbol) is required (e.g. ?symbol=NVDA)'
+    });
+  }
+
+  const symUpper = rawSymbol.toUpperCase().trim();
   const force = req.query.force === 'true';
 
   try {
-    const quote = await fetchRealStockQuote(symUpper, force);
+    const quote = await fetchRealStockQuote(symUpper, force, 3500);
     if (!quote || !quote.price || quote.price <= 0) {
-      return res.status(404).json({ error: `Market data for symbol ${symUpper} is currently unavailable.` });
+      return res.status(404).json({
+        error: 'unsupported_symbol',
+        symbol: symUpper,
+        message: `Market data for symbol "${symUpper}" is currently unavailable or unsupported.`
+      });
     }
     return res.json({
       ...quote,
@@ -1326,8 +1229,15 @@ app.get(['/api/live-quote/:symbol', '/api/v1/market/quote/:symbol', '/api/v1/mar
       source: quote.isRealTime ? "live" : "verified_cache"
     });
   } catch (err: any) {
+    if (err.name === 'AbortError' || err.message?.includes('timeout')) {
+      return res.status(504).json({
+        error: 'upstream_timeout',
+        symbol: symUpper,
+        message: `Upstream market data provider timed out for symbol "${symUpper}".`
+      });
+    }
     console.warn(`[Live Quote Warning] Failed to fetch quote for $${symUpper}:`, err?.message || err);
-    return res.status(500).json({ error: 'Failed to fetch market quote' });
+    return res.status(500).json({ error: 'Failed to fetch market quote', symbol: symUpper });
   }
 });
 
@@ -1344,10 +1254,6 @@ app.post('/api/live-quotes/batch', async (req, res) => {
     
     const quotePromises = symList.map(async (sym) => {
       const symUpper = sym.toUpperCase();
-      const cached = dailyQuoteCache.get(symUpper);
-      if (!force && cached && (now - cached.cachedAt < QUOTE_CACHE_DURATION_MS)) {
-        return { symUpper, quote: cached.quote };
-      }
       const quote = await fetchRealStockQuote(symUpper, force);
       return { symUpper, quote };
     });
@@ -3389,9 +3295,87 @@ app.post('/api/intel/youtube-feed/sync', async (req, res) => {
 
 // Proxy Endpoints: Unified Market Data with sbScore, bloc, CSV export and ?bloc= filter
 app.get(['/api/data/market', '/api/data/market.csv'], requireX402Payment(), async (req, res) => {
+  const singleSymbolQuery = req.query.symbol || req.query.ticker;
+  const isCsv = req.path.endsWith('.csv') || req.query.format === 'csv' || req.headers.accept?.includes('text/csv');
+
+  // If a specific ticker was requested on /api/data/market, resolve it honestly or return 404
+  if (singleSymbolQuery && typeof singleSymbolQuery === 'string' && singleSymbolQuery.trim()) {
+    const symUpper = singleSymbolQuery.toUpperCase().trim();
+    const liveQuote = await fetchRealStockQuote(symUpper, req.query.force === 'true', 3500);
+
+    if (!liveQuote || !liveQuote.price || liveQuote.price <= 0) {
+      return res.status(404).json({
+        error: 'unsupported_symbol',
+        symbol: symUpper,
+        message: `Market data for symbol "${symUpper}" is currently unavailable or unsupported.`
+      });
+    }
+
+    const det = computeDeterministicSignal({
+      symbol: liveQuote.symbol,
+      price: liveQuote.price,
+      change: liveQuote.change,
+      percent_change: liveQuote.changePercent,
+      high52: liveQuote.high52,
+      low52: liveQuote.low52,
+      volume: liveQuote.volume
+    } as any);
+
+    const enrichedStock = {
+      symbol: liveQuote.symbol,
+      name: liveQuote.name || liveQuote.symbol,
+      price: liveQuote.price,
+      change: liveQuote.change,
+      percent_change: liveQuote.changePercent,
+      high52: liveQuote.high52,
+      low52: liveQuote.low52,
+      volume: liveQuote.volume,
+      sbScore: det.score,
+      bloc: 'market',
+      signal: {
+        signalScore: det.score,
+        deterministicScore: det.score,
+        label: det.label,
+        components: {
+          momentum: det.momentum.points,
+          trend: det.trend.points,
+          relativeStrength: det.relativeStrength.points,
+          volume: det.volume.points,
+          volatility: det.volatility.points
+        }
+      },
+      last_updated: liveQuote.lastUpdated
+    };
+
+    if (isCsv) {
+      const headers = ["Symbol", "Name", "Price", "Change", "PercentChange", "SBScore", "Bloc", "SignalLabel", "Volume"];
+      const row = [
+        `"${enrichedStock.symbol}"`,
+        `"${enrichedStock.name.replace(/"/g, '""')}"`,
+        enrichedStock.price,
+        enrichedStock.change,
+        enrichedStock.percent_change,
+        enrichedStock.sbScore,
+        `"market"`,
+        `"${enrichedStock.signal.label}"`,
+        `"${enrichedStock.volume}"`
+      ];
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="market-data-${symUpper.toLowerCase()}.csv"`);
+      return res.send([headers.join(","), row.join(",")].join("\n"));
+    }
+
+    return res.json({
+      status: 'success',
+      feed: 'market',
+      updated_at: liveQuote.lastUpdated,
+      total_assets: 1,
+      watchlist: [enrichedStock]
+    });
+  }
+
   const data = await fetchAndProcessFeed('market');
   const blocQuery = req.query.bloc ? String(req.query.bloc).toLowerCase().trim() : null;
-  const isCsv = req.path.endsWith('.csv') || req.query.format === 'csv' || req.headers.accept?.includes('text/csv');
 
   let watchlist = [...(data.watchlist || [])];
 

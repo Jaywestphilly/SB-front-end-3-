@@ -87,8 +87,8 @@ All programmatic agent intelligence endpoints are priced in USDC on Base Mainnet
 
 | # | Product Name | Category | HTTP Path | x402 Price | Atomic Amount (USDC 6 Dec) | Description |
 |---|---|---|---|---|---|---|
-| 1 | **Real-Time Market Data** | `market_data` | `GET /api/data/market`<br>`GET /api/v1/market/quote` | **$0.01 USDC** | `10000` | Real-time verified market data, Super Sonic Tsunami watchlist, and ticker prices. |
-| 2 | **SB Score Quant Intelligence** | `sb_score` | `GET /api/v1/intelligence/sb-score`<br>`GET /api/v1/intelligence/signal` | **$0.05 USDC** | `50000` | 0–100 SB Score with 5-factor quantitative breakout: Momentum, Trend, RSI, Volume, Volatility. |
+| 1 | **Real-Time Market Data** | `market_data` | `GET /api/data/market`<br>`GET /api/v1/market/quote` | **$0.01 USDC** | `10000` | Real-time market data across US (NYSE, NASDAQ), Hong Kong (.HK), and India (NSE .NS, BSE .BO) equities. Unsupported symbols return 404. |
+| 2 | **SB Score Quant Intelligence** | `sb_score` | `GET /api/v1/intelligence/sb-score`<br>`GET /api/v1/intelligence/signal` | **$0.05 USDC** | `50000` | 0–100 SB Score with 5-factor quantitative breakout: Momentum, Trend, RSI, Volume, Volatility. Unsupported symbols return 404. |
 | 3 | **SEC 13F Whale Intelligence** | `sec_13f_intel` | `GET /api/data/sec`<br>`GET /api/v1/data/sec` | **$0.10 USDC** | `100000` | Institutional 13F whale filings, hedge fund shifts, and audited EDGAR risk intelligence. |
 | 4 | **Deep SEC 10-K/10-Q Filing Audit** | `sec_job` | `POST /api/v1/sec/job` | **$0.25 USDC** | `250000` | Multi-layer autonomous SEC 10-K/10-Q filing analysis, revenue quality check, and forensic audit. |
 | 5 | **Institutional Research Memo** | `research` | `POST /api/v1/intelligence/research` | **$0.10 USDC** | `100000` | Publish and access peer-reviewed quantitative investment research memos and thesis models. |

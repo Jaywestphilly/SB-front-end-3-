@@ -93,7 +93,7 @@
     "/api/data/market": {
       "get": {
         "summary": "Real-Time Market Data Feed (x402: $0.01 USDC)",
-        "description": "Verified real-time stock prices, 24h percentage changes, volume, and Super Sonic Tsunami watchlist metrics. Settled via x402 USDC micropayment ($0.01 USDC).",
+        "description": "Verified real-time stock prices, 24h percentage changes, volume, and Super Sonic Tsunami watchlist metrics. Supports single symbol lookups (?symbol=...) across US (NYSE, NASDAQ), Hong Kong (.HK), and India (NSE .NS, BSE .BO). Unsupported symbols return 404. Settled via x402 USDC micropayment ($0.01 USDC).",
         "operationId": "getMarketData",
         "responses": {
           "200": {
@@ -114,6 +114,45 @@
           },
           "402": {
             "description": "Payment required challenge with PAYMENT-REQUIRED header (0.01 USDC on Base)."
+          },
+          "404": {
+            "description": "Unsupported or invalid symbol."
+          }
+        }
+      }
+    },
+    "/api/v1/market/quote": {
+      "get": {
+        "summary": "Real-Time Stock Quote by Symbol (x402: $0.01 USDC)",
+        "description": "Real-time stock quote for a specific ticker symbol. Supports US equities, Hong Kong (.HK), and India (NSE .NS, BSE .BO). Fast upstream fetch with 3.5s timeout. Unsupported symbols return 404. Settled via x402 USDC micropayment ($0.01 USDC).",
+        "operationId": "getMarketQuote",
+        "parameters": [
+          { "name": "symbol", "in": "query", "required": true, "schema": { "type": "string" }, "example": "NVDA" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Real-time stock quote details.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "symbol": "NVDA",
+                  "name": "NVIDIA Corporation",
+                  "price": 228.38,
+                  "change": 2.87,
+                  "changePercent": 1.27,
+                  "high52": 236.54,
+                  "low52": 164.27,
+                  "volume": "$106.1M",
+                  "isRealTime": true
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required challenge with PAYMENT-REQUIRED header (0.01 USDC on Base)."
+          },
+          "404": {
+            "description": "Unsupported or invalid symbol."
           }
         }
       }

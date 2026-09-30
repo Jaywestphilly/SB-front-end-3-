@@ -962,18 +962,47 @@ agentIntelligenceRouter.get('/agents/compare', async (req, res) => {
 agentIntelligenceRouter.get(['/sb-score', '/signal'], async (req, res) => {
   try {
     const rawTicker = String(req.query.ticker || req.query.symbol || 'NVDA').toUpperCase().trim();
+    if (!rawTicker) {
+      return res.status(400).json({
+        error: 'invalid_symbol',
+        message: 'Query parameter "ticker" or "symbol" is required (e.g. ?ticker=NVDA)'
+      });
+    }
+
     const { MarketDataService, computeQuantMetrics, calculateStockBlocSignal } = await import('../src/services/marketDataService.js');
     const { INITIAL_STOCKS } = await import('../src/data/stocks.js');
+    const { fetchRealStockQuote } = await import('./marketQuoteService.js');
 
     const persisted = MarketDataService.loadPersistedData();
-    const found = persisted?.watchlist?.find((s: any) => s.symbol.toUpperCase() === rawTicker) ||
-      INITIAL_STOCKS.find((s: any) => s.symbol.toUpperCase() === rawTicker) || {
+    let found: any = persisted?.watchlist?.find((s: any) => s.symbol.toUpperCase() === rawTicker) ||
+      INITIAL_STOCKS.find((s: any) => s.symbol.toUpperCase() === rawTicker);
+
+    if (!found) {
+      // Fetch live stock quote from upstream provider (supports US, .HK, .NS, .BO, Crypto)
+      const liveQuote = await fetchRealStockQuote(rawTicker, false, 3500);
+      if (liveQuote && typeof liveQuote.price === 'number' && liveQuote.price > 0) {
+        found = {
+          symbol: liveQuote.symbol,
+          name: liveQuote.name || liveQuote.symbol,
+          price: liveQuote.price,
+          change: liveQuote.change,
+          percent_change: liveQuote.changePercent,
+          high52: liveQuote.high52,
+          low52: liveQuote.low52,
+          volume: liveQuote.volume,
+          isRealTime: liveQuote.isRealTime
+        };
+      }
+    }
+
+    // Never return synthetic or fabricated numbers for unsupported / invalid tickers
+    if (!found || typeof found.price !== 'number' || found.price <= 0) {
+      return res.status(404).json({
+        error: 'unsupported_symbol',
         symbol: rawTicker,
-        name: `${rawTicker} Equity Benchmark`,
-        price: 150.0,
-        changePercent: 1.5,
-        sparkline: [145, 147, 150],
-      };
+        message: `Market data for symbol "${rawTicker}" is currently unavailable or unsupported.`
+      });
+    }
 
     const quant = computeQuantMetrics(found as any);
     const signal = calculateStockBlocSignal(found as any, quant);
