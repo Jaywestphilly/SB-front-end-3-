@@ -6,6 +6,7 @@ import Stripe from 'stripe';
 import {
   authenticateAgent,
   validateProductionStartupSafety,
+  ensurePersistentAgentSecret,
   generateApiKeyPair,
   inMemoryKeyRegistry,
   inMemoryAgentRegistry
@@ -550,5 +551,61 @@ describe('STOCK BLOC — PRODUCTION HARDENING SECURITY TEST SUITE', () => {
       .get('/api/v1/agents/leaderboard');
     expect(leaderboardRes.status).toBe(200);
     expect(leaderboardRes.headers['content-type']).toContain('application/json');
+  });
+
+  // Test 14: ensurePersistentAgentSecret in production throws when key is missing
+  it('throws Error in production when AGENT_API_SECRET_KEY is missing (no random generation in prod)', () => {
+    const origEnv = process.env.AGENT_ENV;
+    const origNodeEnv = process.env.NODE_ENV;
+    const origSecret = process.env.AGENT_API_SECRET_KEY;
+    const origMaster = process.env.AGENT_PLATFORM_MASTER_KEY;
+
+    try {
+      process.env.AGENT_ENV = 'production';
+      process.env.NODE_ENV = 'production';
+      process.env.AGENT_API_SECRET_KEY = '';
+      process.env.AGENT_PLATFORM_MASTER_KEY = '';
+
+      expect(() => ensurePersistentAgentSecret()).toThrow(/AGENT_API_SECRET_KEY is required in production/);
+    } finally {
+      process.env.AGENT_ENV = origEnv;
+      process.env.NODE_ENV = origNodeEnv;
+      process.env.AGENT_API_SECRET_KEY = origSecret;
+      process.env.AGENT_PLATFORM_MASTER_KEY = origMaster;
+    }
+  });
+
+  // Test 15: ensurePersistentAgentSecret succeeds when configured or in non-production
+  it('succeeds in production when secret is set and generates fallback in non-production', () => {
+    const origEnv = process.env.AGENT_ENV;
+    const origNodeEnv = process.env.NODE_ENV;
+    const origSecret = process.env.AGENT_API_SECRET_KEY;
+    const origMaster = process.env.AGENT_PLATFORM_MASTER_KEY;
+
+    try {
+      // 1. Production with valid key -> returns key
+      process.env.AGENT_ENV = 'production';
+      process.env.NODE_ENV = 'production';
+      const validKey = 'live_secret_key_production_guarantee_' + crypto.randomBytes(16).toString('hex');
+      process.env.AGENT_API_SECRET_KEY = validKey;
+      process.env.AGENT_PLATFORM_MASTER_KEY = '';
+
+      expect(ensurePersistentAgentSecret()).toBe(validKey);
+
+      // 2. Non-production without key -> generates and returns valid key
+      process.env.AGENT_ENV = 'development';
+      process.env.NODE_ENV = 'development';
+      process.env.AGENT_API_SECRET_KEY = '';
+      process.env.AGENT_PLATFORM_MASTER_KEY = '';
+
+      const generated = ensurePersistentAgentSecret();
+      expect(generated).toBeDefined();
+      expect(generated.length).toBeGreaterThanOrEqual(32);
+    } finally {
+      process.env.AGENT_ENV = origEnv;
+      process.env.NODE_ENV = origNodeEnv;
+      process.env.AGENT_API_SECRET_KEY = origSecret;
+      process.env.AGENT_PLATFORM_MASTER_KEY = origMaster;
+    }
   });
 });
