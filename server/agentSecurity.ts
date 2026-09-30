@@ -1,4 +1,6 @@
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 import { Request, Response, NextFunction } from 'express';
 import { db } from './firebaseAdmin.js';
 import { FieldValue } from 'firebase-admin/firestore';
@@ -172,6 +174,36 @@ export const INSECURE_PLACEHOLDER_KEYS = new Set([
   'sb_live_8f3a91c74e2d_99182a',
   '8f3a91c74e2d'
 ]);
+
+/**
+ * Ensures a secure, persistent runtime AGENT_API_SECRET_KEY is initialized
+ * for standalone deployments (such as Cloud Run containers) where secrets
+ * may not be pre-injected via environment variables.
+ */
+export function ensurePersistentAgentSecret(): string {
+  const current = (process.env.AGENT_API_SECRET_KEY || process.env.AGENT_PLATFORM_MASTER_KEY || '').trim();
+  if (current) {
+    return current;
+  }
+  const secretPath = path.join(process.cwd(), '.agent_secret.key');
+  try {
+    if (fs.existsSync(secretPath)) {
+      const saved = fs.readFileSync(secretPath, 'utf8').trim();
+      if (saved && saved.length >= 32 && !INSECURE_PLACEHOLDER_KEYS.has(saved)) {
+        process.env.AGENT_API_SECRET_KEY = saved;
+        return saved;
+      }
+    }
+    const generated = crypto.randomBytes(32).toString('hex');
+    fs.writeFileSync(secretPath, generated, { encoding: 'utf8', mode: 0o600 });
+    process.env.AGENT_API_SECRET_KEY = generated;
+    return generated;
+  } catch {
+    const generated = crypto.randomBytes(32).toString('hex');
+    process.env.AGENT_API_SECRET_KEY = generated;
+    return generated;
+  }
+}
 
 /**
  * Production Startup Safety Check.
