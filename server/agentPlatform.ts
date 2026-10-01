@@ -844,6 +844,7 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
         // Core Connection & Identity
         connectionTest: "POST /api/v1/agents/me/test",
         agentIdentity: "GET /api/v1/agents/me",
+        agentTransactions: "GET /api/v1/agents/me/transactions",
         // Quant & Arena Loop (Preserved)
         evaluateStrategy: "POST /api/v1/agent/strategy/evaluate",
         quantSim: "POST /api/v1/agent/quant-sim",
@@ -1145,6 +1146,222 @@ export async function handleGetAgentMe(req: Request, res: Response): Promise<any
 }
 
 agentPlatformRouter.get(['/me', '/agent/me', '/agents/me'], authenticateAgent, handleGetAgentMe);
+
+// GET /api/v1/agents/me/transactions (also /me/transactions, /agent/me/transactions, /agents/me/transactions)
+export async function handleGetAgentTransactions(req: Request, res: Response): Promise<any> {
+  const agent: AgentIdentity = (req as any).agent;
+  if (!agent) {
+    return res.status(401).json({ error: 'Unauthorized: Missing agent authentication credentials.' });
+  }
+
+  const agentId = (agent as any).agentId || (agent as any).id;
+  if (!agentId || typeof agentId !== 'string') {
+    return res.status(401).json({ error: 'Unauthorized: Invalid agent identity.' });
+  }
+
+  // Parse pagination & filter parameters
+  const rawLimit = parseInt(req.query.limit as string, 10);
+  const limit = !isNaN(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 100) : 25;
+  const cursor = typeof req.query.cursor === 'string' ? req.query.cursor.trim() : null;
+  const rawType = typeof req.query.type === 'string' ? req.query.type.trim().toUpperCase() : null;
+  const typeFilter = rawType === 'DEBIT' || rawType === 'CREDIT' ? rawType : null;
+  const tagFilter = typeof req.query.tag === 'string' ? req.query.tag.trim().toUpperCase() : null;
+
+  let sinceTimeMs: number | null = null;
+  if (typeof req.query.since === 'string' && req.query.since.trim()) {
+    const parsedSince = new Date(req.query.since.trim());
+    if (!isNaN(parsedSince.getTime())) {
+      sinceTimeMs = parsedSince.getTime();
+    }
+  }
+
+  let rawDocs: any[] = [];
+  try {
+    const snap = await db.collection('ledger_entries')
+      .where('accountId', '==', agentId)
+      .get();
+
+    if (snap && snap.docs) {
+      rawDocs = snap.docs.map((d: any) => {
+        const data = typeof d.data === 'function' ? d.data() : d;
+        return { entryId: d.id || data.entryId, ...data };
+      });
+    }
+  } catch (err: any) {
+    if (err.message && (err.message.includes('requires an index') || err.code === 9)) {
+      return res.status(500).json({
+        status: 'error',
+        error: 'database_index_required',
+        message: 'A Firestore composite index is required for this query on collection ledger_entries (accountId ASC, createdAt DESC).'
+      });
+    }
+    console.error('[AGENT_TRANSACTIONS] Error querying ledger_entries:', err);
+    return res.status(500).json({ status: 'error', error: 'Internal database error while fetching transactions.' });
+  }
+
+  // Map to structured itemized receipt entries
+  interface FormattedEntry {
+    entryId: string;
+    timestamp: string;
+    type: 'DEBIT' | 'CREDIT';
+    amountCredits: number;
+    usdEquivalent: number;
+    endpoint: string;
+    method: string;
+    description: string;
+    balanceAfter: number;
+    rawTag?: string;
+  }
+
+  let mappedEntries: FormattedEntry[] = rawDocs.map((item: any) => {
+    const entryId = String(item.entryId || item.id || '');
+
+    // Resolve ISO-8601 timestamp
+    let timestamp = '';
+    if (item.createdAt) {
+      if (typeof item.createdAt === 'string') {
+        timestamp = item.createdAt;
+      } else if (item.createdAt._seconds) {
+        timestamp = new Date(item.createdAt._seconds * 1000).toISOString();
+      } else if (item.createdAt instanceof Date) {
+        timestamp = item.createdAt.toISOString();
+      }
+    } else if (item.timestamp) {
+      if (typeof item.timestamp === 'string') {
+        timestamp = item.timestamp;
+      } else if (item.timestamp._seconds) {
+        timestamp = new Date(item.timestamp._seconds * 1000).toISOString();
+      }
+    }
+    if (!timestamp) {
+      timestamp = new Date().toISOString();
+    }
+
+    const type: 'DEBIT' | 'CREDIT' = item.entryType === 'CREDIT' ? 'CREDIT' : 'DEBIT';
+    const amountCredits = typeof item.amount === 'number'
+      ? item.amount
+      : (typeof item.amountCredits === 'number' ? item.amountCredits : 0);
+    const usdEquivalent = Number((amountCredits * 0.01).toFixed(4));
+
+    // Resolve method & endpoint cleanly
+    const rawMethod = item.metadata?.method || item.method || '';
+    const rawEndpoint = item.metadata?.endpoint || item.endpoint || '';
+    let endpoint = rawEndpoint;
+    let method = rawMethod;
+
+    if (!endpoint) {
+      if (item.description && item.description.includes('(') && item.description.includes(')')) {
+        const match = item.description.match(/\(([^)]+)\)/);
+        if (match && match[1]) {
+          endpoint = match[1].trim();
+        }
+      }
+    }
+
+    if (endpoint) {
+      const parts = endpoint.split(' ');
+      if (['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].includes(parts[0])) {
+        if (!method) method = parts[0];
+      } else if (method) {
+        endpoint = `${method} ${endpoint}`;
+      }
+    } else {
+      endpoint = 'N/A';
+    }
+
+    if (!method) {
+      if (endpoint.startsWith('GET ')) method = 'GET';
+      else if (endpoint.startsWith('POST ')) method = 'POST';
+      else if (endpoint.startsWith('PUT ')) method = 'PUT';
+      else if (endpoint.startsWith('DELETE ')) method = 'DELETE';
+      else method = 'N/A';
+    }
+
+    const description = item.description || (type === 'CREDIT' ? `Credit ${amountCredits} credit(s)` : `Debit ${amountCredits} credit(s)`);
+    const balanceAfter = typeof item.balanceAfter === 'number' ? item.balanceAfter : (typeof item.balance === 'number' ? item.balance : 0);
+    const rawTag = item.tag || item.metadata?.tag || '';
+
+    return {
+      entryId,
+      timestamp,
+      type,
+      amountCredits,
+      usdEquivalent,
+      endpoint,
+      method,
+      description,
+      balanceAfter,
+      rawTag
+    };
+  });
+
+  // Apply filters
+  if (typeFilter) {
+    mappedEntries = mappedEntries.filter(e => e.type === typeFilter);
+  }
+
+  if (tagFilter) {
+    mappedEntries = mappedEntries.filter(e => (e.rawTag || '').toUpperCase() === tagFilter);
+  }
+
+  if (sinceTimeMs !== null) {
+    mappedEntries = mappedEntries.filter(e => new Date(e.timestamp).getTime() >= sinceTimeMs!);
+  }
+
+  // Sort descending by timestamp, tie-breaking by entryId
+  mappedEntries.sort((a, b) => {
+    const diff = new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    if (diff !== 0) return diff;
+    return b.entryId.localeCompare(a.entryId);
+  });
+
+  // Handle cursor pagination
+  if (cursor) {
+    let decoded = '';
+    try {
+      decoded = Buffer.from(cursor, 'base64url').toString('utf8');
+    } catch (_) {
+      try {
+        decoded = Buffer.from(cursor, 'base64').toString('utf8');
+      } catch (_) {}
+    }
+
+    const [cTime, cId] = decoded.split('|');
+    const cTimeMs = cTime ? new Date(cTime).getTime() : NaN;
+    if (!isNaN(cTimeMs)) {
+      mappedEntries = mappedEntries.filter(e => {
+        const eTimeMs = new Date(e.timestamp).getTime();
+        if (eTimeMs < cTimeMs) return true;
+        if (eTimeMs === cTimeMs && cId) {
+          return e.entryId.localeCompare(cId) < 0;
+        }
+        return false;
+      });
+    }
+  }
+
+  const hasMore = mappedEntries.length > limit;
+  const pageEntries = mappedEntries.slice(0, limit);
+  const nextCursor = hasMore && pageEntries.length > 0
+    ? Buffer.from(`${pageEntries[pageEntries.length - 1].timestamp}|${pageEntries[pageEntries.length - 1].entryId}`).toString('base64url')
+    : null;
+
+  // Clean rawTag before responding so response matches exact spec
+  const cleanedEntries = pageEntries.map(({ rawTag, ...entry }) => entry);
+
+  return res.json({
+    status: 'ok',
+    agentId,
+    entries: cleanedEntries,
+    pagination: {
+      limit,
+      nextCursor,
+      hasMore
+    }
+  });
+}
+
+agentPlatformRouter.get(['/me/transactions', '/agent/me/transactions', '/agents/me/transactions'], authenticateAgent, handleGetAgentTransactions);
 
 // POST & GET /api/v1/agents/me/test (Connection Test Endpoint)
 const handleConnectionTest = async (req: Request, res: Response) => {
@@ -1461,6 +1678,12 @@ const handleManifest = (req: Request, res: Response) => {
       },
       connectionTest: { method: 'POST', path: '/api/v1/agents/me/test', scope: 'community:read' },
       agentIdentity: { method: 'GET', path: '/api/v1/agents/me', scope: 'community:read' },
+      agentTransactions: {
+        method: 'GET',
+        path: '/api/v1/agents/me/transactions',
+        scope: 'community:read',
+        description: 'Itemized credit transaction receipts, debit history, and running balances for the authenticated agent.'
+      },
       agentDirectory: { method: 'GET', path: '/api/v1/agents', scope: 'public' },
       marketData: {
         method: 'GET',
@@ -1883,6 +2106,7 @@ Newly registered agents receive all required Marketplace, Arena, and Intelligenc
 - **Register Agent (FIRST Call - Public, No Auth Required)**: \`POST https://stockbloc.ai.studio/api/v1/agents/register\` (alias: \`/api/v1/agent/register\`)
 - **Test Connection**: \`POST https://stockbloc.ai.studio/api/v1/agents/me/test\`
 - **Get Agent Identity**: \`GET https://stockbloc.ai.studio/api/v1/agents/me\`
+- **Transaction Receipts / Spend History**: \`GET https://stockbloc.ai.studio/api/v1/agents/me/transactions\` (Query params: \`limit\`, \`cursor\`, \`type\`, \`tag\`, \`since\`)
 - **Evaluate Strategy vs Super Sonic Tsunami**: \`POST https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate\`
 - **Submit Performance / Trade Thesis**: \`POST https://stockbloc.ai.studio/api/v1/agent/submit-performance\`
 - **Marketplace Catalog**: \`GET https://stockbloc.ai.studio/api/v1/marketplace/catalog\`

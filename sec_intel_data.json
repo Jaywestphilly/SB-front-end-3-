@@ -1,6 +1,6 @@
 {
   "status": "success",
-  "updated_at": "2026-09-30T20:11:27.253Z",
+  "updated_at": "2026-10-01T16:04:42.784Z",
   "source": "U.S. SEC EDGAR Submissions API",
   "stale": false,
   "totalFundsTracked": 13,
@@ -155,14 +155,20 @@
       "fundName": "Berkshire Hathaway Inc.",
       "manager": "Warren Buffett",
       "cik": "0001067983",
-      "filing_date": "2026-09-29",
-      "filingDate": "2026-09-29",
+      "filing_date": "2026-09-30",
+      "filingDate": "2026-09-30",
       "quarter": "Q1 13F-HR",
       "aum": "$284.5B",
       "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001067983",
       "holdings_status": "parsed",
       "mandate": "Value investing, durable competitive moats, cash flow generative market leaders.",
       "filings": [
+        {
+          "form_type": "4",
+          "filing_date": "2026-09-30",
+          "description": "4",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526409451/xslF345X06/ownership.xml"
+        },
         {
           "form_type": "4",
           "filing_date": "2026-09-29",
@@ -204,12 +210,6 @@
           "filing_date": "2026-08-14",
           "description": "SEC Form SCHEDULE 13G/A Submission",
           "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526352910/xslSCHEDULE_13G_X02/primary_doc.xml"
-        },
-        {
-          "form_type": "SCHEDULE 13G",
-          "filing_date": "2026-08-14",
-          "description": "SEC Form SCHEDULE 13G Submission",
-          "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526352904/xslSCHEDULE_13G_X02/primary_doc.xml"
         }
       ],
       "topHoldings": [

@@ -256,6 +256,39 @@ curl -i -X GET "https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack?ti
 
 ---
 
+## Agent Spending & Transaction Receipts (`GET /api/v1/agents/me/transactions`)
+Query itemized receipts and running credit balance history for spend reconciliation and budget management.
+- **Parameters**: `limit` (default 25, max 100), `cursor` (opaque pagination token based on createdAt), `type` (optional filter: `DEBIT` or `CREDIT`), `tag` (optional filter, e.g. `METERED_API`), `since` (optional ISO-8601 timestamp filter).
+- **Rule**: `usdEquivalent = amountCredits * 0.01` (1 credit = $0.01).
+- **Example request:**
+```bash
+curl -s "https://stockbloc.ai.studio/api/v1/agents/me/transactions?limit=10" \
+  -H "Authorization: Bearer sb_live_<YOUR_API_KEY>"
+```
+- **Example response:**
+```json
+{
+  "status": "ok",
+  "agentId": "agent_auto_a1b2c3d4e5",
+  "entries": [
+    {
+      "entryId": "led_91af238c",
+      "timestamp": "2026-10-01T12:00:00.000Z",
+      "type": "DEBIT",
+      "amountCredits": 5,
+      "usdEquivalent": 0.05,
+      "endpoint": "GET /api/v1/intelligence/sb-score",
+      "method": "GET",
+      "description": "x402 credit access to SB Score (GET /api/v1/intelligence/sb-score)",
+      "balanceAfter": 95
+    }
+  ],
+  "pagination": { "limit": 10, "nextCursor": null, "hasMore": false }
+}
+```
+
+---
+
 ## Priced Endpoints Reference (Example Requests & Responses)
 
 ### 1. Market Data Feed (`GET /api/data/market`) — $0.01 USDC
@@ -412,6 +445,7 @@ X-Agent-Key: sb_live_<YOUR_API_KEY>
 - **Query x402 Pricing & Facilitator**: `GET https://stockbloc.ai.studio/api/v1/x402/pricing`
 - **Test Connection**: `POST https://stockbloc.ai.studio/api/v1/agents/me/test`
 - **Get Agent Identity**: `GET https://stockbloc.ai.studio/api/v1/agents/me`
+- **Transaction Receipts & Spend History**: `GET https://stockbloc.ai.studio/api/v1/agents/me/transactions` (Query params: `limit`, `cursor`, `type`, `tag`, `since`)
 - **Market Data Feed (x402: $0.01 USDC)**: `GET https://stockbloc.ai.studio/api/data/market`
 - **0–100 SB Score & Quant Signal (x402: $0.05 USDC)**: `GET https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=NVDA`
 - **SEC 13F Whale Filings (x402: $0.10 USDC)**: `GET https://stockbloc.ai.studio/api/data/sec`

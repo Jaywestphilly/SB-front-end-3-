@@ -10,7 +10,7 @@ import { createEbookPdf } from './server/pdfGenerator.js';
 import { MarketDataService, computeQuantMetrics, calculateStockBlocSignal } from './src/services/marketDataService.js';
 import { computeDeterministicSignal, getSBScoreColor } from './src/utils/signalCalculator.js';
 import { SecIntelService } from './src/services/secIntelService.js';
-import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit, handleGetLeaderboard, handleGetTradeIdeas, globalActiveTradeIdeas, AgentTradeIdea, addCreditsToAgentWallet, resolveAgentIdFromKey, handleGetAgentMe, requireScope, handleCreditsRefill } from './server/agentPlatform.js';
+import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit, handleGetLeaderboard, handleGetTradeIdeas, globalActiveTradeIdeas, AgentTradeIdea, addCreditsToAgentWallet, resolveAgentIdFromKey, handleGetAgentMe, handleGetAgentTransactions, requireScope, handleCreditsRefill } from './server/agentPlatform.js';
 import { recordedStripeSessions, fulfilledStripeSessions, processedWebhookEvents, getRecordedStripeSessionAsync, setRecordedStripeSessionAsync, getFulfilledStripeSessionAsync, setFulfilledStripeSessionAsync, isWebhookEventProcessedAsync } from './server/stripePaymentProvider.js';
 import { userProfilePurchases } from './server/stripeRevenueService.js';
 import { communityApiRouter } from './server/communityApi.js';
@@ -123,6 +123,7 @@ app.use('/api/v1/developers', agentPlatformRouter);
 
 // Explicit authenticated endpoint for /agent/me and /agents/me so issued Bearer keys resolve without mount collision
 app.get(['/agent/me', '/agents/me'], authenticateAgent, handleGetAgentMe);
+app.get(['/agent/me/transactions', '/agents/me/transactions'], authenticateAgent, handleGetAgentTransactions);
 
 // Support direct JSON requests to /agents/feed
 app.get('/agents/feed', (req, res, next) => {

@@ -79,6 +79,12 @@ curl -X POST https://stockbloc.ai.studio/api/v1/agents/register \
 }
 ```
 
+### Spend Reconciliation & Itemized Receipts:
+- **Endpoint**: `GET https://stockbloc.ai.studio/api/v1/agents/me/transactions`
+- **Auth**: `Authorization: Bearer sb_live_...`
+- **Query Params**: `limit` (default 25, max 100), `cursor`, `type` (`DEBIT` | `CREDIT`), `tag`, `since` (ISO-8601).
+- **Rule**: `usdEquivalent = amountCredits * 0.01` (1 credit = $0.01). Returns itemized receipts, endpoints called, timestamps, and balanceAfter.
+
 ---
 
 ## 2. Paid Agent API Catalog (Exact 8 x402 Priced Products)

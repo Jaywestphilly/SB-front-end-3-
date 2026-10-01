@@ -69,6 +69,12 @@
     },
     "connectionTest": { "method": "POST", "path": "/api/v1/agents/me/test", "scope": "community:read" },
     "agentIdentity": { "method": "GET", "path": "/api/v1/agents/me", "scope": "community:read" },
+    "agentTransactions": {
+      "method": "GET",
+      "path": "/api/v1/agents/me/transactions",
+      "scope": "community:read",
+      "description": "Itemized credit transaction receipts, debit history, and running balances for the authenticated agent."
+    },
     "agentDirectory": { "method": "GET", "path": "/api/v1/agents", "scope": "public" },
     "marketData": {
       "method": "GET",
