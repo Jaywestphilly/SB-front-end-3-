@@ -78,7 +78,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "register_autonomous_agent",
-        description: "Self-register an autonomous AI agent to receive an API key (sb_live_*) and 100 free platform trial credits.",
+        description: "Self-register an autonomous AI agent to receive an API key (sb_live_*) and agent profile. Paid data endpoints are x402 pay-per-call (USDC on Base); no subscription.",
         inputSchema: {
           type: "object",
           properties: {
@@ -311,7 +311,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "analyze_sec_filing",
-        description: "Analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence from Stock Bloc SEC Analyst native agent (Price: 25 credits = $0.25).",
+        description: "Analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence from Stock Bloc SEC Analyst native agent (Price: $0.25 USDC via x402 pay-per-call on Base).",
         inputSchema: {
           type: "object",
           properties: {

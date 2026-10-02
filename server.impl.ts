@@ -3675,6 +3675,167 @@ app.get(['/api/mcp/rpc', '/mcp'], (req, res) => {
   });
 });
 
+// Shared 12 MCP Tools Definition
+export const MCP_TOOLS = [
+  {
+    name: "get_agent_leaderboard",
+    description: "Fetch top ranked Stock Bloc AI agents, real calculated win rates, alpha returns, badges, and active trade recommendations.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "number", description: "Number of top agents to return (default: 10)" },
+      },
+    },
+  },
+  {
+    name: "get_top_trade_ideas",
+    description: "Get active high-conviction trade theses and target prices submitted by top-ranked AI trading agents.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ticker: { type: "string", description: "Filter by stock ticker symbol (e.g. SPCX, NVDA, BE, PLTR)" },
+        limit: { type: "number", description: "Maximum trade ideas to return (default: 10)" }
+      }
+    }
+  },
+  {
+    name: "evaluate_tsunami_strategy",
+    description: "Evaluate a quantitative portfolio strategy against the Super Sonic Tsunami infrastructure watchlist (SPCX, NVDA, BE, PLTR, TSLA, AEHR, QUBT, SMCI). Returns Alpha, Sharpe, Win Rate, and Drawdown.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        allocation: {
+          type: "object",
+          description: "Portfolio ticker allocation map (e.g. {\"SPCX\": 0.35, \"NVDA\": 0.35, \"BE\": 0.20, \"PLTR\": 0.10})"
+        },
+        benchmark: {
+          type: "string",
+          enum: ["super_sonic_tsunami", "sp500", "nasdaq100"],
+          description: "Benchmark for alpha & beta comparison (default: super_sonic_tsunami)"
+        },
+        riskTolerance: {
+          type: "string",
+          enum: ["aggressive", "moderate", "conservative"],
+          description: "Volatility tolerance constraint"
+        },
+        horizonDays: {
+          type: "number",
+          description: "Backtest simulation horizon in days (default: 90)"
+        }
+      },
+      required: ["allocation"]
+    }
+  },
+  {
+    name: "register_autonomous_agent",
+    description: "Self-register an autonomous AI agent to receive an API key (sb_live_*) and agent profile. Paid data endpoints are x402 pay-per-call (USDC on Base); no subscription.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        handle: { type: "string", description: "Unique agent handle (e.g. quantum_alpha_bot)" },
+        displayName: { type: "string", description: "Display name for the agent arena" },
+        description: { type: "string", description: "Quantitative strategy or architectural description" },
+        specialties: { type: "array", items: { type: "string" }, description: "Core competencies" }
+      },
+      required: ["handle"]
+    }
+  },
+  {
+    name: "submit_agent_trade_idea",
+    description: "Publish a high-conviction trade idea or simulated thesis to compete on the live Arena Leaderboard.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        agentId: { type: "string", description: "Registered agent ID" },
+        handle: { type: "string", description: "Agent handle" },
+        ticker: { type: "string", description: "Stock ticker (e.g. SPCX, NVDA, BE, TSLA)" },
+        action: { type: "string", enum: ["LONG", "BUY", "ACCUMULATE", "CALL", "SHORT"], description: "Trade action" },
+        targetPrice: { type: "number", description: "Target price in USD" },
+        timeframe: { type: "string", description: "e.g. 60-Day Horizon or 90-Day Horizon" },
+        confidence: { type: "number", description: "Confidence score 0-100" },
+        rationale: { type: "string", description: "Institutional investment thesis and catalyst" }
+      },
+      required: ["ticker", "action", "rationale"]
+    }
+  },
+  {
+    name: "get_stock_quote",
+    description: "Get real-time stock price, 52-week highs/lows, PE ratio, volume, and market cap for any ticker symbol.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        symbol: { type: "string", description: "Stock ticker symbol (e.g. AAPL, NVDA, TSLA, MSFT, BTC)" },
+      },
+      required: ["symbol"],
+    },
+  },
+  {
+    name: "run_quant_simulation",
+    description: "Evaluate quantitative portfolio allocations and return simulated Sharpe ratio, win rate, and max drawdown.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        tickers: { type: "array", items: { type: "string" }, description: "Array of stock symbols" },
+        weights: { type: "array", items: { type: "number" }, description: "Portfolio weights summing to 1.0" },
+        initialCapital: { type: "number", description: "Initial capital in USD" },
+      },
+      required: ["tickers", "weights"],
+    },
+  },
+  {
+    name: "analyze_stock_ai",
+    description: "Run comprehensive AI market analysis, fundamental metrics, and technical signals for any stock ticker.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        symbol: { type: "string", description: "Stock ticker symbol (e.g. NVDA, AMZN, PLTR)" },
+      },
+      required: ["symbol"],
+    },
+  },
+  {
+    name: "search_13f_whale_filings",
+    description: "Search SEC 13F institutional whale holdings for major funds (ARK Invest, Duquesne, Tiger Global, Berkshire Hathaway).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        manager: { type: "string", description: "Manager or fund name (e.g. 'ARK', 'Duquesne', 'Berkshire', 'Tiger')" },
+      },
+    },
+  },
+  {
+    name: "get_data_status",
+    description: "Check pipeline data freshness, updated_at timestamps, and stale boolean flags across market, 13F, and intelligence feeds.",
+    inputSchema: {
+      type: "object",
+      properties: {}
+    }
+  },
+  {
+    name: "get_ebook_playbook",
+    description: "Get information and direct PDF download links for Stock Bloc Wealth Operating System e-books and financial playbooks.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ebookId: { type: "string", description: "Ebook ID (e.g. 'wealth_operating_system', 'future_wealth_blueprint')" },
+      },
+    },
+  },
+  {
+    name: "analyze_sec_filing",
+    description: "Analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence from Stock Bloc SEC Analyst native agent (Price: $0.25 USDC via x402 pay-per-call on Base).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ticker: { type: "string", description: "Stock ticker symbol (e.g. AAPL, NVDA, MSFT, TSLA)" },
+        filingType: { type: "string", enum: ["10-K", "10-Q", "8-K"], description: "SEC filing type to analyze" },
+        question: { type: "string", description: "Optional specific financial intelligence query" }
+      },
+      required: ["ticker", "filingType"]
+    }
+  }
+];
+
 // MCP HTTP JSON-RPC 2.0 Handler
 app.post(['/api/mcp/rpc', '/mcp', '/api/v1/mcp'], async (req, res) => {
   const { jsonrpc = "2.0", id, method, params } = req.body || {};
@@ -3732,165 +3893,7 @@ app.post(['/api/mcp/rpc', '/mcp', '/api/v1/mcp'], async (req, res) => {
       jsonrpc: "2.0",
       id,
       result: {
-        tools: [
-          {
-            name: "get_agent_leaderboard",
-            description: "Fetch top ranked Stock Bloc AI agents, real calculated win rates, alpha returns, badges, and active trade recommendations.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                limit: { type: "number", description: "Number of top agents to return (default: 10)" },
-              },
-            },
-          },
-          {
-            name: "get_top_trade_ideas",
-            description: "Get active high-conviction trade theses and target prices submitted by top-ranked AI trading agents.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                ticker: { type: "string", description: "Filter by stock ticker symbol (e.g. SPCX, NVDA, BE, PLTR)" },
-                limit: { type: "number", description: "Maximum trade ideas to return (default: 10)" }
-              }
-            }
-          },
-          {
-            name: "evaluate_tsunami_strategy",
-            description: "Evaluate a quantitative portfolio strategy against the Super Sonic Tsunami infrastructure watchlist (SPCX, NVDA, BE, PLTR, TSLA, AEHR, QUBT, SMCI). Returns Alpha, Sharpe, Win Rate, and Drawdown.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                allocation: {
-                  type: "object",
-                  description: "Portfolio ticker allocation map (e.g. {\"SPCX\": 0.35, \"NVDA\": 0.35, \"BE\": 0.20, \"PLTR\": 0.10})"
-                },
-                benchmark: {
-                  type: "string",
-                  enum: ["super_sonic_tsunami", "sp500", "nasdaq100"],
-                  description: "Benchmark for alpha & beta comparison (default: super_sonic_tsunami)"
-                },
-                riskTolerance: {
-                  type: "string",
-                  enum: ["aggressive", "moderate", "conservative"],
-                  description: "Volatility tolerance constraint"
-                },
-                horizonDays: {
-                  type: "number",
-                  description: "Backtest simulation horizon in days (default: 90)"
-                }
-              },
-              required: ["allocation"]
-            }
-          },
-          {
-            name: "register_autonomous_agent",
-            description: "Self-register an autonomous AI agent to receive an API key (sb_live_*) and 100 free platform trial credits.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                handle: { type: "string", description: "Unique agent handle (e.g. quantum_alpha_bot)" },
-                displayName: { type: "string", description: "Display name for the agent arena" },
-                description: { type: "string", description: "Quantitative strategy or architectural description" },
-                specialties: { type: "array", items: { type: "string" }, description: "Core competencies" }
-              },
-              required: ["handle"]
-            }
-          },
-          {
-            name: "submit_agent_trade_idea",
-            description: "Publish a high-conviction trade idea or simulated thesis to compete on the live Arena Leaderboard.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                agentId: { type: "string", description: "Registered agent ID" },
-                handle: { type: "string", description: "Agent handle" },
-                ticker: { type: "string", description: "Stock ticker (e.g. SPCX, NVDA, BE, TSLA)" },
-                action: { type: "string", enum: ["LONG", "BUY", "ACCUMULATE", "CALL", "SHORT"], description: "Trade action" },
-                targetPrice: { type: "number", description: "Target price in USD" },
-                timeframe: { type: "string", description: "e.g. 60-Day Horizon or 90-Day Horizon" },
-                confidence: { type: "number", description: "Confidence score 0-100" },
-                rationale: { type: "string", description: "Institutional investment thesis and catalyst" }
-              },
-              required: ["ticker", "action", "rationale"]
-            }
-          },
-          {
-            name: "get_stock_quote",
-            description: "Get real-time stock price, 52-week highs/lows, PE ratio, volume, and market cap for any ticker symbol.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                symbol: { type: "string", description: "Stock ticker symbol (e.g. AAPL, NVDA, TSLA, MSFT, BTC)" },
-              },
-              required: ["symbol"],
-            },
-          },
-          {
-            name: "run_quant_simulation",
-            description: "Evaluate quantitative portfolio allocations and return simulated Sharpe ratio, win rate, and max drawdown.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                tickers: { type: "array", items: { type: "string" }, description: "Array of stock symbols" },
-                weights: { type: "array", items: { type: "number" }, description: "Portfolio weights summing to 1.0" },
-                initialCapital: { type: "number", description: "Initial capital in USD" },
-              },
-              required: ["tickers", "weights"],
-            },
-          },
-          {
-            name: "analyze_stock_ai",
-            description: "Run comprehensive AI market analysis, fundamental metrics, and technical signals for any stock ticker.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                symbol: { type: "string", description: "Stock ticker symbol (e.g. NVDA, AMZN, PLTR)" },
-              },
-              required: ["symbol"],
-            },
-          },
-          {
-            name: "search_13f_whale_filings",
-            description: "Search SEC 13F institutional whale holdings for major funds (ARK Invest, Duquesne, Tiger Global, Berkshire Hathaway).",
-            inputSchema: {
-              type: "object",
-              properties: {
-                manager: { type: "string", description: "Manager or fund name (e.g. 'ARK', 'Duquesne', 'Berkshire', 'Tiger')" },
-              },
-            },
-          },
-          {
-            name: "get_data_status",
-            description: "Check pipeline data freshness, updated_at timestamps, and stale boolean flags across market, 13F, and intelligence feeds.",
-            inputSchema: {
-              type: "object",
-              properties: {}
-            }
-          },
-          {
-            name: "get_ebook_playbook",
-            description: "Get information and direct PDF download links for Stock Bloc Wealth Operating System e-books and financial playbooks.",
-            inputSchema: {
-              type: "object",
-              properties: {
-                ebookId: { type: "string", description: "Ebook ID (e.g. 'wealth_operating_system', 'future_wealth_blueprint')" },
-              },
-            },
-          },
-          {
-            name: "analyze_sec_filing",
-            description: "Analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence from Stock Bloc SEC Analyst native agent (Price: 25 credits = $0.25).",
-            inputSchema: {
-              type: "object",
-              properties: {
-                ticker: { type: "string", description: "Stock ticker symbol (e.g. AAPL, NVDA, MSFT, TSLA)" },
-                filingType: { type: "string", enum: ["10-K", "10-Q", "8-K"], description: "SEC filing type to analyze" },
-                question: { type: "string", description: "Optional specific financial intelligence query" }
-              },
-              required: ["ticker", "filingType"]
-            }
-          }
-        ],
+        tools: MCP_TOOLS,
       },
     });
   }
@@ -4214,56 +4217,29 @@ app.get('/.well-known/glama.json', (_req, res) => {
 
 // MCP Server Manifest Endpoint
 app.get('/.well-known/mcp.json', (req, res) => {
+  const functions: Record<string, { description: string; parameters: any }> = {};
+  for (const tool of MCP_TOOLS) {
+    functions[tool.name] = {
+      description: tool.description,
+      parameters: tool.inputSchema
+    };
+  }
+
   res.json({
     "mcpVersion": "1.0",
     "name": "stock-bloc",
-    "version": "1.0.0",
-    "description": "Stock Bloc Model Context Protocol Server",
-    "functions": {
-      "get_13f_holdings": {
-        "description": "Retrieve 13F holdings for a specific hedge fund.",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "whale_name": { "type": "string" }
-          },
-          "required": ["whale_name"]
-        }
-      },
-      "simulate_fico_score": {
-        "description": "Simulate FICO score changes.",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "payment_history": { "type": "number", "description": "0-100 score" },
-            "utilization": { "type": "number", "description": "percentage" }
-          },
-          "required": ["payment_history", "utilization"]
-        }
-      },
-      "analyze_real_estate_deal": {
-        "description": "Analyze cash flow for a real estate deal.",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "purchase_price": { "type": "number" },
-            "monthly_rent": { "type": "number" },
-            "expenses": { "type": "number" }
-          },
-          "required": ["purchase_price", "monthly_rent", "expenses"]
-        }
-      },
-      "get_quant_ticker_data": {
-        "description": "Get latest quant data for a symbol.",
-        "parameters": {
-          "type": "object",
-          "properties": {
-            "symbol": { "type": "string" }
-          },
-          "required": ["symbol"]
-        }
-      }
-    }
+    "version": "2.1.0",
+    "description": "Stock Bloc MCP server: market data, SEC 13F/filings, quant scores, forecasts for autonomous agents. Paid REST endpoints use x402 (USDC, Base eip155:8453).",
+    "transport": {
+      "type": "streamable-http",
+      "url": "https://stockbloc.ai.studio/api/mcp/rpc"
+    },
+    "discovery": {
+      "x402": "https://stockbloc.ai.studio/.well-known/x402",
+      "manifest": "https://stockbloc.ai.studio/agents/manifest.json",
+      "openapi": "https://stockbloc.ai.studio/api/v1/openapi.json"
+    },
+    functions
   });
 });
 
