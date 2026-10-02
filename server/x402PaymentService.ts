@@ -12,6 +12,7 @@ import {
 import { declareDiscoveryExtension, validateDiscoveryExtension } from '@x402/extensions';
 import { inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit } from './agentPlatform.js';
 import { inMemorySettlementRegistry } from './agentExchangeApi.js';
+import { recordMachineCommerceEvent } from './agentTelemetry.js';
 
 // ============================================================================
 // COINBASE CDP X402 CONSTANTS & SPECIFICATION (BASE MAINNET)
@@ -678,6 +679,8 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       return forwardNext();
     }
 
+    const paymentSource = ((req.headers['x-payment-source'] || req.headers['x-source'] || 'rest') as string) === 'mcp' ? 'mcp' : 'rest';
+
     const paymentHeader =
       req.header('payment-signature') ||
       req.header('PAYMENT-SIGNATURE') ||
@@ -791,6 +794,12 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
         paymentPayload,
         typeof paymentHeader === 'string' ? paymentHeader : undefined
       );
+
+      recordMachineCommerceEvent({
+        eventType: 'payment_attempt',
+        source: paymentSource,
+        endpoint: endpointConfig.id
+      });
 
       // 1. Check existing authoritative settlement (Idempotent replay)
       const existingSettlement = getX402Settlement(keys.payloadHash, keys.nonceKey);
@@ -988,6 +997,15 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
           txHash: settlementRecord.txHash
         };
 
+        recordMachineCommerceEvent({
+          eventType: 'payment_success',
+          source: paymentSource,
+          endpoint: endpointConfig.id,
+          payer: settlementRecord.payer,
+          amountUsd: endpointConfig.priceUsd,
+          txHash: settlementRecord.txHash
+        });
+
         // Post-settlement bookkeeping (ISOLATED: MUST NEVER REJECT OR CONVERT A SETTLED PAYMENT TO 402)
         try {
           if (isAgentKey) {
@@ -1106,6 +1124,13 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
           displayName: debitResult.displayName
         };
         (req as any).creditsRemaining = debitResult.creditsRemaining;
+        recordMachineCommerceEvent({
+          eventType: 'trial_usage',
+          source: paymentSource,
+          endpoint: endpointConfig.id,
+          payer: debitResult.agentId,
+          amountUsd: endpointConfig.priceUsd
+        });
         return forwardNext();
       }
 
@@ -1161,6 +1186,12 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
     const encodedHeader = encodePaymentRequiredHeader(paymentRequiredPayload);
     res.setHeader('PAYMENT-REQUIRED', encodedHeader);
     res.setHeader('Cache-Control', 'no-store, private');
+    recordMachineCommerceEvent({
+      eventType: 'payment_required',
+      source: paymentSource,
+      endpoint: endpointConfig.id,
+      amountUsd: endpointConfig.priceUsd
+    });
     return res.status(402).json({
       status: 'payment_required',
       code: 'PAYMENT_REQUIRED',

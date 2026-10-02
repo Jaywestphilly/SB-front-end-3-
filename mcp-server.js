@@ -213,8 +213,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 
 // Handle Tool Executions
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, arguments: args } = request.params;
+  const { name, arguments: args, _meta: rawMeta = {} } = request.params;
   const nowIso = new Date().toISOString();
+
+  // Extract agent auth and payment payload from request parameters / _meta
+  const authKey = process.env.AGENT_API_KEY || process.env.STOCK_BLOC_API_KEY || args?.apiKey || rawMeta?.apiKey || rawMeta?.authorization;
+  const paymentPayload = rawMeta?.['x402/payment'] || rawMeta?.payment || rawMeta?.x402Payment;
+
+  const defaultHeaders = {};
+  if (authKey) {
+    defaultHeaders["Authorization"] = authKey.startsWith("Bearer ") ? authKey : `Bearer ${authKey}`;
+  }
+  if (paymentPayload) {
+    const formattedPayment = typeof paymentPayload === 'string' ? paymentPayload : JSON.stringify(paymentPayload);
+    defaultHeaders["PAYMENT-SIGNATURE"] = formattedPayment;
+    defaultHeaders["X-PAYMENT"] = formattedPayment;
+  }
 
   try {
     if (name === "get_agent_leaderboard") {
@@ -262,8 +276,47 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
 
+    const executePaidFetch = async (url, options = {}) => {
+      const mergedHeaders = { ...defaultHeaders, ...(options.headers || {}) };
+      const res = await fetch(url, { ...options, headers: mergedHeaders });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 402) {
+        return {
+          isError: true,
+          structuredContent: data,
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(data, null, 2),
+            },
+          ],
+          _meta: {
+            "x402/payment-required": data,
+          },
+        };
+      }
+      const rawPaymentResp = res.headers?.get('payment-response');
+      let paymentRespMeta = undefined;
+      if (rawPaymentResp) {
+        try {
+          paymentRespMeta = JSON.parse(Buffer.from(rawPaymentResp, 'base64').toString('utf8'));
+        } catch {
+          paymentRespMeta = { success: true, header: rawPaymentResp };
+        }
+      }
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(data, null, 2),
+          },
+        ],
+        ...(paymentRespMeta ? { _meta: { "x402/payment-response": paymentRespMeta } } : {}),
+      };
+    };
+
     if (name === "evaluate_tsunami_strategy") {
-      const res = await fetch(`${BASE_URL}/api/v1/agent/strategy/evaluate`, {
+      return await executePaidFetch(`${BASE_URL}/api/v1/agent/strategy/evaluate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -273,43 +326,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           horizonDays: args?.horizonDays || 90,
         }),
       });
-      const data = await res.json();
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(data, null, 2),
-          },
-        ],
-      };
-    }
-
-    if (name === "register_autonomous_agent") {
-      const res = await fetch(`${BASE_URL}/api/v1/agent/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          handle: args?.handle,
-          displayName: args?.displayName,
-          description: args?.description,
-          specialties: args?.specialties,
-        }),
-      });
-      const data = await res.json();
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(data, null, 2),
-          },
-        ],
-      };
     }
 
     if (name === "submit_agent_trade_idea") {
-      const res = await fetch(`${BASE_URL}/api/v1/agent/submit-performance`, {
+      return await executePaidFetch(`${BASE_URL}/api/v1/agent/submit-performance`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -323,41 +343,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           rationale: args?.rationale,
         }),
       });
-      const data = await res.json();
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(data, null, 2),
-          },
-        ],
-      };
     }
 
     if (name === "get_stock_quote") {
-      const symbol = String(args.symbol).toUpperCase();
-      const res = await fetch(`${BASE_URL}/api/live-quote/${symbol}`);
-      const data = await res.json();
-      const dataAsOf = data.data_as_of || data.lastUpdated || data.updated_at || nowIso;
-      const stale = data.stale !== undefined ? Boolean(data.stale) : false;
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              ...data,
-              data_as_of: dataAsOf,
-              stale,
-            }, null, 2),
-          },
-        ],
-      };
+      const symbol = String(args.symbol || 'AAPL').toUpperCase();
+      return await executePaidFetch(`${BASE_URL}/api/live-quote/${symbol}`);
     }
 
     if (name === "run_quant_simulation") {
-      const res = await fetch(`${BASE_URL}/api/v1/agent/quant-sim`, {
+      return await executePaidFetch(`${BASE_URL}/api/v1/agent/quant-sim`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -366,21 +360,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           initialCapital: args.initialCapital || 10000,
         }),
       });
-      const data = await res.json();
+    }
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              ...data,
-              data_as_of: data.data_as_of || nowIso,
-              stale: false,
-              endpoint_type: "illustrative_simulation",
-            }, null, 2),
-          },
-        ],
-      };
+    if (name === "analyze_sec_filing") {
+      return await executePaidFetch(`${BASE_URL}/api/v1/sec/job`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ticker: args?.ticker,
+          filingType: args?.filingType,
+          question: args?.question
+        })
+      });
     }
 
     if (name === "analyze_stock_ai") {
@@ -411,76 +402,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
     if (name === "search_13f_whale_filings") {
       const manager = args?.manager ? String(args.manager).toLowerCase() : "";
-      
-      try {
-        const res = await fetch(`${BASE_URL}/api/data/sec`);
-        if (res.ok) {
-          const secData = await res.json();
-          let funds = Array.isArray(secData.funds) ? secData.funds : [];
-          if (manager) {
-            funds = funds.filter(f => 
-              (f.fund_name || f.fundName || "").toLowerCase().includes(manager) ||
-              (f.manager || "").toLowerCase().includes(manager) ||
-              (f.id || "").toLowerCase().includes(manager)
-            );
-          }
-
-          const updatedAt = secData.updated_at || nowIso;
-          const stale = secData.stale !== undefined ? Boolean(secData.stale) : false;
-
-          const processedFunds = funds.map(f => {
-            const holdings = f.topHoldings || f.holdings || [];
-            const hasHoldings = Array.isArray(holdings) && holdings.length > 0;
-            const holdingsStatus = hasHoldings ? (f.holdings_status || "parsed") : "metadata_only";
-
-            return {
-              id: f.id,
-              fund_name: f.fund_name || f.fundName,
-              manager: f.manager,
-              cik: f.cik,
-              filing_date: f.filing_date || f.filingDate,
-              quarter: f.quarter,
-              aum: f.aum,
-              doc_url: f.doc_url || (f.filings && f.filings[0] ? f.filings[0].doc_url : undefined),
-              holdings_status: holdingsStatus,
-              mandate: f.mandate,
-              filings: f.filings,
-              topHoldings: hasHoldings ? holdings : []
-            };
-          });
-
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(
-                  {
-                    source: `${BASE_URL}/api/data/sec`,
-                    data_as_of: updatedAt,
-                    stale: stale,
-                    funds: processedFunds,
-                    macroSummary: secData.macroSummary || "",
-                  },
-                  null,
-                  2
-                ),
-              },
-            ],
-          };
-        }
-      } catch (e) {
-        console.error("MCP 13F fetch error:", e);
-      }
-
-      return {
-        isError: true,
-        content: [
-          {
-            type: "text",
-            text: "Failed to fetch SEC 13F holdings from proxy endpoint.",
-          },
-        ],
-      };
+      return await executePaidFetch(`${BASE_URL}/api/data/sec`);
     }
 
     if (name === "get_data_status") {

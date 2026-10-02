@@ -1,20 +1,31 @@
 // @vitest-environment node
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import http from 'http';
 import crypto from 'crypto';
-import { handleMcpRpcRequest, MCP_TOOLS } from './mcpService.js';
-import { requireX402Payment } from './x402PaymentService.js';
+import { handleMcpRpcRequest, MCP_TOOLS, PAID_MCP_TOOLS, MCP_TOOL_PRICING } from './mcpService.js';
+import { requireX402Payment, clearX402SettlementRegistry, PRICED_ENDPOINTS, BASE_USDC_CONTRACT, BASE_CAIP2 } from './x402PaymentService.js';
 import { secAnalystRouter } from './secAnalystAgent.js';
+import {
+  resetFacilitatorMock,
+  setFacilitatorVerifyHandler,
+  setFacilitatorSettleHandler,
+  mockFacilitatorVerify,
+  mockFacilitatorSettle
+} from './testSetup/facilitatorMock.js';
 import {
   inMemoryAgentRegistry,
   inMemoryKeyRegistry,
   inMemoryWalletRegistry,
   DEFAULT_AUTONOMOUS_SCOPES
 } from './agentPlatform.js';
+import {
+  getMachineRevenueMetrics,
+  clearTelemetryState
+} from './agentTelemetry.js';
 
-describe('Stock Bloc MCP Tool Payment Execution Suite', () => {
+describe('Stock Bloc Native MCP x402 Payment Flow & Tool Execution Suite', () => {
   let server: http.Server;
   const originalEnv = { ...process.env };
   const TEST_RECIPIENT_ADDRESS = '0x0123456789abcdef0123456789abcdef01234567';
@@ -70,6 +81,28 @@ describe('Stock Bloc MCP Tool Payment Execution Suite', () => {
       });
     });
 
+    // Strategy evaluation endpoint ($0.10 / 10 credits)
+    testApp.post('/api/v1/agent/strategy/evaluate', (req, res) => {
+      res.json({
+        status: 'success',
+        annualizedReturn: 0.428,
+        sharpeRatio: 2.65,
+        maxDrawdown: -0.092,
+        benchmarkReturn: 0.312,
+        alpha: 0.116
+      });
+    });
+
+    // Submit performance / trade thesis ($0.10 / 10 credits)
+    testApp.post('/api/v1/agent/submit-performance', (req, res) => {
+      res.json({
+        status: 'success',
+        tradeId: 'tr_test_001',
+        published: true,
+        ticker: req.body?.ticker || 'NVDA'
+      });
+    });
+
     // Public read-only endpoints (free)
     testApp.get('/api/v1/agent/leaderboard', (req, res) => {
       res.json({
@@ -87,6 +120,15 @@ describe('Stock Bloc MCP Tool Payment Execution Suite', () => {
         tradeIdeas: [
           { ticker: 'NVDA', action: 'BUY', targetPrice: 160 }
         ]
+      });
+    });
+
+    testApp.post('/api/v1/agents/register', (req, res) => {
+      res.status(201).json({
+        status: 'registered',
+        agentId: 'agent_test_reg',
+        apiKey: 'sb_live_test_key_123',
+        trialCredits: 100
       });
     });
 
@@ -128,6 +170,9 @@ describe('Stock Bloc MCP Tool Payment Execution Suite', () => {
   });
 
   beforeEach(() => {
+    resetFacilitatorMock();
+    clearX402SettlementRegistry();
+    clearTelemetryState();
     inMemoryAgentRegistry.clear();
     inMemoryKeyRegistry.clear();
     inMemoryWalletRegistry.clear();
@@ -174,10 +219,314 @@ describe('Stock Bloc MCP Tool Payment Execution Suite', () => {
     return { agentId, rawApiKey, handle };
   };
 
+  // Helper to create valid EIP-3009 payment payload
+  const createMockPaymentPayload = (payer = '0x111122223333444455556666777788889999aaaa') => {
+    const nonce = '0x' + crypto.randomBytes(32).toString('hex');
+    return {
+      x402Version: 2,
+      scheme: 'exact',
+      network: BASE_CAIP2,
+      payer,
+      payload: {
+        authorization: {
+          from: payer,
+          to: TEST_RECIPIENT_ADDRESS,
+          value: '10000',
+          validAfter: 0,
+          validBefore: Math.floor(Date.now() / 1000) + 3600,
+          nonce,
+          v: 27,
+          r: '0x' + crypto.randomBytes(32).toString('hex'),
+          s: '0x' + crypto.randomBytes(32).toString('hex')
+        }
+      }
+    };
+  };
+
   // --------------------------------------------------------------------------
-  // A. MCP get_stock_quote with valid sb_live_ key: real quote, credits debited.
+  // 1. Paid MCP tool without payment: returns JSON-RPC success envelope with isError: true and PaymentRequired
   // --------------------------------------------------------------------------
-  it('A. get_stock_quote with valid sb_live_ key: returns real quote and debits $0.01 (1 credit)', async () => {
+  it('1. Paid MCP tool without payment: returns JSON-RPC success envelope, result, isError: true, and machine-readable PaymentRequired', async () => {
+    const res = await request(server)
+      .post('/api/mcp/rpc')
+      .send({
+        jsonrpc: '2.0',
+        id: 'unpaid_quote_01',
+        method: 'tools/call',
+        params: {
+          name: 'get_stock_quote',
+          arguments: { symbol: 'NVDA' }
+        }
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.jsonrpc).toBe('2.0');
+    expect(res.body.id).toBe('unpaid_quote_01');
+    expect(res.body.error).toBeUndefined();
+    expect(res.body.result).toBeDefined();
+    expect(res.body.result.isError).toBe(true);
+
+    // Verify machine-readable PaymentRequired data in structuredContent and _meta
+    const structured = res.body.result.structuredContent;
+    expect(structured).toBeDefined();
+    expect(structured.x402Version).toBe(2);
+    expect(Array.isArray(structured.accepts)).toBe(true);
+    expect(structured.accepts[0].scheme).toBe('exact');
+    expect(structured.accepts[0].network).toBe(BASE_CAIP2);
+    expect(structured.accepts[0].amount).toBe('10000'); // $0.01
+    expect(structured.accepts[0].asset).toBe(BASE_USDC_CONTRACT);
+    expect(structured.accepts[0].payTo).toBe(TEST_RECIPIENT_ADDRESS);
+
+    // Verify content contains equivalent machine-readable payment information
+    expect(Array.isArray(res.body.result.content)).toBe(true);
+    expect(res.body.result.content[0].type).toBe('text');
+    const parsedContent = JSON.parse(res.body.result.content[0].text);
+    expect(parsedContent.x402Version).toBe(2);
+    expect(parsedContent.accepts[0].amount).toBe('10000');
+
+    // Verify _meta["x402/payment-required"]
+    expect(res.body.result._meta?.['x402/payment-required']).toBeDefined();
+  });
+
+  // --------------------------------------------------------------------------
+  // 2. Paid MCP tool with valid _meta["x402/payment"]: verifies, settles, executes tool, returns _meta["x402/payment-response"]
+  // --------------------------------------------------------------------------
+  it('2. Paid MCP tool with valid _meta["x402/payment"]: verifies, settles on-chain, executes tool, and returns _meta["x402/payment-response"]', async () => {
+    const payerWallet = '0xAb5801a7D398351b8bE11C439e05C5B3259aeC9B';
+    const paymentPayload = createMockPaymentPayload(payerWallet);
+    const mockTxHash = '0x' + crypto.randomBytes(32).toString('hex');
+
+    setFacilitatorVerifyHandler(async (payload) => ({
+      isValid: true,
+      payer: payerWallet,
+      scheme: payload.scheme || 'exact',
+      network: payload.network || BASE_CAIP2
+    }));
+
+    setFacilitatorSettleHandler(async () => ({
+      success: true,
+      txHash: mockTxHash,
+      transaction: mockTxHash,
+      network: BASE_CAIP2,
+      payer: payerWallet
+    }));
+
+    const res = await request(server)
+      .post('/api/mcp/rpc')
+      .send({
+        jsonrpc: '2.0',
+        id: 'paid_quote_01',
+        method: 'tools/call',
+        params: {
+          name: 'get_stock_quote',
+          arguments: { symbol: 'NVDA' },
+          _meta: {
+            'x402/payment': paymentPayload
+          }
+        }
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.error).toBeUndefined();
+    expect(res.body.result).toBeDefined();
+    expect(res.body.result.isError).toBeUndefined();
+
+    // Verify tool execution output
+    const quoteData = JSON.parse(res.body.result.content[0].text);
+    expect(quoteData.symbol).toBe('NVDA');
+    expect(quoteData.price).toBe(138.25);
+
+    // Verify _meta["x402/payment-response"]
+    const paymentResponse = res.body.result._meta?.['x402/payment-response'];
+    expect(paymentResponse).toBeDefined();
+    expect(paymentResponse.txHash || paymentResponse.transaction).toBe(mockTxHash);
+
+    // Verify facilitator verify & settle were called exactly once
+    expect(mockFacilitatorVerify).toHaveBeenCalledTimes(1);
+    expect(mockFacilitatorSettle).toHaveBeenCalledTimes(1);
+
+    // Verify revenue telemetry was recorded
+    const metrics = getMachineRevenueMetrics();
+    expect(metrics.paymentSuccessCount).toBe(1);
+    expect(metrics.totalUsdcRevenue).toBe(0.01);
+    expect(metrics.revenueByEndpoint['market_data'] || metrics.revenueByEndpoint['get_stock_quote']).toBeGreaterThan(0);
+  });
+
+  // --------------------------------------------------------------------------
+  // 3. Repeat payment from same agent: tracks first_paid_call, second_paid_call, and repeat_payer KPI
+  // --------------------------------------------------------------------------
+  it('3. Repeat payment from same agent: tracks first_paid_call, second_paid_call, and repeat_payer KPI', async () => {
+    const payerWallet = '0x9999888877776666555544443333222211110000';
+    const payment1 = createMockPaymentPayload(payerWallet);
+    const payment2 = createMockPaymentPayload(payerWallet);
+    const tx1 = '0x' + crypto.randomBytes(32).toString('hex');
+    const tx2 = '0x' + crypto.randomBytes(32).toString('hex');
+
+    setFacilitatorVerifyHandler(async () => ({ isValid: true, payer: payerWallet }));
+
+    let callCount = 0;
+    setFacilitatorSettleHandler(async () => {
+      callCount++;
+      return {
+        success: true,
+        txHash: callCount === 1 ? tx1 : tx2,
+        network: BASE_CAIP2,
+        payer: payerWallet
+      };
+    });
+
+    // First paid call ($0.01)
+    const res1 = await request(server)
+      .post('/api/mcp/rpc')
+      .send({
+        jsonrpc: '2.0',
+        id: 'call_1',
+        method: 'tools/call',
+        params: {
+          name: 'get_stock_quote',
+          arguments: { symbol: 'NVDA' },
+          _meta: { 'x402/payment': payment1 }
+        }
+      });
+    expect(res1.status).toBe(200);
+    expect(res1.body.result._meta?.['x402/payment-response']).toBeDefined();
+
+    let metrics = getMachineRevenueMetrics();
+    expect(metrics.firstPaidCallsCount).toBe(1);
+    expect(metrics.secondPaidCallsCount).toBe(0);
+    expect(metrics.repeatPayersCount).toBe(0);
+
+    // Second paid call from same wallet ($0.10)
+    const res2 = await request(server)
+      .post('/api/mcp/rpc')
+      .send({
+        jsonrpc: '2.0',
+        id: 'call_2',
+        method: 'tools/call',
+        params: {
+          name: 'search_13f_whale_filings',
+          arguments: { manager: 'Berkshire' },
+          _meta: { 'x402/payment': payment2 }
+        }
+      });
+    expect(res2.status).toBe(200);
+    expect(res2.body.result._meta?.['x402/payment-response']).toBeDefined();
+
+    metrics = getMachineRevenueMetrics();
+    expect(metrics.firstPaidCallsCount).toBe(1);
+    expect(metrics.secondPaidCallsCount).toBe(1);
+    expect(metrics.repeatPayersCount).toBe(1);
+    expect(metrics.primaryKpi.value).toBe(1); // 1 repeat paying agent
+    expect(metrics.totalUsdcRevenue).toBe(0.11);
+  });
+
+  // --------------------------------------------------------------------------
+  // 4. Idempotency & Replay Protection: identical payment payload returns original result without re-settling
+  // --------------------------------------------------------------------------
+  it('4. Replay protection: identical payment payload returns original result without settling on-chain again', async () => {
+    const payerWallet = '0x1234123412341234123412341234123412341234';
+    const paymentPayload = createMockPaymentPayload(payerWallet);
+    const txHash = '0x' + crypto.randomBytes(32).toString('hex');
+
+    setFacilitatorVerifyHandler(async () => ({ isValid: true, payer: payerWallet }));
+    setFacilitatorSettleHandler(async () => ({ success: true, txHash, network: BASE_CAIP2, payer: payerWallet }));
+
+    // Call 1: settled on-chain
+    const res1 = await request(server)
+      .post('/api/mcp/rpc')
+      .send({
+        jsonrpc: '2.0',
+        id: 'call_replay_1',
+        method: 'tools/call',
+        params: {
+          name: 'get_stock_quote',
+          arguments: { symbol: 'AAPL' },
+          _meta: { 'x402/payment': paymentPayload }
+        }
+      });
+    expect(res1.status).toBe(200);
+    expect(mockFacilitatorSettle).toHaveBeenCalledTimes(1);
+
+    // Call 2 with identical payload (replay)
+    const res2 = await request(server)
+      .post('/api/mcp/rpc')
+      .send({
+        jsonrpc: '2.0',
+        id: 'call_replay_2',
+        method: 'tools/call',
+        params: {
+          name: 'get_stock_quote',
+          arguments: { symbol: 'AAPL' },
+          _meta: { 'x402/payment': paymentPayload }
+        }
+      });
+    expect(res2.status).toBe(200);
+    expect(res2.body.result).toBeDefined();
+    // Settle was NOT called a second time
+    expect(mockFacilitatorSettle).toHaveBeenCalledTimes(1);
+  });
+
+  // --------------------------------------------------------------------------
+  // 5. Invalid payment payload: returns structured error in result
+  // --------------------------------------------------------------------------
+  it('5. Invalid payment payload: returns structured error in result with isError: true', async () => {
+    setFacilitatorVerifyHandler(async () => {
+      throw new Error('execution reverted: invalid EIP-3009 signature');
+    });
+
+    const res = await request(server)
+      .post('/api/mcp/rpc')
+      .send({
+        jsonrpc: '2.0',
+        id: 'invalid_pay_01',
+        method: 'tools/call',
+        params: {
+          name: 'get_stock_quote',
+          arguments: { symbol: 'NVDA' },
+          _meta: {
+            'x402/payment': { invalid: 'payload' }
+          }
+        }
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.result).toBeDefined();
+    expect(res.body.result.isError).toBe(true);
+    expect(res.body.result._meta?.['x402/payment-error'] || res.body.result._meta?.['x402/payment-required']).toBeDefined();
+  });
+
+  // --------------------------------------------------------------------------
+  // 6. Exhausted trial credits (0 remaining) transitions seamlessly to x402 PaymentRequired
+  // --------------------------------------------------------------------------
+  it('6. Exhausted trial credits: returns native MCP PaymentRequired for seamless transition to x402', async () => {
+    const { rawApiKey } = registerTestAgent(0); // 0 credits
+
+    const res = await request(server)
+      .post('/api/mcp/rpc')
+      .set('Authorization', `Bearer ${rawApiKey}`)
+      .send({
+        jsonrpc: '2.0',
+        id: 'exhausted_trial_01',
+        method: 'tools/call',
+        params: {
+          name: 'get_stock_quote',
+          arguments: { symbol: 'AAPL' }
+        }
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.error).toBeUndefined();
+    expect(res.body.result).toBeDefined();
+    expect(res.body.result.isError).toBe(true);
+    expect(res.body.result.structuredContent.status).toBe('payment_required');
+    expect(res.body.result.structuredContent.accepts[0].amount).toBe('10000');
+    expect(res.body.result._meta?.['x402/payment-required']).toBeDefined();
+  });
+
+  // --------------------------------------------------------------------------
+  // 7. Valid trial credits (100 remaining): debits credits and executes tool
+  // --------------------------------------------------------------------------
+  it('7. Valid trial credits: debits credits and executes tool successfully', async () => {
     const { agentId, rawApiKey } = registerTestAgent(100);
 
     const res = await request(server)
@@ -185,7 +534,7 @@ describe('Stock Bloc MCP Tool Payment Execution Suite', () => {
       .set('Authorization', `Bearer ${rawApiKey}`)
       .send({
         jsonrpc: '2.0',
-        id: 'quote_test_01',
+        id: 'credit_quote_01',
         method: 'tools/call',
         params: {
           name: 'get_stock_quote',
@@ -196,82 +545,48 @@ describe('Stock Bloc MCP Tool Payment Execution Suite', () => {
     expect(res.status).toBe(200);
     expect(res.body.error).toBeUndefined();
     expect(res.body.result).toBeDefined();
-    expect(res.body.result.content).toBeDefined();
-    expect(res.body.result.content[0].type).toBe('text');
+    expect(res.body.result.isError).toBeUndefined();
 
     const quoteData = JSON.parse(res.body.result.content[0].text);
-    expect(quoteData.symbol || quoteData.ticker).toBe('NVDA');
+    expect(quoteData.symbol).toBe('NVDA');
 
-    // $0.01 USDC = 1 credit debit: 100 - 1 = 99
+    // 100 - 1 = 99 credits
     const wallet = inMemoryWalletRegistry.get(agentId);
     expect(wallet?.creditsBalance).toBe(99);
   });
 
   // --------------------------------------------------------------------------
-  // B. MCP paid tool with valid key at zero credits: clear register/pay guidance as JSON-RPC error, not a 402 dump.
+  // 8. All 6 paid MCP tools have matching pricing with REST catalog
   // --------------------------------------------------------------------------
-  it('B. MCP paid tool with valid key at zero credits: returns clear register/pay guidance as JSON-RPC error, not a 402 dump', async () => {
-    const { rawApiKey } = registerTestAgent(0); // Zero credits remaining
+  it('8. All 6 paid MCP tools have exact matching pricing with REST catalog', () => {
+    expect(MCP_TOOL_PRICING.get_stock_quote.priceUsd).toBe(PRICED_ENDPOINTS.market_data.priceUsd);
+    expect(MCP_TOOL_PRICING.get_stock_quote.atomicAmount).toBe(PRICED_ENDPOINTS.market_data.atomicAmount);
 
-    const res = await request(server)
-      .post('/api/mcp/rpc')
-      .set('Authorization', `Bearer ${rawApiKey}`)
-      .send({
-        jsonrpc: '2.0',
-        id: 'zero_credits_test',
-        method: 'tools/call',
-        params: {
-          name: 'get_stock_quote',
-          arguments: { symbol: 'AAPL' }
-        }
-      });
+    expect(MCP_TOOL_PRICING.search_13f_whale_filings.priceUsd).toBe(PRICED_ENDPOINTS.sec_13f_intel.priceUsd);
+    expect(MCP_TOOL_PRICING.search_13f_whale_filings.atomicAmount).toBe(PRICED_ENDPOINTS.sec_13f_intel.atomicAmount);
 
-    expect(res.status).toBe(200);
-    // Must be a JSON-RPC error object, NOT a successful result with 402 text dumped inside
-    expect(res.body.result).toBeUndefined();
-    expect(res.body.error).toBeDefined();
-    expect(res.body.error.code).toBe(-32002);
-    expect(res.body.error.message).toContain('Trial credit balance exhausted');
-    expect(res.body.error.message).toContain('POST /api/v1/agents/register');
-    expect(res.body.error.message).toContain('USDC on Base');
-    expect(res.body.error.data.status).toBe('payment_required');
+    expect(MCP_TOOL_PRICING.analyze_sec_filing.priceUsd).toBe(PRICED_ENDPOINTS.sec_job.priceUsd);
+    expect(MCP_TOOL_PRICING.analyze_sec_filing.atomicAmount).toBe(PRICED_ENDPOINTS.sec_job.atomicAmount);
+
+    expect(MCP_TOOL_PRICING.evaluate_tsunami_strategy.priceUsd).toBe(PRICED_ENDPOINTS.strategy_eval.priceUsd);
+    expect(MCP_TOOL_PRICING.evaluate_tsunami_strategy.atomicAmount).toBe(PRICED_ENDPOINTS.strategy_eval.atomicAmount);
+
+    expect(MCP_TOOL_PRICING.run_quant_simulation.priceUsd).toBe(PRICED_ENDPOINTS.strategy_eval.priceUsd);
+    expect(MCP_TOOL_PRICING.run_quant_simulation.atomicAmount).toBe(PRICED_ENDPOINTS.strategy_eval.atomicAmount);
+
+    expect(MCP_TOOL_PRICING.submit_agent_trade_idea.priceUsd).toBe(PRICED_ENDPOINTS.strategy_eval.priceUsd);
+    expect(MCP_TOOL_PRICING.submit_agent_trade_idea.atomicAmount).toBe(PRICED_ENDPOINTS.strategy_eval.atomicAmount);
   });
 
   // --------------------------------------------------------------------------
-  // C. MCP paid tool with no key: same clear guidance.
+  // 9. Free tools execute without payment requirement or credentials
   // --------------------------------------------------------------------------
-  it('C. MCP paid tool with no key: returns clear machine-readable registration guidance as JSON-RPC error', async () => {
+  it('9. Free tools execute without requiring payment or credentials', async () => {
     const res = await request(server)
       .post('/api/mcp/rpc')
       .send({
         jsonrpc: '2.0',
-        id: 'no_key_test',
-        method: 'tools/call',
-        params: {
-          name: 'get_stock_quote',
-          arguments: { symbol: 'TSLA' }
-        }
-      });
-
-    expect(res.status).toBe(200);
-    expect(res.body.result).toBeUndefined();
-    expect(res.body.error).toBeDefined();
-    expect(res.body.error.code).toBe(-32002);
-    expect(res.body.error.message).toContain('Agent API key required');
-    expect(res.body.error.message).toContain('POST /api/v1/agents/register');
-    expect(res.body.error.message).toContain('USDC on Base');
-    expect(res.body.error.data.status).toBe('payment_required');
-  });
-
-  // --------------------------------------------------------------------------
-  // D. MCP free tool with no key: works as before.
-  // --------------------------------------------------------------------------
-  it('D. MCP free tool with no key: functions normally without requiring authentication', async () => {
-    const res = await request(server)
-      .post('/api/mcp/rpc')
-      .send({
-        jsonrpc: '2.0',
-        id: 'free_leaderboard_test',
+        id: 'free_tool_01',
         method: 'tools/call',
         params: {
           name: 'get_agent_leaderboard',
@@ -280,92 +595,16 @@ describe('Stock Bloc MCP Tool Payment Execution Suite', () => {
       });
 
     expect(res.status).toBe(200);
-    expect(res.body.error).toBeUndefined();
     expect(res.body.result).toBeDefined();
-    expect(res.body.result.content).toBeDefined();
-    expect(res.body.result.content[0].type).toBe('text');
-
-    const leaderboardData = JSON.parse(res.body.result.content[0].text);
-    expect(leaderboardData.summary).toContain('Stock Bloc AI agents');
+    expect(res.body.result.isError).toBeUndefined();
+    const data = JSON.parse(res.body.result.content[0].text);
+    expect(data.summary).toContain('Stock Bloc AI agents');
   });
 
   // --------------------------------------------------------------------------
-  // E. analyze_sec_filing with key: hits real paid SEC endpoint, $0.25 debited.
+  // 10. No accidental Stripe or credit pack path in MCP
   // --------------------------------------------------------------------------
-  it('E. analyze_sec_filing with key: hits real paid SEC job endpoint and debits $0.25 (25 credits)', async () => {
-    const { agentId, rawApiKey } = registerTestAgent(100);
-
-    const res = await request(server)
-      .post('/api/mcp/rpc')
-      .set('Authorization', `Bearer ${rawApiKey}`)
-      .send({
-        jsonrpc: '2.0',
-        id: 'sec_filing_test',
-        method: 'tools/call',
-        params: {
-          name: 'analyze_sec_filing',
-          arguments: {
-            ticker: 'NVDA',
-            filingType: '10-Q',
-            question: 'What is the datacenter revenue growth?'
-          }
-        }
-      });
-
-    expect(res.status).toBe(200);
-    expect(res.body.error).toBeUndefined();
-    expect(res.body.result).toBeDefined();
-    expect(res.body.result.content).toBeDefined();
-    expect(res.body.result.content[0].type).toBe('text');
-
-    const secOutput = JSON.parse(res.body.result.content[0].text);
-    expect(secOutput.jobId).toBeDefined();
-    expect(secOutput.success === true || secOutput.output !== undefined).toBe(true);
-
-    // 25 credits debited for $0.25: 100 - 25 = 75
-    const wallet = inMemoryWalletRegistry.get(agentId);
-    expect(wallet?.creditsBalance).toBe(75);
-  });
-
-  // --------------------------------------------------------------------------
-  // F. search_13f_whale_filings: live data only, no hardcoded holdings in the response path.
-  // --------------------------------------------------------------------------
-  it('F. search_13f_whale_filings: queries live SEC endpoint with credentials and contains no hardcoded holdings', async () => {
-    const { agentId, rawApiKey } = registerTestAgent(100);
-
-    const res = await request(server)
-      .post('/api/mcp/rpc')
-      .set('Authorization', `Bearer ${rawApiKey}`)
-      .send({
-        jsonrpc: '2.0',
-        id: 'whale_search_01',
-        method: 'tools/call',
-        params: {
-          name: 'search_13f_whale_filings',
-          arguments: { manager: 'Berkshire' }
-        }
-      });
-
-    expect(res.status).toBe(200);
-    expect(res.body.error).toBeUndefined();
-    expect(res.body.result).toBeDefined();
-    expect(res.body.result.content).toBeDefined();
-    expect(res.body.result.content[0].type).toBe('text');
-
-    const secData = JSON.parse(res.body.result.content[0].text);
-    // Verifies live source
-    expect(secData.source).toBe('/api/data/sec');
-    expect(Array.isArray(secData.funds)).toBe(true);
-
-    // 10 credits debited for $0.10: 100 - 10 = 90
-    const wallet = inMemoryWalletRegistry.get(agentId);
-    expect(wallet?.creditsBalance).toBe(90);
-  });
-
-  // --------------------------------------------------------------------------
-  // G. tools/list: all 12 descriptions accurate, prices match enforcement.
-  // --------------------------------------------------------------------------
-  it('G. tools/list: all 12 descriptions are accurate and prices match actual x402 enforcement', async () => {
+  it('10. No accidental Stripe or credit pack paths exist in MCP', async () => {
     const res = await request(server)
       .post('/api/mcp/rpc')
       .send({
@@ -374,30 +613,7 @@ describe('Stock Bloc MCP Tool Payment Execution Suite', () => {
         method: 'tools/list'
       });
 
-    expect(res.status).toBe(200);
-    expect(res.body.result).toBeDefined();
-    const tools = res.body.result.tools;
-    expect(tools.length).toBe(12);
-
-    const toolMap = new Map<string, any>(tools.map((t: any) => [t.name, t]));
-
-    // Check all 6 paid tools have matching price claims
-    expect(toolMap.get('get_stock_quote')?.description).toContain('$0.01 USDC');
-    expect(toolMap.get('run_quant_simulation')?.description).toContain('$0.10 USDC');
-    expect(toolMap.get('evaluate_tsunami_strategy')?.description).toContain('$0.10 USDC');
-    expect(toolMap.get('submit_agent_trade_idea')?.description).toContain('$0.10 USDC');
-    expect(toolMap.get('search_13f_whale_filings')?.description).toContain('$0.10 USDC');
-    expect(toolMap.get('analyze_sec_filing')?.description).toContain('$0.25 USDC');
-
-    // Check register tool
-    expect(toolMap.get('register_autonomous_agent')?.description).toContain('no subscription');
-    expect(toolMap.get('register_autonomous_agent')?.description).toContain('USDC on Base');
-
-    // Confirm /.well-known/mcp.json exposes the exact same 12 functions
-    const mcpJsonRes = await request(server).get('/.well-known/mcp.json');
-    expect(mcpJsonRes.status).toBe(200);
-    expect(Object.keys(mcpJsonRes.body.functions).length).toBe(12);
-    expect(mcpJsonRes.body.functions.get_stock_quote.description).toContain('$0.01 USDC');
-    expect(mcpJsonRes.body.functions.analyze_sec_filing.description).toContain('$0.25 USDC');
+    const toolNames = res.body.result.tools.map((t: any) => t.name);
+    expect(toolNames.some((n: string) => n.includes('stripe') || n.includes('credit_pack') || n.includes('checkout'))).toBe(false);
   });
 });

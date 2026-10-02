@@ -11,6 +11,48 @@ export interface AgentTelemetry24h {
   lastUpdated: string;
 }
 
+export interface MachineCommerceEvent {
+  eventType:
+    | 'external_discovery'
+    | 'external_agent'
+    | 'trial_usage'
+    | 'payment_required'
+    | 'payment_attempt'
+    | 'payment_success'
+    | 'first_paid_call'
+    | 'second_paid_call'
+    | 'repeat_payer';
+  source?: 'mcp' | 'rest' | 'discovery';
+  endpoint?: string;
+  payer?: string;
+  amountUsd?: number;
+  txHash?: string;
+  details?: Record<string, any>;
+  timestamp?: string;
+}
+
+export interface MachineRevenueMetrics {
+  externalDiscoveryCount: number;
+  externalAgentsCount: number;
+  trialUsageCount: number;
+  paymentRequiredCount: number;
+  paymentAttemptCount: number;
+  paymentSuccessCount: number;
+  firstPaidCallsCount: number;
+  secondPaidCallsCount: number;
+  repeatPayersCount: number;
+  totalUsdcRevenue: number;
+  revenueByEndpoint: Record<string, number>;
+  revenueBySource: Record<string, number>;
+  agentLifetimeSpend: Record<string, number>;
+  primaryKpi: {
+    name: string;
+    value: number;
+    description: string;
+  };
+  lastUpdated: string;
+}
+
 // Secret in-memory daily rotating salt to guarantee zero-knowledge anonymization.
 // Because the salt rotates daily and is never persisted, identifiers cannot be correlated
 // across multi-day windows or reversed into real IDs, keys, or IPs.
@@ -28,6 +70,25 @@ const activeAgentHashes = new Map<string, number>();
 // Array of ping timestamps within rolling 24-hour window
 let recentPingTimestamps: number[] = [];
 
+// ============================================================================
+// MACHINE COMMERCE & REVENUE TRACKING (Zero Fabricated Data)
+// ============================================================================
+let externalDiscoveryCount = 0;
+const externalAgentsSet = new Set<string>();
+let trialUsageCount = 0;
+let paymentRequiredCount = 0;
+let paymentAttemptCount = 0;
+let paymentSuccessCount = 0;
+let firstPaidCallsCount = 0;
+let secondPaidCallsCount = 0;
+const payerPaidCallCount = new Map<string, number>();
+const repeatPayersSet = new Set<string>();
+let totalUsdcRevenue = 0;
+const revenueByEndpoint = new Map<string, number>();
+const revenueBySource = new Map<string, number>();
+const agentLifetimeSpend = new Map<string, number>();
+const machineCommerceEvents: MachineCommerceEvent[] = [];
+
 // Flag to track initial database hydration
 let hasHydratedFromDb = false;
 let lastFirestoreSyncTime = 0;
@@ -38,6 +99,160 @@ let lastFirestoreSyncTime = 0;
 export function clearTelemetryState(): void {
   activeAgentHashes.clear();
   recentPingTimestamps = [];
+  clearMachineCommerceState();
+}
+
+export function clearMachineCommerceState(): void {
+  externalDiscoveryCount = 0;
+  externalAgentsSet.clear();
+  trialUsageCount = 0;
+  paymentRequiredCount = 0;
+  paymentAttemptCount = 0;
+  paymentSuccessCount = 0;
+  firstPaidCallsCount = 0;
+  secondPaidCallsCount = 0;
+  payerPaidCallCount.clear();
+  repeatPayersSet.clear();
+  totalUsdcRevenue = 0;
+  revenueByEndpoint.clear();
+  revenueBySource.clear();
+  agentLifetimeSpend.clear();
+  machineCommerceEvents.length = 0;
+}
+
+/**
+ * Record a machine commerce event (pure tracking of actual external machine traffic).
+ */
+export function recordMachineCommerceEvent(event: MachineCommerceEvent): void {
+  const nowIso = new Date().toISOString();
+  const eventRecord: MachineCommerceEvent = {
+    ...event,
+    timestamp: event.timestamp || nowIso
+  };
+
+  machineCommerceEvents.push(eventRecord);
+  if (machineCommerceEvents.length > 500) {
+    machineCommerceEvents.shift();
+  }
+
+  if (event.eventType === 'external_discovery') {
+    externalDiscoveryCount++;
+  }
+
+  if (event.payer) {
+    externalAgentsSet.add(event.payer.toLowerCase());
+  }
+
+  if (event.eventType === 'trial_usage') {
+    trialUsageCount++;
+  }
+
+  if (event.eventType === 'payment_required') {
+    paymentRequiredCount++;
+  }
+
+  if (event.eventType === 'payment_attempt') {
+    paymentAttemptCount++;
+  }
+
+  if (event.eventType === 'payment_success') {
+    paymentSuccessCount++;
+    const amt = typeof event.amountUsd === 'number' && !isNaN(event.amountUsd) ? event.amountUsd : 0;
+    if (amt > 0) {
+      totalUsdcRevenue = Number((totalUsdcRevenue + amt).toFixed(6));
+      if (event.endpoint) {
+        const epKey = event.endpoint;
+        revenueByEndpoint.set(epKey, Number(((revenueByEndpoint.get(epKey) || 0) + amt).toFixed(6)));
+      }
+      if (event.source) {
+        const srcKey = event.source;
+        revenueBySource.set(srcKey, Number(((revenueBySource.get(srcKey) || 0) + amt).toFixed(6)));
+      }
+    }
+
+    if (event.payer) {
+      const payerKey = event.payer.toLowerCase();
+      const priorCount = payerPaidCallCount.get(payerKey) || 0;
+      const newCount = priorCount + 1;
+      payerPaidCallCount.set(payerKey, newCount);
+      agentLifetimeSpend.set(payerKey, Number(((agentLifetimeSpend.get(payerKey) || 0) + amt).toFixed(6)));
+
+      if (newCount === 1) {
+        firstPaidCallsCount++;
+        machineCommerceEvents.push({
+          eventType: 'first_paid_call',
+          source: event.source,
+          endpoint: event.endpoint,
+          payer: payerKey,
+          amountUsd: amt,
+          timestamp: nowIso
+        });
+      } else if (newCount === 2) {
+        secondPaidCallsCount++;
+        repeatPayersSet.add(payerKey);
+        machineCommerceEvents.push({
+          eventType: 'second_paid_call',
+          source: event.source,
+          endpoint: event.endpoint,
+          payer: payerKey,
+          amountUsd: amt,
+          timestamp: nowIso
+        });
+        machineCommerceEvents.push({
+          eventType: 'repeat_payer',
+          source: event.source,
+          endpoint: event.endpoint,
+          payer: payerKey,
+          amountUsd: amt,
+          timestamp: nowIso
+        });
+      } else if (newCount > 2) {
+        repeatPayersSet.add(payerKey);
+      }
+    }
+  }
+}
+
+/**
+ * Get aggregated Machine Revenue & Conversion Metrics.
+ */
+export function getMachineRevenueMetrics(): MachineRevenueMetrics {
+  const revByEpObj: Record<string, number> = {};
+  for (const [k, v] of revenueByEndpoint.entries()) {
+    revByEpObj[k] = v;
+  }
+
+  const revBySrcObj: Record<string, number> = {};
+  for (const [k, v] of revenueBySource.entries()) {
+    revBySrcObj[k] = v;
+  }
+
+  const lifetimeSpendObj: Record<string, number> = {};
+  for (const [k, v] of agentLifetimeSpend.entries()) {
+    lifetimeSpendObj[k] = v;
+  }
+
+  return {
+    externalDiscoveryCount,
+    externalAgentsCount: externalAgentsSet.size,
+    trialUsageCount,
+    paymentRequiredCount,
+    paymentAttemptCount,
+    paymentSuccessCount,
+    firstPaidCallsCount,
+    secondPaidCallsCount,
+    repeatPayersCount: repeatPayersSet.size,
+    totalUsdcRevenue: Number(totalUsdcRevenue.toFixed(6)),
+    revenueByEndpoint: revByEpObj,
+    revenueBySource: revBySrcObj,
+    agentLifetimeSpend: lifetimeSpendObj,
+    primaryKpi: {
+      name: 'EXTERNAL_AGENTS_WITH_TWO_OR_MORE_PAID_CALLS',
+      value: repeatPayersSet.size,
+      description: 'The number of distinct external agent wallets that have completed 2 or more verified on-chain USDC payments.'
+    },
+    lastUpdated: new Date().toISOString()
+  };
 }
 
 /**
@@ -203,6 +418,12 @@ agentTelemetryRouter.get(['/agents-24h', '/telemetry/agents-24h', '/agent-activi
   const telemetry = getAgentTelemetry24h();
   res.setHeader('Cache-Control', 'public, max-age=15, s-maxage=30');
   res.status(200).json(telemetry);
+});
+
+agentTelemetryRouter.get(['/revenue', '/commerce', '/telemetry/revenue', '/telemetry/commerce'], (_req: Request, res: Response) => {
+  const metrics = getMachineRevenueMetrics();
+  res.setHeader('Cache-Control', 'public, max-age=5, s-maxage=10');
+  res.status(200).json(metrics);
 });
 
 // Immediately attempt initial hydration
