@@ -349,6 +349,85 @@ export function getCoinbaseFacilitatorClient(): HTTPFacilitatorClient {
   return new HTTPFacilitatorClient(config);
 }
 
+// ============================================================================
+// AUTHORITATIVE X402 SETTLEMENT REGISTRY & IDEMPOTENCY STORE
+// ============================================================================
+
+export interface SettledX402Record {
+  txHash: string;
+  payer?: string;
+  settleResult: any;
+  responseHeader: string;
+  settledAt: string;
+  endpointId?: string;
+}
+
+export const inMemoryX402SettlementRegistry = new Map<string, SettledX402Record>();
+export const inFlightX402SettlementRegistry = new Map<string, Promise<any>>();
+
+export function clearX402SettlementRegistry(): void {
+  inMemoryX402SettlementRegistry.clear();
+  inFlightX402SettlementRegistry.clear();
+}
+
+export function extractPaymentIdempotencyKeys(paymentPayload: any, rawPaymentHeader?: string): {
+  payloadHash: string;
+  nonceKey?: string;
+} {
+  let rawStr = '';
+  if (typeof rawPaymentHeader === 'string' && rawPaymentHeader.trim()) {
+    rawStr = rawPaymentHeader.trim();
+  } else {
+    try {
+      rawStr = JSON.stringify(paymentPayload);
+    } catch {
+      rawStr = String(paymentPayload);
+    }
+  }
+  const payloadHash = crypto.createHash('sha256').update(rawStr).digest('hex');
+
+  const auth =
+    paymentPayload?.payload?.authorization ||
+    paymentPayload?.authorization ||
+    paymentPayload?.payload?.message ||
+    paymentPayload?.message ||
+    paymentPayload?.payload;
+
+  let nonceKey: string | undefined;
+  if (auth && typeof auth === 'object') {
+    const from = auth.from || auth.authorizer || paymentPayload?.payer;
+    const nonce = auth.nonce;
+    if (from && nonce !== undefined && nonce !== null) {
+      nonceKey = `nonce:${String(from).toLowerCase()}:${String(nonce).toLowerCase()}`;
+    }
+  }
+
+  return { payloadHash, nonceKey };
+}
+
+export function getX402Settlement(payloadHash: string, nonceKey?: string): SettledX402Record | undefined {
+  if (inMemoryX402SettlementRegistry.has(payloadHash)) {
+    return inMemoryX402SettlementRegistry.get(payloadHash);
+  }
+  if (nonceKey && inMemoryX402SettlementRegistry.has(nonceKey)) {
+    return inMemoryX402SettlementRegistry.get(nonceKey);
+  }
+  return undefined;
+}
+
+export function saveX402Settlement(
+  keys: { payloadHash: string; nonceKey?: string },
+  record: SettledX402Record
+): void {
+  inMemoryX402SettlementRegistry.set(keys.payloadHash, record);
+  if (keys.nonceKey) {
+    inMemoryX402SettlementRegistry.set(keys.nonceKey, record);
+  }
+  if (record.txHash) {
+    inMemoryX402SettlementRegistry.set(`tx:${record.txHash.toLowerCase()}`, record);
+  }
+}
+
 // Get recipient address from environment variable
 export function getX402RecipientAddress(): string | null {
   const addr = process.env.X402_RECIPIENT_ADDRESS?.trim();
@@ -691,29 +770,119 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
 
       const { paymentRequirement } = reqs;
 
-      try {
-        let paymentPayload: any;
-        if (typeof paymentHeader === 'string') {
-          const trimmed = paymentHeader.trim();
-          if (trimmed.startsWith('{')) {
-            paymentPayload = JSON.parse(trimmed);
-          } else {
-            try {
-              paymentPayload = decodePaymentSignatureHeader(trimmed);
-            } catch {
-              const decoded = Buffer.from(trimmed, 'base64').toString('utf8');
-              paymentPayload = JSON.parse(decoded);
-            }
-          }
+      let paymentPayload: any;
+      if (typeof paymentHeader === 'string') {
+        const trimmed = paymentHeader.trim();
+        if (trimmed.startsWith('{')) {
+          paymentPayload = JSON.parse(trimmed);
         } else {
-          paymentPayload = paymentHeader;
+          try {
+            paymentPayload = decodePaymentSignatureHeader(trimmed);
+          } catch {
+            const decoded = Buffer.from(trimmed, 'base64').toString('utf8');
+            paymentPayload = JSON.parse(decoded);
+          }
+        }
+      } else {
+        paymentPayload = paymentHeader;
+      }
+
+      const keys = extractPaymentIdempotencyKeys(
+        paymentPayload,
+        typeof paymentHeader === 'string' ? paymentHeader : undefined
+      );
+
+      // 1. Check existing authoritative settlement (Idempotent replay)
+      const existingSettlement = getX402Settlement(keys.payloadHash, keys.nonceKey);
+      if (existingSettlement) {
+        res.setHeader('PAYMENT-RESPONSE', existingSettlement.responseHeader);
+        (req as any).x402Payment = {
+          verified: true,
+          settled: true,
+          settleResult: existingSettlement.settleResult,
+          payer: existingSettlement.payer,
+          txHash: existingSettlement.txHash,
+          idempotentReplay: true
+        };
+
+        if (isAgentKey) {
+          try {
+            const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
+            const resolvedAgent = await resolveAgentIdentityFromKey(authHeader);
+            if (resolvedAgent) {
+              (req as any).agent = resolvedAgent;
+            }
+          } catch (bookkeepingErr: any) {
+            console.error('Non-fatal agent resolution error on idempotent replay:', bookkeepingErr?.message || bookkeepingErr);
+          }
         }
 
-        const facilitatorClient = getCoinbaseFacilitatorClient();
+        return forwardNext();
+      }
 
+      // 2. Concurrency Check: Is this exact payment payload settling in-flight?
+      const inFlightPromise = inFlightX402SettlementRegistry.get(keys.payloadHash) ||
+        (keys.nonceKey ? inFlightX402SettlementRegistry.get(keys.nonceKey) : undefined);
+      if (inFlightPromise) {
+        try {
+          const settled = await inFlightPromise;
+          if (settled) {
+            res.setHeader('PAYMENT-RESPONSE', settled.responseHeader);
+            (req as any).x402Payment = {
+              verified: true,
+              settled: true,
+              settleResult: settled.settleResult,
+              payer: settled.payer,
+              txHash: settled.txHash,
+              idempotentReplay: true
+            };
+            return forwardNext();
+          }
+        } catch (_) {
+          // In-flight settlement failed, fall through to fresh attempt
+        }
+      }
+
+      const facilitatorClient = getCoinbaseFacilitatorClient();
+
+      try {
         // Step A: Verify payment through facilitator
-        const verifyResult = await facilitatorClient.verify(paymentPayload, paymentRequirement as any);
+        let verifyResult: any;
+        try {
+          verifyResult = await facilitatorClient.verify(paymentPayload, paymentRequirement as any);
+        } catch (verifyErr: any) {
+          // If verify throws due to execution reverted / used nonce, check if already settled
+          const postCheck = getX402Settlement(keys.payloadHash, keys.nonceKey);
+          if (postCheck) {
+            res.setHeader('PAYMENT-RESPONSE', postCheck.responseHeader);
+            (req as any).x402Payment = {
+              verified: true,
+              settled: true,
+              settleResult: postCheck.settleResult,
+              payer: postCheck.payer,
+              txHash: postCheck.txHash,
+              idempotentReplay: true
+            };
+            return forwardNext();
+          }
+          throw verifyErr;
+        }
+
         if (!verifyResult || (verifyResult as any).isValid === false) {
+          const postCheck = getX402Settlement(keys.payloadHash, keys.nonceKey);
+          if (postCheck) {
+            res.setHeader('PAYMENT-RESPONSE', postCheck.responseHeader);
+            (req as any).x402Payment = {
+              verified: true,
+              settled: true,
+              settleResult: postCheck.settleResult,
+              payer: postCheck.payer,
+              txHash: postCheck.txHash,
+              idempotentReplay: true
+            };
+            return forwardNext();
+          }
+
           return res.status(402).json({
             status: 'payment_verification_failed',
             code: 402,
@@ -723,39 +892,108 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
         }
 
         // Step B: Settle payment through facilitator BEFORE serving response
-        const settleResult = await facilitatorClient.settle(paymentPayload, paymentRequirement as any);
-        if (!settleResult || (settleResult as any).success === false) {
+        let settleResult: any;
+        const settleExecutionPromise = (async () => {
+          return await facilitatorClient.settle(paymentPayload, paymentRequirement as any);
+        })();
+
+        inFlightX402SettlementRegistry.set(keys.payloadHash, settleExecutionPromise as any);
+        if (keys.nonceKey) {
+          inFlightX402SettlementRegistry.set(keys.nonceKey, settleExecutionPromise as any);
+        }
+
+        try {
+          settleResult = await settleExecutionPromise;
+        } finally {
+          inFlightX402SettlementRegistry.delete(keys.payloadHash);
+          if (keys.nonceKey) {
+            inFlightX402SettlementRegistry.delete(keys.nonceKey);
+          }
+        }
+
+        const txHash = (settleResult as any)?.txHash || (settleResult as any)?.transaction;
+        const isSettleSuccess = Boolean(
+          settleResult && (
+            settleResult.success === true ||
+            (typeof txHash === 'string' && txHash.length > 0)
+          )
+        );
+
+        if (!isSettleSuccess) {
           return res.status(402).json({
             status: 'payment_settlement_failed',
             code: 402,
             error: 'x402 payment settlement failed through Coinbase CDP facilitator.',
-            reason: (settleResult as any)?.error || 'On-chain settlement transaction could not be executed.'
+            reason: (settleResult as any)?.error || (settleResult as any)?.errorMessage || 'On-chain settlement transaction could not be executed.'
           });
         }
 
-        // Settlement succeeded! Attach settlement details and headers
-        const responseHeader = encodePaymentResponseHeader(settleResult);
+        // Settlement succeeded! Authoritative on-chain transaction hash acquired.
+        let responseHeader = '';
+        try {
+          responseHeader = encodePaymentResponseHeader(settleResult);
+        } catch (headerErr) {
+          console.error('Non-fatal error encoding payment response header:', headerErr);
+          responseHeader = Buffer.from(JSON.stringify({
+            success: true,
+            txHash: txHash || '0x_settled',
+            payer: (settleResult as any)?.payer || paymentPayload?.payer
+          })).toString('base64');
+        }
+
         res.setHeader('PAYMENT-RESPONSE', responseHeader);
+
+        const settlementRecord: SettledX402Record = {
+          txHash: txHash || '0x_settled',
+          payer: (settleResult as any)?.payer || paymentPayload?.payer,
+          settleResult,
+          responseHeader,
+          settledAt: new Date().toISOString(),
+          endpointId: endpointConfig.id
+        };
+
+        saveX402Settlement(keys, settlementRecord);
+
         (req as any).x402Payment = {
           verified: true,
           settled: true,
           settleResult,
-          payer: (settleResult as any).payer || paymentPayload.payer,
-          txHash: (settleResult as any).txHash
+          payer: settlementRecord.payer,
+          txHash: settlementRecord.txHash
         };
 
-        // Attribute the call to the sb_live_ identity if a valid agent key is also present
-        if (isAgentKey) {
-          const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
-          const resolvedAgent = await resolveAgentIdentityFromKey(authHeader);
-          if (resolvedAgent) {
-            (req as any).agent = resolvedAgent;
+        // Post-settlement bookkeeping (ISOLATED: MUST NEVER REJECT OR CONVERT A SETTLED PAYMENT TO 402)
+        try {
+          if (isAgentKey) {
+            const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
+            const resolvedAgent = await resolveAgentIdentityFromKey(authHeader);
+            if (resolvedAgent) {
+              (req as any).agent = resolvedAgent;
+            }
           }
+        } catch (bookkeepingErr: any) {
+          console.error('Post-settlement bookkeeping error (non-fatal):', bookkeepingErr?.message || bookkeepingErr);
         }
 
         // Do not also debit credits (no double charge).
         return forwardNext();
       } catch (err: any) {
+        // If an error occurs, check if this payment was actually settled (authoritative check)
+        const settledCheck = getX402Settlement(keys.payloadHash, keys.nonceKey);
+        if (settledCheck) {
+          console.warn('Recovered from facilitator error using authoritative settled record:', settledCheck.txHash);
+          res.setHeader('PAYMENT-RESPONSE', settledCheck.responseHeader);
+          (req as any).x402Payment = {
+            verified: true,
+            settled: true,
+            settleResult: settledCheck.settleResult,
+            payer: settledCheck.payer,
+            txHash: settledCheck.txHash,
+            idempotentReplay: true
+          };
+          return forwardNext();
+        }
+
         console.error('Coinbase x402 facilitator error:', err.message);
         return res.status(402).json({
           status: 'payment_rejected',

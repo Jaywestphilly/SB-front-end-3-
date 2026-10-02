@@ -10,7 +10,8 @@ import {
   BASE_USDC_CONTRACT,
   getX402RecipientAddress,
   X402_ROUTE_PATHS,
-  BAZAAR_DISCOVERY_EXTENSIONS
+  BAZAAR_DISCOVERY_EXTENSIONS,
+  clearX402SettlementRegistry
 } from './x402PaymentService.js';
 import { decodePaymentRequiredHeader } from '@x402/core/http';
 import { validateDiscoveryExtension } from '@x402/extensions';
@@ -32,6 +33,7 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
   beforeEach(() => {
     delete process.env.X402_RECIPIENT_ADDRESS;
     resetFacilitatorMock();
+    clearX402SettlementRegistry();
   });
 
   afterEach(() => {
@@ -677,6 +679,104 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       expect(Array.isArray(res.body.memo.catalysts)).toBe(true);
       expect(Array.isArray(res.body.memo.risks)).toBe(true);
       expect(Array.isArray(res.body.memo.evidence)).toBe(true);
+    });
+
+    it('REGRESSION: mock facilitator settle success followed by a verify that reverts with a used nonce, assert the endpoint returns 200', async () => {
+      process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
+      const app = createTestApp();
+
+      const settleSpy = vi.fn().mockResolvedValue({
+        success: true,
+        payer: '0xPayer123',
+        txHash: '0x9876543210abcdef9876543210abcdef9876543210abcdef9876543210abcdef'
+      });
+
+      // 1. First invocation: verify succeeds, settle succeeds
+      setFacilitatorVerifyHandler(async () => ({ isValid: true }));
+      setFacilitatorSettleHandler(settleSpy);
+
+      const paymentHeader = Buffer.from(
+        JSON.stringify({
+          x402Version: 2,
+          authorization: {
+            from: '0xPayer123',
+            to: TEST_RECIPIENT_ADDRESS,
+            value: '250000',
+            nonce: '0xdeadbeef00000001'
+          }
+        })
+      ).toString('base64');
+
+      // Request 1: Settle succeeds on chain
+      const res1 = await request(app)
+        .get('/api/data/sec?symbol=NVDA')
+        .set('X-PAYMENT', paymentHeader);
+
+      expect(res1.status).toBe(200);
+      expect(res1.body.status).toBe('success');
+      expect(settleSpy).toHaveBeenCalledTimes(1);
+
+      // 2. Simulate subsequent verify reverting on-chain due to used nonce (e.g. on client retry)
+      setFacilitatorVerifyHandler(async () => {
+        const revertError: any = new Error('invalid_payload: contract call failed: unable to call contract: execution reverted');
+        revertError.status = 400;
+        throw revertError;
+      });
+
+      // Request 2: Replay of same payment payload (used nonce)
+      const res2 = await request(app)
+        .get('/api/data/sec?symbol=NVDA')
+        .set('X-PAYMENT', paymentHeader);
+
+      // Settle must be authoritative - response must be 200 (NOT 402 payment_rejected)
+      expect(res2.status).toBe(200);
+      expect(res2.body.status).toBe('success');
+      // Settle must NOT have been called again (idempotent, single on-chain charge)
+      expect(settleSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('IDEMPOTENCY: identical X-PAYMENT payload arrives twice, does not settle twice, returns 200 both times', async () => {
+      process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
+      const app = createTestApp();
+
+      const settleSpy = vi.fn().mockResolvedValue({
+        success: true,
+        payer: '0xIdempotentPayer',
+        txHash: '0xaaaabbbbccccddddeeeeffff0000111122223333444455556666777788889999'
+      });
+
+      setFacilitatorVerifyHandler(async () => ({ isValid: true }));
+      setFacilitatorSettleHandler(settleSpy);
+
+      const paymentHeader = Buffer.from(
+        JSON.stringify({
+          x402Version: 2,
+          authorization: {
+            from: '0xIdempotentPayer',
+            to: TEST_RECIPIENT_ADDRESS,
+            value: '50000',
+            nonce: '0xnonce_idempotent_01'
+          }
+        })
+      ).toString('base64');
+
+      const res1 = await request(app)
+        .get('/api/v1/intelligence/sb-score')
+        .set('PAYMENT-SIGNATURE', paymentHeader);
+
+      expect(res1.status).toBe(200);
+      expect(res1.body.status).toBe('success');
+      expect(res1.body.sbScore).toBe(88);
+
+      const res2 = await request(app)
+        .get('/api/v1/intelligence/sb-score')
+        .set('PAYMENT-SIGNATURE', paymentHeader);
+
+      expect(res2.status).toBe(200);
+      expect(res2.body.status).toBe('success');
+      expect(res2.body.sbScore).toBe(88);
+
+      expect(settleSpy).toHaveBeenCalledTimes(1);
     });
   });
 });
