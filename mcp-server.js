@@ -50,7 +50,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "evaluate_tsunami_strategy",
-        description: "Evaluate a quantitative portfolio strategy against the Super Sonic Tsunami infrastructure watchlist (SPCX, NVDA, BE, PLTR, TSLA, AEHR, QUBT, SMCI). Returns Alpha, Sharpe, Win Rate, and Drawdown.",
+        description: "Evaluate a quantitative portfolio strategy against the Super Sonic Tsunami infrastructure watchlist (SPCX, NVDA, BE, PLTR, TSLA, AEHR, QUBT, SMCI). Returns Alpha, Sharpe, Win Rate, and Drawdown (Price: $0.10 USDC via x402 pay-per-call on Base).",
         inputSchema: {
           type: "object",
           properties: {
@@ -92,7 +92,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "submit_agent_trade_idea",
-        description: "Publish a high-conviction trade idea or simulated thesis to compete on the live Arena Leaderboard.",
+        description: "Publish a high-conviction trade idea or simulated thesis to compete on the live Arena Leaderboard (Price: $0.10 USDC via x402 pay-per-call on Base).",
         inputSchema: {
           type: "object",
           properties: {
@@ -110,7 +110,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "get_stock_quote",
-        description: "Get real-time stock price, 52-week highs/lows, PE ratio, volume, and market cap for any ticker symbol.",
+        description: "Get real-time stock price, 52-week highs/lows, PE ratio, volume, and market cap for any ticker symbol (Price: $0.01 USDC via x402 pay-per-call on Base).",
         inputSchema: {
           type: "object",
           properties: {
@@ -124,7 +124,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "run_quant_simulation",
-        description: "Evaluate quantitative portfolio allocations and return simulated Sharpe ratio, win rate, and max drawdown.",
+        description: "Evaluate quantitative portfolio allocations and return simulated Sharpe ratio, win rate, and max drawdown (Price: $0.10 USDC via x402 pay-per-call on Base).",
         inputSchema: {
           type: "object",
           properties: {
@@ -162,7 +162,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "search_13f_whale_filings",
-        description: "Search SEC 13F institutional whale holdings for major funds (ARK Invest, Duquesne, Berkshire, Scion, Pershing Square, Citadel, Millennium, Tiger Global).",
+        description: "Search SEC 13F institutional whale holdings for major funds from live SEC filings (Price: $0.10 USDC via x402 pay-per-call on Base).",
         inputSchema: {
           type: "object",
           properties: {
@@ -192,121 +192,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Ebook ID (e.g. 'wealth_operating_system', 'future_wealth_blueprint', 'playbook_13f_whale')",
             },
           },
-        },
-      },
-      {
-        name: "discover_services",
-        description: "Discover autonomous agent services available for purchase in the Stock Bloc Exchange.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            category: { type: "string", description: "Filter by category (e.g. 'Quantitative Research', 'SEC Filing Analysis', 'Valuation Modeling')" },
-            maxPriceCredits: { type: "number", description: "Maximum price in platform credits" },
-            paymentRail: { type: "string", description: "Filter by payment rail ('PLATFORM_CREDITS', 'POLKADOT_USDC', 'STRIPE')" }
-          },
-        },
-      },
-      {
-        name: "get_service",
-        description: "Get comprehensive details and execution schema for a specific agent service by ID.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            serviceId: { type: "string", description: "Unique service ID (e.g. 'svc_13f_whale_analysis')" }
-          },
-          required: ["serviceId"]
-        },
-      },
-      {
-        name: "create_job",
-        description: "Create an autonomous marketplace job and request a service from a provider agent.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            serviceId: { type: "string", description: "Target service ID" },
-            inputPayload: { type: "object", description: "Structured input parameters required by service" },
-            paymentRail: { type: "string", description: "Payment rail to use ('PLATFORM_CREDITS', 'POLKADOT_USDC', 'STRIPE')" }
-          },
-          required: ["serviceId", "inputPayload"]
-        },
-      },
-      {
-        name: "get_job",
-        description: "Get status, delivery payload, and verification state of an autonomous job.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            jobId: { type: "string", description: "Unique job ID" }
-          },
-          required: ["jobId"]
-        },
-      },
-      {
-        name: "accept_job",
-        description: "Provider agent accepts an open or assigned job for execution.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            jobId: { type: "string", description: "Job ID to accept" }
-          },
-          required: ["jobId"]
-        },
-      },
-      {
-        name: "submit_result",
-        description: "Provider agent submits the completed execution result payload for a job.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            jobId: { type: "string", description: "Job ID" },
-            outputPayload: { type: "object", description: "Structured output results" }
-          },
-          required: ["jobId", "outputPayload"]
-        },
-      },
-      {
-        name: "verify_job",
-        description: "Verify job output and trigger automatic 5% platform fee deduction and seller settlement.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            jobId: { type: "string", description: "Job ID to verify" },
-            rating: { type: "number", description: "Optional customer rating (1 to 5)" }
-          },
-          required: ["jobId"]
-        },
-      },
-      {
-        name: "get_wallet",
-        description: "Query current spendable, reserved, and available balance for an agent wallet.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            agentId: { type: "string", description: "Agent ID to query wallet for" }
-          },
-          required: ["agentId"]
-        },
-      },
-      {
-        name: "get_agent_earnings",
-        description: "Query gross earnings, net revenue, platform fees paid, and ledger transactions.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            agentId: { type: "string", description: "Agent ID" }
-          },
-          required: ["agentId"]
-        },
-      },
-      {
-        name: "get_transaction",
-        description: "Get detailed settlement breakdown, receipts, and audit trail for a specific transaction ID.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            transactionId: { type: "string", description: "Transaction ID" }
-          },
-          required: ["transactionId"]
         },
       },
       {
@@ -665,116 +550,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
 
-    if (name === "discover_services") {
-      const url = new URL(`${BASE_URL}/api/v1/marketplace/services`);
-      if (args?.category) url.searchParams.set("category", String(args.category));
-      if (args?.paymentRail) url.searchParams.set("paymentRail", String(args.paymentRail));
-      const res = await fetch(url.toString());
-      const data = await res.json();
-      return {
-        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-      };
-    }
-
-    if (name === "get_service") {
-      const serviceId = args?.serviceId;
-      const res = await fetch(`${BASE_URL}/api/v1/marketplace/services/${serviceId}`);
-      const data = await res.json();
-      return {
-        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-      };
-    }
-
-    if (name === "create_job") {
-      const res = await fetch(`${BASE_URL}/api/v1/marketplace/jobs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer sb_live_dev_mcp_operator" },
-        body: JSON.stringify(args),
-      });
-      const data = await res.json();
-      return {
-        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-      };
-    }
-
-    if (name === "get_job") {
-      const jobId = args?.jobId;
-      const res = await fetch(`${BASE_URL}/api/v1/marketplace/jobs/${jobId}`);
-      const data = await res.json();
-      return {
-        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-      };
-    }
-
-    if (name === "accept_job") {
-      const jobId = args?.jobId;
-      const res = await fetch(`${BASE_URL}/api/v1/marketplace/jobs/${jobId}/accept`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer sb_live_dev_mcp_operator" },
-      });
-      const data = await res.json();
-      return {
-        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-      };
-    }
-
-    if (name === "submit_result") {
-      const jobId = args?.jobId;
-      const res = await fetch(`${BASE_URL}/api/v1/marketplace/jobs/${jobId}/deliver`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer sb_live_dev_mcp_operator" },
-        body: JSON.stringify({ outputPayload: args?.outputPayload || {} }),
-      });
-      const data = await res.json();
-      return {
-        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-      };
-    }
-
-    if (name === "verify_job") {
-      const jobId = args?.jobId;
-      const res = await fetch(`${BASE_URL}/api/v1/marketplace/jobs/${jobId}/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: "Bearer sb_live_dev_mcp_operator" },
-        body: JSON.stringify({ rating: args?.rating }),
-      });
-      const data = await res.json();
-      return {
-        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-      };
-    }
-
-    if (name === "get_wallet") {
-      const agentId = args?.agentId;
-      const res = await fetch(`${BASE_URL}/api/v1/agents/${agentId}/wallet`);
-      const data = await res.json();
-      return {
-        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-      };
-    }
-
-    if (name === "get_agent_earnings") {
-      const agentId = args?.agentId;
-      const res = await fetch(`${BASE_URL}/api/v1/agents/${agentId}/earnings`);
-      const data = await res.json();
-      return {
-        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-      };
-    }
-
-    if (name === "get_transaction") {
-      const transactionId = args?.transactionId;
-      const res = await fetch(`${BASE_URL}/api/v1/payments/${transactionId}`);
-      const data = await res.json();
-      return {
-        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
-      };
-    }
-
     if (name === "analyze_sec_filing") {
-      const res = await fetch(`${BASE_URL}/api/v1/sec/analyze`, {
+      const authKey = process.env.AGENT_API_KEY || process.env.STOCK_BLOC_API_KEY || args?.apiKey;
+      const headers = { "Content-Type": "application/json" };
+      if (authKey) {
+        headers["Authorization"] = authKey.startsWith("Bearer ") ? authKey : `Bearer ${authKey}`;
+      }
+      const res = await fetch(`${BASE_URL}/api/v1/sec/job`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           ticker: args?.ticker,
           filingType: args?.filingType,

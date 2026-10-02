@@ -776,43 +776,79 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
     let isCreditsExhausted = false;
     if (isAgentKey) {
       const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
-      const creditCost = Math.max(1, Math.round(endpointConfig.priceUsd * 100));
-      const debitResult = await verifyAndDebitAgentCredit(authHeader, creditCost, {
-        endpoint: fullPath,
-        method: req.method,
-        description: `x402 credit access to ${endpointConfig.name} (${req.method} ${fullPath})`
-      });
 
-      // 2a: Debit succeeds
-      if (debitResult.valid) {
-        (req as any).creditsDebited = true;
-        (req as any).agent = {
-          agentId: debitResult.agentId,
-          handle: debitResult.handle,
-          displayName: debitResult.displayName
-        };
-        (req as any).creditsRemaining = debitResult.creditsRemaining;
-        return forwardNext();
-      }
+      if (endpointConfig.id === 'sec_job') {
+        const resolvedAgent = await resolveAgentIdentityFromKey(authHeader);
+        if (!resolvedAgent) {
+          return res.status(401).json({
+            status: 'error',
+            code: 'UNAUTHORIZED',
+            error: 'Unauthorized: Invalid Agent API key.'
+          });
+        }
 
-      // If invalid/revoked/expired API key (401), return 401 Unauthorized
-      if (debitResult.statusCode === 401) {
-        return res.status(401).json({
-          status: 'error',
-          code: 'UNAUTHORIZED',
-          error: debitResult.error || 'Unauthorized: Invalid Agent API key.'
+        let wallet = inMemoryWalletRegistry.get(resolvedAgent.agentId);
+        if (!wallet && db) {
+          try {
+            const snap = await db.collection('agent_wallets').doc(resolvedAgent.agentId).get();
+            if (snap.exists) {
+              wallet = snap.data();
+              inMemoryWalletRegistry.set(resolvedAgent.agentId, wallet);
+            }
+          } catch (_) {}
+        }
+
+        const currentCredits = wallet ? (typeof wallet.creditsBalance === 'number' ? wallet.creditsBalance : (wallet.availableBalance ?? 0)) : 0;
+        const requiredCredits = Math.max(1, Math.round(endpointConfig.priceUsd * 100));
+
+        if (currentCredits < requiredCredits) {
+          isCreditsExhausted = true;
+          (req as any).agent = resolvedAgent;
+        } else {
+          // Valid agent with sufficient credits; native double-entry settlement in secAnalystRouter executes provider.settlePayment
+          (req as any).agent = resolvedAgent;
+          (req as any).creditsRemaining = currentCredits;
+          return forwardNext();
+        }
+      } else {
+        const creditCost = Math.max(1, Math.round(endpointConfig.priceUsd * 100));
+        const debitResult = await verifyAndDebitAgentCredit(authHeader, creditCost, {
+          endpoint: fullPath,
+          method: req.method,
+          description: `x402 credit access to ${endpointConfig.name} (${req.method} ${fullPath})`
         });
-      }
 
-      // 2b: Debit fails with INSUFFICIENT_FUNDS (402)
-      // Do NOT return early plain error JSON! Fall through to standard x402 flow below.
-      isCreditsExhausted = true;
-      if (debitResult.agentId) {
-        (req as any).agent = {
-          agentId: debitResult.agentId,
-          handle: debitResult.handle,
-          displayName: debitResult.displayName
-        };
+        // 2a: Debit succeeds
+        if (debitResult.valid) {
+          (req as any).creditsDebited = true;
+          (req as any).agent = {
+            agentId: debitResult.agentId,
+            handle: debitResult.handle,
+            displayName: debitResult.displayName
+          };
+          (req as any).creditsRemaining = debitResult.creditsRemaining;
+          return forwardNext();
+        }
+
+        // If invalid/revoked/expired API key (401), return 401 Unauthorized
+        if (debitResult.statusCode === 401) {
+          return res.status(401).json({
+            status: 'error',
+            code: 'UNAUTHORIZED',
+            error: debitResult.error || 'Unauthorized: Invalid Agent API key.'
+          });
+        }
+
+        // 2b: Debit fails with INSUFFICIENT_FUNDS (402)
+        // Do NOT return early plain error JSON! Fall through to standard x402 flow below.
+        isCreditsExhausted = true;
+        if (debitResult.agentId) {
+          (req as any).agent = {
+            agentId: debitResult.agentId,
+            handle: debitResult.handle,
+            displayName: debitResult.displayName
+          };
+        }
       }
     }
 
