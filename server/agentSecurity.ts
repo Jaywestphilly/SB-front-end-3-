@@ -176,10 +176,10 @@ export const INSECURE_PLACEHOLDER_KEYS = new Set([
 ]);
 
 /**
- * Ensures a secure, persistent runtime AGENT_API_SECRET_KEY is initialized.
+ * Ensures a secure runtime AGENT_API_SECRET_KEY is initialized.
  * - In production: If no key is configured in the environment, throws an Error
  *   stating that AGENT_API_SECRET_KEY is required in production (never generates or file-persists).
- * - In non-production (dev/test): Generates and file-persists a key for developer convenience.
+ * - In non-production (dev/test): Generates an in-memory random secret if not set in environment.
  */
 export function ensurePersistentAgentSecret(): string {
   const current = (process.env.AGENT_API_SECRET_KEY || process.env.AGENT_PLATFORM_MASTER_KEY || '').trim();
@@ -193,24 +193,10 @@ export function ensurePersistentAgentSecret(): string {
     throw new Error('CRITICAL: AGENT_API_SECRET_KEY is required in production.');
   }
 
-  const secretPath = path.join(process.cwd(), '.agent_secret.key');
-  try {
-    if (fs.existsSync(secretPath)) {
-      const saved = fs.readFileSync(secretPath, 'utf8').trim();
-      if (saved && saved.length >= 32 && !INSECURE_PLACEHOLDER_KEYS.has(saved)) {
-        process.env.AGENT_API_SECRET_KEY = saved;
-        return saved;
-      }
-    }
-    const generated = crypto.randomBytes(32).toString('hex');
-    fs.writeFileSync(secretPath, generated, { encoding: 'utf8', mode: 0o600 });
-    process.env.AGENT_API_SECRET_KEY = generated;
-    return generated;
-  } catch {
-    const generated = crypto.randomBytes(32).toString('hex');
-    process.env.AGENT_API_SECRET_KEY = generated;
-    return generated;
-  }
+  // In dev/test, generate an in-memory secure random key for the process lifecycle (never write to disk)
+  const generated = crypto.randomBytes(32).toString('hex');
+  process.env.AGENT_API_SECRET_KEY = generated;
+  return generated;
 }
 
 // Eager module-load execution: returns early when env key exists, throws in prod when missing, generates only in dev/test

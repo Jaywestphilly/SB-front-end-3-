@@ -5,6 +5,10 @@ coverage/
 *.log
 .env*
 !.env.example
+.agent_secret.key
+*.key
+*.pem
+*.secret
 public/playbooks/
 server/data/
 playwright-report/
