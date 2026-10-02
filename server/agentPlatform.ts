@@ -192,7 +192,7 @@ export async function debitAgentCredits(
     const currentAvailable = typeof walletData.availableBalance === 'number' ? walletData.availableBalance : currentBalance;
 
     if (currentBalance < cost || currentAvailable < cost) {
-      const err: any = new Error(`Trial credit balance exhausted (${currentBalance} credits remaining). Contact support or upgrade at https://stockbloc.ai.studio/pricing`);
+      const err: any = new Error(`Trial credit balance exhausted (${currentBalance} credits remaining).`);
       err.code = 'INSUFFICIENT_FUNDS';
       err.creditsRemaining = currentBalance;
       throw err;
@@ -447,7 +447,7 @@ export async function verifyAndDebitAgentCredit(
     ) {
       return {
         valid: false,
-        error: debitErr.message || 'Trial credit balance exhausted (0 credits remaining). Contact support or upgrade at https://stockbloc.ai.studio/pricing',
+        error: debitErr.message || 'Trial credit balance exhausted (0 credits remaining).',
         statusCode: 402,
         code: 'INSUFFICIENT_FUNDS',
         agentId,

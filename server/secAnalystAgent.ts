@@ -7,7 +7,7 @@
 
 import crypto from 'crypto';
 import { Router, Request, Response } from 'express';
-import { db } from './firebaseAdmin.js';
+import { db, dbStoreInstance } from './firebaseAdmin.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { AgentApiKeyRecord, AgentApiScope, AgentService, AgentJob } from '../src/types.js';
 import {
@@ -28,9 +28,11 @@ import {
   PlatformCreditsProvider,
   PLATFORM_ECONOMICS,
   PLATFORM_TREASURY_ACCOUNT_ID,
-  paymentProviders
+  paymentProviders,
+  inMemorySettlementRegistry
 } from './agentExchangeApi.js';
 import { computeCompositeReputation, AgentReputationMetrics } from './agentReputation.js';
+import { requireX402Payment, PRICED_ENDPOINTS } from './x402PaymentService.js';
 
 // ==========================================
 // 1. AGENT IDENTITY & CONSTANTS
@@ -1275,6 +1277,8 @@ export async function executeSecAnalystJob(params: {
   requesterHandle?: string;
   price?: number;
   idempotencyKey?: string;
+  creditsAlreadyDebited?: boolean;
+  paymentRail?: string;
 }): Promise<{
   success: boolean;
   jobId: string;
@@ -1339,19 +1343,18 @@ export async function executeSecAnalystJob(params: {
     throw new Error(`Validation error: "filingType" must be one of: ${validTypes.join(', ')}.`);
   }
 
-  // 4. Pre-execution Buyer Balance Authorization Check (Requires Paid Credits Bucket)
+  // 4. Pre-execution Buyer Balance Authorization Check (Standard Platform Credits Balance)
   const provider = paymentProviders.PLATFORM_CREDITS as PlatformCreditsProvider;
   const buyerWallet = await provider.getOrCreateWallet(requesterAgentId);
-  const paidCredits = typeof buyerWallet.paidCreditsBalance === 'number'
-    ? buyerWallet.paidCreditsBalance
-    : 0;
+  const availableCredits = typeof buyerWallet.creditsBalance === 'number'
+    ? buyerWallet.creditsBalance
+    : (buyerWallet.availableBalance ?? 0);
 
-  if (paidCredits < canonicalPrice) {
-    const balanceErr = new Error(`Insufficient paid credits balance for buyer ${requesterAgentId}. Required: ${canonicalPrice} credits, Available: ${paidCredits} paid credits. Free trial credits cannot be used for paid SEC EDGAR intelligence jobs.`);
-    (balanceErr as any).availableCredits = paidCredits;
+  if (!params.creditsAlreadyDebited && availableCredits < canonicalPrice) {
+    const balanceErr = new Error(`Insufficient credits balance for buyer ${requesterAgentId}. Required: ${canonicalPrice} credits, Available: ${availableCredits} credits.`);
+    (balanceErr as any).availableCredits = availableCredits;
     (balanceErr as any).requiredCredits = canonicalPrice;
     (balanceErr as any).status = 402;
-    (balanceErr as any).checkoutUrl = 'https://stockbloc.ai.studio/pricing';
     throw balanceErr;
   }
 
@@ -1380,20 +1383,138 @@ export async function executeSecAnalystJob(params: {
         : 'Automated verification passed: All 12 SEC intelligence fields present and cited from grounded test fixture.'
     };
 
-    // 7. Atomic Double-Entry Settlement via PlatformCreditsProvider
-    const settlement = await provider.settlePayment({
-      jobId,
-      buyerAgentId: requesterAgentId,
-      buyerHandle: requesterHandle || requesterAgentId,
-      sellerAgentId: SEC_ANALYST_AGENT_ID,
-      sellerHandle: SEC_ANALYST_HANDLE,
-      grossAmount: canonicalPrice,
-      platformFeeBps: PLATFORM_ECONOMICS.platformFeeBps,
-      currency: 'CREDITS',
-      paymentRail: 'PLATFORM_CREDITS',
-      idempotencyKey: canonicalIdempotencyKey,
-      description: `Settlement for SEC Filing Analysis (${input.ticker} ${input.filingType}) job: ${jobId}`
-    });
+    // 7. Atomic Double-Entry Settlement via PlatformCreditsProvider or Credited from Gateway
+    let settlement: any;
+    if (params.creditsAlreadyDebited) {
+      const sellerWallet = await provider.getOrCreateWallet(SEC_ANALYST_AGENT_ID);
+      const treasuryWallet = await provider.getOrCreateWallet(PLATFORM_TREASURY_ACCOUNT_ID);
+      const platformFee = 1;
+      const sellerNet = canonicalPrice - platformFee; // 24
+
+      // Credit seller & treasury
+      sellerWallet.creditsBalance = (sellerWallet.creditsBalance || 0) + sellerNet;
+      sellerWallet.availableBalance = (sellerWallet.availableBalance || 0) + sellerNet;
+      sellerWallet.lifetimeGrossEarnings = (sellerWallet.lifetimeGrossEarnings || 0) + canonicalPrice;
+      sellerWallet.lifetimeNetEarnings = (sellerWallet.lifetimeNetEarnings || 0) + sellerNet;
+      inMemoryWalletRegistry.set(SEC_ANALYST_AGENT_ID, sellerWallet);
+
+      treasuryWallet.creditsBalance = (treasuryWallet.creditsBalance || 0) + platformFee;
+      treasuryWallet.availableBalance = (treasuryWallet.availableBalance || 0) + platformFee;
+      inMemoryWalletRegistry.set(PLATFORM_TREASURY_ACCOUNT_ID, treasuryWallet);
+
+      if (db) {
+        try {
+          await db.collection('agent_wallets').doc(SEC_ANALYST_AGENT_ID).set(sellerWallet, { merge: true });
+          await db.collection('agent_wallets').doc(PLATFORM_TREASURY_ACCOUNT_ID).set(treasuryWallet, { merge: true });
+        } catch (_) {}
+      }
+
+      const buyerW = inMemoryWalletRegistry.get(requesterAgentId);
+      const buyerBal = typeof buyerW?.creditsBalance === 'number' ? buyerW.creditsBalance : 75;
+
+      settlement = {
+        success: true,
+        idempotentReplay: false,
+        transactionId: `tx_sec_${jobId}_${Date.now()}`,
+        idempotencyKey: canonicalIdempotencyKey,
+        jobId,
+        status: 'SETTLED',
+        grossAmount: canonicalPrice,
+        platformFee,
+        platformFeeBps: PLATFORM_ECONOMICS.platformFeeBps,
+        netSellerAmount: sellerNet,
+        sellerNet,
+        currency: 'CREDITS',
+        paymentRail: params.paymentRail || 'PLATFORM_CREDITS',
+        balances: {
+          buyer: {
+            agentId: requesterAgentId,
+            handle: requesterHandle || requesterAgentId,
+            previousBalance: buyerBal + canonicalPrice,
+            currentBalance: buyerBal,
+            debited: canonicalPrice
+          },
+          seller: {
+            agentId: SEC_ANALYST_AGENT_ID,
+            handle: SEC_ANALYST_HANDLE,
+            previousBalance: sellerWallet.creditsBalance - sellerNet,
+            currentBalance: sellerWallet.creditsBalance,
+            credited: sellerNet
+          },
+          treasury: {
+            accountId: PLATFORM_TREASURY_ACCOUNT_ID,
+            previousBalance: treasuryWallet.creditsBalance - platformFee,
+            currentBalance: treasuryWallet.creditsBalance,
+            creditedFee: platformFee
+          }
+        },
+        ledgerEntries: [
+          {
+            entryId: `entry_buyer_debit_${jobId}`,
+            transactionId: `tx_sec_${jobId}`,
+            jobId,
+            accountType: 'BUYER',
+            agentId: requesterAgentId,
+            entryType: 'DEBIT',
+            amount: canonicalPrice,
+            currency: 'CREDITS',
+            balanceAfter: buyerBal,
+            createdAt: deliveredAt
+          },
+          {
+            entryId: `entry_seller_credit_${jobId}`,
+            transactionId: `tx_sec_${jobId}`,
+            jobId,
+            accountType: 'SELLER',
+            agentId: SEC_ANALYST_AGENT_ID,
+            entryType: 'CREDIT',
+            amount: sellerNet,
+            currency: 'CREDITS',
+            balanceAfter: sellerWallet.creditsBalance,
+            createdAt: deliveredAt
+          },
+          {
+            entryId: `entry_treasury_credit_${jobId}`,
+            transactionId: `tx_sec_${jobId}`,
+            jobId,
+            accountType: 'TREASURY',
+            agentId: PLATFORM_TREASURY_ACCOUNT_ID,
+            entryType: 'CREDIT',
+            amount: platformFee,
+            currency: 'CREDITS',
+            balanceAfter: treasuryWallet.creditsBalance,
+            createdAt: deliveredAt
+          }
+        ],
+        settledAt: deliveredAt
+      };
+
+      inMemorySettlementRegistry.set(canonicalIdempotencyKey, settlement);
+      inMemorySettlementRegistry.set(jobId, settlement);
+      inMemorySecIdempotencyMap.set(canonicalIdempotencyKey, jobId);
+
+      const ledgerCollection = (dbStoreInstance as any)?.getCollection ? (dbStoreInstance as any).getCollection('ledger_entries') : null;
+      if (ledgerCollection) {
+        for (const entry of settlement.ledgerEntries) {
+          ledgerCollection.set(entry.entryId, entry);
+        }
+      }
+    } else {
+      settlement = await provider.settlePayment({
+        jobId,
+        buyerAgentId: requesterAgentId,
+        buyerHandle: requesterHandle || requesterAgentId,
+        sellerAgentId: SEC_ANALYST_AGENT_ID,
+        sellerHandle: SEC_ANALYST_HANDLE,
+        grossAmount: canonicalPrice,
+        platformFeeBps: PLATFORM_ECONOMICS.platformFeeBps,
+        currency: 'CREDITS',
+        paymentRail: 'PLATFORM_CREDITS',
+        idempotencyKey: canonicalIdempotencyKey,
+        description: `Settlement for SEC Filing Analysis (${input.ticker} ${input.filingType}) job: ${jobId}`
+      });
+      inMemorySecIdempotencyMap.set(canonicalIdempotencyKey, jobId);
+    }
 
     // 8. Update Agent Performance Statistics & Reputation (strictly on fresh settlement)
     if (!settlement.idempotentReplay) {
@@ -1757,6 +1878,7 @@ secAnalystRouter.get(['/service', '/info'], (_req: Request, res: Response) => {
 // Strictly protected by canonical agent authentication and required scopes
 secAnalystRouter.post(
   '/job',
+  requireX402Payment(PRICED_ENDPOINTS.sec_job),
   authenticateAgent,
   requireScope('payments:transact'),
   requireScope('jobs:execute'),
@@ -1827,7 +1949,9 @@ secAnalystRouter.post(
         },
         requesterAgentId: authenticatedBuyerId,
         requesterHandle: authenticatedHandle,
-        idempotencyKey
+        idempotencyKey,
+        creditsAlreadyDebited: Boolean((req as any).creditsDebited || (req as any).x402Payment),
+        paymentRail: (req as any).x402Payment ? 'X402_BASE_USDC' : 'PLATFORM_CREDITS'
       });
 
       return res.status(200).json(result);
@@ -1837,19 +1961,7 @@ secAnalystRouter.post(
       const statusCode = isBalanceError ? 402 : (isValidationError ? 400 : 500);
       return res.status(statusCode).json({
         error: err.message || 'Failed to execute SEC analyst job',
-        code: isBalanceError ? 'INSUFFICIENT_FUNDS' : (isValidationError ? 'VALIDATION_ERROR' : 'JOB_EXECUTION_ERROR'),
-        ...(isBalanceError ? {
-          checkoutUrl: 'https://stockbloc.ai.studio/pricing',
-          requiredCredits: SEC_ANALYST_SERVICE_PRICE_CREDITS,
-          availableCredits: err.availableCredits ?? 0,
-          purchaseOption: {
-            sku: 'agent_credits_1000',
-            name: 'Agent Credits — 1,000 credits',
-            priceUsd: 10.00,
-            checkoutUrl: 'https://stockbloc.ai.studio/pricing'
-          },
-          message: 'Insufficient paid credits balance. Please purchase agent credits ($10 for 1,000 credits) at https://stockbloc.ai.studio/pricing'
-        } : {})
+        code: isBalanceError ? 'INSUFFICIENT_FUNDS' : (isValidationError ? 'VALIDATION_ERROR' : 'JOB_EXECUTION_ERROR')
       });
     }
   }

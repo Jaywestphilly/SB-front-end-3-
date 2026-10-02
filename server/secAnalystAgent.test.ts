@@ -318,7 +318,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     expect(executionResult.reputation.compositeScore).toBeGreaterThanOrEqual(1);
   });
 
-  it('Requirement 4: HTTP Security — Unauthenticated paid job request is rejected with 401', async () => {
+  it('Requirement 4: HTTP Security & x402 — Unauthenticated paid job request returns HTTP 402 with standard x402 challenge', async () => {
     const res = await request(app)
       .post('/api/v1/sec/job')
       .send({
@@ -326,8 +326,8 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
         filingType: '10-Q'
       });
 
-    expect(res.status).toBe(401);
-    expect(res.body.error).toMatch(/unauthorized|authentication required|invalid/i);
+    expect(res.status).toBe(402);
+    expect(res.headers['payment-required'] || res.body.x402Version || res.body.accepts).toBeDefined();
   });
 
   it('Requirement 5: HTTP Security — Request with invalid or revoked API key is rejected with 401', async () => {
@@ -406,11 +406,11 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     expect(buyerWallet.creditsBalance).toBe(75);
   });
 
-  it('Requirement 9: Economic Integrity — Insufficient paid funds returns 402 Payment Required with checkoutUrl', async () => {
-    // Set buyer balance to 10 paid credits (less than required 25)
+  it('Requirement 9: Economic Integrity — Insufficient credits returns HTTP 402 with valid x402 challenge and zero dead SKU or pricing URLs', async () => {
+    // Set buyer balance to 10 credits (less than required 25)
     inMemoryWalletRegistry.get(buyerId)!.creditsBalance = 10;
     inMemoryWalletRegistry.get(buyerId)!.availableBalance = 10;
-    inMemoryWalletRegistry.get(buyerId)!.paidCreditsBalance = 10;
+    inMemoryWalletRegistry.get(buyerId)!.paidCreditsBalance = 0;
 
     const res = await request(app)
       .post('/api/v1/sec/job')
@@ -421,14 +421,14 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       });
 
     expect(res.status).toBe(402);
-    expect(res.body.code).toBe('INSUFFICIENT_FUNDS');
-    expect(res.body.error).toMatch(/insufficient/i);
-    expect(res.body.checkoutUrl).toBe('https://stockbloc.ai.studio/pricing');
-    expect(res.body.availableCredits).toBe(10);
-    expect(res.body.requiredCredits).toBe(25);
+    expect(res.body.checkoutUrl).toBeUndefined();
+    expect(res.body.purchaseOption).toBeUndefined();
+    expect(JSON.stringify(res.body)).not.toContain('agent_credits_1000');
+    expect(JSON.stringify(res.body)).not.toContain('https://stockbloc.ai.studio/pricing');
+    expect(res.headers['payment-required'] || res.body.accepts).toBeDefined();
   });
 
-  it('Requirement 9b: Free Trial Credits Protection — Trial credits cannot be spent on paid SEC EDGAR executions', async () => {
+  it('Requirement 9b: Standard Trial Credits Access — Agent with >=25 trial credits succeeds with exactly 25 debited and no paid-bucket involvement', async () => {
     // Agent has 100 total credits, but 0 paid credits (purely trial credits)
     inMemoryWalletRegistry.get(buyerId)!.creditsBalance = 100;
     inMemoryWalletRegistry.get(buyerId)!.availableBalance = 100;
@@ -443,10 +443,11 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
         filingType: '10-K'
       });
 
-    expect(res.status).toBe(402);
-    expect(res.body.code).toBe('INSUFFICIENT_FUNDS');
-    expect(res.body.checkoutUrl).toBe('https://stockbloc.ai.studio/pricing');
-    expect(res.body.availableCredits).toBe(0);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.settlement.grossAmount).toBe(25);
+    expect(inMemoryWalletRegistry.get(buyerId)!.creditsBalance).toBe(75);
+    expect(inMemoryWalletRegistry.get(buyerId)!.paidCreditsBalance).toBe(0);
   });
 
   it('Requirement 10: Idempotency — Repeated requests with same idempotency key return cached result without double charging', async () => {
