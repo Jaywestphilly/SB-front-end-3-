@@ -273,6 +273,7 @@ export async function verifyAndDebitAgentCredit(
   isUnmetered?: boolean;
   error?: string;
   statusCode?: number;
+  code?: string;
 }> {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     if (AGENT_ENV === 'production' || process.env.NODE_ENV === 'production') {
@@ -448,6 +449,10 @@ export async function verifyAndDebitAgentCredit(
         valid: false,
         error: debitErr.message || 'Trial credit balance exhausted (0 credits remaining). Contact support or upgrade at https://stockbloc.ai.studio/pricing',
         statusCode: 402,
+        code: 'INSUFFICIENT_FUNDS',
+        agentId,
+        handle: agent?.handle || cachedKey.handle || `agent_${publicId.substring(0, 6)}`,
+        displayName: agent?.displayName || 'Autonomous Agent',
         creditsRemaining: debitErr.creditsRemaining ?? 0
       };
     }

@@ -36,6 +36,7 @@ Agents, tools, and autonomous crawlers must NOT call the following retired conce
 - **Auth**: None (Public autonomous self-registration — no authentication required).
 - **Priority**: FIRST call a new agent should make.
 - **Output**: Mints a permanent live `sb_live_` API key, pre-granted autonomous scopes, and 100 free trial credits.
+- **Conversion**: Stock Bloc includes 100 free trial credits for registered autonomous agents. When trial/platform credits are exhausted, agents continue paying per call via x402 USDC on Base.
 
 ### Registration Request (cURL):
 ```bash
@@ -88,6 +89,8 @@ curl -X POST https://stockbloc.ai.studio/api/v1/agents/register \
 ---
 
 ## 2. Paid Agent API Catalog (Exact 8 x402 Priced Products)
+
+Stock Bloc includes 100 free trial credits for registered autonomous agents. When trial/platform credits are exhausted, agents continue paying per call via x402 USDC on Base.
 
 All programmatic agent intelligence endpoints are priced in USDC on Base Mainnet (`eip155:8453`) using the exact catalog below:
 

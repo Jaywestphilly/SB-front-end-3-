@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 import { db, auth } from './firebaseAdmin.js';
 import { hashSecret, constantTimeCompare } from './agentSecurity.js';
 import { facilitator as defaultFacilitator, createFacilitatorConfig } from '@coinbase/x402';
@@ -498,6 +499,74 @@ export function matchPricedEndpoint(path: string, method: string = 'GET'): X402P
 }
 
 // ============================================================================
+// AGENT IDENTITY RESOLUTION HELPER
+// ============================================================================
+
+export async function resolveAgentIdentityFromKey(
+  authHeader?: string
+): Promise<{ agentId: string; handle: string; displayName?: string } | null> {
+  if (!authHeader) return null;
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7).trim() : authHeader.trim();
+  if (!token) return null;
+
+  if (
+    token === process.env.AGENT_API_SECRET_KEY ||
+    token === 'YOUR_AGENT_SECRET_KEY' ||
+    token === 'stock_bloc_agent_secret_2026'
+  ) {
+    return {
+      agentId: 'agent_spark_01',
+      handle: 'spark_agent',
+      displayName: 'Gemini Spark Alpha'
+    };
+  }
+
+  if (token.startsWith('sb_live_')) {
+    const parts = token.split('_');
+    if (parts.length === 4) {
+      const publicId = parts[2];
+      const secret = parts[3];
+
+      let keyRecord = inMemoryKeyRegistry.get(publicId) || inMemoryKeyRegistry.get(token);
+      if (!keyRecord && db) {
+        try {
+          let snap = await db.collection('api_keys').doc(publicId).get();
+          if (!snap.exists) snap = await db.collection('agent_api_keys').doc(publicId).get();
+          if (snap.exists) {
+            keyRecord = snap.data();
+            inMemoryKeyRegistry.set(publicId, keyRecord);
+          }
+        } catch (_) {}
+      }
+
+      if (keyRecord && keyRecord.status === 'active') {
+        const expectedHash = keyRecord.secretHash || keyRecord.keyHash;
+        const actualHash = crypto.createHash('sha256').update(secret).digest('hex');
+        if (expectedHash && (expectedHash === actualHash || constantTimeCompare(expectedHash, actualHash))) {
+          const agentId = keyRecord.agentId;
+          let agent = inMemoryAgentRegistry.get(agentId) || (keyRecord.handle ? inMemoryAgentRegistry.get(keyRecord.handle.toLowerCase()) : undefined);
+          if (!agent && db) {
+            try {
+              const agentSnap = await db.collection('users').doc(agentId).get();
+              if (agentSnap.exists) {
+                agent = agentSnap.data();
+                inMemoryAgentRegistry.set(agentId, agent);
+              }
+            } catch (_) {}
+          }
+          return {
+            agentId,
+            handle: agent?.handle || keyRecord.handle || `agent_${publicId.substring(0, 6)}`,
+            displayName: agent?.displayName || 'Autonomous Agent'
+          };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+// ============================================================================
 // EXPRESS MIDDLEWARE: REAL COINBASE X402 ENFORCEMENT
 // ============================================================================
 
@@ -529,8 +598,14 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       return forwardNext();
     }
 
-    // 3. Allow requests paid through platform credits (Bearer sb_live_ key with credits)
-    // Atomically debit credits: 1 credit = $0.01
+    const paymentHeader =
+      req.header('payment-signature') ||
+      req.header('PAYMENT-SIGNATURE') ||
+      req.header('x-payment') ||
+      req.header('X-PAYMENT') ||
+      req.header('x-402-payment-proof') ||
+      req.header('X-402-Payment-Proof');
+
     const rawAuth = req.headers.authorization || (req.headers['x-agent-key'] as string);
     const isAgentKey = rawAuth && (
       rawAuth.includes('sb_live_') ||
@@ -544,6 +619,161 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       ))
     );
 
+    const recipientAddress = getX402RecipientAddress();
+
+    const buildPaymentRequirements = () => {
+      if (!recipientAddress) return null;
+      const paymentRequirement = {
+        scheme: 'exact' as const,
+        network: BASE_CAIP2, // 'eip155:8453' (Base mainnet)
+        amount: endpointConfig.atomicAmount,
+        asset: BASE_USDC_CONTRACT, // Base USDC
+        payTo: recipientAddress,
+        maxTimeoutSeconds: 300,
+        extra: {
+          name: USDC_NAME,
+          version: USDC_VERSION,
+          symbol: 'USDC',
+          decimals: USDC_DECIMALS,
+          priceUsd: endpointConfig.priceDisplay
+        }
+      };
+
+      const discoveryExt = BAZAAR_DISCOVERY_EXTENSIONS[endpointConfig.id]?.bazaar || endpointConfig.discoveryExtension;
+
+      const paymentRequiredPayload = {
+        x402Version: 2 as const,
+        accepts: [paymentRequirement],
+        resource: {
+          url: `${req.protocol}://${req.get('host') || 'stockbloc.ai.studio'}${req.originalUrl || req.url || '/'}` || 'https://stockbloc.ai.studio',
+          description: (endpointConfig.description || '').slice(0, 500),
+          mimeType: 'application/json',
+          serviceName: 'Stock Bloc',
+          tags: ['stocks', 'sec', '13f', 'quant', 'forecasting']
+        },
+        extensions: {
+          bazaar: discoveryExt
+        }
+      };
+
+      return { paymentRequirement, paymentRequiredPayload };
+    };
+
+    // ========================================================================
+    // REQUIRED FLOW STEP 1: x402 PAYMENT-SIGNATURE Header Present
+    // Verify and settle via the Coinbase CDP facilitator path FIRST, regardless of credit balance.
+    // On success, serve the request. Do not also debit credits (no double charge).
+    // Attribute the call to the sb_live_ identity if a valid agent key is also present.
+    // ========================================================================
+    if (paymentHeader) {
+      if (!recipientAddress) {
+        return res.status(500).json({
+          status: 'error',
+          code: 'CONFIGURATION_ERROR',
+          message:
+            'Configuration Error: X402_RECIPIENT_ADDRESS environment variable is not configured. Server cannot accept x402 micropayments or generate payment requirements.',
+          endpoint: endpointConfig.name,
+          price: endpointConfig.priceDisplay,
+          network: 'Base',
+          asset: 'USDC'
+        });
+      }
+
+      const reqs = buildPaymentRequirements();
+      if (!reqs) {
+        return res.status(500).json({
+          status: 'error',
+          code: 'CONFIGURATION_ERROR',
+          message: 'Failed to construct payment requirement.'
+        });
+      }
+
+      const { paymentRequirement } = reqs;
+
+      try {
+        let paymentPayload: any;
+        if (typeof paymentHeader === 'string') {
+          const trimmed = paymentHeader.trim();
+          if (trimmed.startsWith('{')) {
+            paymentPayload = JSON.parse(trimmed);
+          } else {
+            try {
+              paymentPayload = decodePaymentSignatureHeader(trimmed);
+            } catch {
+              const decoded = Buffer.from(trimmed, 'base64').toString('utf8');
+              paymentPayload = JSON.parse(decoded);
+            }
+          }
+        } else {
+          paymentPayload = paymentHeader;
+        }
+
+        const facilitatorClient = getCoinbaseFacilitatorClient();
+
+        // Step A: Verify payment through facilitator
+        const verifyResult = await facilitatorClient.verify(paymentPayload, paymentRequirement as any);
+        if (!verifyResult || (verifyResult as any).isValid === false) {
+          return res.status(402).json({
+            status: 'payment_verification_failed',
+            code: 402,
+            error: 'x402 payment verification failed through Coinbase CDP facilitator.',
+            reason: (verifyResult as any)?.reason || 'Invalid signature, invalid nonce, or expired authorization.'
+          });
+        }
+
+        // Step B: Settle payment through facilitator BEFORE serving response
+        const settleResult = await facilitatorClient.settle(paymentPayload, paymentRequirement as any);
+        if (!settleResult || (settleResult as any).success === false) {
+          return res.status(402).json({
+            status: 'payment_settlement_failed',
+            code: 402,
+            error: 'x402 payment settlement failed through Coinbase CDP facilitator.',
+            reason: (settleResult as any)?.error || 'On-chain settlement transaction could not be executed.'
+          });
+        }
+
+        // Settlement succeeded! Attach settlement details and headers
+        const responseHeader = encodePaymentResponseHeader(settleResult);
+        res.setHeader('PAYMENT-RESPONSE', responseHeader);
+        (req as any).x402Payment = {
+          verified: true,
+          settled: true,
+          settleResult,
+          payer: (settleResult as any).payer || paymentPayload.payer,
+          txHash: (settleResult as any).txHash
+        };
+
+        // Attribute the call to the sb_live_ identity if a valid agent key is also present
+        if (isAgentKey) {
+          const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
+          const resolvedAgent = await resolveAgentIdentityFromKey(authHeader);
+          if (resolvedAgent) {
+            (req as any).agent = resolvedAgent;
+          }
+        }
+
+        // Do not also debit credits (no double charge).
+        return forwardNext();
+      } catch (err: any) {
+        console.error('Coinbase x402 facilitator error:', err.message);
+        return res.status(402).json({
+          status: 'payment_rejected',
+          code: 402,
+          error: 'x402 payment rejected by Coinbase CDP facilitator.',
+          details: err.message
+        });
+      }
+    }
+
+    // ========================================================================
+    // REQUIRED FLOW STEP 2: Else if valid sb_live_ agent key is present
+    // Attempt platform-credit debit as today.
+    // 2a. Debit succeeds: serve the request (unchanged).
+    // 2b. Debit fails with INSUFFICIENT_FUNDS: do NOT return the plain error JSON.
+    //     Fall through to standard x402 flow and return HTTP 402 with complete
+    //     valid x402 PAYMENT-REQUIRED payload.
+    // ========================================================================
+    let isCreditsExhausted = false;
     if (isAgentKey) {
       const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
       const creditCost = Math.max(1, Math.round(endpointConfig.priceUsd * 100));
@@ -552,36 +782,44 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
         method: req.method,
         description: `x402 credit access to ${endpointConfig.name} (${req.method} ${fullPath})`
       });
-      if (!debitResult.valid) {
-        return res.status(debitResult.statusCode || 402).json({
+
+      // 2a: Debit succeeds
+      if (debitResult.valid) {
+        (req as any).creditsDebited = true;
+        (req as any).agent = {
+          agentId: debitResult.agentId,
+          handle: debitResult.handle,
+          displayName: debitResult.displayName
+        };
+        (req as any).creditsRemaining = debitResult.creditsRemaining;
+        return forwardNext();
+      }
+
+      // If invalid/revoked/expired API key (401), return 401 Unauthorized
+      if (debitResult.statusCode === 401) {
+        return res.status(401).json({
           status: 'error',
-          code: debitResult.statusCode === 401 ? 'UNAUTHORIZED' : 'PAYMENT_REQUIRED',
-          error: debitResult.error || 'Insufficient platform credits.',
-          creditsRemaining: debitResult.creditsRemaining ?? 0,
-          cost: creditCost
+          code: 'UNAUTHORIZED',
+          error: debitResult.error || 'Unauthorized: Invalid Agent API key.'
         });
       }
-      (req as any).creditsDebited = true;
-      (req as any).agent = {
-        agentId: debitResult.agentId,
-        handle: debitResult.handle,
-        displayName: debitResult.displayName
-      };
-      (req as any).creditsRemaining = debitResult.creditsRemaining;
-      return forwardNext();
+
+      // 2b: Debit fails with INSUFFICIENT_FUNDS (402)
+      // Do NOT return early plain error JSON! Fall through to standard x402 flow below.
+      isCreditsExhausted = true;
+      if (debitResult.agentId) {
+        (req as any).agent = {
+          agentId: debitResult.agentId,
+          handle: debitResult.handle,
+          displayName: debitResult.displayName
+        };
+      }
     }
 
-    // 3. Check for x402 payment header
-    const paymentHeader =
-      req.header('payment-signature') ||
-      req.header('PAYMENT-SIGNATURE') ||
-      req.header('x-payment') ||
-      req.header('X-PAYMENT') ||
-      req.header('x-402-payment-proof') ||
-      req.header('X-402-Payment-Proof');
-
-    // 4. Configuration Check: If X402_RECIPIENT_ADDRESS is not set, must return a clear configuration error — never a mock payment
-    const recipientAddress = getX402RecipientAddress();
+    // ========================================================================
+    // REQUIRED FLOW STEP 3: Return complete valid x402 PAYMENT-REQUIRED payload
+    // (Reached by anonymous requests, or registered agents with exhausted credits)
+    // ========================================================================
     if (!recipientAddress) {
       return res.status(500).json({
         status: 'error',
@@ -595,132 +833,47 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       });
     }
 
-    // Build standard x402 payment requirement
-    const paymentRequirement = {
-      scheme: 'exact' as const,
-      network: BASE_CAIP2, // 'eip155:8453' (Base mainnet)
-      amount: endpointConfig.atomicAmount,
-      asset: BASE_USDC_CONTRACT, // Base USDC
-      payTo: recipientAddress,
-      maxTimeoutSeconds: 300,
-      extra: {
-        name: USDC_NAME,
-        version: USDC_VERSION,
-        symbol: 'USDC',
-        decimals: USDC_DECIMALS,
-        priceUsd: endpointConfig.priceDisplay
-      }
-    };
+    const reqs = buildPaymentRequirements();
+    if (!reqs) {
+      return res.status(500).json({
+        status: 'error',
+        code: 'CONFIGURATION_ERROR',
+        message: 'Failed to construct payment requirement.'
+      });
+    }
 
-    const discoveryExt = BAZAAR_DISCOVERY_EXTENSIONS[endpointConfig.id]?.bazaar || endpointConfig.discoveryExtension;
+    const { paymentRequiredPayload } = reqs;
 
-    const paymentRequiredPayload = {
-      x402Version: 2 as const,
-      accepts: [paymentRequirement],
-      resource: {
-        url: `${req.protocol}://${req.get('host') || 'stockbloc.ai.studio'}${req.originalUrl || req.url || '/'}` || 'https://stockbloc.ai.studio',
-        description: (endpointConfig.description || '').slice(0, 500),
-        mimeType: 'application/json',
-        serviceName: 'Stock Bloc',
-        tags: ['stocks', 'sec', '13f', 'quant', 'forecasting']
+    const encodedHeader = encodePaymentRequiredHeader(paymentRequiredPayload);
+    res.setHeader('PAYMENT-REQUIRED', encodedHeader);
+    res.setHeader('Cache-Control', 'no-store, private');
+    return res.status(402).json({
+      status: 'payment_required',
+      code: 'PAYMENT_REQUIRED',
+      statusCode: 402,
+      ...paymentRequiredPayload,
+      paymentDetails: {
+        protocol: 'x402',
+        asset: 'USDC',
+        network: 'Base',
+        networkCaip2: BASE_CAIP2,
+        chainId: BASE_CHAIN_ID,
+        contractAddress: BASE_USDC_CONTRACT,
+        priceUsd: endpointConfig.priceUsd,
+        priceDisplay: endpointConfig.priceDisplay,
+        amountAtomic: endpointConfig.atomicAmount,
+        recipientAddress,
+        facilitator: 'Coinbase Developer Platform (CDP) Facilitator',
+        facilitatorUrl: 'https://api.cdp.coinbase.com/platform/v2/x402',
+        instructions:
+          "Sign a USDC transferWithAuthorization (EIP-3009) or permit2 on Base (chain ID 8453) for the required amount and retry with the signed payment payload in the 'PAYMENT-SIGNATURE' header."
       },
-      extensions: {
-        bazaar: discoveryExt
-      }
-    };
-
-    // 5. If no payment header provided, return HTTP 402 with real x402 payment requirement
-    if (!paymentHeader) {
-      const encodedHeader = encodePaymentRequiredHeader(paymentRequiredPayload);
-      res.setHeader('PAYMENT-REQUIRED', encodedHeader);
-      res.setHeader('Cache-Control', 'no-store, private');
-      return res.status(402).json({
-        status: 'payment_required',
-        code: 402,
-        ...paymentRequiredPayload,
-        paymentDetails: {
-          protocol: 'x402',
-          asset: 'USDC',
-          network: 'Base',
-          networkCaip2: BASE_CAIP2,
-          chainId: BASE_CHAIN_ID,
-          contractAddress: BASE_USDC_CONTRACT,
-          priceUsd: endpointConfig.priceUsd,
-          priceDisplay: endpointConfig.priceDisplay,
-          amountAtomic: endpointConfig.atomicAmount,
-          recipientAddress,
-          facilitator: 'Coinbase Developer Platform (CDP) Facilitator',
-          facilitatorUrl: 'https://api.cdp.coinbase.com/platform/v2/x402',
-          instructions:
-            "Sign a USDC transferWithAuthorization (EIP-3009) or permit2 on Base (chain ID 8453) for the required amount and retry with the signed payment payload in the 'PAYMENT-SIGNATURE' header."
-        }
-      });
-    }
-
-    // 6. Payment header is present: Verify through official Coinbase CDP Facilitator
-    // "3. Verify every payment through the x402 facilitator before serving the response. Never serve paid content without verified settlement. No mock invoices, no fabricated transaction hashes, no fake success states."
-    try {
-      let paymentPayload: any;
-      if (typeof paymentHeader === 'string') {
-        const trimmed = paymentHeader.trim();
-        if (trimmed.startsWith('{')) {
-          paymentPayload = JSON.parse(trimmed);
-        } else {
-          try {
-            paymentPayload = decodePaymentSignatureHeader(trimmed);
-          } catch {
-            const decoded = Buffer.from(trimmed, 'base64').toString('utf8');
-            paymentPayload = JSON.parse(decoded);
+      ...(isCreditsExhausted
+        ? {
+            error: 'Trial credit balance exhausted (0 credits remaining). Pay per call via x402 USDC on Base to continue.',
+            creditsRemaining: 0
           }
-        }
-      } else {
-        paymentPayload = paymentHeader;
-      }
-
-      const facilitatorClient = getCoinbaseFacilitatorClient();
-
-      // Step A: Verify payment through facilitator
-      const verifyResult = await facilitatorClient.verify(paymentPayload, paymentRequirement as any);
-      if (!verifyResult || (verifyResult as any).isValid === false) {
-        return res.status(402).json({
-          status: 'payment_verification_failed',
-          code: 402,
-          error: 'x402 payment verification failed through Coinbase CDP facilitator.',
-          reason: (verifyResult as any)?.reason || 'Invalid signature, invalid nonce, or expired authorization.'
-        });
-      }
-
-      // Step B: Settle payment through facilitator BEFORE serving response
-      const settleResult = await facilitatorClient.settle(paymentPayload, paymentRequirement as any);
-      if (!settleResult || (settleResult as any).success === false) {
-        return res.status(402).json({
-          status: 'payment_settlement_failed',
-          code: 402,
-          error: 'x402 payment settlement failed through Coinbase CDP facilitator.',
-          reason: (settleResult as any)?.error || 'On-chain settlement transaction could not be executed.'
-        });
-      }
-
-      // Settlement succeeded! Attach settlement details and continue
-      const responseHeader = encodePaymentResponseHeader(settleResult);
-      res.setHeader('PAYMENT-RESPONSE', responseHeader);
-      (req as any).x402Payment = {
-        verified: true,
-        settled: true,
-        settleResult,
-        payer: (settleResult as any).payer || paymentPayload.payer,
-        txHash: (settleResult as any).txHash
-      };
-
-      return forwardNext();
-    } catch (err: any) {
-      console.error('Coinbase x402 facilitator error:', err.message);
-      return res.status(402).json({
-        status: 'payment_rejected',
-        code: 402,
-        error: 'x402 payment rejected by Coinbase CDP facilitator.',
-        details: err.message
-      });
-    }
+        : {})
+    });
   };
 }
