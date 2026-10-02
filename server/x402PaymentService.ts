@@ -815,6 +815,32 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
           } catch (bookkeepingErr: any) {
             console.error('Non-fatal agent resolution error on idempotent replay:', bookkeepingErr?.message || bookkeepingErr);
           }
+        } else {
+          const payer = existingSettlement.payer || '0x_payer';
+          const payerHandle = payer.startsWith('0x') && payer.length > 10
+            ? `wallet_${payer.substring(0, 6)}...${payer.substring(payer.length - 4)}`
+            : `wallet_${payer}`;
+          if (!(req as any).agent) {
+            (req as any).agent = {
+              agentId: payer.toLowerCase(),
+              handle: payerHandle,
+              displayName: `Web3 Payer (${payer.substring(0, 6)}...${payer.substring(payer.length - 4)})`,
+              walletAddress: payer,
+              status: 'active',
+              isX402Payer: true,
+              createdAt: new Date().toISOString()
+            };
+          }
+          if (!(req as any).agentKey) {
+            (req as any).agentKey = {
+              keyId: `x402_${payer.toLowerCase()}`,
+              agentId: payer.toLowerCase(),
+              handle: payerHandle,
+              scopes: ['*'],
+              status: 'active',
+              isX402Payment: true
+            };
+          }
         }
 
         return forwardNext();
@@ -969,6 +995,32 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
             const resolvedAgent = await resolveAgentIdentityFromKey(authHeader);
             if (resolvedAgent) {
               (req as any).agent = resolvedAgent;
+            }
+          } else {
+            const payer = settlementRecord.payer || '0x_payer';
+            const payerHandle = payer.startsWith('0x') && payer.length > 10
+              ? `wallet_${payer.substring(0, 6)}...${payer.substring(payer.length - 4)}`
+              : `wallet_${payer}`;
+            if (!(req as any).agent) {
+              (req as any).agent = {
+                agentId: payer.toLowerCase(),
+                handle: payerHandle,
+                displayName: `Web3 Payer (${payer.substring(0, 6)}...${payer.substring(payer.length - 4)})`,
+                walletAddress: payer,
+                status: 'active',
+                isX402Payer: true,
+                createdAt: new Date().toISOString()
+              };
+            }
+            if (!(req as any).agentKey) {
+              (req as any).agentKey = {
+                keyId: `x402_${payer.toLowerCase()}`,
+                agentId: payer.toLowerCase(),
+                handle: payerHandle,
+                scopes: ['*'],
+                status: 'active',
+                isX402Payment: true
+              };
             }
           }
         } catch (bookkeepingErr: any) {

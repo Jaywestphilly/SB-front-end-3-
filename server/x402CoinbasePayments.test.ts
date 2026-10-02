@@ -778,5 +778,118 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
 
       expect(settleSpy).toHaveBeenCalledTimes(1);
     });
+
+    it('X402 AS AUTHORIZATION: valid X-PAYMENT with no API key returns 201 on POST /api/v1/intelligence/forecasts and attributes to payer', async () => {
+      process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
+      const { agentIntelligenceRouter } = await import('./agentIntelligenceApi.js');
+      const testApp = express();
+      testApp.use(express.json());
+      testApp.use(requireX402Payment());
+      testApp.use('/api/v1/intelligence', agentIntelligenceRouter);
+
+      const settleSpy = vi.fn().mockResolvedValue({
+        success: true,
+        payer: '0xWeb3ForecastPayer1234567890abcdef12345678',
+        txHash: '0xforecast_tx_1234567890abcdef1234567890abcdef'
+      });
+
+      setFacilitatorVerifyHandler(async () => ({ isValid: true }));
+      setFacilitatorSettleHandler(settleSpy);
+
+      const paymentHeader = Buffer.from(
+        JSON.stringify({
+          x402Version: 2,
+          authorization: {
+            from: '0xWeb3ForecastPayer1234567890abcdef12345678',
+            to: TEST_RECIPIENT_ADDRESS,
+            value: '20000',
+            nonce: '0xforecast_nonce_001'
+          }
+        })
+      ).toString('base64');
+
+      // Request with NO Authorization / API key header, only X-PAYMENT
+      const res = await request(testApp)
+        .post('/api/v1/intelligence/forecasts')
+        .set('X-PAYMENT', paymentHeader)
+        .send({
+          question: 'Will NVDA reach $150 by Q3 2026?',
+          asset: 'NVDA',
+          direction: 'BULLISH',
+          target: '150',
+          probability: 78,
+          timeHorizon: '3M',
+          resolutionCriteria: 'NVDA closing price on NASDAQ >= 150',
+          sourceEvidence: 'Datacenter GPU revenue acceleration'
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.status).toBe('created');
+      expect(res.body.id).toBeDefined();
+      expect(settleSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('X402 AS AUTHORIZATION: valid X-PAYMENT with no API key returns 201 on POST /api/v1/intelligence/research and attributes to payer', async () => {
+      process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
+      const { agentIntelligenceRouter } = await import('./agentIntelligenceApi.js');
+      const testApp = express();
+      testApp.use(express.json());
+      testApp.use(requireX402Payment());
+      testApp.use('/api/v1/intelligence', agentIntelligenceRouter);
+
+      const settleSpy = vi.fn().mockResolvedValue({
+        success: true,
+        payer: '0xWeb3ResearchPayer1234567890abcdef12345678',
+        txHash: '0xresearch_tx_1234567890abcdef1234567890abcdef'
+      });
+
+      setFacilitatorVerifyHandler(async () => ({ isValid: true }));
+      setFacilitatorSettleHandler(settleSpy);
+
+      const paymentHeader = Buffer.from(
+        JSON.stringify({
+          x402Version: 2,
+          authorization: {
+            from: '0xWeb3ResearchPayer1234567890abcdef12345678',
+            to: TEST_RECIPIENT_ADDRESS,
+            value: '20000',
+            nonce: '0xresearch_nonce_001'
+          }
+        })
+      ).toString('base64');
+
+      const res = await request(testApp)
+        .post('/api/v1/intelligence/research')
+        .set('X-PAYMENT', paymentHeader)
+        .send({
+          title: 'NVDA Blackwell Architecture Deep Dive',
+          summary: 'NVDA Blackwell GPU architecture scaling analysis',
+          thesis: 'Hyperscale demand for GB200 systems drives sustained margin expansion',
+          bullCase: 'Accelerated cloud provider capex',
+          bearCase: 'Supply chain packaging bottlenecks',
+          catalysts: ['Q2 Earnings Report', 'Hot Chips Keynote']
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.status).toBe('created');
+      expect(res.body.id).toBeDefined();
+      expect(settleSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('NON-PRICED ROUTE: unauthenticated request without API key is still rejected with 401', async () => {
+      process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
+      const { agentPlatformRouter } = await import('./agentPlatform.js');
+      const testApp = express();
+      testApp.use(express.json());
+      testApp.use(requireX402Payment());
+      testApp.use('/api/v1/agents', agentPlatformRouter);
+
+      // Attempt to access unpriced authenticated endpoint with no API key
+      const res = await request(testApp)
+        .get('/api/v1/agents/me');
+
+      expect(res.status).toBe(401);
+      expect(res.body.error).toContain('Unauthorized');
+    });
   });
 });

@@ -320,6 +320,47 @@ export const authenticateAgent = async (
   res: Response,
   next: NextFunction
 ): Promise<any> => {
+  // If the request carries an authoritative x402 payment settlement, the on-chain payment is the authorization
+  if ((req as any).x402Payment?.verified && (req as any).x402Payment?.settled) {
+    const payer = (req as any).x402Payment.payer || '0x_payer';
+    const payerHandle = payer.startsWith('0x') && payer.length > 10
+      ? `wallet_${payer.substring(0, 6)}...${payer.substring(payer.length - 4)}`
+      : `wallet_${payer}`;
+
+    if (!(req as any).agent) {
+      (req as any).agent = {
+        agentId: payer.toLowerCase(),
+        handle: payerHandle,
+        displayName: `Web3 Payer (${payer.substring(0, 6)}...${payer.substring(payer.length - 4)})`,
+        walletAddress: payer,
+        status: 'active',
+        isX402Payer: true,
+        createdAt: new Date().toISOString()
+      };
+    }
+    if (!(req as any).agentKey) {
+      (req as any).agentKey = {
+        keyId: `x402_${payer.toLowerCase()}`,
+        agentId: payer.toLowerCase(),
+        handle: payerHandle,
+        scopes: ['*'],
+        status: 'active',
+        isX402Payment: true
+      };
+    }
+    logSecurityAudit({
+      action: 'AUTHENTICATION',
+      agentId: (req as any).agent.agentId,
+      handle: (req as any).agent.handle,
+      keyId: (req as any).agentKey.keyId,
+      path: req.path,
+      method: req.method,
+      status: 200,
+      details: { authType: 'x402_onchain_payment', txHash: (req as any).x402Payment.txHash }
+    });
+    return next();
+  }
+
   const authHeader = req.headers.authorization || (req.headers['x-agent-key'] as string);
 
   if (!authHeader) {
@@ -1018,6 +1059,10 @@ export function getSystemReadinessStatus(): {
 // Scope authorization middleware
 export const requireScope = (scope: AgentApiScope | string) => {
   return (req: Request, res: Response, next: NextFunction) => {
+    // If authenticated via authoritative x402 payment, on-chain settlement authorizes the priced operation
+    if ((req as any).x402Payment?.verified && (req as any).x402Payment?.settled) {
+      return next();
+    }
     const keyData: AgentApiKeyRecord = (req as any).agentKey;
     if (!keyData) {
       return res.status(401).json({ error: 'Unauthorized: Missing API key credentials' });
