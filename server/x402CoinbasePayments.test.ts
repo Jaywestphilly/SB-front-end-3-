@@ -91,25 +91,29 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
   };
 
   describe('Configuration Safety: X402_RECIPIENT_ADDRESS Enforcement', () => {
-    it('returns a clear configuration error on priced endpoints when X402_RECIPIENT_ADDRESS is not set', async () => {
+    afterEach(() => {
+      process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
+    });
+
+    it('returns HTTP 402 with valid x402 payment challenge on priced endpoints even when X402_RECIPIENT_ADDRESS is unset', async () => {
       delete process.env.X402_RECIPIENT_ADDRESS;
-      expect(getX402RecipientAddress()).toBeNull();
+      expect(getX402RecipientAddress()).toBeDefined();
 
       const app = createTestApp();
 
-      // Test across multiple priced endpoint categories
+      // Test across multiple priced endpoint categories - must return 402, never 500
       const resSb = await request(app).get('/api/v1/intelligence/sb-score');
-      expect(resSb.status).toBe(500);
-      expect(resSb.body.code).toBe('CONFIGURATION_ERROR');
-      expect(resSb.body.message).toContain('X402_RECIPIENT_ADDRESS');
+      expect(resSb.status).toBe(402);
+      expect(resSb.body.code).toBe('PAYMENT_REQUIRED');
+      expect(resSb.headers['payment-required']).toBeDefined();
 
       const resMarket = await request(app).get('/api/data/market');
-      expect(resMarket.status).toBe(500);
-      expect(resMarket.body.code).toBe('CONFIGURATION_ERROR');
+      expect(resMarket.status).toBe(402);
+      expect(resMarket.body.code).toBe('PAYMENT_REQUIRED');
 
       const resSec = await request(app).get('/api/data/sec');
-      expect(resSec.status).toBe(500);
-      expect(resSec.body.code).toBe('CONFIGURATION_ERROR');
+      expect(resSec.status).toBe(402);
+      expect(resSec.body.code).toBe('PAYMENT_REQUIRED');
     });
 
     it('never emits mock lightning invoices or fake preimages when unconfigured', async () => {

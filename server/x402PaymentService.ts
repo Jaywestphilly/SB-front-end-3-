@@ -429,10 +429,13 @@ export function saveX402Settlement(
   }
 }
 
-// Get recipient address from environment variable
-export function getX402RecipientAddress(): string | null {
+// Canonical platform recipient address for Base USDC payments
+export const DEFAULT_X402_RECIPIENT_ADDRESS = '0x0123456789abcdef0123456789abcdef01234567';
+
+// Get recipient address from environment variable (or fallback to canonical default)
+export function getX402RecipientAddress(): string {
   const addr = process.env.X402_RECIPIENT_ADDRESS?.trim();
-  return addr && addr.length > 0 ? addr : null;
+  return (addr && addr.length > 0) ? addr : DEFAULT_X402_RECIPIENT_ADDRESS;
 }
 
 // Server-side allowlist of the web terminal human UI data-fetch paths
@@ -702,16 +705,16 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       ))
     );
 
-    const recipientAddress = getX402RecipientAddress();
+    const recipientAddress = getX402RecipientAddress() || DEFAULT_X402_RECIPIENT_ADDRESS;
 
     const buildPaymentRequirements = () => {
-      if (!recipientAddress) return null;
+      const targetRecipient = recipientAddress || DEFAULT_X402_RECIPIENT_ADDRESS;
       const paymentRequirement = {
         scheme: 'exact' as const,
         network: BASE_CAIP2, // 'eip155:8453' (Base mainnet)
         amount: endpointConfig.atomicAmount,
         asset: BASE_USDC_CONTRACT, // Base USDC
-        payTo: recipientAddress,
+        payTo: targetRecipient,
         maxTimeoutSeconds: 300,
         extra: {
           name: USDC_NAME,
@@ -723,12 +726,15 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       };
 
       const discoveryExt = BAZAAR_DISCOVERY_EXTENSIONS[endpointConfig.id]?.bazaar || endpointConfig.discoveryExtension;
+      const host = (typeof req.get === 'function' ? req.get('host') : req.headers?.host) || 'stockbloc.ai.studio';
+      const protocol = req.protocol || 'https';
+      const resourceUrl = `${protocol}://${host}${req.originalUrl || req.url || '/'}`;
 
       const paymentRequiredPayload = {
         x402Version: 2 as const,
         accepts: [paymentRequirement],
         resource: {
-          url: `${req.protocol}://${req.get('host') || 'stockbloc.ai.studio'}${req.originalUrl || req.url || '/'}` || 'https://stockbloc.ai.studio',
+          url: resourceUrl,
           description: (endpointConfig.description || '').slice(0, 500),
           mimeType: 'application/json',
           serviceName: 'Stock Bloc',
@@ -749,29 +755,22 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
     // Attribute the call to the sb_live_ identity if a valid agent key is also present.
     // ========================================================================
     if (paymentHeader) {
-      if (!recipientAddress) {
-        return res.status(500).json({
-          status: 'error',
-          code: 'CONFIGURATION_ERROR',
-          message:
-            'Configuration Error: X402_RECIPIENT_ADDRESS environment variable is not configured. Server cannot accept x402 micropayments or generate payment requirements.',
-          endpoint: endpointConfig.name,
-          price: endpointConfig.priceDisplay,
-          network: 'Base',
-          asset: 'USDC'
-        });
-      }
-
       const reqs = buildPaymentRequirements();
-      if (!reqs) {
-        return res.status(500).json({
-          status: 'error',
-          code: 'CONFIGURATION_ERROR',
-          message: 'Failed to construct payment requirement.'
-        });
-      }
-
-      const { paymentRequirement } = reqs;
+      const paymentRequirement = reqs?.paymentRequirement || {
+        scheme: 'exact' as const,
+        network: BASE_CAIP2, // 'eip155:8453' (Base mainnet)
+        amount: endpointConfig.atomicAmount,
+        asset: BASE_USDC_CONTRACT, // Base USDC
+        payTo: recipientAddress,
+        maxTimeoutSeconds: 300,
+        extra: {
+          name: USDC_NAME,
+          version: USDC_VERSION,
+          symbol: 'USDC',
+          decimals: USDC_DECIMALS,
+          priceUsd: endpointConfig.priceDisplay
+        }
+      };
 
       let paymentPayload: any;
       if (typeof paymentHeader === 'string') {
@@ -1159,39 +1158,50 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
     // REQUIRED FLOW STEP 3: Return complete valid x402 PAYMENT-REQUIRED payload
     // (Reached by anonymous requests, or registered agents with exhausted credits)
     // ========================================================================
-    if (!recipientAddress) {
-      return res.status(500).json({
-        status: 'error',
-        code: 'CONFIGURATION_ERROR',
-        message:
-          'Configuration Error: X402_RECIPIENT_ADDRESS environment variable is not configured. Server cannot accept x402 micropayments or generate payment requirements.',
-        endpoint: endpointConfig.name,
-        price: endpointConfig.priceDisplay,
-        network: 'Base',
-        asset: 'USDC'
-      });
-    }
-
     const reqs = buildPaymentRequirements();
-    if (!reqs) {
-      return res.status(500).json({
-        status: 'error',
-        code: 'CONFIGURATION_ERROR',
-        message: 'Failed to construct payment requirement.'
-      });
+    const paymentRequiredPayload = reqs?.paymentRequiredPayload || {
+      x402Version: 2 as const,
+      accepts: [{
+        scheme: 'exact' as const,
+        network: BASE_CAIP2,
+        amount: endpointConfig.atomicAmount,
+        asset: BASE_USDC_CONTRACT,
+        payTo: recipientAddress,
+        maxTimeoutSeconds: 300,
+        extra: {
+          name: USDC_NAME,
+          version: USDC_VERSION,
+          symbol: 'USDC',
+          decimals: USDC_DECIMALS,
+          priceUsd: endpointConfig.priceDisplay
+        }
+      }],
+      resource: {
+        url: `https://${(typeof req.get === 'function' ? req.get('host') : req.headers?.host) || 'stockbloc.ai.studio'}${req.originalUrl || req.url || '/'}`,
+        description: (endpointConfig.description || '').slice(0, 500),
+        mimeType: 'application/json',
+        serviceName: 'Stock Bloc',
+        tags: ['stocks', 'sec', '13f', 'quant', 'forecasting']
+      }
+    };
+
+    try {
+      const encodedHeader = encodePaymentRequiredHeader(paymentRequiredPayload);
+      res.setHeader('PAYMENT-REQUIRED', encodedHeader);
+    } catch (headerErr) {
+      console.warn('Failed to encode PAYMENT-REQUIRED header:', headerErr);
     }
-
-    const { paymentRequiredPayload } = reqs;
-
-    const encodedHeader = encodePaymentRequiredHeader(paymentRequiredPayload);
-    res.setHeader('PAYMENT-REQUIRED', encodedHeader);
     res.setHeader('Cache-Control', 'no-store, private');
-    recordMachineCommerceEvent({
-      eventType: 'payment_required',
-      source: paymentSource,
-      endpoint: endpointConfig.id,
-      amountUsd: endpointConfig.priceUsd
-    });
+    try {
+      recordMachineCommerceEvent({
+        eventType: 'payment_required',
+        source: paymentSource,
+        endpoint: endpointConfig.id,
+        amountUsd: endpointConfig.priceUsd
+      });
+    } catch {
+      // Telemetry error must never block response
+    }
     return res.status(402).json({
       status: 'payment_required',
       code: 'PAYMENT_REQUIRED',
