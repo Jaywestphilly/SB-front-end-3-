@@ -2004,6 +2004,30 @@ app.post(['/api/v1/agent/strategy/evaluate', '/api/v1/agent/evaluate-strategy'],
 
     const evalResult = computeSuperSonicTsunamiEvaluation(allocation, benchmark as any, riskTolerance as any, Number(horizonDays) || 90);
 
+    // Persist immutable quant simulation snapshot to Firestore collection quant_runs
+    try {
+      const { persistQuantRun } = await import('./server/historicalIntelligenceService.js');
+      persistQuantRun({
+        strategyName: "Super Sonic Tsunami Strategy Evaluation",
+        parameters: { benchmark, riskTolerance, horizonDays },
+        inputPortfolio: allocation,
+        lookbackDays: Number(horizonDays) || 90,
+        assumptions: { riskFreeRate: 0.0425 },
+        benchmark: String(benchmark),
+        results: {
+          return: evalResult.portfolioMetrics.annualizedExpectedReturnPercent,
+          sharpe: evalResult.portfolioMetrics.sharpeRatio,
+          drawdown: evalResult.portfolioMetrics.maxDrawdownPercent,
+          volatility: evalResult.portfolioMetrics.annualizedVolatilityPercent,
+          winRate: evalResult.portfolioMetrics.winRatePercent
+        }
+      }).catch(persistErr => {
+        console.warn('Non-fatal quant run persistence error:', persistErr?.message || persistErr);
+      });
+    } catch (e: any) {
+      console.warn('Could not load historicalIntelligenceService for quant run:', e?.message || e);
+    }
+
     // If authenticated agent, mark verified simulation in registry
     if (agentId) {
       const cached = inMemoryAgentRegistry.get(agentId) || (handle ? inMemoryAgentRegistry.get(handle.toLowerCase()) : null);
@@ -2205,6 +2229,33 @@ app.post('/api/v1/agent/quant-sim', (req, res) => {
 
   const evalResult = computeSuperSonicTsunamiEvaluation(allocation, "super_sonic_tsunami", riskTolerance, horizonDays);
   const tickers = Object.keys(allocation);
+
+  // Persist immutable quant simulation snapshot to Firestore collection quant_runs
+  try {
+    import('./server/historicalIntelligenceService.js').then(({ persistQuantRun }) => {
+      persistQuantRun({
+        strategyName: "Agent Quant Simulation",
+        parameters: { benchmark: "super_sonic_tsunami", riskTolerance, horizonDays },
+        inputPortfolio: allocation,
+        lookbackDays: Number(horizonDays) || 90,
+        assumptions: { riskFreeRate: 0.0425 },
+        benchmark: "super_sonic_tsunami",
+        results: {
+          return: evalResult.portfolioMetrics.annualizedExpectedReturnPercent,
+          sharpe: evalResult.portfolioMetrics.sharpeRatio,
+          drawdown: evalResult.portfolioMetrics.maxDrawdownPercent,
+          volatility: evalResult.portfolioMetrics.annualizedVolatilityPercent,
+          winRate: evalResult.portfolioMetrics.winRatePercent
+        }
+      }).catch(persistErr => {
+        console.warn('Non-fatal quant run persistence error:', persistErr?.message || persistErr);
+      });
+    }).catch(e => {
+      console.warn('Could not load historicalIntelligenceService for quant run:', e?.message || e);
+    });
+  } catch (e) {
+    // non-fatal
+  }
 
   res.json({
     status: "simulation_complete",

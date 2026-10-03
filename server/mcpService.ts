@@ -174,6 +174,20 @@ export const MCP_TOOLS = [
         ebookId: { type: "string", description: "Ebook ID (e.g. 'wealth_operating_system', 'future_wealth_blueprint')" },
       },
     },
+  },
+  {
+    name: "get_sb_score_history",
+    description: "Get audited historical SB Score quantitative snapshots and performance tracking (30d/60d/90d returns) for any stock ticker (Price: $0.05 USDC via x402 pay-per-call on Base).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ticker: { type: "string", description: "Stock ticker symbol (e.g. NVDA, AAPL, MSFT, TSLA)" },
+        limit: { type: "number", description: "Maximum records to return (default: 20)" },
+        cursor: { type: "string", description: "Pagination cursor (scoreId)" },
+        methodologyVersion: { type: "string", description: "Filter by methodology version (e.g. 'SB_SCORE_V1')" }
+      },
+      required: ["ticker"]
+    }
   }
 ];
 
@@ -184,7 +198,8 @@ export const PAID_MCP_TOOLS = new Set([
   'evaluate_tsunami_strategy',
   'submit_agent_trade_idea',
   'analyze_sec_filing',
-  'search_13f_whale_filings'
+  'search_13f_whale_filings',
+  'get_sb_score_history'
 ]);
 
 export interface McpToolPricingConfig {
@@ -230,6 +245,12 @@ export const MCP_TOOL_PRICING: Record<string, McpToolPricingConfig> = {
     priceUsd: 0.25,
     priceDisplay: '$0.25',
     atomicAmount: '250000'
+  },
+  get_sb_score_history: {
+    endpointId: 'sb_score',
+    priceUsd: 0.05,
+    priceDisplay: '$0.05',
+    atomicAmount: '50000'
   }
 };
 
@@ -549,6 +570,17 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
         });
       } else if (name === "search_13f_whale_filings") {
         fetchRes = await fetch(`${baseUrl}/api/data/sec`, {
+          headers: forwardHeaders
+        });
+      } else if (name === "get_sb_score_history") {
+        const ticker = String(args.ticker || "NVDA").toUpperCase().trim();
+        const url = new URL(`${baseUrl}/api/v1/intelligence/sb-score/history`);
+        url.searchParams.set("ticker", ticker);
+        if (args.limit) url.searchParams.set("limit", String(args.limit));
+        if (args.cursor) url.searchParams.set("cursor", String(args.cursor));
+        if (args.methodologyVersion) url.searchParams.set("methodologyVersion", String(args.methodologyVersion));
+
+        fetchRes = await fetch(url.toString(), {
           headers: forwardHeaders
         });
       } else if (name === "get_agent_leaderboard") {

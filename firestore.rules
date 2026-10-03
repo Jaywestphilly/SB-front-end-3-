@@ -159,6 +159,24 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Historical SB Score Intelligence (Strict immutability: write only via server, update/delete forbidden)
+    match /sb_scores/{scoreId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Historical SB Score Outcomes (Strict outcome immutability: calculated only by server scheduled jobs)
+    match /sb_score_outcomes/{scoreId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Quantitative Simulation Runs (Strict immutability: created via server quant simulations, client write forbidden)
+    match /quant_runs/{runId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Default deny catch-all
     match /{document=**} {
       allow read, write: if false;

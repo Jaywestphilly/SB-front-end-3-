@@ -3,6 +3,7 @@ import { db, auth } from './firebaseAdmin.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import { authenticateAgent, requireScope, globalApiLimiter } from './agentPlatform.js';
 import rateLimit from 'express-rate-limit';
+import { requireX402Payment, PRICED_ENDPOINTS } from './x402PaymentService.js';
 
 export const agentIntelligenceRouter = Router();
 agentIntelligenceRouter.use(globalApiLimiter);
@@ -1007,6 +1008,39 @@ agentIntelligenceRouter.get(['/sb-score', '/signal'], async (req, res) => {
     const quant = computeQuantMetrics(found as any);
     const signal = calculateStockBlocSignal(found as any, quant);
 
+    // Persist immutable historical snapshot of the calculated SB Score
+    try {
+      const { persistSBScore } = await import('./historicalIntelligenceService.js');
+      persistSBScore({
+        ticker: (found as any).symbol,
+        priceAtScore: Number((found as any).price),
+        sbScore: Number(signal.signalScore),
+        signalLabel: String(signal.signalLabel),
+        components: {
+          momentum: signal.components?.find((c: any) => c.name.toLowerCase().includes('momentum'))?.score ?? 20,
+          trend: signal.components?.find((c: any) => c.name.toLowerCase().includes('trend'))?.score ?? 22,
+          relativeStrength: signal.components?.find((c: any) => c.name.toLowerCase().includes('strength') || c.name.toLowerCase().includes('rsi'))?.score ?? 18,
+          volume: signal.components?.find((c: any) => c.name.toLowerCase().includes('volume'))?.score ?? 12,
+          volatility: signal.components?.find((c: any) => c.name.toLowerCase().includes('volatility'))?.score ?? 13,
+        },
+        indicators: {
+          rsi: quant.rsi14 ?? null,
+          sma20: quant.sma20 ?? null,
+          sma50: quant.sma50 ?? null,
+          sma200: quant.sma200 ?? null,
+          volumeRatio: quant.volumeVsAvg20Ratio ?? null,
+          volatility: quant.volatility ?? null,
+          week52percentile: quant.percentile52Week ?? null,
+        },
+        dataSource: 'Yahoo Finance chart API',
+        dataFreshnessSeconds: 0
+      }).catch(persistErr => {
+        console.warn('Non-fatal SB score historical snapshot error:', persistErr?.message || persistErr);
+      });
+    } catch (e: any) {
+      console.warn('Could not load historicalIntelligenceService:', e?.message || e);
+    }
+
     return res.json({
       status: 'success',
       queryType: 'sb_score_quant_intelligence',
@@ -1043,6 +1077,43 @@ agentIntelligenceRouter.get(['/sb-score', '/signal'], async (req, res) => {
     return res.status(500).json({ error: 'Failed to compute SB Score', details: err.message });
   }
 });
+
+// GET /api/v1/intelligence/sb-score/history (Paid Historical Intelligence Endpoint, $0.05 USDC)
+agentIntelligenceRouter.get(
+  ['/sb-score/history', '/intelligence/sb-score/history'],
+  requireX402Payment(PRICED_ENDPOINTS.sb_score),
+  async (req, res) => {
+    try {
+      const ticker = String(req.query.ticker || req.query.symbol || '').toUpperCase().trim();
+      if (!ticker) {
+        return res.status(400).json({
+          error: 'invalid_ticker',
+          message: 'Query parameter "ticker" is required (e.g. ?ticker=NVDA)'
+        });
+      }
+
+      const limit = req.query.limit ? Number(req.query.limit) : 20;
+      const cursor = req.query.cursor ? String(req.query.cursor).trim() : undefined;
+      const methodologyVersion = req.query.methodologyVersion ? String(req.query.methodologyVersion).trim() : undefined;
+
+      const { getSBScoreHistory } = await import('./historicalIntelligenceService.js');
+      const history = await getSBScoreHistory({
+        ticker,
+        limit,
+        cursor,
+        methodologyVersion
+      });
+
+      return res.status(200).json(history);
+    } catch (err: any) {
+      console.error('Error fetching SB Score history:', err);
+      return res.status(500).json({
+        error: 'history_fetch_error',
+        message: err.message || 'Failed to retrieve SB Score history'
+      });
+    }
+  }
+);
 
 // ==========================================
 // EARNINGS PREP PACK BUNDLE API ($0.35 USDC)

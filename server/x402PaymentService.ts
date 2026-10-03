@@ -299,7 +299,9 @@ export const X402_ROUTE_PATHS: Record<string, string[]> = {
     '/api/v1/intelligence/sb-score',
     '/api/v1/intelligence/signal',
     '/api/intelligence/sb-score',
-    '/api/intelligence/signal'
+    '/api/intelligence/signal',
+    '/api/v1/intelligence/sb-score/history',
+    '/api/intelligence/sb-score/history'
   ],
   sec_13f_intel: [
     '/api/data/sec',
@@ -537,12 +539,14 @@ export function matchPricedEndpoint(path: string, method: string = 'GET'): X402P
     return PRICED_ENDPOINTS.sec_13f_intel;
   }
 
-  // SB Score & Quantitative Signals
+  // SB Score & Quantitative Signals (Live & Historical: $0.05 USDC)
   if (
     normalized === '/api/v1/intelligence/sb-score' ||
     normalized === '/api/v1/intelligence/signal' ||
     normalized === '/api/intelligence/sb-score' ||
-    normalized === '/api/intelligence/signal'
+    normalized === '/api/intelligence/signal' ||
+    normalized === '/api/v1/intelligence/sb-score/history' ||
+    normalized === '/api/intelligence/sb-score/history'
   ) {
     return PRICED_ENDPOINTS.sb_score;
   }

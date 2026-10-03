@@ -646,6 +646,9 @@ export const dbStore: Record<string, Map<string, any>> = {
   research_articles: dbStoreInstance.getCollection('research_articles'),
   forecasts: dbStoreInstance.getCollection('forecasts'),
   theses: dbStoreInstance.getCollection('theses'),
+  sb_scores: dbStoreInstance.getCollection('sb_scores'),
+  sb_score_outcomes: dbStoreInstance.getCollection('sb_score_outcomes'),
+  quant_runs: dbStoreInstance.getCollection('quant_runs'),
 };
 
 // Create a Resilient Firestore Query/Collection Wrapper
@@ -756,16 +759,26 @@ function createDocRef(collectionName: string, docId: string, rawDb?: any) {
   };
 }
 
-function createQueryRef(collectionName: string, filters: { field: string; op: string; val: any }[] = [], limitCount?: number, order?: { field: string; dir: 'asc' | 'desc' }, rawDb?: Firestore) {
+function createQueryRef(
+  collectionName: string,
+  filters: { field: string; op: string; val: any }[] = [],
+  limitCount?: number,
+  order?: { field: string; dir: 'asc' | 'desc' },
+  rawDb?: Firestore,
+  startAfterVal?: any
+) {
   const queryObj = {
     where: (field: string, op: string, val: any) => {
-      return createQueryRef(collectionName, [...filters, { field, op, val }], limitCount, order, rawDb);
+      return createQueryRef(collectionName, [...filters, { field, op, val }], limitCount, order, rawDb, startAfterVal);
     },
     orderBy: (field: string, dir: 'asc' | 'desc' = 'asc') => {
-      return createQueryRef(collectionName, filters, limitCount, { field, dir }, rawDb);
+      return createQueryRef(collectionName, filters, limitCount, { field, dir }, rawDb, startAfterVal);
     },
     limit: (n: number) => {
-      return createQueryRef(collectionName, filters, n, order, rawDb);
+      return createQueryRef(collectionName, filters, n, order, rawDb, startAfterVal);
+    },
+    startAfter: (cursor: any) => {
+      return createQueryRef(collectionName, filters, limitCount, order, rawDb, cursor);
     },
     get: async () => {
       // 1. Try real Firestore first
@@ -777,6 +790,9 @@ function createQueryRef(collectionName: string, filters: { field: string; op: st
           }
           if (order) {
             ref = ref.orderBy(order.field, order.dir);
+          }
+          if (startAfterVal !== undefined && startAfterVal !== null) {
+            ref = ref.startAfter(startAfterVal);
           }
           if (typeof limitCount === 'number') {
             ref = ref.limit(limitCount);
@@ -802,6 +818,10 @@ function createQueryRef(collectionName: string, filters: { field: string; op: st
           else if (f.op === 'in' && Array.isArray(f.val) && !f.val.includes(itemVal)) matches = false;
           else if (f.op === 'array-contains' && (!Array.isArray(itemVal) || !itemVal.includes(f.val))) matches = false;
           else if (f.op === '!=' && itemVal === f.val) matches = false;
+          else if (f.op === '<=' && (itemVal > f.val)) matches = false;
+          else if (f.op === '>=' && (itemVal < f.val)) matches = false;
+          else if (f.op === '<' && (itemVal >= f.val)) matches = false;
+          else if (f.op === '>' && (itemVal <= f.val)) matches = false;
         }
         if (matches) {
           docs.push({ id, data: () => data, ...data });
@@ -817,6 +837,15 @@ function createQueryRef(collectionName: string, filters: { field: string; op: st
           const tB = vB?._seconds ? vB._seconds * 1000 : (vB instanceof Date ? vB.getTime() : (vB || 0));
           return order.dir === 'desc' ? (tB > tA ? 1 : -1) : (tA > tB ? 1 : -1);
         });
+      }
+
+      // Cursor Pagination (startAfter)
+      if (startAfterVal !== undefined && startAfterVal !== null) {
+        const cursorId = typeof startAfterVal === 'string' ? startAfterVal : (startAfterVal.id || startAfterVal.scoreId || startAfterVal.runId);
+        const idx = docs.findIndex(d => d.id === cursorId || (order && d.data()[order.field] === startAfterVal));
+        if (idx !== -1) {
+          docs = docs.slice(idx + 1);
+        }
       }
 
       if (typeof limitCount === 'number') {

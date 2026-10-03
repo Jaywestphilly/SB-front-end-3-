@@ -118,9 +118,78 @@
         "createdAt": { "type": "string" }
       },
       "required": ["entryId", "accountId", "entryType", "amount", "balanceBefore", "balanceAfter"]
+    },
+    "HistoricalSBScore": {
+      "title": "HistoricalSBScore",
+      "description": "Immutable historical snapshot of an SB Score calculation",
+      "type": "object",
+      "properties": {
+        "scoreId": { "type": "string" },
+        "ticker": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "priceAtScore": { "type": "number" },
+        "sbScore": { "type": "number" },
+        "signalLabel": { "type": "string" },
+        "components": { "type": "object" },
+        "indicators": { "type": "object" },
+        "dataSource": { "type": "string" },
+        "dataFreshnessSeconds": { "type": "number" },
+        "methodologyVersion": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["scoreId", "ticker", "timestamp", "priceAtScore", "sbScore", "signalLabel", "methodologyVersion", "createdAt"]
+    },
+    "SBScoreOutcome": {
+      "title": "SBScoreOutcome",
+      "description": "Linked performance tracking outcomes at 30d, 60d, and 90d horizons for historical SB Scores",
+      "type": "object",
+      "properties": {
+        "scoreId": { "type": "string" },
+        "ticker": { "type": "string" },
+        "price30d": { "type": "number" },
+        "return30d": { "type": "number" },
+        "price60d": { "type": "number" },
+        "return60d": { "type": "number" },
+        "price90d": { "type": "number" },
+        "return90d": { "type": "number" },
+        "calculatedAt": { "type": "string" },
+        "outcomeVersion": { "type": "string" }
+      },
+      "required": ["scoreId", "ticker", "calculatedAt", "outcomeVersion"]
+    },
+    "HistoricalQuantRun": {
+      "title": "HistoricalQuantRun",
+      "description": "Immutable historical record of completed quantitative portfolio simulations and backtests",
+      "type": "object",
+      "properties": {
+        "runId": { "type": "string" },
+        "strategyName": { "type": "string" },
+        "parameters": { "type": "object" },
+        "inputPortfolio": { "type": "object" },
+        "lookbackDays": { "type": "number" },
+        "assumptions": { "type": "object" },
+        "benchmark": { "type": "string" },
+        "results": { "type": "object" },
+        "timestamp": { "type": "string" },
+        "methodologyVersion": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["runId", "strategyName", "benchmark", "results", "timestamp", "methodologyVersion", "createdAt"]
     }
   },
   "firestore": {
+    "/sb_scores/{scoreId}": {
+      "schema": "HistoricalSBScore",
+      "description": "Immutable historical SB Score snapshots"
+    },
+    "/sb_score_outcomes/{scoreId}": {
+      "schema": "SBScoreOutcome",
+      "description": "Independent outcome tracking documents linked to sb_scores by scoreId"
+    },
+    "/quant_runs/{runId}": {
+      "schema": "HistoricalQuantRun",
+      "description": "Immutable quantitative simulation run records"
+    },
     "/agent_wallets/{agentId}": {
       "schema": "AgentWallet",
       "description": "Durable agent platform credit wallets"
