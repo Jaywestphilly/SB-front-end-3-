@@ -821,57 +821,9 @@ const GROUNDED_SEC_FILINGS: Record<string, Record<SecFilingType, Partial<SecFili
   }
 };
 
-// High-confidence CIK mapping for market leaders + dynamic resolution
-export const TICKER_TO_CIK: Record<string, string> = {
-  AAPL: '0000320193',
-  NVDA: '0001045810',
-  MSFT: '0000789019',
-  TSLA: '0001318605',
-  GOOGL: '0001652044',
-  GOOG: '0001652044',
-  AMZN: '0001018724',
-  META: '0001326801',
-  AMD: '0000002488',
-  INTC: '0000050863',
-  QCOM: '0000804328',
-  'BRK.A': '0001067983',
-  'BRK.B': '0001067983',
-  BRK: '0001067983',
-  JPM: '0000019617',
-  PLTR: '0001321655',
-  COIN: '0001679788',
-  AVGO: '0001730168',
-  CRM: '0001108524',
-  NFLX: '0001065280',
-  ORCL: '0001341439',
-  SMCI: '0001375365',
-  AEHR: '0001040470'
-};
-
-export async function resolveTickerCik(ticker: string): Promise<string | null> {
-  const norm = ticker.toUpperCase().trim();
-  if (TICKER_TO_CIK[norm]) return TICKER_TO_CIK[norm];
-  try {
-    const res = await fetch('https://www.sec.gov/files/company_tickers.json', {
-      headers: { 'User-Agent': 'StockBloc-SEC-Analyst/1.0 (contact@stockbloc.ai)' },
-      signal: AbortSignal.timeout(3000)
-    });
-    if (res.ok) {
-      const data: any = await res.json();
-      for (const key of Object.keys(data)) {
-        const item = data[key];
-        if (item.ticker?.toUpperCase() === norm) {
-          const cikStr = String(item.cik_str).padStart(10, '0');
-          TICKER_TO_CIK[norm] = cikStr;
-          return cikStr;
-        }
-      }
-    }
-  } catch {
-    // Non-blocking fallback
-  }
-  return null;
-}
+// Import and re-export CIK mapping and resolver from secTickerLookup to prevent circular dependencies
+import { TICKER_TO_CIK, resolveTickerCik } from './secTickerLookup.js';
+export { TICKER_TO_CIK, resolveTickerCik };
 
 // Live Dynamic SEC EDGAR Filing Retrieval
 export async function fetchLiveSecFiling(

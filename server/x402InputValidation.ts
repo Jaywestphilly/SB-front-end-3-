@@ -12,6 +12,7 @@ export interface ValidationFailure {
   message: string;
   field?: string;
   charged: false;
+  allowHeader?: string;
 }
 
 export type PricedValidationResult = ValidationSuccess | ValidationFailure;
@@ -54,6 +55,7 @@ export async function validatePricedRequestInput(
           code: 'METHOD_NOT_ALLOWED',
           error: 'Method Not Allowed. Use POST for batch live quotes.',
           message: 'Method Not Allowed. Use POST for batch live quotes.',
+          allowHeader: 'POST',
           charged: false
         };
       }
@@ -93,6 +95,7 @@ export async function validatePricedRequestInput(
         code: 'METHOD_NOT_ALLOWED',
         error: 'Method Not Allowed. market_data endpoints require GET.',
         message: 'Method Not Allowed. market_data endpoints require GET.',
+        allowHeader: 'GET',
         charged: false
       };
     }
@@ -183,6 +186,7 @@ export async function validatePricedRequestInput(
         code: 'METHOD_NOT_ALLOWED',
         error: 'Method Not Allowed. sb_score endpoints require GET.',
         message: 'Method Not Allowed. sb_score endpoints require GET.',
+        allowHeader: 'GET',
         charged: false
       };
     }
@@ -234,6 +238,7 @@ export async function validatePricedRequestInput(
         code: 'METHOD_NOT_ALLOWED',
         error: 'Method Not Allowed. earnings_pack requires GET.',
         message: 'Method Not Allowed. earnings_pack requires GET.',
+        allowHeader: 'GET',
         charged: false
       };
     }
@@ -272,6 +277,7 @@ export async function validatePricedRequestInput(
         code: 'METHOD_NOT_ALLOWED',
         error: 'Method Not Allowed. sec_job endpoints require POST.',
         message: 'Method Not Allowed. sec_job endpoints require POST.',
+        allowHeader: 'POST',
         charged: false
       };
     }
@@ -359,6 +365,7 @@ export async function validatePricedRequestInput(
         code: 'METHOD_NOT_ALLOWED',
         error: 'Method Not Allowed. sec_13f_intel requires GET.',
         message: 'Method Not Allowed. sec_13f_intel requires GET.',
+        allowHeader: 'GET',
         charged: false
       };
     }
@@ -374,6 +381,7 @@ export async function validatePricedRequestInput(
         code: 'METHOD_NOT_ALLOWED',
         error: 'Method Not Allowed. research endpoints require POST.',
         message: 'Method Not Allowed. research endpoints require POST.',
+        allowHeader: 'POST',
         charged: false
       };
     }
@@ -418,6 +426,7 @@ export async function validatePricedRequestInput(
         code: 'METHOD_NOT_ALLOWED',
         error: 'Method Not Allowed. forecast endpoints require POST.',
         message: 'Method Not Allowed. forecast endpoints require POST.',
+        allowHeader: 'POST',
         charged: false
       };
     }
@@ -465,6 +474,7 @@ export async function validatePricedRequestInput(
         code: 'METHOD_NOT_ALLOWED',
         error: 'Method Not Allowed. strategy_eval endpoints require POST.',
         message: 'Method Not Allowed. strategy_eval endpoints require POST.',
+        allowHeader: 'POST',
         charged: false
       };
     }

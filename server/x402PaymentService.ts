@@ -532,12 +532,13 @@ export function matchPricedEndpoint(path: string, method: string = 'GET'): X402P
     return PRICED_ENDPOINTS.earnings_pack;
   }
 
-  // SEC Job & Stock Bloc SEC Analyst
+  // SEC Job & Stock Bloc SEC Analyst (POST only is priced; GET /api/v1/sec/analyst is free service discovery)
   if (
-    normalized === '/api/v1/sec/job' ||
-    normalized === '/api/sec/job' ||
-    normalized === '/api/v1/sec/analyst' ||
-    normalized === '/api/sec/analyst'
+    method.toUpperCase() === 'POST' &&
+    (normalized === '/api/v1/sec/job' ||
+      normalized === '/api/sec/job' ||
+      normalized === '/api/v1/sec/analyst' ||
+      normalized === '/api/sec/analyst')
   ) {
     return PRICED_ENDPOINTS.sec_job;
   }
@@ -731,6 +732,9 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       const failure = validationResult as any;
       res.setHeader('Cache-Control', 'no-store');
       res.removeHeader('PAYMENT-REQUIRED');
+      if (failure.allowHeader) {
+        res.setHeader('Allow', failure.allowHeader);
+      }
       return res.status(failure.status).json({
         status: 'error',
         code: failure.code,

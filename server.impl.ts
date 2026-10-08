@@ -3530,7 +3530,7 @@ app.get(['/api/data/market', '/api/data/market.csv'], requireX402Payment(), asyn
   return res.json(responseData);
 });
 
-app.get('/api/data/sec', requireX402Payment(), async (req, res) => {
+app.get(['/api/data/sec', '/api/v1/data/sec'], requireX402Payment(), async (req, res) => {
   const data = await fetchAndProcessFeed('sec');
   res.setHeader('Cache-Control', 'public, max-age=180');
   res.setHeader('X-Data-As-Of', data.updated_at || 'unknown');
