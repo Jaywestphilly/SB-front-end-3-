@@ -33,9 +33,52 @@ export const TICKER_TO_CIK: Record<string, string> = {
 
 // 24-hour cache for SEC company_tickers.json
 let secCompanyTickersCache: Record<string, string> | null = null;
+let titleToTickerCache: Record<string, string> | null = null;
 let lastCacheFetchTime = 0;
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 let cacheFetchPromise: Promise<Record<string, string> | null> | null = null;
+
+export function normalizeCompanyName(name: string): string {
+  if (!name) return '';
+  return name
+    .toUpperCase()
+    // strip punctuation
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ")
+    // strip suffixes
+    .replace(/\b(INC|CORP|CO|LTD|PLC|CLASS\s+[A-Z0-9]|COM|NEW|GROUP|HOLDINGS?|PARTNERS?|ASSOCIATES?|LP|LLC|TRUST)\b/g, " ")
+    // consolidate whitespace
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export async function getTitleToTickerMap(): Promise<Record<string, string>> {
+  if (titleToTickerCache) return titleToTickerCache;
+  try {
+    const res = await fetch('https://www.sec.gov/files/company_tickers.json', {
+      headers: { 'User-Agent': 'StockBloc-SEC-Analyst/2.0 (contact@stockbloc.ai)' },
+      signal: AbortSignal.timeout(6000)
+    });
+    if (res.ok) {
+      const data: any = await res.json();
+      const map: Record<string, string> = {};
+      for (const key of Object.keys(data)) {
+        const item = data[key];
+        if (item?.ticker && item?.title) {
+          const rawTitle = String(item.title).toUpperCase();
+          const cleanTitle = normalizeCompanyName(rawTitle);
+          if (cleanTitle) {
+            map[cleanTitle] = String(item.ticker).toUpperCase();
+          }
+        }
+      }
+      titleToTickerCache = map;
+      return map;
+    }
+  } catch (err) {
+    console.warn('[secTickerLookup] getTitleToTickerMap error:', err);
+  }
+  return {};
+}
 
 async function refreshSecCompanyTickersCache(): Promise<Record<string, string> | null> {
   const now = Date.now();

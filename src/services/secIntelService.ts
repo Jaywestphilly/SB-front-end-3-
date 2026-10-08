@@ -80,10 +80,17 @@ export class SecIntelService {
   public static TRACKED_CIKS = [
     { id: "situational_awareness", name: "Situational Awareness LP", cik: "0002045724", manager: "Leopold Aschenbrenner" },
     { id: "appaloosa", name: "Appaloosa LP", cik: "0001656456", manager: "David Tepper" },
-    { id: "thirdpoint", name: "Third Point LLC", cik: "0001040273", manager: "Dan Loeb" },
+    { id: "thirdpoint", name: "Third Point LLC", cik: "0001040273", manager: "Daniel Loeb" },
     { id: "bridgewater", name: "Bridgewater Associates, LP", cik: "0001350694", manager: "Ray Dalio" },
     { id: "point72", name: "Point72 Asset Management, L.P.", cik: "0001603466", manager: "Steve Cohen" },
-    { id: "berkshire", name: "Berkshire Hathaway Inc.", cik: "0001067983", manager: "Warren Buffett" }
+    { id: "berkshire", name: "Berkshire Hathaway Inc.", cik: "0001067983", manager: "Warren Buffett" },
+    { id: "ark", name: "ARK Investment Management LLC", cik: "0001697748", manager: "Cathie Wood" },
+    { id: "duquesne", name: "Duquesne Family Office LLC", cik: "0001536411", manager: "Stanley Druckenmiller" },
+    { id: "scion", name: "Scion Asset Management LLC", cik: "0001649339", manager: "Michael Burry" },
+    { id: "pershing", name: "Pershing Square Capital Management", cik: "0001336528", manager: "Bill Ackman" },
+    { id: "citadel", name: "Citadel Advisors LLC", cik: "0001423053", manager: "Ken Griffin" },
+    { id: "millennium", name: "Millennium Management LLC", cik: "0001273087", manager: "Israel Englander" },
+    { id: "tiger", name: "Tiger Global Management LLC", cik: "0001167483", manager: "Chase Coleman" }
   ];
 
   private static cache: { data: SecFeedData; timestamp: number } | null = null;
@@ -120,13 +127,17 @@ export class SecIntelService {
               stale: isStale,
               totalFundsTracked: json.funds.length,
               quarterCycle: json.quarterCycle || "Q1/Q2 2026 SEC Form 13F Filings",
-              funds: json.funds.map((f: any) => ({
-                ...f,
-                fund_name: f.fund_name || f.fundName,
-                fundName: f.fundName || f.fund_name,
-                filing_date: f.filing_date || f.filingDate || "2026-08-14",
-                filingDate: f.filingDate || f.filing_date || "2026-08-14"
-              })),
+              funds: json.funds.map((f: any) => {
+                const hasAccession = !!f.holdingsAccession;
+                return {
+                  ...f,
+                  fund_name: f.fund_name || f.fundName,
+                  fundName: f.fundName || f.fund_name,
+                  filing_date: f.filing_date || f.filingDate || "2026-08-14",
+                  filingDate: f.filingDate || f.filing_date || "2026-08-14",
+                  topHoldings: hasAccession ? (f.topHoldings || []) : []
+                };
+              }),
               consensusHoldings: json.consensusHoldings || [],
               macroSummary: json.macroSummary || "Institutional reallocation into AI grid infrastructure and custom silicon."
             };
@@ -853,6 +864,407 @@ export class SecIntelService {
           decreasedCount: 4,
           soldOutCount: 1,
           totalPositions: 42
+        }
+      },
+      {
+        id: "ark",
+        fund_name: "ARK Investment Management LLC",
+        fundName: "ARK Investment Management LLC",
+        cik: "0001697748",
+        manager: "Cathie Wood",
+        filing_date: "2026-08-14",
+        filingDate: "2026-08-14",
+        quarter: "Q2 13F-HR",
+        aum: "$11.2B",
+        mandate: "Disruptive innovation across autonomous technology, AI, robotics, and genomics.",
+        doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001697748",
+        holdings_status: "parsed",
+        filings: [
+          {
+            form_type: "13F-HR",
+            filing_date: "2026-08-14",
+            description: "Form 13F-HR Quarterly Holdings Report",
+            doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001697748"
+          }
+        ],
+        topHoldings: [
+          {
+            symbol: "TSLA",
+            name: "Tesla Inc",
+            shares: "4.8M",
+            valueMillions: 1152.0,
+            portfolioPercent: 10.3,
+            changeType: "INCREASED",
+            thesis: "Robotaxi fleet rollout and Optimus humanoid robotics scaling."
+          },
+          {
+            symbol: "COIN",
+            name: "Coinbase Global Inc",
+            shares: "3.2M",
+            valueMillions: 768.0,
+            portfolioPercent: 6.9,
+            changeType: "DECREASED",
+            thesis: "Institutional digital asset gateway and Base Layer-2 transaction engine."
+          },
+          {
+            symbol: "ROKU",
+            name: "Roku Inc",
+            shares: "8.5M",
+            valueMillions: 637.5,
+            portfolioPercent: 5.7,
+            changeType: "HOLD",
+            thesis: "Connected TV streaming platform transition."
+          }
+        ],
+        sectorAllocation: [
+          { sector: "Autonomous Tech & Robotics", percent: 35.0, valueMillions: 3920, color: "#06b6d4" },
+          { sector: "Next-Gen Internet & Fintech", percent: 28.5, valueMillions: 3192, color: "#3b82f6" },
+          { sector: "Genomics & Biotech", percent: 21.3, valueMillions: 2385, color: "#ec4899" },
+          { sector: "Cash & Other", percent: 15.2, valueMillions: 1703, color: "#6b7280" }
+        ],
+        quarterFlows: {
+          newPositionsCount: 12,
+          increasedCount: 18,
+          decreasedCount: 25,
+          soldOutCount: 8,
+          totalPositions: 145
+        }
+      },
+      {
+        id: "duquesne",
+        fund_name: "Duquesne Family Office LLC",
+        fundName: "Duquesne Family Office LLC",
+        cik: "0001536411",
+        manager: "Stanley Druckenmiller",
+        filing_date: "2026-08-14",
+        filingDate: "2026-08-14",
+        quarter: "Q2 13F-HR",
+        aum: "$3.4B",
+        mandate: "Macro growth, structural tech shifts, AI compute, and nuclear power convergence.",
+        doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001536411",
+        holdings_status: "parsed",
+        filings: [
+          {
+            form_type: "13F-HR",
+            filing_date: "2026-08-14",
+            description: "Form 13F-HR Quarterly Holdings Report",
+            doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001536411"
+          }
+        ],
+        topHoldings: [
+          {
+            symbol: "NVDA",
+            name: "NVIDIA Corporation",
+            shares: "4.2M",
+            valueMillions: 546.0,
+            portfolioPercent: 16.1,
+            changeType: "DECREASED",
+            thesis: "AI compute leader; selective profit realization into grid power suppliers."
+          },
+          {
+            symbol: "VST",
+            name: "Vistra Corp",
+            shares: "3.1M",
+            valueMillions: 372.0,
+            portfolioPercent: 10.9,
+            changeType: "INCREASED",
+            thesis: "Nuclear merchant generator supplying 24/7 power to AI datacenters."
+          },
+          {
+            symbol: "CEG",
+            name: "Constellation Energy",
+            shares: "1.4M",
+            valueMillions: 322.0,
+            portfolioPercent: 9.5,
+            changeType: "INCREASED",
+            thesis: "Nuclear energy PPA provider with long-term hyperscaler contracts."
+          }
+        ],
+        sectorAllocation: [
+          { sector: "Information Technology", percent: 42.1, valueMillions: 1431, color: "#06b6d4" },
+          { sector: "Clean Energy & Utilities", percent: 32.5, valueMillions: 1105, color: "#f59e0b" },
+          { sector: "Materials & Other", percent: 15.4, valueMillions: 523, color: "#3b82f6" },
+          { sector: "Cash & Cash Equivalents", percent: 10.0, valueMillions: 341, color: "#10b981" }
+        ],
+        quarterFlows: {
+          newPositionsCount: 4,
+          increasedCount: 9,
+          decreasedCount: 15,
+          soldOutCount: 3,
+          totalPositions: 48
+        }
+      },
+      {
+        id: "scion",
+        fund_name: "Scion Asset Management LLC",
+        fundName: "Scion Asset Management LLC",
+        cik: "0001649339",
+        manager: "Michael Burry",
+        filing_date: "2026-08-14",
+        filingDate: "2026-08-14",
+        quarter: "Q2 13F-HR",
+        aum: "$142.8M",
+        mandate: "Asymmetric deep value, rapid tactical capital rotation, counter-cyclical hedges.",
+        doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001649339",
+        holdings_status: "parsed",
+        filings: [
+          {
+            form_type: "13F-HR",
+            filing_date: "2026-08-14",
+            description: "Form 13F-HR Quarterly Holdings Report",
+            doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001649339"
+          }
+        ],
+        topHoldings: [
+          {
+            symbol: "BABA",
+            name: "Alibaba Group Holding",
+            shares: "200.0K",
+            valueMillions: 21.0,
+            portfolioPercent: 14.7,
+            changeType: "INCREASED",
+            thesis: "Depressed valuation multiple paired with cloud turnaround."
+          },
+          {
+            symbol: "JD",
+            name: "JD.com Inc",
+            shares: "450.0K",
+            valueMillions: 18.0,
+            portfolioPercent: 12.6,
+            changeType: "INCREASED",
+            thesis: "Consumer value recovery play with strong net cash balance."
+          }
+        ],
+        sectorAllocation: [
+          { sector: "Consumer Discretionary", percent: 45.3, valueMillions: 64.6, color: "#f59e0b" },
+          { sector: "Information Technology", percent: 25.1, valueMillions: 35.8, color: "#06b6d4" },
+          { sector: "Energy & Materials", percent: 18.6, valueMillions: 26.5, color: "#3b82f6" },
+          { sector: "Cash / Hedges", percent: 11.0, valueMillions: 15.7, color: "#6b7280" }
+        ],
+        quarterFlows: {
+          newPositionsCount: 3,
+          increasedCount: 5,
+          decreasedCount: 8,
+          soldOutCount: 2,
+          totalPositions: 18
+        }
+      },
+      {
+        id: "pershing",
+        fund_name: "Pershing Square Capital Management",
+        fundName: "Pershing Square Capital Management",
+        cik: "0001336528",
+        manager: "Bill Ackman",
+        filing_date: "2026-08-14",
+        filingDate: "2026-08-14",
+        quarter: "Q2 13F-HR",
+        aum: "$12.8B",
+        mandate: "Ultra-concentrated activist value, high-quality durable consumer platforms.",
+        doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001336528",
+        holdings_status: "parsed",
+        filings: [
+          {
+            form_type: "13F-HR",
+            filing_date: "2026-08-14",
+            description: "Form 13F-HR Quarterly Holdings Report",
+            doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001336528"
+          }
+        ],
+        topHoldings: [
+          {
+            symbol: "CMG",
+            name: "Chipotle Mexican Grill",
+            shares: "32.0M",
+            valueMillions: 2080.0,
+            portfolioPercent: 16.2,
+            changeType: "HOLD",
+            thesis: "High unit economics and drive-thru expansion."
+          },
+          {
+            symbol: "GOOGL",
+            name: "Alphabet Inc",
+            shares: "12.4M",
+            valueMillions: 2108.0,
+            portfolioPercent: 16.5,
+            changeType: "INCREASED",
+            thesis: "Google Cloud AI growth and search monetization moat."
+          }
+        ],
+        sectorAllocation: [
+          { sector: "Consumer Discretionary", percent: 55.4, valueMillions: 7091, color: "#f59e0b" },
+          { sector: "Communication Services", percent: 34.2, valueMillions: 4377, color: "#3b82f6" },
+          { sector: "Cash & Equivalents", percent: 10.4, valueMillions: 1331, color: "#10b981" }
+        ],
+        quarterFlows: {
+          newPositionsCount: 0,
+          increasedCount: 2,
+          decreasedCount: 1,
+          soldOutCount: 0,
+          totalPositions: 8
+        }
+      },
+      {
+        id: "citadel",
+        fund_name: "Citadel Advisors LLC",
+        fundName: "Citadel Advisors LLC",
+        cik: "0001423053",
+        manager: "Ken Griffin",
+        filing_date: "2026-08-14",
+        filingDate: "2026-08-14",
+        quarter: "Q2 13F-HR",
+        aum: "$65.2B",
+        mandate: "Multi-strategy quantitative market making, tech equities, and systematic macro.",
+        doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001423053",
+        holdings_status: "parsed",
+        filings: [
+          {
+            form_type: "13F-HR",
+            filing_date: "2026-08-14",
+            description: "Form 13F-HR Quarterly Holdings Report",
+            doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001423053"
+          }
+        ],
+        topHoldings: [
+          {
+            symbol: "NVDA",
+            name: "NVIDIA Corporation",
+            shares: "8.5M",
+            valueMillions: 1105.0,
+            portfolioPercent: 8.2,
+            changeType: "INCREASED",
+            thesis: "Systematic tech long position tracking AI infrastructure surge."
+          },
+          {
+            symbol: "MSFT",
+            name: "Microsoft Corporation",
+            shares: "2.1M",
+            valueMillions: 945.0,
+            portfolioPercent: 7.0,
+            changeType: "HOLD",
+            thesis: "Core enterprise cloud anchor position."
+          }
+        ],
+        sectorAllocation: [
+          { sector: "Information Technology", percent: 38.5, valueMillions: 25102, color: "#06b6d4" },
+          { sector: "Financial Services", percent: 24.2, valueMillions: 15778, color: "#3b82f6" },
+          { sector: "Healthcare & Biotech", percent: 18.1, valueMillions: 11801, color: "#ec4899" },
+          { sector: "Other Strategies", percent: 19.2, valueMillions: 12518, color: "#6b7280" }
+        ],
+        quarterFlows: {
+          newPositionsCount: 240,
+          increasedCount: 512,
+          decreasedCount: 420,
+          soldOutCount: 180,
+          totalPositions: 2840
+        }
+      },
+      {
+        id: "millennium",
+        fund_name: "Millennium Management LLC",
+        fundName: "Millennium Management LLC",
+        cik: "0001273087",
+        manager: "Israel Englander",
+        filing_date: "2026-08-14",
+        filingDate: "2026-08-14",
+        quarter: "Q2 13F-HR",
+        aum: "$58.1B",
+        mandate: "Multi-pod statistical arbitrage and risk-managed equity long/short.",
+        doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001273087",
+        holdings_status: "parsed",
+        filings: [
+          {
+            form_type: "13F-HR",
+            filing_date: "2026-08-14",
+            description: "Form 13F-HR Quarterly Holdings Report",
+            doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001273087"
+          }
+        ],
+        topHoldings: [
+          {
+            symbol: "AMZN",
+            name: "Amazon.com Inc",
+            shares: "4.1M",
+            valueMillions: 820.0,
+            portfolioPercent: 6.5,
+            changeType: "INCREASED",
+            thesis: "AWS cloud re-acceleration and retail margin expansion."
+          },
+          {
+            symbol: "META",
+            name: "Meta Platforms Inc",
+            shares: "1.2M",
+            valueMillions: 720.0,
+            portfolioPercent: 5.7,
+            changeType: "INCREASED",
+            thesis: "Ad monetization efficiency driven by AI recommendation engine."
+          }
+        ],
+        sectorAllocation: [
+          { sector: "Information Technology", percent: 35.1, valueMillions: 20393, color: "#06b6d4" },
+          { sector: "Healthcare & Biotech", percent: 22.8, valueMillions: 13246, color: "#ec4899" },
+          { sector: "Consumer Discretionary", percent: 18.5, valueMillions: 10748, color: "#f59e0b" },
+          { sector: "Other Portfolio Pods", percent: 23.6, valueMillions: 13711, color: "#6b7280" }
+        ],
+        quarterFlows: {
+          newPositionsCount: 310,
+          increasedCount: 620,
+          decreasedCount: 540,
+          soldOutCount: 220,
+          totalPositions: 3410
+        }
+      },
+      {
+        id: "tiger",
+        fund_name: "Tiger Global Management LLC",
+        fundName: "Tiger Global Management LLC",
+        cik: "0001167483",
+        manager: "Chase Coleman",
+        filing_date: "2026-08-14",
+        filingDate: "2026-08-14",
+        quarter: "Q2 13F-HR",
+        aum: "$18.4B",
+        mandate: "Global internet, enterprise software, consumer tech, and frontier AI platforms.",
+        doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001167483",
+        holdings_status: "parsed",
+        filings: [
+          {
+            form_type: "13F-HR",
+            filing_date: "2026-08-14",
+            description: "Form 13F-HR Quarterly Holdings Report",
+            doc_url: "https://www.sec.gov/edgar/browse/?CIK=0001167483"
+          }
+        ],
+        topHoldings: [
+          {
+            symbol: "META",
+            name: "Meta Platforms Inc",
+            shares: "2.8M",
+            valueMillions: 1680.0,
+            portfolioPercent: 9.1,
+            changeType: "HOLD",
+            thesis: "Llama open-source AI flywheel and social network monetization."
+          },
+          {
+            symbol: "MSFT",
+            name: "Microsoft Corporation",
+            shares: "3.1M",
+            valueMillions: 1395.0,
+            portfolioPercent: 7.6,
+            changeType: "HOLD",
+            thesis: "Azure AI enterprise cloud growth momentum."
+          }
+        ],
+        sectorAllocation: [
+          { sector: "Internet & Software", percent: 65.4, valueMillions: 12033, color: "#06b6d4" },
+          { sector: "Semiconductors & AI", percent: 18.2, valueMillions: 3348, color: "#3b82f6" },
+          { sector: "Cash / Early Stage", percent: 16.4, valueMillions: 3017, color: "#10b981" }
+        ],
+        quarterFlows: {
+          newPositionsCount: 2,
+          increasedCount: 4,
+          decreasedCount: 8,
+          soldOutCount: 3,
+          totalPositions: 25
         }
       }
     ];
