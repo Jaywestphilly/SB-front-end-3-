@@ -102,7 +102,7 @@ def main():
     failed = False
     for filename in target_files:
         # Check both root and public paths
-        paths_to_test = [filename, os.path.join("public", filename)]
+        paths_to_test = [os.path.join("server", "data", filename), filename, os.path.join("public", filename)]
         for p in paths_to_test:
             if os.path.exists(p):
                 try:

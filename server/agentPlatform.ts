@@ -1757,8 +1757,7 @@ const handleManifest = (req: Request, res: Response) => {
         requestBody: {
           ticker: 'string (required, e.g. NVDA)',
           filingType: 'string (required: 10-K | 10-Q | 8-K)',
-          question: 'string (optional specific research question)',
-          forceFixture: 'boolean (optional)'
+          question: 'string (optional specific research question)'
         },
         response: {
           status: 200,
@@ -1788,8 +1787,7 @@ const handleManifest = (req: Request, res: Response) => {
         requestBody: {
           ticker: 'string (required, e.g. NVDA)',
           filingType: 'string (required: 10-K | 10-Q | 8-K)',
-          question: 'string (optional specific research question)',
-          forceFixture: 'boolean (optional)'
+          question: 'string (optional specific research question)'
         },
         response: {
           status: 200,

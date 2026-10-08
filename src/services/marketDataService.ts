@@ -357,8 +357,7 @@ export class MarketDataService {
   };
 
   private static targetFiles = [
-    path.join(process.cwd(), "market_watchlist_data.json"),
-    path.join(process.cwd(), "public", "market_watchlist_data.json")
+    path.join(process.cwd(), "server", "data", "market_watchlist_data.json")
   ];
 
   private static cache: { data: MarketFeedData; timestamp: number } | null = null;

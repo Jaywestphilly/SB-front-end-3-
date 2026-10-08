@@ -944,7 +944,7 @@ export function App() {
       }
 
       if (!res.ok || !json) {
-        const fallbackRes = await fetchWithPaywallHandling("/market_watchlist_data.json");
+        const fallbackRes = await fetchWithPaywallHandling("/api/data/market");
         if (fallbackRes.ok && fallbackRes.data) {
           json = fallbackRes.data;
           sourceName = "Local Proxy Fallback";

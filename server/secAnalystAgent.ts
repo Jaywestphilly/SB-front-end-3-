@@ -881,30 +881,75 @@ export async function fetchLiveSecFiling(
       }
     ];
 
-    const grounded = GROUNDED_SEC_FILINGS[normTicker]?.[filingType];
-    if (grounded) {
-      return {
-        ticker: normTicker,
-        filingType,
-        filingDate,
-        companyName: companyName || grounded.companyName || `${normTicker} Inc.`,
-        dataSource: 'LIVE_SEC_DATA',
-        isLiveSecData: true,
-        dataTier: 'LIVE_SEC_EDGAR',
-        executiveSummary: `[LIVE SEC DATA] ${companyName} official Form ${filingType} retrieved live from the U.S. SEC EDGAR System (Filing Date: ${filingDate}, Period: ${reportDate}, Accession: ${accessionNumber}). ${grounded.executiveSummary || ''}${question ? ` Addressed query: "${question}".` : ''}`,
-        revenueHighlights: grounded.revenueHighlights || { totalRevenue: '$0' },
-        earningsHighlights: grounded.earningsHighlights || { netIncome: '$0', epsDiluted: '$0' },
-        balanceSheetHighlights: grounded.balanceSheetHighlights || { cashAndEquivalents: '$0', totalAssets: '$0', totalDebt: '$0' },
-        cashFlowHighlights: grounded.cashFlowHighlights || { operatingCashFlow: '$0' },
-        guidance: grounded.guidance || { outlookSummary: 'Management forward outlook verified in SEC EDGAR disclosures.' },
-        risks: grounded.risks || ['Item 1A risk factors filed under U.S. SEC disclosure requirements.'],
-        materialEvents: grounded.materialEvents || [`SEC Form ${filingType} accepted into EDGAR repository on ${filingDate}.`],
-        managementCommentary: grounded.managementCommentary || 'Operating results and forward MD&A submitted under federal securities regulations.',
-        notableChanges: grounded.notableChanges || ['Financial statements audited and XBRL tagged.'],
-        sourceReferences,
-        confidence: 0.99
-      };
+    let revenueHighlights: any = undefined;
+    let earningsHighlights: any = undefined;
+    let balanceSheetHighlights: any = undefined;
+    let cashFlowHighlights: any = undefined;
+    let hasExactFigures = false;
+
+    // Fetch numeric highlights ONLY if they come from SEC companyfacts consistent with that exact accession
+    try {
+      const factsRes = await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik.padStart(10, '0')}.json`, {
+        headers: { 'User-Agent': 'StockBloc-SEC-Analyst/1.0 (contact@stockbloc.ai)' },
+        signal: AbortSignal.timeout(3000)
+      });
+      if (factsRes.ok) {
+        const factsData: any = await factsRes.json();
+        const gaap = factsData?.facts?.['us-gaap'];
+        if (gaap) {
+          const revConcepts = ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'SalesRevenueNet'];
+          let revVal: number | null = null;
+          for (const c of revConcepts) {
+            const units = gaap[c]?.units?.USD;
+            if (Array.isArray(units)) {
+              const match = units.find((u: any) => u.accn === accessionNumber);
+              if (match && typeof match.val === 'number') {
+                revVal = match.val;
+                break;
+              }
+            }
+          }
+          let netIncVal: number | null = null;
+          const netUnits = gaap['NetIncomeLoss']?.units?.USD;
+          if (Array.isArray(netUnits)) {
+            const match = netUnits.find((u: any) => u.accn === accessionNumber);
+            if (match && typeof match.val === 'number') {
+              netIncVal = match.val;
+            }
+          }
+
+          if (revVal !== null || netIncVal !== null) {
+            hasExactFigures = true;
+            if (revVal !== null) {
+              const formattedRev = Math.abs(revVal) >= 1e9
+                ? `$${(revVal / 1e9).toFixed(2)}B`
+                : `$${(revVal / 1e6).toFixed(2)}M`;
+              revenueHighlights = {
+                totalRevenue: formattedRev,
+                source: `SEC EDGAR XBRL companyfacts for accession ${accessionNumber}`
+              };
+            }
+            if (netIncVal !== null) {
+              const formattedNet = Math.abs(netIncVal) >= 1e9
+                ? `$${(netIncVal / 1e9).toFixed(2)}B`
+                : `$${(netIncVal / 1e6).toFixed(2)}M`;
+              earningsHighlights = {
+                netIncome: formattedNet,
+                source: `SEC EDGAR XBRL companyfacts for accession ${accessionNumber}`
+              };
+            }
+          }
+        }
+      }
+    } catch {
+      // Non-blocking XBRL lookup
     }
+
+    const executiveSummary = hasExactFigures
+      ? `[LIVE SEC DATA] ${companyName} (${normTicker}) official Form ${filingType} retrieved live from U.S. SEC EDGAR (Filing Date: ${filingDate}, Period: ${reportDate}, Accession: ${accessionNumber}). Verified under CIK ${cik}.${question ? ` Addressed query: "${question}".` : ''}`
+      : `[LIVE SEC DATA] ${companyName} (${normTicker}) official Form ${filingType} retrieved live from U.S. SEC EDGAR for period ending ${reportDate} (Filed: ${filingDate}, Accession: ${accessionNumber}). Verified under CIK ${cik}. Official filing URL: ${filingUrl}. Detailed XBRL numeric figures were not available for this exact accession and period in companyfacts and have been omitted.${question ? ` Intelligence synthesized for: "${question}".` : ''}`;
+
+    const confidence = hasExactFigures ? 0.99 : 0.6;
 
     return {
       ticker: normTicker,
@@ -914,26 +959,13 @@ export async function fetchLiveSecFiling(
       dataSource: 'LIVE_SEC_DATA',
       isLiveSecData: true,
       dataTier: 'LIVE_SEC_EDGAR',
-      executiveSummary: `[LIVE SEC DATA] ${companyName} (${normTicker}) official Form ${filingType} retrieved live from the U.S. SEC EDGAR System for period ending ${reportDate} (Filed: ${filingDate}, Accession: ${accessionNumber}). Verified under CIK ${cik}.${question ? ` Intelligence synthesized for: "${question}".` : ''}`,
-      revenueHighlights: {
-        totalRevenue: 'Verified via live SEC EDGAR submission record',
-        yoyGrowth: 'Reported under GAAP XBRL taxonomy',
-        details: `Official SEC filing accessible at: ${filingUrl}`
-      },
-      earningsHighlights: {
-        netIncome: 'Audited GAAP Net Income reported in SEC EDGAR',
-        epsDiluted: 'Diluted EPS compliant with FASB ASC 260'
-      },
-      balanceSheetHighlights: {
-        cashAndEquivalents: 'Disclosed in Consolidated Balance Sheets',
-        totalAssets: 'Audited assets registered with the SEC',
-        totalDebt: 'Term and revolving debt disclosures'
-      },
-      cashFlowHighlights: {
-        operatingCashFlow: `Net cash provided by operating activities disclosed in Form ${filingType}`
-      },
+      executiveSummary,
+      ...(revenueHighlights ? { revenueHighlights } : {}),
+      ...(earningsHighlights ? { earningsHighlights } : {}),
+      ...(balanceSheetHighlights ? { balanceSheetHighlights } : {}),
+      ...(cashFlowHighlights ? { cashFlowHighlights } : {}),
       guidance: {
-        outlookSummary: 'Management Discussion & Analysis forward guidance section in SEC EDGAR filing.'
+        outlookSummary: 'Management forward guidance section in official SEC EDGAR filing.'
       },
       risks: [
         'Item 1A Risk Factors disclosed in live SEC EDGAR submission.',
@@ -948,7 +980,7 @@ export async function fetchLiveSecFiling(
         `Accession ${accessionNumber} parsed and indexed in Stock Bloc SEC intelligence registry.`
       ],
       sourceReferences,
-      confidence: 0.98
+      confidence
     };
   } catch (err) {
     console.error('Error fetching live SEC filing from EDGAR:', err);

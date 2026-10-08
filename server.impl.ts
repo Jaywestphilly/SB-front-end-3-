@@ -2385,9 +2385,12 @@ async function fetchAndProcessFeed(feedKey: 'market' | 'sec' | 'dyson' | 'news')
   };
 
   try {
+    const serverDataPath = path.join(process.cwd(), 'server', 'data', localFileNames[feedKey]);
     const localPath = path.join(process.cwd(), 'public', localFileNames[feedKey]);
     const rootPath = path.join(process.cwd(), localFileNames[feedKey]);
-    const targetPath = fs.existsSync(localPath) ? localPath : (fs.existsSync(rootPath) ? rootPath : null);
+    const targetPath = fs.existsSync(serverDataPath)
+      ? serverDataPath
+      : (fs.existsSync(localPath) ? localPath : (fs.existsSync(rootPath) ? rootPath : null));
 
     if (targetPath) {
       const fileContent = fs.readFileSync(targetPath, 'utf-8');
@@ -5042,12 +5045,6 @@ app.get("/api/ticker-news/:symbol", async (req, res) => {
 // Explicit Public Static Serving for Raw JSON Backend Feeds
 const publicFolder = path.join(process.cwd(), 'public');
 app.use(express.static(publicFolder));
-
-app.get(['/market_watchlist_data.json', '/api/market-watchlist'], (req, res) => {
-  const filePath = path.join(publicFolder, 'market_watchlist_data.json');
-  if (fs.existsSync(filePath)) return res.sendFile(filePath);
-  return res.status(404).json({ status: "error", message: "market_watchlist_data.json not found" });
-});
 
 app.get(['/sec_intel_data.json', '/api/sec-intel'], (req, res) => {
   const filePath = path.join(publicFolder, 'sec_intel_data.json');

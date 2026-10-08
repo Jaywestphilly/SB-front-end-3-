@@ -284,28 +284,41 @@ curl -X POST https://stockbloc.ai.studio/api/v1/sec/analyst \
   }'
 ```
 
-### Production Response (HTTP 200 OK):
+### Production Response Schema (HTTP 200 OK):
 ```json
 {
   "success": true,
-  "jobId": "job_sec_1790616000000_a1b2c3d4",
+  "jobId": "job_sec_<timestamp>_<hash>",
   "settled": true,
   "paymentRail": "X402_BASE_USDC",
   "output": {
-    "ticker": "NVDA",
-    "filingType": "10-Q",
-    "companyName": "NVIDIA CORP",
-    "accessionNumber": "0001045810-26-000075",
-    "managementTone": "BULLISH",
-    "executiveSummary": "Form 10-Q filed with SEC EDGAR. Datacenter revenue accelerated with strong operating leverage.",
-    "keyFinancialMetrics": {
-      "revenue": { "value": "$35.08B", "yoyChange": "+94%" },
-      "grossMargin": { "value": "75.1%", "trend": "STABLE" }
-    },
-    "riskFactors": [
-      { "category": "Supply Chain", "severity": "MEDIUM", "description": "Concentration in advanced packaging foundry capacity." }
+    "ticker": "<string (e.g. NVDA)>",
+    "filingType": "<string (10-K | 10-Q | 8-K)>",
+    "companyName": "<string (verified legal entity name from SEC EDGAR)>",
+    "filingDate": "<string (YYYY-MM-DD submission date)>",
+    "dataSource": "LIVE_SEC_DATA",
+    "isLiveSecData": true,
+    "dataTier": "LIVE_SEC_EDGAR",
+    "executiveSummary": "<string (verified filing summary and synthesis)>",
+    "revenueHighlights": "<object | null (XBRL revenue metrics when available)>",
+    "earningsHighlights": "<object | null (XBRL net income metrics when available)>",
+    "balanceSheetHighlights": "<object | null (disclosed balance sheet items)>",
+    "cashFlowHighlights": "<object | null (operating cash flow disclosures)>",
+    "guidance": "<object (management forward outlook disclosures)>",
+    "risks": ["<string (Item 1A risk factors)>"],
+    "materialEvents": ["<string (notable material disclosures)>"],
+    "managementCommentary": "<string (MD&A discussion)>",
+    "sourceReferences": [
+      {
+        "form": "<string (filing type)>",
+        "filingDate": "<string (submission date)>",
+        "cik": "<string (10-digit CIK)>",
+        "accessionNumber": "<string (official SEC accession number)>",
+        "url": "<string (official SEC EDGAR filing URL)>",
+        "sourceType": "LIVE_EDGAR_SUBMISSION"
+      }
     ],
-    "revenueQualityScore": 92
+    "confidence": "<number (0.0 - 1.0)>"
   }
 }
 ```

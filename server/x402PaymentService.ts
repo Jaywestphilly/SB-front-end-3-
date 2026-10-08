@@ -576,6 +576,7 @@ export function matchPricedEndpoint(path: string, method: string = 'GET'): X402P
   // Strategy Evaluation / Quant Sim
   if (
     normalized === '/api/v1/agent/strategy/evaluate' ||
+    normalized === '/api/v1/agent/evaluate-strategy' ||
     normalized === '/api/v1/agent/quant-sim' ||
     normalized === '/api/v1/agent/submit-performance'
   ) {
