@@ -375,10 +375,11 @@
               "application/json": {
                 "example": {
                   "status": "success",
-                  "quarterCycle": "Q1/Q2 2026 SEC Form 13F Filings",
+                  "source": "SEC EDGAR Form 13F-HR information tables",
+                  "parsedFunds": 13,
                   "totalFundsTracked": 13,
                   "consensusHoldings": [
-                    { "symbol": "NVDA", "fundCount": 6, "totalValueMillions": 2240, "overallSentiment": "STRONG ACCUMULATION" }
+                    { "symbol": null, "name": "AMAZON COM INC", "fundCount": 10, "totalValueUsd": 0 }
                   ]
                 }
               }
@@ -1124,7 +1125,7 @@
                 "example": {
                   "ticker": "NVDA",
                   "asOf": "2026-10-08T12:00:00.000Z",
-                  "thirteenF": { "fundCount": 6, "totalValueMillions": 2240 }
+                  "thirteenF": { "quarterCycle": "Q1/Q2 2026 SEC Form 13F Filings", "consensus": { "fundCount": 6, "totalValueUsd": 2240000000 } }
                 }
               }
             }

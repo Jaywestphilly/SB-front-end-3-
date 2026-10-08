@@ -14,6 +14,7 @@ import { inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry } fr
 import { inMemorySettlementRegistry } from './agentExchangeApi.js';
 import { recordMachineCommerceEvent } from './agentTelemetry.js';
 import { validatePricedRequestInput } from './x402InputValidation.js';
+import { SecIntelService } from '../src/services/secIntelService.js';
 
 // ============================================================================
 // COINBASE CDP X402 CONSTANTS & SPECIFICATION (BASE MAINNET)
@@ -144,7 +145,7 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
         asOf: '2026-09-29T00:00:00.000Z',
         thirteenF: {
           quarterCycle: 'Q1/Q2 2026 SEC Form 13F Filings',
-          consensus: { fundCount: 6, totalValueMillions: 2240, overallSentiment: 'STRONG ACCUMULATION' }
+          consensus: { fundCount: 6, totalValueUsd: 2240000000 }
         },
         filingAudit: {
           accessionNumber: '0001045810-26-000075',
@@ -155,7 +156,7 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
         },
         memo: {
           title: 'Earnings Prep & Institutional Positioning: NVDA',
-          thesis: 'NVDA displays STRONG ACCUMULATION with BULLISH management tone.'
+          thesis: 'NVDA displays high fundCount with BULLISH management tone.'
         }
       }
     }
@@ -195,15 +196,14 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
 
   sec_13f_intel: declareDiscovery({
     method: 'GET',
-    input: { symbol: 'NVDA' },
+    input: {},
     output: {
       example: {
         status: 'success',
-        quarterCycle: 'Q1/Q2 2026 SEC Form 13F Filings',
+        source: 'SEC EDGAR Form 13F-HR information tables',
+        parsedFunds: 0,
         totalFundsTracked: 13,
-        consensusHoldings: [
-          { symbol: 'NVDA', fundCount: 6, totalValueMillions: 2240, overallSentiment: 'STRONG ACCUMULATION' }
-        ]
+        consensusHoldings: []
       }
     }
   }),
@@ -788,7 +788,43 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
         }
       };
 
-      const discoveryExt = BAZAAR_DISCOVERY_EXTENSIONS[endpointConfig.id]?.bazaar || endpointConfig.discoveryExtension;
+      let discoveryExt = BAZAAR_DISCOVERY_EXTENSIONS[endpointConfig.id]?.bazaar || endpointConfig.discoveryExtension;
+
+      if (endpointConfig.id === 'sec_13f_intel') {
+        let parsedFunds = 0;
+        let consensusHoldings: any[] = [];
+        try {
+          const data = SecIntelService.loadPersistedData();
+          if (data) {
+            parsedFunds = data.funds ? data.funds.filter((f: any) => f.holdings_status === 'parsed_13f_information_table').length : 0;
+            consensusHoldings = (data.consensusHoldings || []).slice(0, 3).map((ch: any) => ({
+              symbol: ch.symbol || null,
+              name: ch.name || '',
+              fundCount: ch.fundCount ?? 0,
+              totalValueUsd: ch.totalValueUsd ?? 0
+            }));
+          }
+        } catch (e) {
+          // safe fallback
+        }
+        const hydratedExt = declareDiscovery({
+          method: 'GET',
+          input: {},
+          output: {
+            example: {
+              status: 'success',
+              source: 'SEC EDGAR Form 13F-HR information tables',
+              parsedFunds,
+              totalFundsTracked: 13,
+              consensusHoldings
+            }
+          }
+        });
+        const validRes = validateDiscoveryExtension(hydratedExt.bazaar);
+        if (validRes.valid) {
+          discoveryExt = hydratedExt.bazaar;
+        }
+      }
       const host = (typeof req.get === 'function' ? req.get('host') : req.headers?.host) || 'stockbloc.ai.studio';
       const protocol = req.protocol || 'https';
       const resourceUrl = `${protocol}://${host}${req.originalUrl || req.url || '/'}`;
