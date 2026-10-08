@@ -931,7 +931,7 @@ export function App() {
 
     try {
       let res = await fetchWithPaywallHandling("/api/data/market");
-      let sourceName = "Yahoo Finance API";
+      let sourceName = "Third-party market data feed";
       let json = res.data;
 
       if (res.isPaywall) {

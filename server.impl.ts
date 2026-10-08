@@ -1146,7 +1146,7 @@ app.post('/api/ai/market-pulse', async (req, res) => {
         const dynamicFallback = {
           headline,
           sentiment: "Neutral",
-          executiveSummary: "Live market news headlines aggregated from Yahoo Finance. API tracking real-time publisher updates without Gemini summarization.",
+          executiveSummary: "Live market news headlines aggregated from verified news feeds. API tracking real-time publisher updates without Gemini summarization.",
           keyDrivers,
           impactedTickers,
           lastUpdated: new Date().toISOString()
@@ -3522,7 +3522,7 @@ app.get(['/api/data/market', '/api/data/market.csv'], requireX402Payment(), asyn
   const responseData = {
     ...data,
     updated_at: updatedAt,
-    source: data.source || "Yahoo Finance chart API",
+    source: data.source && !data.source.toLowerCase().includes("yahoo") ? data.source : "Third-party market data feed",
     total_assets: watchlist.length,
     bloc_filter: blocQuery || "all",
     watchlist
@@ -3716,20 +3716,22 @@ app.get(['/mcp.json', '/api/v1/mcp-config.json'], (req, res) => {
           STOCK_BLOC_URL: baseUrl,
         },
         description: "Stock Bloc Market Intelligence & Quant Agent MCP Server",
-        version: "1.0.0",
+        version: "2.2.0",
         tools: [
+          "get_stock_quote",
+          "search_13f_whale_filings",
+          "analyze_sec_filing",
+          "sec_analyst",
+          "evaluate_tsunami_strategy",
+          "run_quant_simulation",
+          "submit_agent_trade_idea",
+          "register_autonomous_agent",
           "get_agent_leaderboard",
           "get_top_trade_ideas",
-          "evaluate_tsunami_strategy",
-          "register_autonomous_agent",
-          "submit_agent_trade_idea",
-          "get_stock_quote",
-          "run_quant_simulation",
           "analyze_stock_ai",
-          "search_13f_whale_filings",
           "get_data_status",
           "get_ebook_playbook",
-          "analyze_sec_filing"
+          "get_sb_score_history"
         ]
       }
     },
@@ -3747,13 +3749,13 @@ app.get(['/api/mcp/rpc', '/mcp'], (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.json({
     name: "stock-bloc-mcp-server",
-    version: "2.0.0",
+    version: "2.2.0",
     protocolVersion: "2024-11-05",
     description: "Stock Bloc MCP Server. POST JSON-RPC 2.0 requests to this endpoint."
   });
 });
 
-// Shared 12 MCP Tools & JSON-RPC 2.0 Handler
+// Shared 14 MCP Tools & JSON-RPC 2.0 Handler
 import { MCP_TOOLS, handleMcpRpcRequest } from './server/mcpService.js';
 export { MCP_TOOLS, handleMcpRpcRequest };
 
@@ -3776,7 +3778,6 @@ Stock Bloc provides real-time market data, institutional 13F filings analytics, 
 ## 2. Monetization & API Access
 - Free Endpoints: ${baseUrl}/api/v1/agent/leaderboard (Public read-only)
 - Metered Endpoints: ${baseUrl}/api/v1/agent/quant-sim (Requires X-StockBloc-API-Key)
-- Purchase API Key: ${baseUrl}/api/v1/agent/keys/generate (Platform credits & x402 USDC)
 - Playbooks & Downloads: ${baseUrl}/
 
 ## 3. API Endpoints for AI Agents
@@ -3819,7 +3820,7 @@ app.get('/.well-known/mcp.json', (req, res) => {
   res.json({
     "mcpVersion": "1.0",
     "name": "stock-bloc",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "description": "Stock Bloc MCP server: market data, SEC 13F/filings, quant scores, forecasts for autonomous agents. Paid REST endpoints use x402 (USDC, Base eip155:8453).",
     "transport": {
       "type": "streamable-http",
@@ -3839,25 +3840,11 @@ app.get('/pricing.json', (req, res) => {
   res.json({
     "products": [
       {
-        "id": "agent_credits_1000",
-        "name": "Agent Credits — 1,000 credits — $10",
-        "price_usd": 10.00,
-        "credits": 1000,
-        "type": "api_credits",
-        "crypto_payment_supported": true
-      },
-      {
         "id": "playbook-trilogy",
         "name": "Stock Bloc Wealth Playbook Trilogy",
         "price_usd": 97.00,
         "type": "digital_download",
         "crypto_payment_supported": true
-      },
-      {
-        "id": "agent-api-refill-5",
-        "name": "AI Agent API Key Credit Refill",
-        "price_usd": 5.00,
-        "type": "api_credits"
       }
     ]
   });
@@ -5033,7 +5020,7 @@ app.get("/api/ticker-news/:symbol", async (req, res) => {
       title: item.title,
       link: item.link,
       pubDate: item.pubDate,
-      source: item.creator || item.source || "Yahoo Finance"
+      source: item.creator || item.source || "Market News Feed"
     }));
     res.json({ news });
   } catch (error) {

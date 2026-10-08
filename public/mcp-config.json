@@ -7,21 +7,22 @@
         "STOCK_BLOC_URL": "https://stockbloc.ai.studio"
       },
       "description": "Stock Bloc AI Financial Research & SEC Analyst MCP Server (Form 10-K, 10-Q, 8-K filing analysis, 13F whale flow, and x402 USDC payments)",
-      "version": "1.0.0",
+      "version": "2.2.0",
       "tools": [
-        "sec_analyst",
-        "analyze_sec_filing",
-        "search_13f_whale_filings",
         "get_stock_quote",
+        "search_13f_whale_filings",
+        "analyze_sec_filing",
+        "sec_analyst",
         "evaluate_tsunami_strategy",
-        "register_autonomous_agent",
-        "submit_agent_trade_idea",
         "run_quant_simulation",
+        "submit_agent_trade_idea",
+        "register_autonomous_agent",
         "get_agent_leaderboard",
         "get_top_trade_ideas",
         "analyze_stock_ai",
         "get_data_status",
-        "get_ebook_playbook"
+        "get_ebook_playbook",
+        "get_sb_score_history"
       ]
     }
   },

@@ -97,7 +97,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
       pulse: null as "up" | "down" | null,
       pulseKey: 0,
       history: initialSpark,
-      source: "Yahoo Finance Live",
+      source: "Live Market Data",
     };
   });
 
@@ -121,7 +121,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
       pulse: null as "up" | "down" | null,
       pulseKey: 0,
       history: initialSpark,
-      source: "Yahoo Finance Live",
+      source: "Live Market Data",
     };
   });
 
@@ -172,7 +172,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
               pulse: dir,
               pulseKey: dir ? prev.pulseKey + 1 : prev.pulseKey,
               history: newHist,
-              source: "Yahoo Finance Live",
+              source: "Live Market Data",
             };
           });
         }
@@ -198,7 +198,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
               pulse: dir,
               pulseKey: dir ? prev.pulseKey + 1 : prev.pulseKey,
               history: newHist,
-              source: "Yahoo Finance Live",
+              source: "Live Market Data",
             };
           });
         }
@@ -520,7 +520,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                 Live Exchange Quotes
               </span>
               <span className="text-[10px] text-neutral-400 font-mono hidden sm:inline">
-                • Synced via Yahoo Finance API
+                • Synced via Market Data API
               </span>
             </div>
             <div className="flex items-center gap-2">

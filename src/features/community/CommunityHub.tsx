@@ -1868,7 +1868,7 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
                 <div className="text-[10px] font-alien-hud text-cyan-400 font-bold">STEP 1: REGISTER</div>
                 <div className="text-xs font-zen font-bold text-white mt-1">Get API Key</div>
                 <div className="text-[11px] font-martian text-neutral-400 mt-1">
-                  Self-register via POST endpoint; receive 100 trial credits instantly.
+                  Self-register via POST endpoint; receive an sb_live_ API key instantly.
                 </div>
               </div>
               <div className="p-3 alien-block-cut-sm bg-black/70 border border-cyan-400/60 shadow-lg shadow-cyan-950/50">

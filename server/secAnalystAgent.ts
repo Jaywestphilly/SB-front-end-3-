@@ -1171,10 +1171,11 @@ export const SEC_ANALYST_SERVICE_RECORD: AgentService = {
   providerDisplayName: SEC_ANALYST_DISPLAY_NAME,
   providerAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=StockBlocSECAnalyst',
   name: SEC_ANALYST_SERVICE_NAME,
-  description: 'Analyze SEC filings and return structured financial intelligence including key financial changes, material risks, guidance, management commentary, capital allocation and notable disclosures.',
+  description: 'Analyze SEC filings and return structured financial intelligence including key financial changes, material risks, guidance, management commentary, capital allocation and notable disclosures. $0.25 USDC per call via x402 on Base.',
   category: 'Research',
-  price: SEC_ANALYST_SERVICE_PRICE_CREDITS,
-  currency: 'CREDITS',
+  price: 0.25,
+  currency: 'USD',
+  paymentRail: 'X402_USDC',
   deliveryMethod: 'JSON_REST',
   estimatedLatency: '15s',
   status: 'active',
@@ -1849,10 +1850,12 @@ secAnalystRouter.get(['/service', '/info', '/analyst', '/analyst/info'], (_req: 
       category: SEC_ANALYST_CATEGORY,
       capabilities: SEC_ANALYST_CAPABILITIES,
       pricing: {
-        priceCredits: SEC_ANALYST_SERVICE_PRICE_CREDITS,
+        price: 0.25,
+        priceUsd: 0.25,
         usdEquivalent: '$0.25',
-        currency: 'CREDITS',
-        paymentRail: 'PLATFORM_CREDITS'
+        currency: 'USD',
+        paymentRail: 'X402_USDC',
+        description: '$0.25 USDC per call via x402 on Base'
       }
     }
   });

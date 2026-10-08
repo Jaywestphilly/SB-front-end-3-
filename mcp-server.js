@@ -11,7 +11,7 @@ const BASE_URL = process.env.STOCK_BLOC_URL || "https://stockbloc.ai.studio";
 const server = new Server(
   {
     name: "stock-bloc-mcp-server",
-    version: "1.0.0",
+    version: "2.2.0",
   },
   {
     capabilities: {
@@ -218,6 +218,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             question: { type: "string", description: "Optional specific financial intelligence query" }
           },
           required: ["ticker", "filingType"]
+        },
+      },
+      {
+        name: "get_sb_score_history",
+        description: "Get audited historical SB Score quantitative snapshots for any ticker symbol (Price: $0.05 USDC via x402 pay-per-call on Base).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            ticker: { type: "string", description: "Stock ticker symbol (e.g. NVDA, AAPL, MSFT, TSLA)" },
+            limit: { type: "number", description: "Maximum records to return (default: 20)" }
+          },
+          required: ["ticker"]
         },
       }
     ],
@@ -482,6 +494,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             ),
           },
         ],
+      };
+    }
+
+    if (name === "get_sb_score_history") {
+      const ticker = args?.ticker || "NVDA";
+      const limit = args?.limit || 20;
+      const res = await fetch(`${BASE_URL}/api/v1/intelligence/sb-score/history?ticker=${encodeURIComponent(ticker)}&limit=${limit}`, {
+        headers: defaultHeaders
+      });
+      const data = await res.json();
+      return {
+        content: [{ type: "text", text: JSON.stringify(data, null, 2) }],
       };
     }
 

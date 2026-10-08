@@ -77,7 +77,7 @@ export const DataStatusPanel: React.FC<DataStatusPanelProps> = ({
   const feeds = [
     {
       name: "Quant Live Watchlist Quotes",
-      source: marketDataSource || "Yahoo Finance chart API",
+      source: marketDataSource || "Third-party market data feed",
       status: marketDataIsStale ? "STALE DATA (>24H)" : "LIVE ONLINE",
       latency: "45ms",
       lastUpdated: `${formatUtcTimestamp(marketDataUpdatedAt)} (${getDataAgeText(marketDataUpdatedAt)})`,

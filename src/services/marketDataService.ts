@@ -363,10 +363,18 @@ export class MarketDataService {
   private static cache: { data: MarketFeedData; timestamp: number } | null = null;
   private static CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes in-memory cache
 
+  public static toPublicSourceLabel(rawSource?: string | null): string {
+    if (!rawSource) return "Third-party market data feed";
+    if (rawSource.toLowerCase().includes("yahoo")) return "Third-party market data feed";
+    return rawSource;
+  }
+
   public static getProviderName(): string {
     const configuredProvider = process.env.MARKET_DATA_PROVIDER;
-    if (configuredProvider && configuredProvider !== 'auto') return configuredProvider;
-    return 'Yahoo Finance chart API';
+    if (configuredProvider && configuredProvider !== 'auto') {
+      return MarketDataService.toPublicSourceLabel(configuredProvider);
+    }
+    return 'Third-party market data feed';
   }
 
   public static getStalenessThresholds() {
@@ -427,7 +435,7 @@ export class MarketDataService {
               status: statusLabel === "very_stale" || statusLabel === "stale" ? "stale" : "success",
               updated_at: updatedAt,
               last_successful_update: lastSuccess,
-              source: json.source || MarketDataService.getProviderName(),
+              source: MarketDataService.toPublicSourceLabel(json.source || MarketDataService.getProviderName()),
               data_age_seconds: ageSeconds,
               status_label: statusLabel,
               market_status: MarketDataService.getMarketStatus(),

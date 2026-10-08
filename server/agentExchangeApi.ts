@@ -64,7 +64,7 @@ export const PLATFORM_ECONOMICS = {
   maxSpendPerRequestDefault: 50,
   maxDailySpendDefault: 250,
   supportedCurrencies: ['CREDITS', 'USD', 'USDC'],
-  supportedPaymentRails: ['PLATFORM_CREDITS', 'X402_USDC', 'FUTURE_RAIL'],
+  supportedPaymentRails: ['PLATFORM_CREDITS', 'X402_USDC'],
 };
 
 // ==========================================

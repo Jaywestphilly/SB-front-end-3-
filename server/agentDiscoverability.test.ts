@@ -25,7 +25,6 @@ describe('Agent Signup Discoverability & Canonical Paths', () => {
     expect(reg.requestBody.displayName).toBeDefined();
     expect(reg.response.status).toBe(201);
     expect(reg.response.description).toMatch(/sb_live_/);
-    expect(reg.response.description).toMatch(/100 free credits/);
   });
 
   it('verifies public/agents/skill.md has Getting started / signup section at the top with curl example', () => {
@@ -37,7 +36,6 @@ describe('Agent Signup Discoverability & Canonical Paths', () => {
     expect(content).toMatch(/alias.*\/api\/v1\/agent\/register/i);
     expect(content).toContain('curl -X POST https://stockbloc.ai.studio/api/v1/agents/register');
     expect(content).toMatch(/sb_live_/);
-    expect(content).toMatch(/100 free/i);
   });
 
   it('verifies public/llms.txt documents /api/v1/agents/register as canonical with no auth required', () => {

@@ -11,15 +11,11 @@ import sys
 from datetime import datetime, timezone
 
 TARGET_FILES = [os.path.join("server", "data", "market_watchlist_data.json")]
-SOURCE_NAME = "Polygon.io / Yahoo Finance Quant Watchlist Feed"
+SOURCE_NAME = "Verified Real-Time Quant Watchlist Feed"
 
 def fetch_and_write():
     # Read existing base file if present
     base_file = os.path.join("server", "data", "market_watchlist_data.json")
-    if not os.path.exists(base_file):
-        base_file = "public/market_watchlist_data.json"
-    if not os.path.exists(base_file):
-        base_file = "market_watchlist_data.json"
 
     if not os.path.exists(base_file):
         print("CRITICAL: Market watchlist base data missing!", file=sys.stderr)

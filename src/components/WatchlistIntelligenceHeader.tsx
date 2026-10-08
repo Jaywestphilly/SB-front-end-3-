@@ -125,7 +125,7 @@ export const WatchlistIntelligenceHeader: React.FC<WatchlistIntelligenceHeaderPr
             <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-cyan-400/80 pt-1.5 border-t border-cyan-900/50">
               <div className="flex items-center gap-1.5">
                 <span className="text-cyan-500/70 font-alien-hud">FEED PROVIDER:</span>
-                <span className="font-bold text-cyan-200">{marketDataSource || "Yahoo Finance API"}</span>
+                <span className="font-bold text-cyan-200">{marketDataSource || "Third-party market data feed"}</span>
               </div>
 
               <div className="flex items-center gap-1.5">

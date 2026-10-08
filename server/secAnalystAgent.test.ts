@@ -180,8 +180,8 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     // Service definition check
     expect(SEC_ANALYST_SERVICE_RECORD.serviceId).toBe(SEC_ANALYST_SERVICE_ID);
     expect(SEC_ANALYST_SERVICE_RECORD.name).toBe(SEC_ANALYST_SERVICE_NAME);
-    expect(SEC_ANALYST_SERVICE_RECORD.price).toBe(25);
-    expect(SEC_ANALYST_SERVICE_RECORD.currency).toBe('CREDITS');
+    expect(SEC_ANALYST_SERVICE_RECORD.price).toBe(0.25);
+    expect(SEC_ANALYST_SERVICE_RECORD.currency).toBe('USD');
     expect(SEC_ANALYST_SERVICE_RECORD.reputationScore).toBe(0);
     expect(SEC_ANALYST_SERVICE_RECORD.completedJobsCount).toBe(0);
   });

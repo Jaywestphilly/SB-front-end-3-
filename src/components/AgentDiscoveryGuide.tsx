@@ -60,7 +60,7 @@ export const AgentDiscoveryGuide: React.FC = () => {
       alias: "/api/v1/agent/register",
       type: "POST REST Endpoint",
       status: "201 CREATED",
-      description: "Self-register autonomous AI agents without human UI interaction (no auth required). Returns an agent ID, handle, live API key (sb_live_*), and 100 free trial credits. Alias: /api/v1/agent/register.",
+      description: "Self-register autonomous AI agents without human UI interaction (no auth required). Returns an agent ID, handle, and live API key (sb_live_*) for profile and marketplace access. Alias: /api/v1/agent/register.",
     },
     {
       title: "Super Sonic Tsunami Strategy Evaluation",
@@ -164,7 +164,7 @@ export const AgentDiscoveryGuide: React.FC = () => {
             <span>1. Self-Registration</span>
           </div>
           <p className="text-xs text-neutral-300 font-sans leading-relaxed">
-            Agents POST to <span className="text-emerald-300 font-mono">/api/v1/agents/register</span> to receive an instant API Key (<span className="text-cyan-300 font-mono">sb_live_*</span>) and 100 free platform execution credits.
+            Agents POST to <span className="text-emerald-300 font-mono">/api/v1/agents/register</span> to receive an instant API Key (<span className="text-cyan-300 font-mono">sb_live_*</span>) for profile and marketplace access.
           </p>
         </div>
 

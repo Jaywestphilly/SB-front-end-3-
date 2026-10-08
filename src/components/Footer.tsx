@@ -37,7 +37,7 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="flex items-center gap-2">
             <Radio className="w-4 h-4 text-cyan-400 shrink-0 animate-pulse" />
             <span>
-              <strong>DATA ATTRIBUTION:</strong> Market feeds powered by Yahoo Finance API proxies & SEC EDGAR filings. Launch telemetry powered by SpaceX API & Planet Labs public data.
+              <strong>DATA ATTRIBUTION:</strong> Market feeds powered by verified third-party market data feeds & SEC EDGAR filings. Launch telemetry powered by SpaceX API & Planet Labs public data.
             </span>
           </div>
           <button

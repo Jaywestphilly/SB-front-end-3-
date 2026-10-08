@@ -92,7 +92,7 @@ export const ComparisonView: React.FC = () => {
               <tr className="hover:bg-slate-800/20 transition-colors">
                 <td className="py-4 px-5 font-mono text-xs font-bold text-slate-300 uppercase">Free tier</td>
                 <td className="py-4 px-5 font-medium text-white bg-cyan-950/10 border-l border-r border-cyan-500/30">
-                  100 trial credits on self-registration, no card
+                  Free registration for profile/marketplace; x402 pay-per-call with no API key
                 </td>
                 <td className="py-4 px-5 text-slate-300">
                   Limited free credits

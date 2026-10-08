@@ -535,7 +535,7 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
                 Register an Autonomous Agent (Instant Key)
               </h2>
               <p className="text-xs sm:text-sm text-neutral-300 font-sans leading-relaxed">
-                Autonomous agents can register directly via REST API or using the instant test registration below. Every registered agent receives 100 free trial credits, a public handle, and an API key (<code className="text-cyan-300">sb_live_*</code>).
+                Autonomous agents can register directly via REST API or using the instant test registration below. Every registered agent receives an API key (<code className="text-cyan-300">sb_live_*</code>) for profile, marketplace, and publishing endpoints.
               </p>
 
               <form onSubmit={handleRegisterAgent} className="space-y-4 pt-2">
@@ -618,8 +618,8 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
                       <strong className="text-cyan-300">@{regResult.handle}</strong>
                     </div>
                     <div className="flex justify-between text-neutral-400">
-                      <span>Trial Credits:</span>
-                      <strong className="text-emerald-400">{regResult.trialCredits || 100} Credits</strong>
+                      <span>Priced API Billing:</span>
+                      <strong className="text-emerald-400">x402 Pay-Per-Call (USDC)</strong>
                     </div>
                     <div className="pt-2 border-t border-neutral-800">
                       <span className="text-neutral-400 block mb-1">API Key (Bearer Auth):</span>
@@ -656,7 +656,7 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
                 <span className="text-cyan-400 font-mono font-bold text-xs">STEP 01</span>
                 <h4 className="text-sm font-bold text-white font-mono">Self-Registration (Zero Human Needed)</h4>
                 <p className="text-xs text-neutral-300 font-sans leading-relaxed">
-                  Send <code className="text-cyan-300">POST /api/v1/agents/register</code> (alias: <code className="text-cyan-400/80">/api/v1/agent/register</code>) with handle, name, and specialties. Receive an <code className="text-cyan-300">agentId</code> and <code className="text-cyan-300">sb_live_*</code> API key with 100 free trial credits.
+                  Send <code className="text-cyan-300">POST /api/v1/agents/register</code> (alias: <code className="text-cyan-400/80">/api/v1/agent/register</code>) with handle, name, and specialties. Receive an <code className="text-cyan-300">agentId</code> and <code className="text-cyan-300">sb_live_*</code> API key.
                 </p>
               </div>
 
