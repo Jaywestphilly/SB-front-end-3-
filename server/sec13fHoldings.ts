@@ -102,7 +102,6 @@ export async function getLatest13F(cik: string): Promise<Latest13FResult | null>
     }
     throw err;
   }
-  return null;
 }
 
 export async function fetchInfoTable(cik: string, accession: string): Promise<{ url: string; xml: string }> {
@@ -120,14 +119,36 @@ export async function fetchInfoTable(cik: string, accession: string): Promise<{ 
     }
     const indexJson: any = await indexRes.json();
     const items = indexJson?.directory?.item || [];
-    let xmlFilename: string | null = null;
     
-    for (const item of items) {
-      const name = item.name || '';
-      if (name.endsWith('.xml') && name !== 'primary_doc.xml') {
-        xmlFilename = name;
-        break;
-      }
+    // Filter items that end in .xml and are not primary_doc.xml (case-insensitive)
+    const xmlItems = items.filter((item: any) => {
+      const name = (item.name || '').toLowerCase();
+      return name.endsWith('.xml') && name !== 'primary_doc.xml';
+    });
+
+    // Prefer name matching /infotable/i, then matching /form13f/i, then largest remaining xml.
+    xmlItems.sort((a: any, b: any) => {
+      const nameA = (a.name || '').toLowerCase();
+      const nameB = (b.name || '').toLowerCase();
+      const isInfotableA = /infotable/.test(nameA);
+      const isInfotableB = /infotable/.test(nameB);
+      if (isInfotableA && !isInfotableB) return -1;
+      if (!isInfotableA && isInfotableB) return 1;
+
+      const isForm13fA = /form13f/.test(nameA);
+      const isForm13fB = /form13f/.test(nameB);
+      if (isForm13fA && !isForm13fB) return -1;
+      if (!isForm13fA && isForm13fB) return 1;
+
+      const sizeA = parseInt(a.size, 10) || 0;
+      const sizeB = parseInt(b.size, 10) || 0;
+      return sizeB - sizeA;
+    });
+
+    let xmlFilename: string | null = null;
+    if (xmlItems.length > 0) {
+      xmlFilename = xmlItems[0].name;
+      console.log('[13F] Chosen XML filename:', xmlFilename);
     }
     
     if (!xmlFilename) {
@@ -213,9 +234,153 @@ export function parseInfoTable(xml: string): { items: ParsedInfoTableItem[]; tot
   return { items, totalValueUsd };
 }
 
+// In-process write serializer to avoid LOST WRITES under high concurrency
+let cacheMutexPromise: Promise<void> = Promise.resolve();
+
+async function serializeCacheWrite(fn: () => Promise<void>): Promise<void> {
+  const current = cacheMutexPromise;
+  cacheMutexPromise = (async () => {
+    try {
+      await current;
+    } catch {}
+    await fn();
+  })();
+  return cacheMutexPromise;
+}
+
+export async function writeCacheAtomic(key: string, value: any) {
+  const dataDir = process.env.SB_DATA_DIR || path.join(process.cwd(), 'server', 'data');
+  const cachePath = path.join(dataDir, 'sec_13f_holdings_cache.json');
+  const tmpPath = `${cachePath}.tmp`;
+  await serializeCacheWrite(async () => {
+    try {
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      let cacheData: Record<string, any> = {};
+      if (fs.existsSync(cachePath)) {
+        try {
+          cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
+        } catch {
+          // ignore bad file
+        }
+      }
+      cacheData[key] = value;
+      fs.writeFileSync(tmpPath, JSON.stringify(cacheData, null, 2), 'utf-8');
+      fs.renameSync(tmpPath, cachePath);
+    } catch (e) {
+      console.error('[13F] Cache write atomic error:', e);
+      try {
+        if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+      } catch {}
+    }
+  });
+}
+
+export async function deleteCacheKeyAtomic(key: string) {
+  const dataDir = process.env.SB_DATA_DIR || path.join(process.cwd(), 'server', 'data');
+  const cachePath = path.join(dataDir, 'sec_13f_holdings_cache.json');
+  const tmpPath = `${cachePath}.tmp`;
+  await serializeCacheWrite(async () => {
+    try {
+      if (fs.existsSync(cachePath)) {
+        let cacheData: Record<string, any> = {};
+        try {
+          cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
+        } catch {
+          // ignore bad file
+        }
+        if (cacheData[key]) {
+          delete cacheData[key];
+          fs.writeFileSync(tmpPath, JSON.stringify(cacheData, null, 2), 'utf-8');
+          fs.renameSync(tmpPath, cachePath);
+        }
+      }
+    } catch (e) {
+      console.error('[13F] Cache delete atomic error:', e);
+      try {
+        if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+      } catch {}
+    }
+  });
+}
+
+let isScrubbed = false;
+export function scrubCacheAndPersistedFile() {
+  if (isScrubbed) return;
+  isScrubbed = true;
+  
+  const dataDir = process.env.SB_DATA_DIR || path.join(process.cwd(), 'server', 'data');
+  const cachePath = path.join(dataDir, 'sec_13f_holdings_cache.json');
+  
+  // 1. Scrub holdings cache: "On cache read: ignore (and delete) any entry where ok !== true or !Array.isArray(topHoldings) or topHoldings.length === 0"
+  if (fs.existsSync(cachePath)) {
+    try {
+      const cacheData = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
+      let modified = false;
+      for (const key of Object.keys(cacheData)) {
+        const entry = cacheData[key];
+        if (
+          !entry ||
+          entry.ok !== true ||
+          !Array.isArray(entry.topHoldings) ||
+          entry.topHoldings.length === 0
+        ) {
+          delete cacheData[key];
+          modified = true;
+        }
+      }
+      if (modified) {
+        if (!fs.existsSync(dataDir)) {
+          fs.mkdirSync(dataDir, { recursive: true });
+        }
+        const tmpPath = `${cachePath}.tmp`;
+        fs.writeFileSync(tmpPath, JSON.stringify(cacheData, null, 2), 'utf-8');
+        fs.renameSync(tmpPath, cachePath);
+        console.log('[13F] Holdings cache file scrubbed successfully.');
+      }
+    } catch (e) {
+      console.warn('[13F] Cache scrub warning:', e);
+    }
+  }
+  
+  // 2. Clear empty holdings fields in server/data/sec_intel_data.json
+  const secIntelPath = path.join(dataDir, 'sec_intel_data.json');
+  if (fs.existsSync(secIntelPath)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(secIntelPath, 'utf-8'));
+      let modified = false;
+      if (data && Array.isArray(data.funds)) {
+        for (const f of data.funds) {
+          if (f.holdingsAccession && (!Array.isArray(f.topHoldings) || f.topHoldings.length === 0)) {
+            delete f.holdingsAccession;
+            delete f.holdingsFiledOn;
+            delete f.holdingsAsOf;
+            delete f.holdingsSourceUrl;
+            delete f.totalValueUsd;
+            f.holdings_status = 'metadata_only';
+            f.topHoldings = [];
+            modified = true;
+          }
+        }
+      }
+      if (modified) {
+        const tmpPath = `${secIntelPath}.tmp`;
+        fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), 'utf-8');
+        fs.renameSync(tmpPath, secIntelPath);
+        console.log('[13F] sec_intel_data.json empty funds cleared for refetch.');
+      }
+    } catch (e) {
+      console.warn('[13F] sec_intel_data.json scrub warning:', e);
+    }
+  }
+}
+
 export async function getHoldings(cik: string, fundId?: string): Promise<any> {
   const fId = fundId || cik;
   try {
+    scrubCacheAndPersistedFile();
+    
     const latest = await getLatest13F(cik);
     if (!latest) {
       return { ok: false, reason: 'no_13f_hr' };
@@ -233,12 +398,25 @@ export async function getHoldings(cik: string, fundId?: string): Promise<any> {
       }
     }
     
-    if (cacheData[latest.accession]) {
-      return cacheData[latest.accession];
+    const paddedCik = String(cik).padStart(10, '0');
+    const cacheKey = `${paddedCik}:${latest.accession}`;
+    
+    if (cacheData[cacheKey]) {
+      const entry = cacheData[cacheKey];
+      if (entry && entry.ok === true && Array.isArray(entry.topHoldings) && entry.topHoldings.length > 0) {
+        return entry;
+      } else {
+        await deleteCacheKeyAtomic(cacheKey);
+      }
     }
     
     const infoTable = await fetchInfoTable(cik, latest.accession);
     const parsed = parseInfoTable(infoTable.xml);
+    
+    if (!parsed || parsed.items.length === 0) {
+      console.warn('[13F]', fId, cik, 'parse_zero_equity_rows');
+      return { ok: false, reason: 'parse_zero_equity_rows' };
+    }
     
     const titleToTicker = await getTitleToTickerMap();
     
@@ -267,11 +445,7 @@ export async function getHoldings(cik: string, fundId?: string): Promise<any> {
     };
     
     try {
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-      }
-      cacheData[latest.accession] = result;
-      fs.writeFileSync(cachePath, JSON.stringify(cacheData, null, 2), 'utf-8');
+      await writeCacheAtomic(cacheKey, result);
     } catch {
       // ignore cache write errors
     }
@@ -303,4 +477,11 @@ export async function runWithLimit<T, R>(
     }
   }
   return Promise.all(results);
+}
+
+// Run scrubbing once on startup
+try {
+  scrubCacheAndPersistedFile();
+} catch (e) {
+  console.warn('[13F] Module load scrub warning:', e);
 }

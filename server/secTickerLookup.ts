@@ -60,15 +60,24 @@ export async function getTitleToTickerMap(): Promise<Record<string, string>> {
     });
     if (res.ok) {
       const data: any = await res.json();
-      const map: Record<string, string> = {};
+      const tempMap = new Map<string, Set<string>>();
       for (const key of Object.keys(data)) {
         const item = data[key];
         if (item?.ticker && item?.title) {
           const rawTitle = String(item.title).toUpperCase();
           const cleanTitle = normalizeCompanyName(rawTitle);
           if (cleanTitle) {
-            map[cleanTitle] = String(item.ticker).toUpperCase();
+            if (!tempMap.has(cleanTitle)) {
+              tempMap.set(cleanTitle, new Set<string>());
+            }
+            tempMap.get(cleanTitle)!.add(String(item.ticker).toUpperCase().trim());
           }
+        }
+      }
+      const map: Record<string, string> = {};
+      for (const [cleanTitle, tickerSet] of tempMap.entries()) {
+        if (tickerSet.size === 1) {
+          map[cleanTitle] = Array.from(tickerSet)[0];
         }
       }
       titleToTickerCache = map;

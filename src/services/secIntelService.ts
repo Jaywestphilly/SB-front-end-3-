@@ -195,8 +195,8 @@ export class SecIntelService {
 
       const mergedFunds: SecFundData[] = baseFunds.map((fund: any) => {
         const itemResult = holdingsResults.find(r => r.item.id === fund.id);
-        if (itemResult && itemResult.res && itemResult.res.ok) {
-          const hold = itemResult.res;
+        const hold = itemResult?.res;
+        if (hold && hold.ok === true && Array.isArray(hold.topHoldings) && hold.topHoldings.length > 0) {
           return {
             ...fund,
             filing_date: hold.holdingsFiledOn,
@@ -212,7 +212,7 @@ export class SecIntelService {
             filings: hold.filings || []
           };
         } else {
-          const errReason = itemResult?.res?.reason || 'no_13f_hr';
+          const errReason = hold ? (hold.reason || 'parse_zero_equity_rows') : 'no_13f_hr';
           return {
             ...fund,
             topHoldings: [],
@@ -280,7 +280,7 @@ export class SecIntelService {
   }
 
   public static computeConsensusAndSummary(funds: SecFundData[]): { consensusHoldings: ConsensusHolding[]; macroSummary: string; parsedCount: number } {
-    const parsedFunds = funds.filter(f => f.holdings_status === 'parsed_13f_information_table');
+    const parsedFunds = funds.filter(f => f.holdings_status === 'parsed_13f_information_table' && Array.isArray(f.topHoldings) && f.topHoldings.length > 0);
     const parsedCount = parsedFunds.length;
     
     const cusipMap = new Map<string, { symbol: string | null; name: string; cusip: string; fundNames: Set<string>; totalValueUsd: number }>();

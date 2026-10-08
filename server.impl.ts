@@ -3616,7 +3616,7 @@ const secReadinessMiddleware = async (req: express.Request, res: express.Respons
         charged: false
       });
     }
-    const parsedCount = data.funds.filter((f: any) => f.holdings_status === 'parsed_13f_information_table').length;
+    const parsedCount = data.funds.filter((f: any) => f.holdings_status === 'parsed_13f_information_table' && Array.isArray(f.topHoldings) && f.topHoldings.length > 0).length;
     if (parsedCount < 7) {
       res.setHeader('Cache-Control', 'no-store');
       return res.status(503).json({

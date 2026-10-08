@@ -1148,9 +1148,9 @@ agentIntelligenceRouter.get('/earnings-pack', async (req, res) => {
       });
     }
 
-    const consensus = secFeedData.consensusHoldings?.find((h: any) => h.symbol.toUpperCase() === ticker) || null;
+    const consensus = secFeedData.consensusHoldings?.find((h: any) => h.symbol && h.symbol.toUpperCase() === ticker) || null;
     const institutionalHolders = (secFeedData.funds || []).flatMap((fund: any) => {
-      const holding = fund.topHoldings?.find((h: any) => h.symbol.toUpperCase() === ticker);
+      const holding = fund.topHoldings?.find((h: any) => h.symbol && h.symbol.toUpperCase() === ticker);
       if (!holding) return [];
       return [{
         fundName: fund.fundName || fund.fund_name,
