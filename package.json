@@ -25,7 +25,7 @@
   "scripts": {
     "dev": "tsx server.js",
     "build": "vite build && esbuild server.impl.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
-    "start": "node server.js",
+    "start": "npm run build && NODE_ENV=production node server.js",
     "lint": "tsc --noEmit",
     "test": "vitest run",
     "test:ui": "playwright test",
