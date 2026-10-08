@@ -1162,6 +1162,17 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
 
         saveX402Settlement(keys, settlementRecord);
 
+        // Requirement 7: Persist settlement to Firestore x402_settlements
+        db.collection('x402_settlements').doc(keys.payloadHash).set({
+          timestamp: settlementRecord.settledAt,
+          payer: settlementRecord.payer || '0x0000000000000000000000000000000000000000',
+          route: req.originalUrl || req.path,
+          endpointId: endpointConfig.id,
+          amountUsd: endpointConfig.priceUsd,
+          amountAtomic: endpointConfig.atomicAmount,
+          txHash: settlementRecord.txHash
+        }).catch(() => {});
+
         (req as any).x402Payment = {
           verified: true,
           settled: true,

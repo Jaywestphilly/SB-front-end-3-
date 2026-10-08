@@ -1810,8 +1810,18 @@ secAnalystRouter.post(['/analyze', '/'], async (req: Request, res: Response) => 
       });
     }
 
+    const normTicker = String(ticker).toUpperCase().trim();
+    const cik = await resolveTickerCik(normTicker);
+    if (!cik) {
+      return res.status(404).json({
+        error: `Ticker "${normTicker}" not found in U.S. SEC EDGAR directory.`,
+        code: 'TICKER_NOT_FOUND',
+        success: false
+      });
+    }
+
     const analysis = await analyzeSecFilingAsync({
-      ticker: String(ticker).toUpperCase().trim(),
+      ticker: normTicker,
       filingType: filingType as SecFilingType,
       question: question ? String(question).trim() : undefined,
       forceFixture: Boolean(forceFixture)

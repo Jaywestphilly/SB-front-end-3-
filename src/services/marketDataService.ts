@@ -676,7 +676,7 @@ export class MarketDataService {
               low52: fetched.low52 ?? baseStock.low52,
               volume: fetched.volume ?? baseStock.volume,
               last_updated: nowIso,
-              source: "Yahoo Finance chart API"
+              source: MarketDataService.toPublicSourceLabel("Yahoo Finance chart API")
             };
           } else {
             // Provider failed for this stock -> preserve last verified record

@@ -125,6 +125,51 @@ app.use('/api/v1/developers', agentPlatformRouter);
 app.get(['/agent/me', '/agents/me'], authenticateAgent, handleGetAgentMe);
 app.get(['/agent/me/transactions', '/agents/me/transactions'], authenticateAgent, handleGetAgentTransactions);
 
+// Requirement 7: Internal x402 settlements summary
+app.get('/api/v1/internal/x402-settlements/summary', authenticateAgent, requireScope('admin'), async (req, res) => {
+  try {
+    const snapshot = await db.collection('x402_settlements').get();
+    let totalSettled = 0;
+    let totalAmountUsd = 0;
+    const uniquePayersSet = new Set<string>();
+    const byEndpoint: Record<string, { count: number; amountUsd: number }> = {};
+    const records: Array<any> = [];
+
+    snapshot.forEach((doc: any) => {
+      const data = doc.data();
+      totalSettled++;
+      const amt = typeof data.amountUsd === 'number' ? data.amountUsd : parseFloat(data.amountUsd || '0') || 0;
+      totalAmountUsd += amt;
+      if (data.payer) {
+        uniquePayersSet.add(data.payer);
+      }
+      const ep = data.endpointId || 'unknown';
+      if (!byEndpoint[ep]) {
+        byEndpoint[ep] = { count: 0, amountUsd: 0 };
+      }
+      byEndpoint[ep].count += 1;
+      byEndpoint[ep].amountUsd = parseFloat((byEndpoint[ep].amountUsd + amt).toFixed(6));
+
+      records.push({ id: doc.id, ...data });
+    });
+
+    totalAmountUsd = parseFloat(totalAmountUsd.toFixed(6));
+
+    records.sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
+    const recent = records.slice(0, 50);
+
+    return res.json({
+      totalSettled,
+      totalAmountUsd,
+      uniquePayers: uniquePayersSet.size,
+      byEndpoint,
+      recent
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to generate settlements summary', details: err.message });
+  }
+});
+
 // Support direct JSON requests to /agents/feed
 app.get('/agents/feed', (req, res, next) => {
   if (req.headers.accept?.includes('application/json') || req.query.format === 'json') {
