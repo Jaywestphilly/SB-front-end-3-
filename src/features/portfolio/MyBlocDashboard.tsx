@@ -277,9 +277,9 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
   });
   const [apiCredits, setApiCredits] = useState<number>(() => {
     const val = safeStorage.getItem("stockbloc_api_credits");
-    return val ? parseInt(val, 10) : 2850;
+    return val ? parseInt(val, 10) : 0;
   });
-  const [apiTotalCredits, setApiTotalCredits] = useState<number>(3000);
+  const [apiTotalCredits, setApiTotalCredits] = useState<number>(0);
   const [subscriptionTier, setSubscriptionTier] = useState<"Free Terminal" | "Developer" | "Institutional">("Free Terminal");
   const [copiedKey, setCopiedKey] = useState(false);
   const [isGeneratingKey, setIsGeneratingKey] = useState(false);
@@ -344,13 +344,23 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
 
 
     try {
-      const res = await fetch("/api/v1/agent/keys/generate", { method: "POST" });
+      const storedKey = safeStorage.getItem("stockbloc_api_key") || apiKey;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (storedKey) {
+        headers["Authorization"] = `Bearer ${storedKey}`;
+      }
+      const res = await fetch("/api/v1/agent/keys/generate", {
+        method: "POST",
+        headers,
+      });
       const data = await res.json();
       if (data.status === "ok" && data.key) {
+        const returnedCredits = typeof data.creditsRemaining === "number" ? data.creditsRemaining : 0;
         setApiKey(data.key);
-        setApiCredits(data.creditsRemaining || 3000);
+        setApiCredits(returnedCredits);
+        setApiTotalCredits(returnedCredits);
         safeStorage.setItem("stockbloc_api_key", data.key);
-        safeStorage.setItem("stockbloc_api_credits", String(data.creditsRemaining || 3000));
+        safeStorage.setItem("stockbloc_api_credits", String(returnedCredits));
       } else {
         console.error("Failed to generate API key:", data);
       }
@@ -1150,7 +1160,7 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
                 <div
                   className="h-full bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-full transition-all duration-500"
                   style={{
-                    width: `${Math.min(100, Math.max(0, (apiCredits / apiTotalCredits) * 100))}%`,
+                    width: `${apiTotalCredits > 0 ? Math.min(100, Math.max(0, (apiCredits / apiTotalCredits) * 100)) : 0}%`,
                   }}
                 />
               </div>

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
+import crypto from 'node:crypto';
 import Stripe from 'stripe';
 import {
   agentPlatformRouter,
@@ -66,6 +67,92 @@ describe('CREDIT MINT AUTHORITY HARDENING — 12 Canonical Security Tests', () =
       authenticateAgent,
       requireScope('admin'),
       handleCreditsRefill
+    );
+
+    app.post(
+      '/api/v1/agent/keys/generate',
+      authenticateAgent,
+      requireScope('admin'),
+      (req, res) => {
+        const publicId = crypto.randomBytes(8).toString('hex');
+        const secret = crypto.randomBytes(32).toString('hex');
+        const rawKey = `sb_live_${publicId}_${secret}`;
+        const keyHash = crypto.createHash('sha256').update(secret).digest('hex');
+        const agentId = `agent_quant_${crypto.randomBytes(5).toString('hex')}`;
+        const handle = `quant_pro_${publicId.substring(0, 6)}`;
+        const keyPrefix = secret.substring(0, 4) + '...';
+
+        const keyRecord: any = {
+          keyId: publicId,
+          agentId,
+          ownerUid: 'dashboard_user',
+          keyPrefix,
+          keyHash,
+          secretHash: keyHash,
+          scopes: [
+            'services:read',
+            'services:write',
+            'jobs:read',
+            'jobs:execute',
+            'payments:transact',
+            'community:read',
+            'community:write',
+            'community:reply'
+          ],
+          createdAt: new Date(),
+          lastUsedAt: null,
+          expiresAt: null,
+          revokedAt: null,
+          status: 'active'
+        };
+
+        const agentRecord: any = {
+          agentId,
+          handle,
+          handleLower: handle.toLowerCase(),
+          displayName: 'Quant Agent',
+          description: 'Autonomous quant agent with API key credentials.',
+          ownerUid: 'dashboard_user',
+          verificationStatus: 'arena_candidate',
+          status: 'active',
+          isAgent: true,
+          isAutonomousAgent: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastSeenAt: new Date().toISOString()
+        };
+
+        const walletRecord: any = {
+          agentId,
+          creditsBalance: 0,
+          availableBalance: 0,
+          paidCreditsBalance: 0,
+          promoCreditsBalance: 0,
+          trialCreditsBalance: 0,
+          trialCredits: 0,
+          lastCreditTag: 'NONE',
+          lifetimeSpent: 0,
+          simulationRuns: 0,
+          verifiedSimulations: 0,
+          status: 'active'
+        };
+
+        inMemoryKeyRegistry.set(publicId, keyRecord);
+        inMemoryKeyRegistry.set(rawKey, keyRecord);
+        inMemoryAgentRegistry.set(agentId, agentRecord);
+        inMemoryAgentRegistry.set(handle.toLowerCase(), agentRecord);
+        inMemoryWalletRegistry.set(agentId, walletRecord);
+
+        res.json({
+          status: "ok",
+          key: rawKey,
+          keyId: publicId,
+          agentId,
+          handle,
+          createdAt: new Date().toISOString(),
+          creditsRemaining: 0,
+        });
+      }
     );
 
     // Stripe Webhook Endpoint matching server.ts architecture
@@ -454,5 +541,49 @@ describe('CREDIT MINT AUTHORITY HARDENING — 12 Canonical Security Tests', () =
     // Wallet must NOT exist or be credited
     const wallet = inMemoryWalletRegistry.get(victimAgentId);
     expect(wallet).toBeUndefined();
+  });
+
+  // 13. POST /api/v1/agent/keys/generate unauthenticated → 401 Unauthorized
+  it('13. POST /api/v1/agent/keys/generate unauthenticated → 401 Unauthorized', async () => {
+    const res = await request(app)
+      .post('/api/v1/agent/keys/generate')
+      .send({});
+
+    expect(res.status).toBe(401);
+  });
+
+  // 14. POST /api/v1/agent/keys/generate with non-admin agent key → 403 Forbidden
+  it('14. POST /api/v1/agent/keys/generate with non-admin agent key → 403 Forbidden', async () => {
+    const res = await request(app)
+      .post('/api/v1/agent/keys/generate')
+      .set('Authorization', `Bearer ${normalRawKey}`)
+      .send({});
+
+    expect(res.status).toBe(403);
+  });
+
+  // 15. POST /api/v1/agent/keys/generate with admin key → 200, 0 credits, arena_candidate
+  it('15. POST /api/v1/agent/keys/generate with admin key → 200, 0 credits, arena_candidate', async () => {
+    const res = await request(app)
+      .post('/api/v1/agent/keys/generate')
+      .set('Authorization', `Bearer ${adminSecretKey}`)
+      .send({});
+
+    expect(res.status).toBe(200);
+    expect(res.body.status).toBe('ok');
+    expect(res.body.creditsRemaining).toBe(0);
+    expect(res.body.tier).toBeUndefined();
+
+    const mintedAgentId = res.body.agentId;
+    const wallet = inMemoryWalletRegistry.get(mintedAgentId);
+    expect(wallet).toBeDefined();
+    expect(wallet.creditsBalance).toBe(0);
+    expect(wallet.availableBalance).toBe(0);
+    expect(wallet.paidCreditsBalance).toBe(0);
+    expect(wallet.trialCreditsBalance).toBe(0);
+
+    const agent = inMemoryAgentRegistry.get(mintedAgentId);
+    expect(agent).toBeDefined();
+    expect(agent.verificationStatus).toBe('arena_candidate');
   });
 });

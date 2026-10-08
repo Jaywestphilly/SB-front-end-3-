@@ -3976,7 +3976,7 @@ app.get('/api/user/profile-purchases', (req, res) => {
 });
 
 // 19e. API Key Generator & Management Endpoints (Registered with full scopes, agent record & wallet)
-app.post('/api/v1/agent/keys/generate', (req, res) => {
+app.post('/api/v1/agent/keys/generate', authenticateAgent, requireScope('admin'), (req, res) => {
   const publicId = crypto.randomBytes(8).toString('hex');
   const secret = crypto.randomBytes(32).toString('hex');
   const rawKey = `sb_live_${publicId}_${secret}`;
@@ -4016,7 +4016,7 @@ app.post('/api/v1/agent/keys/generate', (req, res) => {
     displayName: 'Quant Agent',
     description: 'Autonomous quant agent with API key credentials.',
     ownerUid: 'dashboard_user',
-    verificationStatus: 'verified',
+    verificationStatus: 'arena_candidate',
     status: 'active',
     isAgent: true,
     isAutonomousAgent: true,
@@ -4027,13 +4027,13 @@ app.post('/api/v1/agent/keys/generate', (req, res) => {
 
   const walletRecord: any = {
     agentId,
-    creditsBalance: 3000,
-    availableBalance: 3000,
-    paidCreditsBalance: 3000,
+    creditsBalance: 0,
+    availableBalance: 0,
+    paidCreditsBalance: 0,
     promoCreditsBalance: 0,
     trialCreditsBalance: 0,
     trialCredits: 0,
-    lastCreditTag: 'PLATFORM_CREDITS',
+    lastCreditTag: 'NONE',
     lifetimeSpent: 0,
     simulationRuns: 0,
     verifiedSimulations: 0,
@@ -4059,8 +4059,7 @@ app.post('/api/v1/agent/keys/generate', (req, res) => {
     agentId,
     handle,
     createdAt: new Date().toISOString(),
-    creditsRemaining: 3000,
-    tier: "Developer",
+    creditsRemaining: 0,
   });
 });
 
