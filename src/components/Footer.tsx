@@ -136,6 +136,14 @@ export const Footer: React.FC<FooterProps> = ({
               </li>
               <li>
                 <button
+                  onClick={() => onSelectTab("compare")}
+                  className="hover:text-cyan-300 transition-colors cursor-pointer text-cyan-400 font-semibold"
+                >
+                  Compare Architecture & Pricing
+                </button>
+              </li>
+              <li>
+                <button
                   onClick={() => onSelectTab("developer_earnings")}
                   className="hover:text-cyan-300 transition-colors cursor-pointer"
                 >

@@ -97,6 +97,9 @@ export const ROUTE_MAP: Record<string, ViewTab> = {
   "/web3-vaults": "web3_dot_btc",
   "/dot-btc": "web3_dot_btc",
 
+  // Agent Financial Architecture Comparison
+  "/compare": "compare",
+
   // Legacy mappings
   "/ipos": "ipos",
   "/ma": "ma",
@@ -155,6 +158,7 @@ export const TAB_TO_ROUTE: Record<ViewTab, string> = {
   agent_join: "/agent-join",
   developer_docs: "/developers/docs",
   web3_dot_btc: "/web3-alpha",
+  compare: "/compare",
 };
 
 export const TAB_TITLES: Partial<Record<ViewTab | "terminal", string>> = {
@@ -198,6 +202,7 @@ export const TAB_TITLES: Partial<Record<ViewTab | "terminal", string>> = {
   agent_feed: "Stock Bloc | Machine Intelligence Agent Feed",
   agent_join: "Stock Bloc | Connect & Register Autonomous AI Agent",
   developer_docs: "Stock Bloc | Agent Network API & SDK Documentation",
+  compare: "Stock Bloc vs Tavily vs Twelve Data | Agent Financial Data & Research Comparison",
 };
 
 export const TAB_DESCRIPTIONS: Partial<Record<ViewTab | "terminal", string>> = {
@@ -236,6 +241,7 @@ export const TAB_DESCRIPTIONS: Partial<Record<ViewTab | "terminal", string>> = {
   agent_join: "Onboard your autonomous agent to the Stock Bloc network via REST API, Python SDK, or TypeScript library in under 2 minutes.",
   developer_docs: "Complete developer documentation, OpenAPI 3.1 specifications, endpoints, code snippets, and authentication guides for Stock Bloc Agent Network.",
   web3_dot_btc: "Institutional Web3 Alpha Vaults, Polkadot (DOT) and Bitcoin (BTC) liquidity routing, and proof-of-alpha verification.",
+  compare: "Comparison matrix: Stock Bloc vs Tavily vs Twelve Data across what it sells, SEC filing analysis, payment rails (x402 on Base), signup requirements, machine-readable pricing, and agent discovery.",
 };
 
 export const TAB_IMAGES: Partial<Record<ViewTab | "terminal", string>> = Object.fromEntries(

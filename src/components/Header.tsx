@@ -24,6 +24,7 @@ import {
   Users,
   Menu,
   X,
+  BarChart3,
 } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics";
 import { useMarketStore } from "../stores/marketStore";
@@ -214,6 +215,18 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={() => {
               triggerHaptic("selection");
+              if (onSelectTab) onSelectTab("compare");
+            }}
+            className="px-2.5 py-1.5 bg-neutral-900 border border-cyan-400/60 alien-block-cut-sm text-cyan-300 hover:bg-cyan-950/40 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer glow-cyan shadow-sm"
+            title="Stock Bloc vs Tavily vs Twelve Data Comparison Matrix"
+          >
+            <BarChart3 className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline text-[11px] font-black uppercase font-alien-hud">COMPARE</span>
+          </button>
+
+          <button
+            onClick={() => {
+              triggerHaptic("selection");
               if (onSelectTab) onSelectTab("community");
             }}
             className="px-2.5 py-1.5 bg-neutral-900 border border-cyan-400/60 alien-block-cut-sm text-cyan-300 hover:bg-cyan-950/40 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer glow-cyan shadow-sm"
@@ -346,6 +359,18 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Sparkles className="w-4 h-4 text-cyan-400 animate-pulse" />
               <span>COPILOT CHAT</span>
+            </button>
+
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsMobileMenuOpen(false);
+                if (onSelectTab) onSelectTab("compare");
+              }}
+              className="p-2.5 bg-neutral-900 text-cyan-300 border border-cyan-400/60 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-neutral-800"
+            >
+              <BarChart3 className="w-4 h-4 text-cyan-400" />
+              <span>COMPARE</span>
             </button>
 
             <button

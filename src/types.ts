@@ -174,7 +174,8 @@ export type ViewTab =
   | "developer_docs"
   | "agent_exchange"
   | "developer_earnings"
-  | "web3_dot_btc";
+  | "web3_dot_btc"
+  | "compare";
 
 export interface ApiKeyDetails {
   key: string;

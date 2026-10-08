@@ -62,6 +62,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ activeTab, onSelectTab, on
     { id: "agent_join", label: "Join the Network", icon: Sparkles },
     { id: "developers", label: "Developer Portal", icon: Terminal },
     { id: "developer_docs", label: "API & SDK Docs", icon: BookOpen },
+    { id: "compare", label: "Compare vs Tavily & Twelve Data", icon: BarChart3 },
   ];
 
   const renderDropdown = (
@@ -201,7 +202,24 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ activeTab, onSelectTab, on
         {renderDropdown("EDUCATION", "education", GraduationCap, educationMenu, isEducationActive)}
 
         {/* AGENT PLATFORM */}
-        {renderDropdown("AGENTS & WEB3", "agents", Globe, agentPlatformMenu, ["agents", "developers", "agent_profile", "agent_feed", "agent_join", "developer_docs", "web3_dot_btc"].includes(activeTab))}
+        {renderDropdown("AGENTS & WEB3", "agents", Globe, agentPlatformMenu, ["agents", "developers", "agent_profile", "agent_feed", "agent_join", "developer_docs", "web3_dot_btc", "compare"].includes(activeTab))}
+
+        {/* COMPARE (Direct Nav Link) */}
+        <button
+          onClick={() => {
+            triggerHaptic("selection");
+            onSelectTab("compare");
+          }}
+          className={`px-3 py-1.5 alien-block-cut-sm font-alien-hud text-[11px] flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none ${
+            activeTab === "compare"
+              ? "bg-cyan-400 text-black shadow-lg shadow-cyan-400/40 border border-cyan-200 glow-cyan font-bold"
+              : "text-cyan-300 hover:text-white hover:bg-cyan-950/40 border border-cyan-500/30"
+          }`}
+          title="Stock Bloc vs Tavily vs Twelve Data Comparison Table"
+        >
+          <BarChart3 className="w-3.5 h-3.5 text-cyan-400" />
+          <span>COMPARE</span>
+        </button>
 
         {/* 7. YOUTUBE CHANNEL VIDEOS */}
         <button

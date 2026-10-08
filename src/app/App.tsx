@@ -261,6 +261,10 @@ const DotBtcWeb3Hub = safeLazy(
   () => import("../features/web3/DotBtcWeb3Hub"),
   "DotBtcWeb3Hub"
 );
+const ComparisonView = safeLazy(
+  () => import("../components/ComparisonView"),
+  "ComparisonView"
+);
 
 
 const HubLoadingFallback: React.FC = () => (
@@ -1781,6 +1785,7 @@ export function App() {
         {activeTab === "agent_join" && <AgentLandingPage onNavigate={handleSelectTab} onOpenAuth={() => setIsAuthOpen(true)} />}
         {activeTab === "developer_docs" && <DeveloperDocs onNavigateTab={handleSelectTab} />}
         {activeTab === "web3_dot_btc" && <DotBtcWeb3Hub onNavigateTab={handleSelectTab} />}
+        {activeTab === "compare" && <ComparisonView />}
         </Suspense>
       </main>
 

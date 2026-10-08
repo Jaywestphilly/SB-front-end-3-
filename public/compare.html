@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Bloc vs Tavily vs Twelve Data | Agent Financial Data & Research Comparison</title>
+  <meta name="description" content="Comparison matrix: Stock Bloc vs Tavily vs Twelve Data across what it sells, SEC filing analysis, payment rails (x402 on Base), signup requirements, machine-readable pricing, and agent discovery.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #030712;
+      --panel: #0b1120;
+      --panel-alt: #0f172a;
+      --border: rgba(6, 182, 212, 0.25);
+      --border-bright: rgba(6, 182, 212, 0.55);
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation Bar */
+    header {
+      background: rgba(2, 6, 23, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 14px 24px;
+    }
+
+    .nav-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+    }
+
+    .brand-dot {
+      color: var(--cyan);
+      animation: pulse 2s infinite;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+
+    .nav-links a:hover {
+      color: var(--cyan-light);
+      border-color: var(--border);
+      background: rgba(6, 182, 212, 0.08);
+    }
+
+    .nav-links a.active {
+      color: #000;
+      background: var(--cyan);
+      font-weight: 700;
+      border-color: var(--cyan-light);
+    }
+
+    /* Main Container */
+    main {
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+      flex: 1;
+    }
+
+    .hero {
+      margin-bottom: 32px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--cyan);
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid var(--border);
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: var(--text-muted);
+      max-width: 800px;
+    }
+
+    /* Comparison Table */
+    .table-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow-x: auto;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+      margin-bottom: 40px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    thead th {
+      background: rgba(15, 23, 42, 0.95);
+      padding: 16px 20px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    thead th.feature-col {
+      width: 22%;
+      color: var(--text-muted);
+    }
+
+    thead th.sb-col {
+      width: 32%;
+      color: var(--cyan-light);
+      background: rgba(6, 182, 212, 0.06);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+
+    thead th.tavily-col {
+      width: 23%;
+      color: #cbd5e1;
+    }
+
+    thead th.twelve-col {
+      width: 23%;
+      color: #cbd5e1;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    tbody td {
+      padding: 16px 20px;
+      vertical-align: top;
+      line-height: 1.5;
+    }
+
+    td.feature-title {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    td.sb-cell {
+      background: rgba(6, 182, 212, 0.03);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      color: #f8fafc;
+      font-weight: 500;
+    }
+
+    td.tavily-cell, td.twelve-cell {
+      color: var(--text-muted);
+    }
+
+    .tx-hash {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      word-break: break-all;
+      color: var(--cyan);
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    /* Two Decision Guidance Sections */
+    .guidance-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    @media (min-width: 768px) {
+      .guidance-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .guidance-card {
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .guidance-card.wrong {
+      border-left: 4px solid var(--rose);
+    }
+
+    .guidance-card.right {
+      border-left: 4px solid var(--emerald);
+    }
+
+    .guidance-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .guidance-card.wrong .guidance-title {
+      color: #fda4af;
+    }
+
+    .guidance-card.right .guidance-title {
+      color: #6ee7b7;
+    }
+
+    .guidance-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .guidance-list li {
+      position: relative;
+      padding-left: 20px;
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+
+    .guidance-card.wrong .guidance-list li::before {
+      content: "—";
+      position: absolute;
+      left: 0;
+      color: var(--rose);
+      font-weight: 800;
+    }
+
+    .guidance-card.right .guidance-list li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      color: var(--emerald);
+      font-weight: 800;
+    }
+
+    /* Verified Claims & Live Discovery Links */
+    .verified-links {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 40px;
+    }
+
+    .verified-links h3 {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--cyan);
+      margin-bottom: 12px;
+    }
+
+    .link-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .link-chip {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      background: rgba(2, 6, 23, 0.8);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .link-chip:hover {
+      color: var(--cyan-light);
+      border-color: var(--cyan);
+      background: rgba(6, 182, 212, 0.1);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 24px;
+      background: #020617;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    footer p {
+      max-width: 900px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="nav-container">
+      <a href="/" class="brand">
+        STOCK BLOC<span class="brand-dot">.</span>
+      </a>
+      <nav class="nav-links">
+        <a href="/">Terminal</a>
+        <a href="/compare" class="active">Compare</a>
+        <a href="/agents">Agents</a>
+        <a href="/developers/docs">API Docs</a>
+        <a href="/.well-known/claims.json" target="_blank">claims.json</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Comparison Content -->
+  <main>
+    <section class="hero">
+      <div class="hero-badge">Architecture & Settlement Comparison</div>
+      <h1>Stock Bloc vs Tavily vs Twelve Data</h1>
+      <p class="subtitle">
+        Independent evaluation matrix for autonomous AI agents, quant engineers, and algorithmic research systems.
+      </p>
+    </section>
+
+    <!-- Comparison Table (exact content and structure as specified, no winner badge) -->
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th class="feature-col">Feature / Dimension</th>
+            <th class="sb-col">Stock Bloc</th>
+            <th class="tavily-col">Tavily</th>
+            <th class="twelve-col">Twelve Data</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="feature-title">What it sells</td>
+            <td class="sb-cell">Finished analysis + market data for agents</td>
+            <td class="tavily-cell">Web search results for agents</td>
+            <td class="twelve-cell">Raw market data via REST</td>
+          </tr>
+          <tr>
+            <td class="feature-title">SEC filing analysis</td>
+            <td class="sb-cell">Yes, $0.25/call finished output with citations</td>
+            <td class="tavily-cell">No, returns raw web text you parse yourself</td>
+            <td class="twelve-cell">No</td>
+          </tr>
+          <tr>
+            <td class="feature-title">Payment rail</td>
+            <td class="sb-cell">x402 v2, USDC on Base, per call</td>
+            <td class="tavily-cell">API key + usage billing</td>
+            <td class="twelve-cell">API key + subscription tiers</td>
+          </tr>
+          <tr>
+            <td class="feature-title">Signup required</td>
+            <td class="sb-cell">No, unpaid calls return HTTP 402 with price and payment terms</td>
+            <td class="tavily-cell">Yes, API key</td>
+            <td class="twelve-cell">Yes, API key</td>
+          </tr>
+          <tr>
+            <td class="feature-title">Free tier</td>
+            <td class="sb-cell">100 trial credits on self-registration, no card</td>
+            <td class="tavily-cell">Limited free credits</td>
+            <td class="twelve-cell">Freemium, rate-limited</td>
+          </tr>
+          <tr>
+            <td class="feature-title">Machine-readable pricing</td>
+            <td class="sb-cell">Yes: llms.txt, manifest, OpenAPI, claims.json</td>
+            <td class="tavily-cell">Docs page</td>
+            <td class="twelve-cell">Docs page</td>
+          </tr>
+          <tr>
+            <td class="feature-title">Agent discovery</td>
+            <td class="sb-cell">MCP on Smithery and Glama, x402 manifest, skill repo</td>
+            <td class="tavily-cell">MCP, API docs</td>
+            <td class="twelve-cell">API docs</td>
+          </tr>
+          <tr>
+            <td class="feature-title">Cheapest call</td>
+            <td class="sb-cell">$0.01</td>
+            <td class="tavily-cell">Varies by plan</td>
+            <td class="twelve-cell">Free tier, then paid</td>
+          </tr>
+          <tr>
+            <td class="feature-title">Live payment proof</td>
+            <td class="sb-cell">
+              1 external x402 settlement 2026-10-03, tx 0x2c768476cb3db3c148001b0aecb2f89f3826f73f87650e6c2044c8e5c50be9c3
+              <br>
+              <a class="tx-hash" href="https://basescan.org/tx/0x2c768476cb3db3c148001b0aecb2f89f3826f73f87650e6c2044c8e5c50be9c3" target="_blank" rel="noopener noreferrer">View on BaseScan &rarr;</a>
+            </td>
+            <td class="tavily-cell">N/A</td>
+            <td class="twelve-cell">N/A</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section 1: When Stock Bloc is the wrong call -->
+    <div class="guidance-grid">
+      <div class="guidance-card wrong">
+        <h2 class="guidance-title">When Stock Bloc is the wrong call</h2>
+        <ul class="guidance-list">
+          <li><strong>Need raw web search:</strong> use Tavily</li>
+          <li><strong>Need streaming real-time quotes:</strong> compare Twelve Data websocket pricing</li>
+          <li><strong>Need a human dashboard:</strong> free terminal exists but is not the agent product</li>
+        </ul>
+      </div>
+
+      <!-- Section 2: When Stock Bloc is the right call -->
+      <div class="guidance-card right">
+        <h2 class="guidance-title">When Stock Bloc is the right call</h2>
+        <ul class="guidance-list">
+          <li><strong>Agent needs a finished answer with citations</strong></li>
+          <li><strong>Agent holds USDC on Base and can complete x402 without human approval</strong></li>
+          <li><strong>Want the agent to see exact price in the 402 before paying</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Verified Machine-Readable Surfaces & Claims -->
+    <div class="verified-links">
+      <h3>Machine-Readable Verification Surfaces</h3>
+      <div class="link-chips">
+        <a class="link-chip" href="/.well-known/claims.json" target="_blank">/.well-known/claims.json</a>
+        <a class="link-chip" href="/.well-known/x402" target="_blank">/.well-known/x402</a>
+        <a class="link-chip" href="/api/v1/agents/manifest.json" target="_blank">/api/v1/agents/manifest.json</a>
+        <a class="link-chip" href="/llms.txt" target="_blank">/llms.txt</a>
+        <a class="link-chip" href="/api/v1/openapi.json" target="_blank">/api/v1/openapi.json</a>
+        <a class="link-chip" href="/api/v1/telemetry/funnel" target="_blank">/api/v1/telemetry/funnel</a>
+        <a class="link-chip" href="https://smithery.ai/servers/realestatejcarter/stock-bloc" target="_blank" rel="noopener noreferrer">Smithery MCP Registry</a>
+        <a class="link-chip" href="https://glama.ai/mcp/connectors/studio.ai.stockbloc/stock-bloc" target="_blank" rel="noopener noreferrer">Glama MCP Registry</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer with Last Verified date and spending disclaimer -->
+  <footer>
+    <p>
+      Last verified 2026-10-07. Prices and tiers change; check linked sources before spending.
+    </p>
+  </footer>
+</body>
+</html>

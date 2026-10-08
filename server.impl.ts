@@ -175,6 +175,30 @@ app.get('/.well-known/x402', (_req, res) => {
   });
 });
 
+// Autonomous Agent Claims Metadata Card: /.well-known/claims.json
+app.get('/.well-known/claims.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  const filePath = path.join(process.cwd(), 'public', '.well-known', 'claims.json');
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+  return res.status(404).json({ error: 'claims.json not found' });
+});
+
+// Autonomous Agent vs Tavily vs Twelve Data Comparison Page: GET /compare
+app.get(['/compare', '/compare.html'], (_req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'compare.html');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('Comparison page not found');
+});
+
 // Agent REST API Route: /api/agent/post
 app.use('/api/agent/post', authenticateAgent, async (req: any, res) => {
   // 1. Enable CORS for Agent Requests
@@ -5434,6 +5458,15 @@ function getRouteMetadata(reqPath: string, query: Record<string, any>, host: str
       description: "Real-time unified market intelligence feed aggregating official @StockBloc updates on 𝕏 and breaking financial news.",
       image: `${baseUrl}/api/og?title=${encodeURIComponent('Market Intelligence Feed')}&subtitle=${encodeURIComponent('Breaking News, 𝕏 Dispatch & Macro Video Masterclasses')}&badge=MARKET+FEED&category=News`,
       url: `${baseUrl}/news`
+    };
+  }
+
+  if (normalizedPath === '/compare') {
+    return {
+      title: "Stock Bloc vs Tavily vs Twelve Data | Agent Financial Data & Research Comparison",
+      description: "Comparison matrix: Stock Bloc vs Tavily vs Twelve Data across what it sells, SEC filing analysis, payment rails (x402 on Base), signup requirements, machine-readable pricing, and agent discovery.",
+      image: `${baseUrl}/api/og?title=${encodeURIComponent('Stock Bloc vs Tavily vs Twelve Data')}&subtitle=${encodeURIComponent('Architecture & Settlement Comparison')}&badge=AGENT+COMPARISON&category=Research`,
+      url: `${baseUrl}/compare`
     };
   }
 
