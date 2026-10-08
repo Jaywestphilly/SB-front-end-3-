@@ -3616,6 +3616,16 @@ const secReadinessMiddleware = async (req: express.Request, res: express.Respons
         charged: false
       });
     }
+    const parsedCount = data.funds.filter((f: any) => f.holdings_status === 'parsed_13f_information_table').length;
+    if (parsedCount < 7) {
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(503).json({
+        status: 'error',
+        code: 'LIVE_DATA_UNAVAILABLE',
+        message: '13F dataset temporarily unavailable',
+        charged: false
+      });
+    }
     res.locals.secFeed = data;
     next();
   } catch (err) {
@@ -4836,8 +4846,7 @@ app.get('/api/13f/filings', async (req, res) => {
       const top3 = holdings.slice(0, 3).map((h: any) => ({
         symbol: h.symbol || '',
         name: h.name || h.symbol || '',
-        sector: h.sector || 'General',
-        changeType: h.changeType || h.change_type || 'HOLD'
+        sector: h.sector || 'General'
       }));
 
       return {
@@ -4846,6 +4855,7 @@ app.get('/api/13f/filings', async (req, res) => {
         manager: f.manager || 'Investment Manager',
         cik: f.cik || '0000000000',
         filingDate: f.filingDate || f.filing_date || new Date().toISOString().split('T')[0],
+        holdingsAsOf: f.holdingsAsOf || null,
         quarter: f.quarter || '13F-HR',
         doc_url: f.doc_url || f.docUrl || `https://www.sec.gov/edgar/browse/?CIK=${f.cik || ''}`,
         topHoldings: top3
@@ -4856,8 +4866,7 @@ app.get('/api/13f/filings', async (req, res) => {
     const previewConsensus = rawConsensus.slice(0, 3).map((c: any) => ({
       symbol: c.symbol || '',
       name: c.name || c.symbol || '',
-      fundCount: c.fundCount || c.fund_count || 0,
-      overallSentiment: c.overallSentiment || c.sentiment || 'BUY'
+      fundCount: c.fundCount || c.fund_count || 0
     }));
 
     const rawSummary = feedData.macroSummary || 'Q1/Q2 SEC 13F institutional filings overview.';
