@@ -195,8 +195,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: "sec_analyst",
+        description: "Call the Stock Bloc SEC Analyst to analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence, revenue quality audits, and forensic risks (Price: $0.25 USDC via x402 pay-per-call on Base). Alias: analyze_sec_filing.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            ticker: { type: "string", description: "Stock ticker symbol (e.g. AAPL, NVDA, MSFT, TSLA)" },
+            filingType: { type: "string", enum: ["10-K", "10-Q", "8-K"], description: "SEC filing type to analyze" },
+            question: { type: "string", description: "Optional specific financial intelligence query" }
+          },
+          required: ["ticker", "filingType"]
+        },
+      },
+      {
         name: "analyze_sec_filing",
-        description: "Analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence from Stock Bloc SEC Analyst native agent (Price: $0.25 USDC via x402 pay-per-call on Base).",
+        description: "Analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence from Stock Bloc SEC Analyst native agent (Price: $0.25 USDC via x402 pay-per-call on Base). Alias: sec_analyst.",
         inputSchema: {
           type: "object",
           properties: {
@@ -362,7 +375,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       });
     }
 
-    if (name === "analyze_sec_filing") {
+    if (name === "analyze_sec_filing" || name === "sec_analyst") {
       return await executePaidFetch(`${BASE_URL}/api/v1/sec/job`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -472,7 +485,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
 
-    if (name === "analyze_sec_filing") {
+    if (name === "analyze_sec_filing" || name === "sec_analyst") {
       const authKey = process.env.AGENT_API_KEY || process.env.STOCK_BLOC_API_KEY || args?.apiKey;
       const headers = { "Content-Type": "application/json" };
       if (authKey) {

@@ -53,6 +53,19 @@ export const MCP_TOOLS = [
     }
   },
   {
+    name: "sec_analyst",
+    description: "Call the Stock Bloc SEC Analyst to analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence, revenue quality audits, and forensic risks (Price: $0.25 USDC via x402 pay-per-call on Base). Alias: analyze_sec_filing.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ticker: { type: "string", description: "Stock ticker symbol (e.g. AAPL, NVDA, MSFT, TSLA)" },
+        filingType: { type: "string", enum: ["10-K", "10-Q", "8-K"], description: "SEC filing type to analyze" },
+        question: { type: "string", description: "Optional specific financial intelligence query" }
+      },
+      required: ["ticker", "filingType"]
+    }
+  },
+  {
     name: "evaluate_tsunami_strategy",
     description: "Evaluate a quantitative portfolio strategy against the Super Sonic Tsunami infrastructure watchlist (SPCX, NVDA, BE, PLTR, TSLA, AEHR, QUBT, SMCI). Returns Alpha, Sharpe, Win Rate, and Drawdown (Price: $0.10 USDC via x402 pay-per-call on Base).",
     inputSchema: {
@@ -198,6 +211,7 @@ export const PAID_MCP_TOOLS = new Set([
   'evaluate_tsunami_strategy',
   'submit_agent_trade_idea',
   'analyze_sec_filing',
+  'sec_analyst',
   'search_13f_whale_filings',
   'get_sb_score_history'
 ]);
@@ -241,6 +255,12 @@ export const MCP_TOOL_PRICING: Record<string, McpToolPricingConfig> = {
     atomicAmount: '100000'
   },
   analyze_sec_filing: {
+    endpointId: 'sec_job',
+    priceUsd: 0.25,
+    priceDisplay: '$0.25',
+    atomicAmount: '250000'
+  },
+  sec_analyst: {
     endpointId: 'sec_job',
     priceUsd: 0.25,
     priceDisplay: '$0.25',
@@ -495,7 +515,7 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
       let fetchRes: any;
       let toolOutputData: any;
 
-      if (name === "analyze_sec_filing") {
+      if (name === "analyze_sec_filing" || name === "sec_analyst") {
         const ticker = String(args.ticker || "AAPL").toUpperCase().trim();
         const filingType = String(args.filingType || "10-K").trim().toUpperCase();
         fetchRes = await fetch(`${baseUrl}/api/v1/sec/job`, {

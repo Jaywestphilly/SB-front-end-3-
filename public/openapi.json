@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.1",
   "info": {
-    "title": "Stock Bloc Agentic Financial API",
-    "description": "Machine-readable financial market intelligence, SEC 13F whale analytics, and quantitative endpoints for autonomous AI agents. Settled natively via the open x402 Payment Protocol v2 (USDC on Base Mainnet). Free human terminal available at https://stockbloc.ai.studio with no paywall or subscription. Model Context Protocol (MCP) supported via POST /api/mcp/rpc.",
+    "title": "Stock Bloc Agentic Financial API & SEC Analyst",
+    "description": "Stock Bloc AI agent financial data API, SEC research API, SEC filing analysis (10-K, 10-Q, 8-K), autonomous financial intelligence, Stock Bloc SEC Analyst, MCP tools, and x402 micropayments in USDC on Base. Settled natively via the open x402 Payment Protocol v2 (USDC on Base Mainnet). Free human terminal available at https://stockbloc.ai.studio with no paywall or subscription. Model Context Protocol (MCP) supported via POST /api/mcp/rpc.",
     "version": "2.0.0"
   },
   "servers": [
@@ -262,9 +262,10 @@
     },
     "/api/v1/sec/job": {
       "post": {
-        "summary": "Deep SEC 10-K/10-Q Filing Production Audit (x402: $0.25 USDC)",
-        "description": "Multi-layer autonomous SEC 10-K/10-Q filing analysis, revenue quality check, and forensic audit. Settled via x402 USDC micropayment ($0.25 USDC).",
+        "summary": "Stock Bloc SEC Analyst Deep Filing Audit (x402: $0.25 USDC)",
+        "description": "Stock Bloc SEC Analyst: Multi-layer autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings, revenue quality check, and forensic audit. Settled via x402 USDC micropayment ($0.25 USDC). Alias: /api/v1/sec/analyst.",
         "operationId": "executeSecJob",
+        "tags": ["Stock Bloc SEC Analyst", "SEC Research API"],
         "requestBody": {
           "required": true,
           "content": {
@@ -303,6 +304,49 @@
           },
           "402": {
             "description": "Payment required challenge with PAYMENT-REQUIRED header (0.25 USDC on Base)."
+          }
+        }
+      }
+    },
+    "/api/v1/sec/analyst": {
+      "post": {
+        "summary": "Stock Bloc SEC Analyst Deep Filing Audit (x402: $0.25 USDC)",
+        "description": "Stock Bloc SEC Analyst: Multi-layer autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings, revenue quality check, and forensic audit. Settled via x402 USDC micropayment ($0.25 USDC). Canonical alias for /api/v1/sec/job.",
+        "operationId": "callStockBlocSecAnalyst",
+        "tags": ["Stock Bloc SEC Analyst", "SEC Research API"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["ticker", "filingType"],
+                "properties": {
+                  "ticker": { "type": "string", "example": "NVDA" },
+                  "filingType": { "type": "string", "enum": ["10-K", "10-Q", "8-K"], "example": "10-Q" },
+                  "question": { "type": "string", "example": "What are the primary supply chain risks?" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Audited SEC filing analysis payload from Stock Bloc SEC Analyst."
+          },
+          "402": {
+            "description": "Payment required challenge with PAYMENT-REQUIRED header (0.25 USDC on Base)."
+          }
+        }
+      },
+      "get": {
+        "summary": "Stock Bloc SEC Analyst Capability & Service Discovery",
+        "description": "Inspect service profile, pricing, and capabilities for the Stock Bloc SEC Analyst agent.",
+        "operationId": "getSecAnalystService",
+        "tags": ["Stock Bloc SEC Analyst", "Discovery"],
+        "responses": {
+          "200": {
+            "description": "Stock Bloc SEC Analyst service record and agent profile."
           }
         }
       }

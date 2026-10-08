@@ -108,4 +108,61 @@ describe('Agent Signup Discoverability & Canonical Paths', () => {
     expect(res.body.agentId).toBeDefined();
     expect(res.body.endpoints.register).toContain('/api/v1/agents/register');
   });
+
+  it('verifies public/agents/manifest.json documents "secAnalyst" capability with exact schema, aliases and x402 terms', () => {
+    const manifestPath = path.join(process.cwd(), 'public', 'agents', 'manifest.json');
+    const raw = fs.readFileSync(manifestPath, 'utf8');
+    const manifest = JSON.parse(raw);
+
+    // Endpoint must be explicitly discoverable by name "secAnalyst"
+    expect(manifest.endpoints.secAnalyst).toBeDefined();
+    const secAnalyst = manifest.endpoints.secAnalyst;
+    expect(secAnalyst.name).toBe('Stock Bloc SEC Analyst');
+    expect(secAnalyst.method).toBe('POST');
+    expect(secAnalyst.path).toBe('/api/v1/sec/analyst');
+    expect(secAnalyst.alias).toBe('/api/v1/sec/job');
+    expect(secAnalyst.supportedFilingTypes).toEqual(['10-K', '10-Q', '8-K']);
+    expect(secAnalyst.requestBody.ticker).toBeDefined();
+    expect(secAnalyst.requestBody.filingType).toBeDefined();
+
+    // Must have complete x402 payment block
+    expect(secAnalyst.x402).toBeDefined();
+    expect(secAnalyst.x402.priced).toBe(true);
+    expect(secAnalyst.x402.priceUsd).toBe(0.25);
+    expect(secAnalyst.x402.atomicAmount).toBe('250000');
+    expect(secAnalyst.x402.asset).toBe('USDC');
+    expect(secAnalyst.x402.network).toBe('Base');
+    expect(secAnalyst.x402.chainId).toBe(8453);
+
+    // Backward compatibility: existing endpoint "secJob" remains preserved
+    expect(manifest.endpoints.secJob).toBeDefined();
+    expect(manifest.endpoints.secJob.path).toBe('/api/v1/sec/job');
+  });
+
+  it('verifies public/llms.txt documents Stock Bloc SEC Analyst with 10-K, 10-Q, 8-K filings and x402 terms', () => {
+    const llmsPath = path.join(process.cwd(), 'public', 'llms.txt');
+    const content = fs.readFileSync(llmsPath, 'utf8');
+
+    expect(content).toMatch(/Stock Bloc SEC Analyst/i);
+    expect(content).toContain('/api/v1/sec/analyst');
+    expect(content).toContain('/api/v1/sec/job');
+    expect(content).toMatch(/10-K.*10-Q.*8-K/i);
+    expect(content).toContain('$0.25 USDC');
+  });
+
+  it('verifies openapi.json documents Stock Bloc SEC Analyst operation and tags', () => {
+    for (const subPath of ['public/openapi.json', 'public/api/v1/openapi.json']) {
+      const openapiPath = path.join(process.cwd(), subPath);
+      const raw = fs.readFileSync(openapiPath, 'utf8');
+      const doc = JSON.parse(raw);
+
+      expect(doc.paths['/api/v1/sec/analyst']).toBeDefined();
+      expect(doc.paths['/api/v1/sec/job']).toBeDefined();
+
+      const analystOp = doc.paths['/api/v1/sec/analyst'].post;
+      expect(analystOp.summary).toMatch(/Stock Bloc SEC Analyst/i);
+      expect(analystOp.operationId).toBe('callStockBlocSecAnalyst');
+      expect(analystOp.tags).toContain('Stock Bloc SEC Analyst');
+    }
+  });
 });

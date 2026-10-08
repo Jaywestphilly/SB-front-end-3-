@@ -18,7 +18,11 @@ export interface MachineCommerceEvent {
     | 'trial_usage'
     | 'payment_required'
     | 'payment_attempt'
+    | 'payment_verified'
+    | 'verification_failed'
+    | 'settlement_failed'
     | 'payment_success'
+    | 'data_delivered'
     | 'first_paid_call'
     | 'second_paid_call'
     | 'repeat_payer';
@@ -27,8 +31,27 @@ export interface MachineCommerceEvent {
   payer?: string;
   amountUsd?: number;
   txHash?: string;
+  paymentId?: string;
   details?: Record<string, any>;
   timestamp?: string;
+}
+
+export interface TransactionFunnelMetrics {
+  challengesServed: number;
+  paymentAttempts: number;
+  paymentsVerified: number;
+  verificationFailures: number;
+  settlementsSucceeded: number;
+  settlementFailures: number;
+  dataDelivered: number;
+  firstPaidAgents: number;
+  repeatPaidAgents: number;
+  conversionRates: {
+    challengeToAttempt: number;
+    attemptToSettlement: number;
+    settlementToDelivery: number;
+    firstToRepeatPaid: number;
+  };
 }
 
 export interface MachineRevenueMetrics {
@@ -37,7 +60,11 @@ export interface MachineRevenueMetrics {
   trialUsageCount: number;
   paymentRequiredCount: number;
   paymentAttemptCount: number;
+  paymentVerifiedCount: number;
+  verificationFailedCount: number;
   paymentSuccessCount: number;
+  settlementFailedCount: number;
+  dataDeliveredCount: number;
   firstPaidCallsCount: number;
   secondPaidCallsCount: number;
   repeatPayersCount: number;
@@ -45,6 +72,7 @@ export interface MachineRevenueMetrics {
   revenueByEndpoint: Record<string, number>;
   revenueBySource: Record<string, number>;
   agentLifetimeSpend: Record<string, number>;
+  funnel: TransactionFunnelMetrics;
   primaryKpi: {
     name: string;
     value: number;
@@ -78,7 +106,15 @@ const externalAgentsSet = new Set<string>();
 let trialUsageCount = 0;
 let paymentRequiredCount = 0;
 let paymentAttemptCount = 0;
+let paymentVerifiedCount = 0;
+let verificationFailedCount = 0;
 let paymentSuccessCount = 0;
+let settlementFailedCount = 0;
+let dataDeliveredCount = 0;
+const deliveredKeys = new Set<string>();
+const attemptedPaymentKeys = new Set<string>();
+const verifiedPaymentKeys = new Set<string>();
+const settledPaymentKeys = new Set<string>();
 let firstPaidCallsCount = 0;
 let secondPaidCallsCount = 0;
 const payerPaidCallCount = new Map<string, number>();
@@ -108,7 +144,15 @@ export function clearMachineCommerceState(): void {
   trialUsageCount = 0;
   paymentRequiredCount = 0;
   paymentAttemptCount = 0;
+  paymentVerifiedCount = 0;
+  verificationFailedCount = 0;
   paymentSuccessCount = 0;
+  settlementFailedCount = 0;
+  dataDeliveredCount = 0;
+  deliveredKeys.clear();
+  attemptedPaymentKeys.clear();
+  verifiedPaymentKeys.clear();
+  settledPaymentKeys.clear();
   firstPaidCallsCount = 0;
   secondPaidCallsCount = 0;
   payerPaidCallCount.clear();
@@ -152,62 +196,118 @@ export function recordMachineCommerceEvent(event: MachineCommerceEvent): void {
   }
 
   if (event.eventType === 'payment_attempt') {
-    paymentAttemptCount++;
+    const attemptKey = event.paymentId || event.txHash || event.details?.paymentId;
+    if (attemptKey) {
+      if (!attemptedPaymentKeys.has(attemptKey)) {
+        attemptedPaymentKeys.add(attemptKey);
+        paymentAttemptCount++;
+      }
+    } else {
+      paymentAttemptCount++;
+    }
+  }
+
+  if (event.eventType === 'payment_verified') {
+    const verifiedKey = event.paymentId || event.txHash || event.details?.paymentId;
+    if (verifiedKey) {
+      if (!verifiedPaymentKeys.has(verifiedKey)) {
+        verifiedPaymentKeys.add(verifiedKey);
+        paymentVerifiedCount++;
+      }
+    } else {
+      paymentVerifiedCount++;
+    }
+  }
+
+  if (event.eventType === 'verification_failed') {
+    verificationFailedCount++;
+  }
+
+  if (event.eventType === 'settlement_failed') {
+    settlementFailedCount++;
+  }
+
+  if (event.eventType === 'data_delivered') {
+    const deliveryKey =
+      event.txHash ||
+      event.paymentId ||
+      event.details?.paymentId ||
+      (event.payer && event.endpoint ? `${event.payer}_${event.endpoint}_${event.timestamp}` : undefined);
+    if (deliveryKey) {
+      if (!deliveredKeys.has(deliveryKey)) {
+        deliveredKeys.add(deliveryKey);
+        dataDeliveredCount++;
+      }
+    } else {
+      dataDeliveredCount++;
+    }
   }
 
   if (event.eventType === 'payment_success') {
-    paymentSuccessCount++;
-    const amt = typeof event.amountUsd === 'number' && !isNaN(event.amountUsd) ? event.amountUsd : 0;
-    if (amt > 0) {
-      totalUsdcRevenue = Number((totalUsdcRevenue + amt).toFixed(6));
-      if (event.endpoint) {
-        const epKey = event.endpoint;
-        revenueByEndpoint.set(epKey, Number(((revenueByEndpoint.get(epKey) || 0) + amt).toFixed(6)));
-      }
-      if (event.source) {
-        const srcKey = event.source;
-        revenueBySource.set(srcKey, Number(((revenueBySource.get(srcKey) || 0) + amt).toFixed(6)));
+    const settledKey = event.txHash || event.paymentId || event.details?.paymentId;
+    let isNewSettlement = true;
+    if (settledKey) {
+      if (settledPaymentKeys.has(settledKey)) {
+        isNewSettlement = false;
+      } else {
+        settledPaymentKeys.add(settledKey);
       }
     }
 
-    if (event.payer) {
-      const payerKey = event.payer.toLowerCase();
-      const priorCount = payerPaidCallCount.get(payerKey) || 0;
-      const newCount = priorCount + 1;
-      payerPaidCallCount.set(payerKey, newCount);
-      agentLifetimeSpend.set(payerKey, Number(((agentLifetimeSpend.get(payerKey) || 0) + amt).toFixed(6)));
+    if (isNewSettlement) {
+      paymentSuccessCount++;
+      const amt = typeof event.amountUsd === 'number' && !isNaN(event.amountUsd) ? event.amountUsd : 0;
+      if (amt > 0) {
+        totalUsdcRevenue = Number((totalUsdcRevenue + amt).toFixed(6));
+        if (event.endpoint) {
+          const epKey = event.endpoint;
+          revenueByEndpoint.set(epKey, Number(((revenueByEndpoint.get(epKey) || 0) + amt).toFixed(6)));
+        }
+        if (event.source) {
+          const srcKey = event.source;
+          revenueBySource.set(srcKey, Number(((revenueBySource.get(srcKey) || 0) + amt).toFixed(6)));
+        }
+      }
 
-      if (newCount === 1) {
-        firstPaidCallsCount++;
-        machineCommerceEvents.push({
-          eventType: 'first_paid_call',
-          source: event.source,
-          endpoint: event.endpoint,
-          payer: payerKey,
-          amountUsd: amt,
-          timestamp: nowIso
-        });
-      } else if (newCount === 2) {
-        secondPaidCallsCount++;
-        repeatPayersSet.add(payerKey);
-        machineCommerceEvents.push({
-          eventType: 'second_paid_call',
-          source: event.source,
-          endpoint: event.endpoint,
-          payer: payerKey,
-          amountUsd: amt,
-          timestamp: nowIso
-        });
-        machineCommerceEvents.push({
-          eventType: 'repeat_payer',
-          source: event.source,
-          endpoint: event.endpoint,
-          payer: payerKey,
-          amountUsd: amt,
-          timestamp: nowIso
-        });
-      } else if (newCount > 2) {
-        repeatPayersSet.add(payerKey);
+      if (event.payer) {
+        const payerKey = event.payer.toLowerCase();
+        const priorCount = payerPaidCallCount.get(payerKey) || 0;
+        const newCount = priorCount + 1;
+        payerPaidCallCount.set(payerKey, newCount);
+        agentLifetimeSpend.set(payerKey, Number(((agentLifetimeSpend.get(payerKey) || 0) + amt).toFixed(6)));
+
+        if (newCount === 1) {
+          firstPaidCallsCount++;
+          machineCommerceEvents.push({
+            eventType: 'first_paid_call',
+            source: event.source,
+            endpoint: event.endpoint,
+            payer: payerKey,
+            amountUsd: amt,
+            timestamp: nowIso
+          });
+        } else if (newCount === 2) {
+          secondPaidCallsCount++;
+          repeatPayersSet.add(payerKey);
+          machineCommerceEvents.push({
+            eventType: 'second_paid_call',
+            source: event.source,
+            endpoint: event.endpoint,
+            payer: payerKey,
+            amountUsd: amt,
+            timestamp: nowIso
+          });
+          machineCommerceEvents.push({
+            eventType: 'repeat_payer',
+            source: event.source,
+            endpoint: event.endpoint,
+            payer: payerKey,
+            amountUsd: amt,
+            timestamp: nowIso
+          });
+        } else if (newCount > 2) {
+          repeatPayersSet.add(payerKey);
+        }
       }
     }
   }
@@ -238,7 +338,11 @@ export function getMachineRevenueMetrics(): MachineRevenueMetrics {
     trialUsageCount,
     paymentRequiredCount,
     paymentAttemptCount,
+    paymentVerifiedCount,
+    verificationFailedCount,
     paymentSuccessCount,
+    settlementFailedCount,
+    dataDeliveredCount,
     firstPaidCallsCount,
     secondPaidCallsCount,
     repeatPayersCount: repeatPayersSet.size,
@@ -246,12 +350,49 @@ export function getMachineRevenueMetrics(): MachineRevenueMetrics {
     revenueByEndpoint: revByEpObj,
     revenueBySource: revBySrcObj,
     agentLifetimeSpend: lifetimeSpendObj,
+    funnel: getTransactionFunnelMetrics(),
     primaryKpi: {
       name: 'EXTERNAL_AGENTS_WITH_TWO_OR_MORE_PAID_CALLS',
       value: repeatPayersSet.size,
       description: 'The number of distinct external agent wallets that have completed 2 or more verified on-chain USDC payments.'
     },
     lastUpdated: new Date().toISOString()
+  };
+}
+
+/**
+ * Get itemized transaction funnel metrics and conversion rates.
+ */
+export function getTransactionFunnelMetrics(): TransactionFunnelMetrics {
+  const challengeToAttempt = paymentRequiredCount > 0
+    ? Number((paymentAttemptCount / paymentRequiredCount).toFixed(4))
+    : 0;
+  const attemptToSettlement = paymentAttemptCount > 0
+    ? Number((paymentSuccessCount / paymentAttemptCount).toFixed(4))
+    : 0;
+  const settlementToDelivery = paymentSuccessCount > 0
+    ? Number((dataDeliveredCount / paymentSuccessCount).toFixed(4))
+    : 0;
+  const firstToRepeatPaid = firstPaidCallsCount > 0
+    ? Number((repeatPayersSet.size / firstPaidCallsCount).toFixed(4))
+    : 0;
+
+  return {
+    challengesServed: paymentRequiredCount,
+    paymentAttempts: paymentAttemptCount,
+    paymentsVerified: paymentVerifiedCount,
+    verificationFailures: verificationFailedCount,
+    settlementsSucceeded: paymentSuccessCount,
+    settlementFailures: settlementFailedCount,
+    dataDelivered: dataDeliveredCount,
+    firstPaidAgents: firstPaidCallsCount,
+    repeatPaidAgents: repeatPayersSet.size,
+    conversionRates: {
+      challengeToAttempt,
+      attemptToSettlement,
+      settlementToDelivery,
+      firstToRepeatPaid
+    }
   };
 }
 
@@ -424,6 +565,25 @@ agentTelemetryRouter.get(['/revenue', '/commerce', '/telemetry/revenue', '/telem
   const metrics = getMachineRevenueMetrics();
   res.setHeader('Cache-Control', 'public, max-age=5, s-maxage=10');
   res.status(200).json(metrics);
+});
+
+agentTelemetryRouter.get(['/funnel', '/telemetry/funnel'], (_req: Request, res: Response) => {
+  const funnel = getTransactionFunnelMetrics();
+  res.setHeader('Cache-Control', 'public, max-age=5, s-maxage=10');
+  res.status(200).json(funnel);
+});
+
+export function getRecentCommerceEvents(limit: number = 50): MachineCommerceEvent[] {
+  return machineCommerceEvents.slice(-limit);
+}
+
+agentTelemetryRouter.get(['/events', '/telemetry/events'], (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store, private');
+  res.status(200).json({
+    success: true,
+    count: machineCommerceEvents.length,
+    events: getRecentCommerceEvents(100)
+  });
 });
 
 // Immediately attempt initial hydration

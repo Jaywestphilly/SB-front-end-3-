@@ -1854,7 +1854,7 @@ secAnalystRouter.post(['/analyze', '/'], async (req: Request, res: Response) => 
 });
 
 // GET /api/v1/sec/service - Inspect service record & capabilities
-secAnalystRouter.get(['/service', '/info'], (_req: Request, res: Response) => {
+secAnalystRouter.get(['/service', '/info', '/analyst', '/analyst/info'], (_req: Request, res: Response) => {
   return res.status(200).json({
     success: true,
     service: SEC_ANALYST_SERVICE_RECORD,
@@ -1874,10 +1874,10 @@ secAnalystRouter.get(['/service', '/info'], (_req: Request, res: Response) => {
   });
 });
 
-// POST /api/v1/sec/job - Execute authenticated job with settlement lifecycle
+// POST /api/v1/sec/job (alias /api/v1/sec/analyst) - Execute authenticated job with settlement lifecycle
 // Strictly protected by canonical agent authentication and required scopes
 secAnalystRouter.post(
-  '/job',
+  ['/job', '/analyst', '/analyst/job'],
   requireX402Payment(PRICED_ENDPOINTS.sec_job),
   authenticateAgent,
   requireScope('payments:transact'),

@@ -1,9 +1,9 @@
 {
   "schema_version": "v1",
-  "name_for_human": "Stock Bloc Quant Wealth Terminal",
-  "name_for_model": "stock_bloc_quant_terminal",
-  "description_for_human": "Real-time stock momentum, 13F hedge fund analytics, credit dispute letter generation, and real estate ROI tools.",
-  "description_for_model": "Stock Bloc provides AI agents with live market data, SEC 13F filings, FCRA credit dispute letters, and financial calculators via machine-readable Express proxy JSON endpoints.",
+  "name_for_human": "Stock Bloc Financial API & SEC Analyst",
+  "name_for_model": "stock_bloc_sec_analyst_and_financial_api",
+  "description_for_human": "Stock Bloc AI agent financial data API, SEC research API, Stock Bloc SEC Analyst (Form 10-K, 10-Q, 8-K filing analysis), and x402 USDC micropayments.",
+  "description_for_model": "Stock Bloc provides AI agents with programmatic financial research, live market data, Stock Bloc SEC Analyst filing analysis (Form 10-K, 10-Q, 8-K), SEC 13F whale filings, MCP tools, and x402 USDC on Base micropayments.",
   "auth": {
     "type": "none"
   },

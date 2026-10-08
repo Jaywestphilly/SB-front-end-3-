@@ -1,6 +1,6 @@
 {
   "status": "success",
-  "updated_at": "2026-10-03T14:47:00.624Z",
+  "updated_at": "2026-10-07T23:20:02.731Z",
   "source": "U.S. SEC EDGAR Submissions API",
   "stale": false,
   "totalFundsTracked": 13,
@@ -155,14 +155,20 @@
       "fundName": "Berkshire Hathaway Inc.",
       "manager": "Warren Buffett",
       "cik": "0001067983",
-      "filing_date": "2026-09-30",
-      "filingDate": "2026-09-30",
+      "filing_date": "2026-10-05",
+      "filingDate": "2026-10-05",
       "quarter": "Q1 13F-HR",
       "aum": "$284.5B",
       "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001067983",
       "holdings_status": "parsed",
       "mandate": "Value investing, durable competitive moats, cash flow generative market leaders.",
       "filings": [
+        {
+          "form_type": "4",
+          "filing_date": "2026-10-05",
+          "description": "4",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526414744/xslF345X06/ownership.xml"
+        },
         {
           "form_type": "4",
           "filing_date": "2026-09-30",
@@ -204,12 +210,6 @@
           "filing_date": "2026-09-04",
           "description": "PRIMARY DOCUMENT",
           "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000172845126000003/xslF345X06/primary_doc.xml"
-        },
-        {
-          "form_type": "SCHEDULE 13G/A",
-          "filing_date": "2026-08-14",
-          "description": "SEC Form SCHEDULE 13G/A Submission",
-          "doc_url": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526352910/xslSCHEDULE_13G_X02/primary_doc.xml"
         }
       ],
       "topHoldings": [
@@ -764,14 +764,20 @@
       "fundName": "Point72 Asset Management L.P.",
       "manager": "Steve Cohen",
       "cik": "0001603466",
-      "filing_date": "2026-08-31",
-      "filingDate": "2026-08-31",
+      "filing_date": "2026-10-05",
+      "filingDate": "2026-10-05",
       "quarter": "Q1 13F-HR",
       "aum": "$32.1B",
       "doc_url": "https://www.sec.gov/edgar/browse/?CIK=0001603466",
       "holdings_status": "metadata_only",
       "mandate": "Multi-manager long/short equity, fundamental tech and healthcare research.",
       "filings": [
+        {
+          "form_type": "SCHEDULE 13G",
+          "filing_date": "2026-10-05",
+          "description": "SEC Form SCHEDULE 13G Submission",
+          "doc_url": "https://www.sec.gov/Archives/edgar/data/1603466/000091957426006657/xslSCHEDULE_13G_X02/primary_doc.xml"
+        },
         {
           "form_type": "N-PX",
           "filing_date": "2026-08-31",
@@ -813,12 +819,6 @@
           "filing_date": "2026-08-14",
           "description": "SEC Form SCHEDULE 13G/A Submission",
           "doc_url": "https://www.sec.gov/Archives/edgar/data/1603466/000091957426005501/xslSCHEDULE_13G_X02/primary_doc.xml"
-        },
-        {
-          "form_type": "SCHEDULE 13G/A",
-          "filing_date": "2026-08-14",
-          "description": "SEC Form SCHEDULE 13G/A Submission",
-          "doc_url": "https://www.sec.gov/Archives/edgar/data/1603466/000091957426005499/xslSCHEDULE_13G_X02/primary_doc.xml"
         }
       ],
       "topHoldings": []

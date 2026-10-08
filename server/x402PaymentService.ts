@@ -80,12 +80,12 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
   // Deep SEC Analyst Audit Job ($0.25 USDC)
   sec_job: {
     id: 'sec_job',
-    name: 'Deep SEC 10-K/10-Q Production Filing Audit',
+    name: 'Stock Bloc SEC Analyst Deep Filing Audit',
     category: 'sec_13f_intel',
     priceUsd: 0.25,
     priceDisplay: '$0.25',
     atomicAmount: '250000', // 0.25 * 10^6
-    description: 'Multi-layer autonomous SEC 10-K/10-Q filing analysis, revenue quality check, and forensic audit.'
+    description: 'Stock Bloc SEC Analyst: Multi-layer autonomous SEC 10-K/10-Q/8-K filing analysis, revenue quality check, and forensic audit.'
   },
   // Institutional Research Memo ($0.10 USDC)
   research: {
@@ -309,7 +309,9 @@ export const X402_ROUTE_PATHS: Record<string, string[]> = {
   ],
   sec_job: [
     '/api/v1/sec/job',
-    '/api/sec/job'
+    '/api/sec/job',
+    '/api/v1/sec/analyst',
+    '/api/sec/analyst'
   ],
   research: [
     '/api/v1/intelligence/research',
@@ -529,8 +531,13 @@ export function matchPricedEndpoint(path: string, method: string = 'GET'): X402P
     return PRICED_ENDPOINTS.earnings_pack;
   }
 
-  // SEC Job
-  if (normalized === '/api/v1/sec/job' || normalized === '/api/sec/job') {
+  // SEC Job & Stock Bloc SEC Analyst
+  if (
+    normalized === '/api/v1/sec/job' ||
+    normalized === '/api/sec/job' ||
+    normalized === '/api/v1/sec/analyst' ||
+    normalized === '/api/sec/analyst'
+  ) {
     return PRICED_ENDPOINTS.sec_job;
   }
 
@@ -671,6 +678,31 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
     const fullPath = (req.originalUrl || (req.baseUrl ? req.baseUrl + req.path : req.path) || '').split('?')[0];
 
     const forwardNext = () => {
+      res.once('finish', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          const isPaid = Boolean((req as any).x402Payment?.settled);
+          if (isPaid && endpointConfig) {
+            const payer = (req as any).x402Payment?.payer || (req as any).agent?.agentId;
+            const txHash = (req as any).x402Payment?.txHash;
+            try {
+              recordMachineCommerceEvent({
+                eventType: 'data_delivered',
+                source: paymentSource,
+                endpoint: endpointConfig.id,
+                payer,
+                txHash,
+                amountUsd: endpointConfig.priceUsd,
+                timestamp: new Date().toISOString(),
+                details: {
+                  path: fullPath
+                }
+              });
+            } catch {
+              // Non-fatal telemetry error
+            }
+          }
+        }
+      });
       return next();
     };
 
@@ -798,11 +830,24 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
         typeof paymentHeader === 'string' ? paymentHeader : undefined
       );
 
-      recordMachineCommerceEvent({
-        eventType: 'payment_attempt',
-        source: paymentSource,
-        endpoint: endpointConfig.id
-      });
+      const safeAttemptPayer = paymentPayload?.payer || (req as any).agent?.agentId;
+      try {
+        recordMachineCommerceEvent({
+          eventType: 'payment_attempt',
+          source: paymentSource,
+          endpoint: endpointConfig.id,
+          payer: safeAttemptPayer,
+          amountUsd: endpointConfig.priceUsd,
+          txHash: paymentPayload?.txHash,
+          paymentId: keys.payloadHash,
+          timestamp: new Date().toISOString(),
+          details: {
+            paymentId: keys.payloadHash
+          }
+        });
+      } catch {
+        // Non-fatal telemetry error
+      }
 
       // 1. Check existing authoritative settlement (Idempotent replay)
       const existingSettlement = getX402Settlement(keys.payloadHash, keys.nonceKey);
@@ -903,6 +948,26 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
             };
             return forwardNext();
           }
+
+          try {
+            recordMachineCommerceEvent({
+              eventType: 'verification_failed',
+              source: paymentSource,
+              endpoint: endpointConfig.id,
+              payer: safeAttemptPayer,
+              amountUsd: endpointConfig.priceUsd,
+              txHash: paymentPayload?.txHash,
+              paymentId: keys.payloadHash,
+              timestamp: new Date().toISOString(),
+              details: {
+                paymentId: keys.payloadHash,
+                reason: verifyErr?.message || 'Coinbase CDP facilitator verify failed'
+              }
+            });
+          } catch {
+            // Non-fatal telemetry error
+          }
+
           throw verifyErr;
         }
 
@@ -921,12 +986,50 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
             return forwardNext();
           }
 
+          try {
+            recordMachineCommerceEvent({
+              eventType: 'verification_failed',
+              source: paymentSource,
+              endpoint: endpointConfig.id,
+              payer: safeAttemptPayer,
+              amountUsd: endpointConfig.priceUsd,
+              txHash: paymentPayload?.txHash,
+              paymentId: keys.payloadHash,
+              timestamp: new Date().toISOString(),
+              details: {
+                paymentId: keys.payloadHash,
+                reason: (verifyResult as any)?.reason || 'Invalid signature, invalid nonce, or expired authorization.'
+              }
+            });
+          } catch {
+            // Non-fatal telemetry error
+          }
+
           return res.status(402).json({
             status: 'payment_verification_failed',
             code: 402,
             error: 'x402 payment verification failed through Coinbase CDP facilitator.',
             reason: (verifyResult as any)?.reason || 'Invalid signature, invalid nonce, or expired authorization.'
           });
+        }
+
+        // Verification succeeded
+        try {
+          recordMachineCommerceEvent({
+            eventType: 'payment_verified',
+            source: paymentSource,
+            endpoint: endpointConfig.id,
+            payer: safeAttemptPayer || (verifyResult as any)?.payer,
+            amountUsd: endpointConfig.priceUsd,
+            txHash: paymentPayload?.txHash,
+            paymentId: keys.payloadHash,
+            timestamp: new Date().toISOString(),
+            details: {
+              paymentId: keys.payloadHash
+            }
+          });
+        } catch {
+          // Non-fatal telemetry error
         }
 
         // Step B: Settle payment through facilitator BEFORE serving response
@@ -942,6 +1045,26 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
 
         try {
           settleResult = await settleExecutionPromise;
+        } catch (settleErr: any) {
+          try {
+            recordMachineCommerceEvent({
+              eventType: 'settlement_failed',
+              source: paymentSource,
+              endpoint: endpointConfig.id,
+              payer: safeAttemptPayer,
+              amountUsd: endpointConfig.priceUsd,
+              txHash: paymentPayload?.txHash,
+              paymentId: keys.payloadHash,
+              timestamp: new Date().toISOString(),
+              details: {
+                paymentId: keys.payloadHash,
+                reason: settleErr?.message || 'Coinbase CDP facilitator settle failed'
+              }
+            });
+          } catch {
+            // Non-fatal telemetry error
+          }
+          throw settleErr;
         } finally {
           inFlightX402SettlementRegistry.delete(keys.payloadHash);
           if (keys.nonceKey) {
@@ -958,6 +1081,25 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
         );
 
         if (!isSettleSuccess) {
+          try {
+            recordMachineCommerceEvent({
+              eventType: 'settlement_failed',
+              source: paymentSource,
+              endpoint: endpointConfig.id,
+              payer: safeAttemptPayer || (settleResult as any)?.payer,
+              amountUsd: endpointConfig.priceUsd,
+              txHash: paymentPayload?.txHash,
+              paymentId: keys.payloadHash,
+              timestamp: new Date().toISOString(),
+              details: {
+                paymentId: keys.payloadHash,
+                reason: (settleResult as any)?.error || (settleResult as any)?.errorMessage || 'On-chain settlement transaction could not be executed.'
+              }
+            });
+          } catch {
+            // Non-fatal telemetry error
+          }
+
           return res.status(402).json({
             status: 'payment_settlement_failed',
             code: 402,
@@ -1006,7 +1148,12 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
           endpoint: endpointConfig.id,
           payer: settlementRecord.payer,
           amountUsd: endpointConfig.priceUsd,
-          txHash: settlementRecord.txHash
+          txHash: settlementRecord.txHash,
+          paymentId: keys.payloadHash,
+          timestamp: settlementRecord.settledAt,
+          details: {
+            paymentId: keys.payloadHash
+          }
         });
 
         // Post-settlement bookkeeping (ISOLATED: MUST NEVER REJECT OR CONVERT A SETTLED PAYMENT TO 402)
@@ -1201,7 +1348,13 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
         eventType: 'payment_required',
         source: paymentSource,
         endpoint: endpointConfig.id,
-        amountUsd: endpointConfig.priceUsd
+        payer: (isCreditsExhausted && (req as any).agent?.agentId) ? (req as any).agent.agentId : undefined,
+        amountUsd: endpointConfig.priceUsd,
+        timestamp: new Date().toISOString(),
+        details: {
+          priceDisplay: endpointConfig.priceDisplay,
+          path: fullPath
+        }
       });
     } catch {
       // Telemetry error must never block response

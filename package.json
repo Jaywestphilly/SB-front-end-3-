@@ -2,6 +2,22 @@
   "name": "stock-bloc",
   "private": true,
   "version": "1.0.0",
+  "description": "Stock Bloc AI agent financial data API, SEC research API, SEC filing analysis (10-K, 10-Q, 8-K), autonomous financial intelligence, Stock Bloc SEC Analyst, MCP tools, and x402 micropayments in USDC on Base.",
+  "keywords": [
+    "stock-bloc",
+    "financial research API for AI agents",
+    "SEC research API",
+    "SEC filing analysis API",
+    "autonomous financial data API",
+    "x402 financial API",
+    "USDC paid API",
+    "MCP financial research",
+    "SEC 10-K / 10-Q / 8-K analysis API",
+    "Stock Bloc SEC Analyst",
+    "AI agents",
+    "Base",
+    "x402"
+  ],
   "type": "module",
   "engines": {
     "node": ">=22"

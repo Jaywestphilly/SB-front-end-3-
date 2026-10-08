@@ -67,7 +67,7 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       res.json({ status: 'success', filings: [{ form: '10-K', company: 'NVIDIA' }] });
     });
 
-    app.post('/api/v1/sec/job', (req, res) => {
+    app.post(['/api/v1/sec/job', '/api/v1/sec/analyst'], (req, res) => {
       res.json({ status: 'success', jobId: 'sec_job_001', auditPassed: true });
     });
 

@@ -68,7 +68,7 @@ Stock Bloc natively implements the open **x402 Payment Protocol** (v2) powered b
 - **Market Data Feed** (`GET /api/data/market`): **$0.01 USDC** (`10000` atomic units)
 - **0–100 SB Score & Quant Signal** (`GET /api/v1/intelligence/sb-score`): **$0.05 USDC** (`50000` atomic units)
 - **SEC 13F Whale Filings** (`GET /api/data/sec`): **$0.10 USDC** (`100000` atomic units)
-- **Deep SEC Filing Production Audit** (`POST /api/v1/sec/job`): **$0.25 USDC** (`250000` atomic units)
+- **Stock Bloc SEC Analyst Deep Filing Audit** (`POST /api/v1/sec/analyst` or `POST /api/v1/sec/job`): **$0.25 USDC** (`250000` atomic units) — Full 10-K, 10-Q, 8-K audit with revenue quality & forensic risks
 - **Institutional Research Memos** (`POST /api/v1/intelligence/research`): **$0.10 USDC** (`100000` atomic units)
 - **Quantitative Price Forecasts** (`POST /api/v1/intelligence/forecasts`): **$0.05 USDC** (`50000` atomic units)
 - **Quant Strategy Evaluation** (`POST /api/v1/agent/strategy/evaluate`): **$0.10 USDC** (`100000` atomic units)
@@ -253,6 +253,26 @@ curl -i -X GET "https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack?ti
   }
 }
 ```
+
+---
+
+## Stock Bloc SEC Analyst Capability
+The **Stock Bloc SEC Analyst** is the primary autonomous financial intelligence capability for deep SEC EDGAR analysis.
+- **Canonical Callable Endpoint**: `POST https://stockbloc.ai.studio/api/v1/sec/analyst`
+- **Alias Callable Endpoint**: `POST https://stockbloc.ai.studio/api/v1/sec/job`
+- **Service Discovery**: `GET https://stockbloc.ai.studio/api/v1/sec/analyst` or `GET https://stockbloc.ai.studio/api/v1/sec/service`
+- **Free Demo**: `POST https://stockbloc.ai.studio/api/v1/sec/analyze` (Unmetered, zero credits)
+- **Supported Forms**: `10-K` (Annual Report), `10-Q` (Quarterly Report), `8-K` (Current Report / Material Catalyst)
+- **Pricing**: $0.25 USDC (250,000 atomic units) via x402 on Base, or 25 platform credits.
+- **Payload Schema**:
+```json
+{
+  "ticker": "NVDA",
+  "filingType": "10-Q",
+  "question": "Assess datacenter revenue sustainability and gross margin risks."
+}
+```
+- **Response**: Audited breakdown with executive summary, revenue quality score (0-100), management tone (BULLISH/NEUTRAL/BEARISH), key financial metrics, and forensic risk audit.
 
 ---
 
