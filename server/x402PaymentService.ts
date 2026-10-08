@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { db, auth } from './firebaseAdmin.js';
-import { hashSecret, constantTimeCompare } from './agentSecurity.js';
+import { hashSecret, constantTimeCompare, INSECURE_PLACEHOLDER_KEYS } from './agentSecurity.js';
 import { facilitator as defaultFacilitator, createFacilitatorConfig } from '@coinbase/x402';
 import {
   HTTPFacilitatorClient,
@@ -605,7 +605,7 @@ export async function resolveAgentIdentityFromKey(
   const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7).trim() : authHeader.trim();
   if (!token) return null;
 
-  if (token === 'YOUR_AGENT_SECRET_KEY' || token === 'stock_bloc_agent_secret_2026') {
+  if (INSECURE_PLACEHOLDER_KEYS.has(token) || token === 'YOUR_AGENT_SECRET_KEY' || token === 'stock_bloc_agent_secret_2026') {
     return null;
   }
 
@@ -752,6 +752,8 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       req.header('X-402-Payment-Proof');
 
     const rawAuth = req.headers.authorization || (req.headers['x-agent-key'] as string);
+    const token = rawAuth ? (rawAuth.startsWith('Bearer ') ? rawAuth.substring(7).trim() : rawAuth.trim()) : '';
+    const isPlaceholder = Boolean(token && (INSECURE_PLACEHOLDER_KEYS.has(token) || token.includes('YOUR_AGENT_SECRET_KEY') || token.includes('stock_bloc_agent_secret_2026')));
     const isAgentKey = Boolean(rawAuth && (
       rawAuth.includes('sb_live_') ||
       rawAuth.startsWith('sb_live_') ||
@@ -760,7 +762,7 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
         rawAuth.substring(7).trim().startsWith('sb_live_') ||
         Boolean(process.env.AGENT_API_SECRET_KEY && rawAuth.substring(7).trim() === process.env.AGENT_API_SECRET_KEY)
       ))
-    ) && !rawAuth.includes('YOUR_AGENT_SECRET_KEY') && !rawAuth.includes('stock_bloc_agent_secret_2026'));
+    ) && !isPlaceholder);
 
     const recipientAddress = getX402RecipientAddress() || DEFAULT_X402_RECIPIENT_ADDRESS;
 
