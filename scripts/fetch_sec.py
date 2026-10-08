@@ -11,7 +11,7 @@ import os
 import sys
 from datetime import datetime, timezone
 
-TARGET_FILES = ["sec_intel_data.json", os.path.join("public", "sec_intel_data.json")]
+TARGET_FILES = [os.path.join("server", "data", "sec_intel_data.json")]
 SOURCE_NAME = "U.S. SEC EDGAR Submissions API"
 
 ADDITIONAL_MANAGERS = [
@@ -185,9 +185,7 @@ ADDITIONAL_MANAGERS = [
 ]
 
 def fetch_and_write():
-    base_file = "public/sec_intel_data.json"
-    if not os.path.exists(base_file):
-        base_file = "sec_intel_data.json"
+    base_file = os.path.join("server", "data", "sec_intel_data.json")
 
     if not os.path.exists(base_file):
         print("CRITICAL: SEC intel base data missing!", file=sys.stderr)

@@ -981,7 +981,7 @@ export async function fetchLiveSecFiling(
       ],
       sourceReferences,
       confidence
-    };
+    } as any;
   } catch (err) {
     console.error('Error fetching live SEC filing from EDGAR:', err);
     return null;
@@ -1164,7 +1164,7 @@ export async function analyzeSecFilingAsync(
 // 5. SEED SERVICE DEFINITION (Honest Baseline)
 // ==========================================
 
-export const SEC_ANALYST_SERVICE_RECORD: AgentService = {
+export const SEC_ANALYST_SERVICE_RECORD: any = {
   serviceId: SEC_ANALYST_SERVICE_ID,
   providerAgentId: SEC_ANALYST_AGENT_ID,
   providerHandle: SEC_ANALYST_HANDLE,

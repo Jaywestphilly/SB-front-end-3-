@@ -90,8 +90,7 @@ export class SecIntelService {
   private static CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
   private static targetFiles = [
-    path.join(process.cwd(), "sec_intel_data.json"),
-    path.join(process.cwd(), "public", "sec_intel_data.json")
+    path.join(process.cwd(), "server", "data", "sec_intel_data.json")
   ];
 
   /**

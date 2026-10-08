@@ -29,7 +29,7 @@ export const useSecIntelData = () => {
   const [isConfigError, setIsConfigError] = useState<boolean>(false);
   const [updatedAtFormatted, setUpdatedAtFormatted] = useState<string>("");
   const [isStale, setIsStale] = useState<boolean>(false);
-  const [dataSource, setDataSource] = useState<string>("U.S. SEC EDGAR API");
+  const [dataSource, setDataSource] = useState<string>("SEC EDGAR 13F (preview)");
 
   useEffect(() => {
     const fetchIntel = async () => {
@@ -39,62 +39,36 @@ export const useSecIntelData = () => {
         setIsConfigError(false);
         setError(null);
 
-        // Try live backend first
-        let fetchedData: SecIntelData | null = null;
-        let sourceName = "U.S. SEC EDGAR API";
-
-        try {
-          const apiResult = await fetchWithPaywallHandling("/api/13f/filings");
-          if (apiResult.ok && apiResult.data) {
-            const apiJson = apiResult.data;
-            if (apiJson && apiJson.funds) {
-              fetchedData = {
-                updated_at: apiJson.timestamp || apiJson.updated_at || new Date().toISOString(),
-                funds: (apiJson.funds || []).map((f: any) => ({
-                  fund_name: f.fundName || f.fund_name,
-                  manager: f.manager,
-                  cik: f.cik,
-                  filings: (f.topHoldings || []).map((h: any) => ({
-                    form_type: "13F-HR",
-                    filing_date: f.filingDate || "2026-05-15",
-                    description: `${h.changeType || 'HOLD'} ${h.symbol} (${h.name}): ${h.portfolioPercent}% portfolio weight. ${h.thesis || ''}`,
-                    doc_url: `https://www.sec.gov/edgar/browse/?CIK=${f.cik}`
-                  }))
+        const apiResult = await fetchWithPaywallHandling("/api/13f/filings");
+        if (apiResult.ok && apiResult.data) {
+          const apiJson = apiResult.data;
+          if (apiJson && apiJson.funds) {
+            const fetchedData: SecIntelData = {
+              updated_at: apiJson.timestamp || apiJson.updated_at || new Date().toISOString(),
+              funds: (apiJson.funds || []).map((f: any) => ({
+                fund_name: f.fundName || f.fund_name || 'Hedge Fund',
+                manager: f.manager || 'Manager',
+                cik: f.cik || '0000000000',
+                filings: (f.topHoldings || []).map((h: any) => ({
+                  form_type: "13F-HR",
+                  filing_date: f.filingDate || "2026-05-15",
+                  description: `${h.changeType || 'HOLD'} ${h.symbol || ''} (${h.name || h.symbol || ''})`,
+                  doc_url: f.doc_url || `https://www.sec.gov/edgar/browse/?CIK=${f.cik}`
                 }))
-              };
-              sourceName = "Live SEC EDGAR API";
-            }
-          } else if (apiResult.isPaywall) {
-            setIsPaywall(true);
-          } else if (apiResult.isConfigError) {
-            setIsConfigError(true);
+              }))
+            };
+            setData(fetchedData);
+            const rawTime = fetchedData.updated_at || new Date().toISOString();
+            setUpdatedAtFormatted(formatUtcTimestamp(rawTime));
+            setIsStale(isDataStale(rawTime));
+            setDataSource("SEC EDGAR 13F (preview)");
           }
-        } catch {
-          // Ignore and fallback to raw cdn
-        }
-
-        if (!fetchedData && !isPaywall) {
-          const secResult = await fetchWithPaywallHandling<SecIntelData>("/api/data/sec");
-          if (secResult.ok && secResult.data) {
-            fetchedData = secResult.data;
-            sourceName = "CDN Proxy / SEC Edgar";
-          } else if (secResult.isPaywall) {
-            setIsPaywall(true);
-            setError(secResult.error || "Failed to fetch SEC Intel data");
-          } else if (secResult.isConfigError) {
-            setIsConfigError(true);
-            setError("Data temporarily unavailable");
-          } else {
-            throw new Error(secResult.error || "Failed to fetch SEC Intel data");
-          }
-        }
-
-        if (fetchedData) {
-          setData(fetchedData);
-          const rawTime = fetchedData.updated_at || new Date().toISOString();
-          setUpdatedAtFormatted(formatUtcTimestamp(rawTime));
-          setIsStale(isDataStale(rawTime));
-          setDataSource(sourceName);
+        } else if (apiResult.isPaywall) {
+          setIsPaywall(true);
+        } else if (apiResult.isConfigError) {
+          setIsConfigError(true);
+        } else {
+          setError(apiResult.error || "Failed to fetch SEC Intel data");
         }
       } catch (err: unknown) {
         setError((err as Error)?.message || "Failed to fetch SEC Intel data");

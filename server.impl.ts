@@ -2381,8 +2381,6 @@ const dataFeedCache: Record<string, DataFeedCacheItem> = {};
 const FEED_CACHE_TTL_MS = 180 * 1000; // 3 minutes = 180 seconds
 
 const FEED_URLS: Record<string, string> = {
-  market: "https://raw.githubusercontent.com/Jaywestphilly/stock-bloc-backend/main/market_watchlist_data.json",
-  sec: "https://raw.githubusercontent.com/Jaywestphilly/stock-bloc-backend/main/sec_intel_data.json",
   dyson: "https://raw.githubusercontent.com/Jaywestphilly/stock-bloc-backend/main/dyson_swarm_data.json",
   news: "https://raw.githubusercontent.com/Jaywestphilly/stock-bloc-backend/main/intel_news_feed.json",
 };
@@ -2391,23 +2389,51 @@ async function fetchAndProcessFeed(feedKey: 'market' | 'sec' | 'dyson' | 'news')
   if (feedKey === 'market') {
     try {
       const marketData = await MarketDataService.refreshMarketData();
-      return marketData;
+      if (marketData && Array.isArray(marketData.watchlist) && marketData.watchlist.length > 0) {
+        return marketData;
+      }
     } catch (e) {
-      console.warn('[Market Feed Warning] Live refresh failed, falling back to persisted dataset:', e);
-      const persisted = MarketDataService.loadPersistedData();
-      if (persisted) return persisted;
+      console.warn('[Market Feed Warning] Live refresh failed:', e);
     }
+    const persisted = MarketDataService.loadPersistedData();
+    if (persisted && Array.isArray(persisted.watchlist) && persisted.watchlist.length > 0) {
+      return persisted;
+    }
+    return {
+      status: 'unavailable',
+      unavailable: true,
+      stale: true,
+      updated_at: null,
+      source: 'StockBloc Live Feed',
+      total_assets: 0,
+      watchlist: []
+    };
   }
 
   if (feedKey === 'sec') {
     try {
       const secData = await SecIntelService.fetchLiveSecData();
-      return secData;
+      if (secData && Array.isArray(secData.funds) && secData.funds.length > 0) {
+        return secData;
+      }
     } catch (e) {
-      console.warn('[SEC Intel Warning] Live EDGAR fetch failed, falling back to persisted dataset:', e);
-      const persisted = SecIntelService.loadPersistedData();
-      if (persisted) return persisted;
+      console.warn('[SEC Intel Warning] Live EDGAR fetch failed:', e);
     }
+    const persisted = SecIntelService.loadPersistedData();
+    if (persisted && Array.isArray(persisted.funds) && persisted.funds.length > 0) {
+      return persisted;
+    }
+    return {
+      status: 'unavailable',
+      unavailable: true,
+      stale: true,
+      updated_at: null,
+      source: 'StockBloc Live Feed',
+      totalFundsTracked: 0,
+      funds: [],
+      consensusHoldings: [],
+      macroSummary: '13F dataset temporarily unavailable.'
+    };
   }
 
   const url = FEED_URLS[feedKey];
@@ -3578,8 +3604,33 @@ app.get(['/api/data/market', '/api/data/market.csv'], requireX402Payment(), asyn
   return res.json(responseData);
 });
 
-app.get(['/api/data/sec', '/api/v1/data/sec'], requireX402Payment(), async (req, res) => {
-  const data = await fetchAndProcessFeed('sec');
+const secReadinessMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  try {
+    const data = await fetchAndProcessFeed('sec');
+    if (!data || !data.funds || !Array.isArray(data.funds) || data.funds.length === 0 || (data as any).unavailable) {
+      res.setHeader('Cache-Control', 'no-store');
+      return res.status(503).json({
+        status: 'error',
+        code: 'LIVE_DATA_UNAVAILABLE',
+        message: '13F dataset temporarily unavailable',
+        charged: false
+      });
+    }
+    res.locals.secFeed = data;
+    next();
+  } catch (err) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(503).json({
+      status: 'error',
+      code: 'LIVE_DATA_UNAVAILABLE',
+      message: '13F dataset temporarily unavailable',
+      charged: false
+    });
+  }
+};
+
+app.get(['/api/data/sec', '/api/v1/data/sec'], secReadinessMiddleware, requireX402Payment(PRICED_ENDPOINTS.sec_13f_intel), async (req, res) => {
+  const data = res.locals.secFeed || await fetchAndProcessFeed('sec');
   res.setHeader('Cache-Control', 'public, max-age=180');
   res.setHeader('X-Data-As-Of', data.updated_at || 'unknown');
   return res.json(data);
@@ -3717,9 +3768,9 @@ app.get('/llms.txt', (req, res) => {
 - Base URL: https://stockbloc.ai.studio
 - Web Terminal: https://stockbloc.ai.studio/
 
-## Public Backend Data Feeds (JSON)
-- Market Watchlist & Price Feed: https://raw.githubusercontent.com/Jaywestphilly/stock-bloc-backend/main/market_watchlist_data.json
-- SEC Form 13F Institutional Holdings: https://raw.githubusercontent.com/Jaywestphilly/stock-bloc-backend/main/sec_intel_data.json
+## Backend Data Feeds (JSON)
+- Market Watchlist & Price Feed: GET /api/data/market ($0.01 USDC via x402)
+- SEC Form 13F Institutional Holdings: GET /api/data/sec ($0.10 USDC via x402)
 - Intelligence News & Podcast Feed: https://raw.githubusercontent.com/Jaywestphilly/stock-bloc-backend/main/intel_news_feed.json
 - Dyson Swarm AI Telemetry: https://raw.githubusercontent.com/Jaywestphilly/stock-bloc-backend/main/dyson_swarm_data.json
 
@@ -4748,309 +4799,93 @@ app.get("/api/stock-news", async (req, res) => {
 // 23. 13F Institutional Intelligence & Filings API
 app.get('/api/13f/filings', async (req, res) => {
   try {
-    const fundQuery = typeof req.query.fund === 'string' ? req.query.fund.toLowerCase() : '';
-    const tickerQuery = typeof req.query.ticker === 'string' ? req.query.ticker.toUpperCase() : '';
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    const fundQuery = typeof req.query.fund === 'string' ? req.query.fund.toLowerCase().trim() : '';
+    const tickerQuery = typeof req.query.ticker === 'string' ? req.query.ticker.toUpperCase().trim() : '';
 
-    const funds13F = [
-      {
-        id: "berkshire",
-        fundName: "Berkshire Hathaway Inc.",
-        cik: "0001067983",
-        manager: "Warren Buffett",
-        filingDate: "2026-05-15",
-        quarter: "Q1 13F-HR",
-        aum: "$284.5B",
-        aumRaw: 284500,
-        mandate: "Value investing, durable competitive moats, cash flow generative market leaders with strong capital return programs.",
-        topHoldings: [
-          { symbol: "AAPL", name: "Apple Inc.", shares: "300.0M", valueMillions: 67500, portfolioPercent: 23.7, changeType: "DECREASED", changePercent: -10.5, sector: "Technology", thesis: "Core consumer ecosystem anchor; selective trimming for tax optimization and cash deployment." },
-          { symbol: "BAC", name: "Bank of America Corp", shares: "780.0M", valueMillions: 31200, portfolioPercent: 11.0, changeType: "DECREASED", changePercent: -8.2, sector: "Financials", thesis: "Long-term banking anchor; gradual position reduction into capital distribution strength." },
-          { symbol: "AXP", name: "American Express Co", shares: "151.6M", valueMillions: 36400, portfolioPercent: 12.8, changeType: "HOLD", changePercent: 0, sector: "Financials", thesis: "High-margin premium payment loop with unmatched affluent customer loyalty and pricing power." },
-          { symbol: "KO", name: "The Coca-Cola Company", shares: "400.0M", valueMillions: 26000, portfolioPercent: 9.1, changeType: "HOLD", changePercent: 0, sector: "Consumer Staples", thesis: "Irreplaceable global brand equity generating resilient inflation-protected dividend cash flow." },
-          { symbol: "CVX", name: "Chevron Corporation", shares: "123.0M", valueMillions: 19680, portfolioPercent: 6.9, changeType: "INCREASED", changePercent: 4.5, sector: "Energy", thesis: "Permian Basin operational efficiency and high free-cash-flow yield amid global energy realignment." },
-          { symbol: "OXY", name: "Occidental Petroleum", shares: "255.3M", valueMillions: 15318, portfolioPercent: 5.4, changeType: "INCREASED", changePercent: 6.2, sector: "Energy", thesis: "Direct strategic exposure to US domestic energy production and carbon capture infrastructure." },
-          { symbol: "MCO", name: "Moody's Corporation", shares: "24.7M", valueMillions: 11609, portfolioPercent: 4.1, changeType: "HOLD", changePercent: 0, sector: "Financials", thesis: "Monopolistic debt rating duopoly benefiting from corporate bond issuance expansion." },
-          { symbol: "CB", name: "Chubb Limited", shares: "27.0M", valueMillions: 7560, portfolioPercent: 2.7, changeType: "NEW", changePercent: 100, sector: "Financials", thesis: "Stealth insurance accumulation featuring high underwriting profitability and conservative balance sheet." }
-        ],
-        sectorAllocation: [
-          { sector: "Technology", percent: 24.5, valueMillions: 69700, color: "#06b6d4" },
-          { sector: "Financials", percent: 32.8, valueMillions: 93319, color: "#3b82f6" },
-          { sector: "Energy", percent: 14.2, valueMillions: 40400, color: "#f59e0b" },
-          { sector: "Consumer Staples", percent: 12.0, valueMillions: 34140, color: "#10b981" },
-          { sector: "Other / Cash Equivalents", percent: 16.5, valueMillions: 46941, color: "#8b5cf6" }
-        ],
-        quarterFlows: { newPositionsCount: 1, increasedCount: 3, decreasedCount: 4, soldOutCount: 0, totalPositions: 42 }
-      },
-      {
-        id: "scion",
-        fundName: "Scion Asset Management LLC",
-        cik: "0001649339",
-        manager: "Dr. Michael Burry",
-        filingDate: "2026-05-14",
-        quarter: "Q1 13F-HR",
-        aum: "$142.8M",
-        aumRaw: 142.8,
-        mandate: "Deep asymmetric value macro bets, rapid tactical capital rotation, and counter-cyclical tail hedges.",
-        topHoldings: [
-          { symbol: "BABA", name: "Alibaba Group Holding", shares: "200.0K", valueMillions: 21.0, portfolioPercent: 14.7, changeType: "INCREASED", changePercent: 28.0, sector: "Consumer Discretionary", thesis: "Extremely depressed valuation multiple (P/E ~9x) paired with massive buyback yield and cloud AI turnaround." },
-          { symbol: "JD", name: "JD.com Inc", shares: "450.0K", valueMillions: 18.0, portfolioPercent: 12.6, changeType: "INCREASED", changePercent: 33.3, sector: "Consumer Discretionary", thesis: "Deep value consumer recovery play with high net cash reserves relative to market cap." },
-          { symbol: "BIDU", name: "Baidu Inc", shares: "150.0K", valueMillions: 16.5, portfolioPercent: 11.6, changeType: "NEW", changePercent: 100, sector: "Technology", thesis: "Ernie Bot AI monetization engine and dominance in autonomous robo-taxi fleets." },
-          { symbol: "HCA", name: "HCA Healthcare Inc", shares: "35.0K", valueMillions: 12.2, portfolioPercent: 8.5, changeType: "NEW", changePercent: 100, sector: "Healthcare", thesis: "Inpatient surgical volume recovery and pricing power against private health insurers." },
-          { symbol: "CITI", name: "Citigroup Inc", shares: "180.0K", valueMillions: 11.7, portfolioPercent: 8.2, changeType: "INCREASED", changePercent: 15.0, sector: "Financials", thesis: "Jane Fraser turnaround restructuring unlocking tangible book value discount." }
-        ],
-        sectorAllocation: [
-          { sector: "Consumer Discretionary", percent: 34.5, valueMillions: 49.2, color: "#10b981" },
-          { sector: "Technology", percent: 22.1, valueMillions: 31.5, color: "#06b6d4" },
-          { sector: "Healthcare", percent: 18.2, valueMillions: 26.0, color: "#ec4899" },
-          { sector: "Financials", percent: 16.0, valueMillions: 22.8, color: "#3b82f6" },
-          { sector: "Real Estate", percent: 9.2, valueMillions: 13.3, color: "#f59e0b" }
-        ],
-        quarterFlows: { newPositionsCount: 4, increasedCount: 5, decreasedCount: 2, soldOutCount: 3, totalPositions: 16 }
-      },
-      {
-        id: "duquesne",
-        fundName: "Duquesne Family Office LLC",
-        cik: "0001536411",
-        manager: "Stanley Druckenmiller",
-        filingDate: "2026-05-15",
-        quarter: "Q1 13F-HR",
-        aum: "$3.4B",
-        aumRaw: 3400,
-        mandate: "Concentrated macro growth, structural technological shifts, AI infrastructure, and nuclear energy convergence.",
-        topHoldings: [
-          { symbol: "NVDA", name: "NVIDIA Corporation", shares: "4.2M", valueMillions: 546.0, portfolioPercent: 16.1, changeType: "DECREASED", changePercent: -15.0, sector: "Technology", thesis: "Generational AI infrastructure leader; taking selective profits following 500%+ run to reallocate into grid power." },
-          { symbol: "VST", name: "Vistra Corp", shares: "3.1M", valueMillions: 372.0, portfolioPercent: 10.9, changeType: "INCREASED", changePercent: 42.0, sector: "Utilities / Energy", thesis: "Nuclear power merchant generator supplying 24/7 baseload electricity directly to hyperscale AI datacenters." },
-          { symbol: "CEG", name: "Constellation Energy", shares: "1.4M", valueMillions: 322.0, portfolioPercent: 9.5, changeType: "INCREASED", changePercent: 25.0, sector: "Utilities", thesis: "Contracted nuclear PPA provider locking in long-term premium pricing with tech hyperscalers." },
-          { symbol: "PLTR", name: "Palantir Technologies", shares: "5.8M", valueMillions: 290.0, portfolioPercent: 8.5, changeType: "INCREASED", changePercent: 18.0, sector: "Technology", thesis: "US Commercial AIP enterprise deployment accelerating government and private sector workflow automation." },
-          { symbol: "MSFT", name: "Microsoft Corporation", shares: "620.0K", valueMillions: 279.0, portfolioPercent: 8.2, changeType: "HOLD", changePercent: 0, sector: "Technology", thesis: "Azure AI cloud platform monopoly and OpenAI enterprise monetization moat." }
-        ],
-        sectorAllocation: [
-          { sector: "Technology", percent: 42.0, valueMillions: 1428, color: "#06b6d4" },
-          { sector: "Utilities & Energy", percent: 32.5, valueMillions: 1105, color: "#f59e0b" },
-          { sector: "Financials", percent: 12.0, valueMillions: 408, color: "#3b82f6" },
-          { sector: "Industrials", percent: 8.5, valueMillions: 289, color: "#10b981" },
-          { sector: "Healthcare", percent: 5.0, valueMillions: 170, color: "#ec4899" }
-        ],
-        quarterFlows: { newPositionsCount: 3, increasedCount: 6, decreasedCount: 3, soldOutCount: 1, totalPositions: 28 }
-      },
-      {
-        id: "ark",
-        fundName: "ARK Investment Management LLC",
-        cik: "0001605941",
-        manager: "Cathie Wood",
-        filingDate: "2026-05-15",
-        quarter: "Q1 13F-HR",
-        aum: "$11.2B",
-        aumRaw: 11200,
-        mandate: "Disruptive innovation across autonomous technology, AI, robotics, genomic sequencing, and blockchain.",
-        topHoldings: [
-          { symbol: "TSLA", name: "Tesla Inc", shares: "4.8M", valueMillions: 1152.0, portfolioPercent: 10.3, changeType: "INCREASED", changePercent: 12.0, sector: "Consumer / Mobility", thesis: "Robotaxi fleet rollout, Full Self-Driving v13 training compute, and Optimus humanoid robotics commercialization." },
-          { symbol: "COIN", name: "Coinbase Global Inc", shares: "3.2M", valueMillions: 768.0, portfolioPercent: 6.9, changeType: "DECREASED", changePercent: -5.0, sector: "Financials / Crypto", thesis: "Institutional crypto asset gateway and Base Layer-2 network transaction fee engine." },
-          { symbol: "ROKU", name: "Roku Inc", shares: "8.5M", valueMillions: 637.5, portfolioPercent: 5.7, changeType: "HOLD", changePercent: 0, sector: "Communication", thesis: "Connected TV streaming ad platform transition and programmatic ad monetization." },
-          { symbol: "PATH", name: "UiPath Inc", shares: "28.0M", valueMillions: 420.0, portfolioPercent: 3.8, changeType: "INCREASED", changePercent: 8.5, sector: "Technology", thesis: "Enterprise AI robotic process automation (RPA) and agentic workflow integration." },
-          { symbol: "CRSP", name: "CRISPR Therapeutics", shares: "6.1M", valueMillions: 366.0, portfolioPercent: 3.3, changeType: "INCREASED", changePercent: 15.0, sector: "Healthcare", thesis: "Casgevy gene-editing commercial approval launch and oncology pipeline pipeline expansion." }
-        ],
-        sectorAllocation: [
-          { sector: "Technology & Software", percent: 38.0, valueMillions: 4256, color: "#06b6d4" },
-          { sector: "Autonomous & Mobility", percent: 22.0, valueMillions: 2464, color: "#8b5cf6" },
-          { sector: "Genomics & Biotech", percent: 18.5, valueMillions: 2072, color: "#ec4899" },
-          { sector: "Fintech & Digital Assets", percent: 15.0, valueMillions: 1680, color: "#3b82f6" },
-          { sector: "Communication", percent: 6.5, valueMillions: 728, color: "#f59e0b" }
-        ],
-        quarterFlows: { newPositionsCount: 2, increasedCount: 14, decreasedCount: 8, soldOutCount: 2, totalPositions: 35 }
-      },
-      {
-        id: "pershing",
-        fundName: "Pershing Square Capital Management",
-        cik: "0001336528",
-        manager: "Bill Ackman",
-        filingDate: "2026-05-15",
-        quarter: "Q1 13F-HR",
-        aum: "$12.8B",
-        aumRaw: 12800,
-        mandate: "Ultra-concentrated activist value, high-quality durable consumer platforms with fortress balance sheets.",
-        topHoldings: [
-          { symbol: "CMG", name: "Chipotle Mexican Grill", shares: "32.0M", valueMillions: 2080.0, portfolioPercent: 16.2, changeType: "HOLD", changePercent: 0, sector: "Consumer Discretionary", thesis: "Chipotlane drive-thru unit economics, pricing power, and international market expansion." },
-          { symbol: "HLT", name: "Hilton Worldwide Holdings", shares: "8.1M", valueMillions: 1863.0, portfolioPercent: 14.6, changeType: "HOLD", changePercent: 0, sector: "Consumer Discretionary", thesis: "Asset-light franchise fee model with high return on invested capital and continuous share repurchases." },
-          { symbol: "QSR", name: "Restaurant Brands Int", shares: "24.5M", valueMillions: 1837.5, portfolioPercent: 14.4, changeType: "HOLD", changePercent: 0, sector: "Consumer Discretionary", thesis: "Burger King system remodels, Tim Hortons international expansion, and high dividend yield." },
-          { symbol: "GOOGL", name: "Alphabet Inc", shares: "12.4M", valueMillions: 2108.0, portfolioPercent: 16.5, changeType: "INCREASED", changePercent: 6.0, sector: "Technology", thesis: "Google Cloud AI momentum, Gemini multimodal search dominance, and Waymo autonomous leadership." },
-          { symbol: "UBER", name: "Uber Technologies Inc", shares: "18.5M", valueMillions: 1387.5, portfolioPercent: 10.8, changeType: "NEW", changePercent: 100, sector: "Technology / Mobility", thesis: "High free-cash-flow generation, network mobility duopoly, and autonomous fleet aggregation platform." }
-        ],
-        sectorAllocation: [
-          { sector: "Consumer Discretionary", percent: 52.0, valueMillions: 6656, color: "#10b981" },
-          { sector: "Technology & Platforms", percent: 38.0, valueMillions: 4864, color: "#06b6d4" },
-          { sector: "Industrials / Services", percent: 10.0, valueMillions: 1280, color: "#3b82f6" }
-        ],
-        quarterFlows: { newPositionsCount: 1, increasedCount: 2, decreasedCount: 0, soldOutCount: 0, totalPositions: 8 }
-      },
-      {
-        id: "citadel",
-        fundName: "Citadel Advisors LLC",
-        cik: "0001423053",
-        manager: "Ken Griffin",
-        filingDate: "2026-05-15",
-        quarter: "Q1 13F-HR",
-        aum: "$65.2B",
-        aumRaw: 65200,
-        mandate: "Multi-strategy quantitative market making, tech equities, and systematic macro.",
-        topHoldings: [
-          { symbol: "NVDA", name: "NVIDIA Corporation", shares: "8.5M", valueMillions: 1105.0, portfolioPercent: 8.2, changeType: "INCREASED", changePercent: 12.0, sector: "Technology", thesis: "Systematic tech long position tracking AI infrastructure surge." },
-          { symbol: "MSFT", name: "Microsoft Corporation", shares: "2.1M", valueMillions: 945.0, portfolioPercent: 7.0, changeType: "HOLD", changePercent: 0, sector: "Technology", thesis: "Core enterprise cloud anchor position." }
-        ],
-        sectorAllocation: [
-          { sector: "Technology", percent: 45.0, valueMillions: 29340, color: "#06b6d4" },
-          { sector: "Financials", percent: 30.0, valueMillions: 19560, color: "#3b82f6" },
-          { sector: "Healthcare", percent: 15.0, valueMillions: 9780, color: "#ec4899" },
-          { sector: "Other", percent: 10.0, valueMillions: 6520, color: "#10b981" }
-        ],
-        quarterFlows: { newPositionsCount: 12, increasedCount: 45, decreasedCount: 30, soldOutCount: 8, totalPositions: 120 }
-      },
-      {
-        id: "millennium",
-        fundName: "Millennium Management LLC",
-        cik: "0001273087",
-        manager: "Israel Englander",
-        filingDate: "2026-05-15",
-        quarter: "Q1 13F-HR",
-        aum: "$58.1B",
-        aumRaw: 58100,
-        mandate: "Multi-pod statistical arbitrage and risk-managed equity long/short.",
-        topHoldings: [
-          { symbol: "AMZN", name: "Amazon.com Inc", shares: "4.1M", valueMillions: 820.0, portfolioPercent: 6.5, changeType: "INCREASED", changePercent: 15.0, sector: "Consumer Discretionary", thesis: "AWS cloud re-acceleration and retail margin expansion." },
-          { symbol: "META", name: "Meta Platforms Inc", shares: "1.2M", valueMillions: 720.0, portfolioPercent: 5.7, changeType: "INCREASED", changePercent: 8.0, sector: "Technology", thesis: "Ad monetization efficiency driven by AI recommendation engine." }
-        ],
-        sectorAllocation: [
-          { sector: "Technology", percent: 40.0, valueMillions: 23240, color: "#06b6d4" },
-          { sector: "Consumer", percent: 25.0, valueMillions: 14525, color: "#10b981" },
-          { sector: "Financials", percent: 20.0, valueMillions: 11620, color: "#3b82f6" },
-          { sector: "Healthcare", percent: 15.0, valueMillions: 8715, color: "#ec4899" }
-        ],
-        quarterFlows: { newPositionsCount: 15, increasedCount: 50, decreasedCount: 20, soldOutCount: 10, totalPositions: 150 }
-      },
-      {
-        id: "tiger",
-        fundName: "Tiger Global Management LLC",
-        cik: "0001167483",
-        manager: "Chase Coleman",
-        filingDate: "2026-05-15",
-        quarter: "Q1 13F-HR",
-        aum: "$18.4B",
-        aumRaw: 18400,
-        mandate: "Global internet, enterprise software, consumer tech, and frontier AI platforms.",
-        topHoldings: [
-          { symbol: "META", name: "Meta Platforms Inc", shares: "2.8M", valueMillions: 1680.0, portfolioPercent: 9.1, changeType: "HOLD", changePercent: 0, sector: "Technology", thesis: "Llama open-source AI flywheel and social network monetization." },
-          { symbol: "MSFT", name: "Microsoft Corporation", shares: "3.1M", valueMillions: 1395.0, portfolioPercent: 7.6, changeType: "HOLD", changePercent: 0, sector: "Technology", thesis: "Azure AI enterprise cloud growth momentum." }
-        ],
-        sectorAllocation: [
-          { sector: "Technology", percent: 65.0, valueMillions: 11960, color: "#06b6d4" },
-          { sector: "Consumer Internet", percent: 25.0, valueMillions: 4600, color: "#10b981" },
-          { sector: "Fintech", percent: 10.0, valueMillions: 1840, color: "#3b82f6" }
-        ],
-        quarterFlows: { newPositionsCount: 2, increasedCount: 5, decreasedCount: 3, soldOutCount: 1, totalPositions: 22 }
-      }
-    ];
+    const feedData = await fetchAndProcessFeed('sec');
+    if (!feedData || !feedData.funds || !Array.isArray(feedData.funds) || feedData.funds.length === 0 || feedData.unavailable) {
+      return res.status(503).json({
+        status: 'unavailable',
+        preview: true,
+        funds: []
+      });
+    }
 
-    // Aggregated Institutional Holdings across funds
-    const consensusHoldings = [
-      {
-        symbol: "NVDA",
-        name: "NVIDIA Corporation",
-        fundCount: 12,
-        totalValueMillions: 24500,
-        avgPortfolioWeight: 11.4,
-        overallSentiment: "STRONG BUY",
-        sector: "Technology",
-        topHolders: ["Duquesne", "Citadel", "Millennium", "Coatue", "Renaissance"]
-      },
-      {
-        symbol: "MSFT",
-        name: "Microsoft Corporation",
-        fundCount: 14,
-        totalValueMillions: 19800,
-        avgPortfolioWeight: 8.8,
-        overallSentiment: "BUY",
-        sector: "Technology",
-        topHolders: ["Duquesne", "Bridgewater", "Pershing", "Tiger Global"]
-      },
-      {
-        symbol: "AMZN",
-        name: "Amazon.com Inc",
-        fundCount: 11,
-        totalValueMillions: 16200,
-        avgPortfolioWeight: 7.5,
-        overallSentiment: "BUY",
-        sector: "Consumer Discretionary",
-        topHolders: ["Coatue", "Appaloosa", "Third Point", "Viking"]
-      },
-      {
-        symbol: "GOOGL",
-        name: "Alphabet Inc",
-        fundCount: 10,
-        totalValueMillions: 14800,
-        avgPortfolioWeight: 8.2,
-        overallSentiment: "BUY",
-        sector: "Communication Services",
-        topHolders: ["Pershing Square", "Duquesne", "Baupost", "Scion"]
-      },
-      {
-        symbol: "VST",
-        name: "Vistra Corp",
-        fundCount: 8,
-        totalValueMillions: 8900,
-        avgPortfolioWeight: 9.6,
-        overallSentiment: "VERY STRONG BUY",
-        sector: "Utilities / Energy",
-        topHolders: ["Duquesne", "Third Point", "Elliott", "Tiger Global"]
-      },
-      {
-        symbol: "TSLA",
-        name: "Tesla Inc",
-        fundCount: 7,
-        totalValueMillions: 7400,
-        avgPortfolioWeight: 6.4,
-        overallSentiment: "ACCUMULATING",
-        sector: "Consumer Discretionary",
-        topHolders: ["ARK Invest", "Citadel", "Renaissance"]
-      },
-      {
-        symbol: "AAPL",
-        name: "Apple Inc.",
-        fundCount: 9,
-        totalValueMillions: 71200,
-        avgPortfolioWeight: 14.2,
-        overallSentiment: "TRIMMING / HOLD",
-        sector: "Technology",
-        topHolders: ["Berkshire Hathaway", "Citadel", "Bridgewater"]
-      }
-    ];
+    const rawFunds = feedData.funds || [];
+    let filteredFunds = rawFunds;
 
-    // Filter funds if query exists
-    let filteredFunds = funds13F;
     if (fundQuery) {
-      filteredFunds = funds13F.filter(f => 
-        f.fundName.toLowerCase().includes(fundQuery) || 
-        f.manager.toLowerCase().includes(fundQuery) ||
-        f.id.toLowerCase().includes(fundQuery)
-      );
+      filteredFunds = filteredFunds.filter((f: any) => {
+        const idMatch = (f.id || '').toLowerCase().includes(fundQuery);
+        const nameMatch = (f.fundName || f.fund_name || '').toLowerCase().includes(fundQuery);
+        const mgrMatch = (f.manager || '').toLowerCase().includes(fundQuery);
+        return idMatch || nameMatch || mgrMatch;
+      });
     }
+
     if (tickerQuery) {
-      filteredFunds = filteredFunds.filter(f =>
-        f.topHoldings.some(h => h.symbol.toUpperCase() === tickerQuery)
-      );
+      filteredFunds = filteredFunds.filter((f: any) => {
+        const holdings = f.topHoldings || f.holdings || [];
+        return holdings.some((h: any) => (h.symbol || '').toUpperCase() === tickerQuery);
+      });
     }
+
+    const previewFunds = filteredFunds.map((f: any) => {
+      const holdings = f.topHoldings || f.holdings || [];
+      const top3 = holdings.slice(0, 3).map((h: any) => ({
+        symbol: h.symbol || '',
+        name: h.name || h.symbol || '',
+        sector: h.sector || 'General',
+        changeType: h.changeType || h.change_type || 'HOLD'
+      }));
+
+      return {
+        id: f.id,
+        fundName: f.fundName || f.fund_name || 'Hedge Fund',
+        manager: f.manager || 'Investment Manager',
+        cik: f.cik || '0000000000',
+        filingDate: f.filingDate || f.filing_date || new Date().toISOString().split('T')[0],
+        quarter: f.quarter || '13F-HR',
+        doc_url: f.doc_url || f.docUrl || `https://www.sec.gov/edgar/browse/?CIK=${f.cik || ''}`,
+        topHoldings: top3
+      };
+    });
+
+    const rawConsensus = feedData.consensusHoldings || [];
+    const previewConsensus = rawConsensus.slice(0, 3).map((c: any) => ({
+      symbol: c.symbol || '',
+      name: c.name || c.symbol || '',
+      fundCount: c.fundCount || c.fund_count || 0,
+      overallSentiment: c.overallSentiment || c.sentiment || 'BUY'
+    }));
+
+    const rawSummary = feedData.macroSummary || 'Q1/Q2 SEC 13F institutional filings overview.';
+    const macroSummaryFirstSentence = rawSummary.split('.')[0] + '.';
 
     return res.json({
-      status: "success",
-      timestamp: new Date().toISOString(),
-      quarterCycle: "Q1/Q2 2026 SEC Form 13F Filings",
-      totalFundsTracked: funds13F.length,
-      funds: filteredFunds,
-      consensusHoldings,
-      macroSummary: "Q1/Q2 13F filings reveal massive institutional capital reallocation from legacy software into AI Datacenter Grid Infrastructure (Vistra, Constellation, Bloom Energy) and Custom ASIC Silicon (Broadcom, NVIDIA), alongside selective accumulation of undervalued Chinese internet titans (Alibaba, JD.com)."
+      status: 'success',
+      preview: true,
+      timestamp: feedData.updated_at || new Date().toISOString(),
+      quarterCycle: feedData.quarterCycle || 'Q1/Q2 2026 SEC Form 13F Filings',
+      totalFundsTracked: rawFunds.length,
+      funds: previewFunds,
+      consensusHoldings: previewConsensus,
+      macroSummary: macroSummaryFirstSentence,
+      fullDataset: {
+        endpoint: 'GET /api/data/sec',
+        priceUsd: '0.10',
+        protocol: 'x402',
+        network: 'eip155:8453'
+      }
     });
   } catch (err: any) {
     console.error("Error in /api/13f/filings:", err);
-    return res.status(500).json({ status: "error", message: err.message });
+    return res.status(503).json({
+      status: 'unavailable',
+      preview: true,
+      funds: []
+    });
   }
 });
 
@@ -5074,15 +4909,12 @@ app.get("/api/ticker-news/:symbol", async (req, res) => {
   }
 });
 
+// Tombstone route for retired raw json feed endpoints to prevent 200 HTML fallthrough
+app.get(['/market_watchlist_data.json','/api/market-watchlist','/sec_intel_data.json','/api/sec-intel'], (req, res) => res.status(404).json({ status: 'error', code: 'NOT_FOUND', message: 'Not available. Full 13F dataset: GET /api/data/sec ($0.10 USDC via x402). Market data: GET /api/data/market ($0.01 USDC via x402).' }));
+
 // Explicit Public Static Serving for Raw JSON Backend Feeds
 const publicFolder = path.join(process.cwd(), 'public');
 app.use(express.static(publicFolder));
-
-app.get(['/sec_intel_data.json', '/api/sec-intel'], (req, res) => {
-  const filePath = path.join(publicFolder, 'sec_intel_data.json');
-  if (fs.existsSync(filePath)) return res.sendFile(filePath);
-  return res.status(404).json({ status: "error", message: "sec_intel_data.json not found" });
-});
 
 app.get(['/dyson_swarm_data.json', '/api/dyson-swarm'], (req, res) => {
   const filePath = path.join(publicFolder, 'dyson_swarm_data.json');
@@ -5648,6 +5480,7 @@ async function startServer() {
 
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Stock Bloc server running on http://0.0.0.0:${PORT}`);
+    fetchAndProcessFeed('sec').catch(() => {});
   });
 }
 

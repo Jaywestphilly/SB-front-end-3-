@@ -448,7 +448,6 @@ export const HUMAN_UI_FREE_PATHS = new Set([
   '/api/data/market',
   '/api/data/market.csv',
   '/api/live-quote',
-  '/api/data/sec',
   '/api/13f/filings',
   '/api/v1/market/quote',
   '/api/v1/intelligence/sb-score',

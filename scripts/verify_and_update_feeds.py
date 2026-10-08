@@ -75,14 +75,16 @@ def verify_and_sync_file(filepath):
 
     data["updated_at"] = now_iso_str
 
-    # Write updated feed back to both local root and public directory if available
+    # Write updated feed back to filepath
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
-    public_path = os.path.join("public", filename)
-    if os.path.exists("public"):
-        with open(public_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
+    # Only sync public path for non-paid public feeds (dyson, intel_news)
+    if filename not in ["market_watchlist_data.json", "sec_intel_data.json"]:
+        public_path = os.path.join("public", filename)
+        if os.path.exists("public"):
+            with open(public_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
 
     print(f"SUCCESS: {filename} verified and updated_at advanced to {now_iso_str}")
     return True
@@ -101,8 +103,10 @@ def main():
 
     failed = False
     for filename in target_files:
-        # Check both root and public paths
-        paths_to_test = [os.path.join("server", "data", filename), filename, os.path.join("public", filename)]
+        if filename in ["market_watchlist_data.json", "sec_intel_data.json"]:
+            paths_to_test = [os.path.join("server", "data", filename)]
+        else:
+            paths_to_test = [os.path.join("server", "data", filename), filename, os.path.join("public", filename)]
         for p in paths_to_test:
             if os.path.exists(p):
                 try:

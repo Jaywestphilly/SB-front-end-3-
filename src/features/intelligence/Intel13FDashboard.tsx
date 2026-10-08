@@ -135,7 +135,7 @@ export const Intel13FDashboard: React.FC = () => {
           const rawTime = data.timestamp || data.updated_at || new Date().toISOString();
           setSecUpdatedAt(formatUtcTimestamp(rawTime));
           setSecIsStale(isDataStale(rawTime));
-          showToast("Live 13F SEC Filings Synchronized!");
+          showToast("13F preview loaded");
           return;
         }
       } else if (res.isPaywall) {
@@ -143,45 +143,8 @@ export const Intel13FDashboard: React.FC = () => {
       } else if (res.isConfigError) {
         setIsConfigError(true);
       }
-      
-      // Fallback: CDN Proxy automated JSON feed
-      const ghRes = await fetchWithPaywallHandling("/api/data/sec");
-      if (ghRes.ok && ghRes.data) {
-        const ghData = ghRes.data;
-        if (ghData.funds && ghData.funds.length > 0) {
-          setFunds(ghData.funds);
-          setConsensus(ghData.consensusHoldings || []);
-          setMacroSummary(ghData.macroSummary || "");
-          const rawTime = ghData.updated_at || new Date().toISOString();
-          setSecUpdatedAt(formatUtcTimestamp(rawTime));
-          setSecIsStale(ghData.stale !== undefined ? ghData.stale : isDataStale(rawTime));
-          showToast("Live 13F SEC Intel Synchronized!");
-          return;
-        }
-      } else if (ghRes.isPaywall) {
-        setIsPaywall(true);
-      } else if (ghRes.isConfigError) {
-        setIsConfigError(true);
-      }
-
-      // Local Proxy Endpoint Fallback
-      const localRes = await fetchWithPaywallHandling("/sec_intel_data.json");
-      if (localRes.ok && localRes.data) {
-        const localData = localRes.data;
-        if (localData.funds && localData.funds.length > 0) {
-          setFunds(localData.funds);
-          setConsensus(localData.consensusHoldings || []);
-          setMacroSummary(localData.macroSummary || "");
-          const rawTime = localData.updated_at || new Date().toISOString();
-          setSecUpdatedAt(formatUtcTimestamp(rawTime));
-          setSecIsStale(isDataStale(rawTime));
-          setIsUsingLocalFallback(true);
-          showToast("SEC Intel loaded from local backend proxy!");
-        }
-      }
     } catch (err) {
       console.warn("Failed to fetch 13F filings feed:", err);
-      setIsUsingLocalFallback(true);
     } finally {
       setLoading(false);
     }
@@ -193,14 +156,14 @@ export const Intel13FDashboard: React.FC = () => {
 
   const selectedFund = funds.find((f) => f.id === selectedFundId) || funds[0];
 
-  const filteredHoldings = selectedFund?.topHoldings.filter((h) => {
+  const filteredHoldings = (selectedFund?.topHoldings || []).filter((h) => {
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||
-      h.symbol.toLowerCase().includes(q) ||
-      h.name.toLowerCase().includes(q) ||
-      h.sector.toLowerCase().includes(q) ||
-      h.thesis.toLowerCase().includes(q);
+      (h.symbol || "").toLowerCase().includes(q) ||
+      (h.name || "").toLowerCase().includes(q) ||
+      (h.sector || "").toLowerCase().includes(q) ||
+      (h.thesis || "").toLowerCase().includes(q);
 
     const matchesAction =
       filterAction === "ALL" ||
@@ -209,7 +172,7 @@ export const Intel13FDashboard: React.FC = () => {
       (filterAction === "TRIM" && h.changeType === "DECREASED");
 
     return matchesSearch && matchesAction;
-  }) || [];
+  });
 
   const handleCopySummary = () => {
     triggerHaptic("success");
@@ -342,6 +305,9 @@ export const Intel13FDashboard: React.FC = () => {
               <p className="text-xs text-cyan-400/80 max-w-3xl font-sans">
                 Real-time 13F filing disclosures from top institutional hedge funds and family offices. Interactive asset allocation visualizations, position flow tracking, and automated holding summaries.
               </p>
+              <div className="mt-2 p-2.5 bg-cyan-950/60 border border-cyan-500/30 text-xs text-cyan-300 font-sans alien-block-cut-sm">
+                Preview: top 3 holdings per fund. Full 13F dataset (all holdings, positions, values, flows): GET /api/data/sec, $0.10 USDC per call via x402.
+              </div>
             </div>
           </div>
 
