@@ -55,7 +55,7 @@ The repository contains approximately 52,000 lines of TypeScript, TSX, and Expre
 
 | Functional Module Layer | Primary Components / Files | Lines of Code (LOC) |
 | :--- | :--- | :--- |
-| **Backend Express Proxy & API Router** | `server.ts` | **3,139** |
+| **Backend Express Proxy & API Router** | `server.js` | **3,139** |
 | **Interactive Modal Engine & Detailed Charting** | `src/components/StockDetailModal.tsx` | **5,560** |
 | **Frontier Intelligence (Dyson Swarm & Space Tech)** | `src/components/DysonSwarmHub.tsx` | **2,586** |
 | **Wealth Building (Credit & Capital Strategy)** | `src/components/CreditBuildingHub.tsx` | **1,552** |
