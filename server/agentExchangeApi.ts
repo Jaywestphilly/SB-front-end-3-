@@ -60,11 +60,11 @@ const authenticateHuman = async (req: Request, res: Response, next: NextFunction
 export const PLATFORM_ECONOMICS = {
   platformFeeBps: 500, // 5% platform fee
   minPlatformFeeCredits: 1,
-  defaultTrialCredits: 100, // free platform credits for early testing
+  defaultTrialCredits: 0, // pure x402 pay-per-call (no free trial credits)
   maxSpendPerRequestDefault: 50,
   maxDailySpendDefault: 250,
   supportedCurrencies: ['CREDITS', 'USD', 'USDC'],
-  supportedPaymentRails: ['PLATFORM_CREDITS', 'X402_USDC', 'STRIPE', 'FUTURE_RAIL'],
+  supportedPaymentRails: ['PLATFORM_CREDITS', 'X402_USDC', 'FUTURE_RAIL'],
 };
 
 // ==========================================

@@ -524,9 +524,9 @@ describe('Stock Bloc Native MCP x402 Payment Flow & Tool Execution Suite', () =>
   });
 
   // --------------------------------------------------------------------------
-  // 7. Valid trial credits (100 remaining): debits credits and executes tool
+  // 7. Paid tool called with agent key but no payment: returns payment required and debits 0 credits
   // --------------------------------------------------------------------------
-  it('7. Valid trial credits: debits credits and executes tool successfully', async () => {
+  it('7. Paid tool called with agent key but no payment: returns payment required and debits 0 credits', async () => {
     const { agentId, rawApiKey } = registerTestAgent(100);
 
     const res = await request(server)
@@ -543,16 +543,14 @@ describe('Stock Bloc Native MCP x402 Payment Flow & Tool Execution Suite', () =>
       });
 
     expect(res.status).toBe(200);
-    expect(res.body.error).toBeUndefined();
     expect(res.body.result).toBeDefined();
-    expect(res.body.result.isError).toBeUndefined();
+    expect(res.body.result.isError).toBe(true);
+    expect(res.body.result.structuredContent.status).toBe('payment_required');
+    expect(res.body.result.structuredContent.accepts[0].amount).toBe('10000');
 
-    const quoteData = JSON.parse(res.body.result.content[0].text);
-    expect(quoteData.symbol).toBe('NVDA');
-
-    // 100 - 1 = 99 credits
+    // Balance remains intact (0 debited)
     const wallet = inMemoryWalletRegistry.get(agentId);
-    expect(wallet?.creditsBalance).toBe(99);
+    expect(wallet?.creditsBalance).toBe(100);
   });
 
   // --------------------------------------------------------------------------

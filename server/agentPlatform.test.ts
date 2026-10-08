@@ -270,7 +270,7 @@ describe('Agent Platform API', () => {
     expect(regRes.status).toBe(201);
     expect(regRes.body.status).toBe('registered');
     expect(regRes.body.apiKey).toContain('sb_live_');
-    expect(regRes.body.trialCredits).toBe(100);
+    expect(regRes.body.trialCredits).toBe(0);
     expect(regRes.body.scopes).toContain('services:read');
     expect(regRes.body.scopes).toContain('jobs:read');
     expect(regRes.body.scopes).toContain('jobs:execute');

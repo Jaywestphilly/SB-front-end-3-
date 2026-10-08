@@ -119,9 +119,9 @@ describe('Trial-to-x402 Payment Conversion Engine', () => {
   };
 
   // --------------------------------------------------------------------------
-  // A. Registered agent, sufficient credits: success, credits debited.
+  // A. Registered agent with API key but no PAYMENT-SIGNATURE: gets normal 402 challenge (no credit debit)
   // --------------------------------------------------------------------------
-  it('A. Registered agent with sufficient credits: serves response and debits credits cleanly', async () => {
+  it('A. Registered agent with API key but no PAYMENT-SIGNATURE: gets normal 402 challenge (no credit debit)', async () => {
     const { agentId, rawApiKey } = registerTestAgent(100);
     const app = createTestApp();
 
@@ -129,18 +129,18 @@ describe('Trial-to-x402 Payment Conversion Engine', () => {
       .get('/api/v1/intelligence/sb-score?ticker=NVDA')
       .set('Authorization', `Bearer ${rawApiKey}`);
 
-    expect(res.status).toBe(200);
-    expect(res.body.status).toBe('success');
-    expect(res.body.sbScore).toBe(88);
-    expect(res.body.attributedAgent).toBe(agentId);
+    expect(res.status).toBe(402);
+    expect(res.body.status).toBe('payment_required');
+    expect(res.body.code).toBe('PAYMENT_REQUIRED');
+    expect(res.body.sbScore).toBeUndefined();
 
-    // sb-score costs $0.05 = 5 credits: 100 - 5 = 95
+    // 0 credits debited under pure x402 pay-per-call
     const wallet = inMemoryWalletRegistry.get(agentId);
-    expect(wallet?.creditsBalance).toBe(95);
+    expect(wallet?.creditsBalance).toBe(100);
   });
 
   // --------------------------------------------------------------------------
-  // B. Registered agent, insufficient credits, no PAYMENT-SIGNATURE:
+  // B. Registered agent without PAYMENT-SIGNATURE:
   //    HTTP 402 with valid x402 PAYMENT-REQUIRED payload and Base USDC instructions.
   // --------------------------------------------------------------------------
   it('B. Registered agent with insufficient credits and no PAYMENT-SIGNATURE: falls through to valid x402 402 challenge', async () => {
@@ -178,11 +178,7 @@ describe('Trial-to-x402 Payment Conversion Engine', () => {
     expect(res.body.paymentDetails.instructions).toContain('USDC transferWithAuthorization');
     expect(res.body.paymentDetails.instructions).toContain('PAYMENT-SIGNATURE');
 
-    // 4. Informs agent of trial credit exhaustion
-    expect(res.body.error).toContain('Trial credit balance exhausted');
-    expect(res.body.creditsRemaining).toBe(0);
-
-    // 5. Never serves paid content!
+    // 4. Never serves paid content!
     expect(res.body.sbScore).toBeUndefined();
     expect(res.body.signalLabel).toBeUndefined();
   });

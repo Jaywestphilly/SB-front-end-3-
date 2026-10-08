@@ -29,7 +29,7 @@ describe('Autonomous Agent Community:Write Acceptance Test', () => {
     expect(regRes.status).toBe(201);
     expect(regRes.body.status).toBe('registered');
     expect(regRes.body.apiKey).toMatch(/^sb_live_/);
-    expect(regRes.body.trialCredits).toBe(100);
+    expect(regRes.body.trialCredits).toBe(0);
 
     // Verify granted scopes include community:write and community:reply
     expect(regRes.body.scopes).toContain('community:write');

@@ -12,6 +12,7 @@ import {
   BAZAAR_DISCOVERY_EXTENSIONS
 } from './x402PaymentService.js';
 import { recordMachineCommerceEvent } from './agentTelemetry.js';
+import { validatePricedRequestInput } from './x402InputValidation.js';
 
 // ============================================================================
 // SHARED 12 MCP TOOLS DEFINITION (TICKER RESEARCH & QUANT POSITIONING)
@@ -126,7 +127,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "register_autonomous_agent",
-    description: "Self-register an autonomous AI agent to receive a permanent API key (sb_live_*) and 100 free platform trial credits. (Free - No Auth Required).",
+    description: "Self-register an autonomous AI agent to receive a permanent API key (sb_live_*). (Free - No Auth Required).",
     inputSchema: {
       type: "object",
       properties: {
@@ -311,6 +312,9 @@ export function buildMcpPaymentRequiredResponse(
   const discoveryExt = endpointConfig ? (BAZAAR_DISCOVERY_EXTENSIONS[endpointConfig.id]?.bazaar || endpointConfig.discoveryExtension) : undefined;
 
   const paymentRequiredPayload = {
+    status: 'payment_required',
+    code: 'PAYMENT_REQUIRED',
+    statusCode: 402,
     x402Version: 2 as const,
     accepts: [paymentRequirement],
     resource: {
@@ -338,7 +342,7 @@ export function buildMcpPaymentRequiredResponse(
       facilitatorUrl: 'https://api.cdp.coinbase.com/platform/v2/x402',
       instructions: "Sign a USDC transferWithAuthorization (EIP-3009) on Base (chain ID 8453) for the required amount and retry with _meta['x402/payment']."
     },
-    error: reason || 'Payment or Agent API key required. Register via POST /api/v1/agents/register for 100 free trial credits and pass Authorization: Bearer sb_live_..., or supply x402 payment in _meta[\"x402/payment\"] with USDC on Base.'
+    error: reason || 'Payment required. Supply x402 payment in _meta[\"x402/payment\"] with USDC on Base.'
   };
 
   return {
@@ -358,6 +362,104 @@ export function buildMcpPaymentRequiredResponse(
       }
     }
   };
+}
+
+function getMcpValidationParams(name: string, args: any = {}) {
+  switch (name) {
+    case 'get_stock_quote': {
+      const sym = args.symbol ? String(args.symbol).trim() : '';
+      return {
+        endpointId: 'market_data',
+        rawPath: sym ? `/api/live-quote/${encodeURIComponent(sym)}` : '/api/v1/market/quote',
+        method: 'GET',
+        query: { symbol: args.symbol },
+        body: {}
+      };
+    }
+    case 'search_13f_whale_filings':
+      return {
+        endpointId: 'sec_13f_intel',
+        rawPath: '/api/data/sec',
+        method: 'GET',
+        query: {},
+        body: {}
+      };
+    case 'analyze_sec_filing':
+      return {
+        endpointId: 'sec_job',
+        rawPath: '/api/v1/sec/job',
+        method: 'POST',
+        query: {},
+        body: { ticker: args.ticker, filingType: args.filingType, question: args.question }
+      };
+    case 'sec_analyst':
+      return {
+        endpointId: 'sec_job',
+        rawPath: '/api/v1/sec/analyst',
+        method: 'POST',
+        query: {},
+        body: { ticker: args.ticker, filingType: args.filingType, question: args.question }
+      };
+    case 'get_sb_score_history':
+      return {
+        endpointId: 'sb_score',
+        rawPath: '/api/v1/intelligence/sb-score/history',
+        method: 'GET',
+        query: { ticker: args.ticker, limit: args.limit },
+        body: {}
+      };
+    case 'run_quant_simulation': {
+      let alloc = args.allocation;
+      if (!alloc && Array.isArray(args.tickers) && Array.isArray(args.weights)) {
+        alloc = {};
+        args.tickers.forEach((t: string, i: number) => {
+          alloc[t] = args.weights[i] !== undefined ? args.weights[i] : 1 / args.tickers.length;
+        });
+      }
+      return {
+        endpointId: 'strategy_eval',
+        rawPath: '/api/v1/agent/quant-sim',
+        method: 'POST',
+        query: {},
+        body: {
+          allocation: alloc,
+          tickers: args.tickers,
+          weights: args.weights,
+          initialCapital: args.initialCapital
+        }
+      };
+    }
+    case 'evaluate_tsunami_strategy':
+      return {
+        endpointId: 'strategy_eval',
+        rawPath: '/api/v1/agent/strategy/evaluate',
+        method: 'POST',
+        query: {},
+        body: {
+          allocation: args.allocation,
+          benchmark: args.benchmark,
+          riskTolerance: args.riskTolerance,
+          horizonDays: args.horizonDays
+        }
+      };
+    case 'submit_agent_trade_idea':
+      return {
+        endpointId: 'strategy_eval',
+        rawPath: '/api/v1/agent/submit-performance',
+        method: 'POST',
+        query: {},
+        body: {
+          ticker: args.ticker,
+          action: args.action,
+          rationale: args.rationale,
+          targetPrice: args.targetPrice,
+          agentId: args.agentId,
+          handle: args.handle
+        }
+      };
+    default:
+      return null;
+  }
 }
 
 // ============================================================================
@@ -491,16 +593,55 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
   if (method === "tools/call") {
     const { name, arguments: args = {} } = params || {};
 
-    // 1. Unpaid Check: Paid MCP tool called with no agent credentials and no payment payload
-    if (PAID_MCP_TOOLS.has(name) && !agentAuthHeader && !effectivePayment) {
-      const pricing = MCP_TOOL_PRICING[name];
-      recordMachineCommerceEvent({
-        eventType: 'payment_required',
-        source: 'mcp',
-        endpoint: name,
-        amountUsd: pricing?.priceUsd
-      });
-      return res.json(buildMcpPaymentRequiredResponse(name, baseUrl, id));
+    // If it is a paid MCP tool, validate inputs first!
+    if (PAID_MCP_TOOLS.has(name)) {
+      const valParams = getMcpValidationParams(name, args);
+      if (valParams) {
+        const valResult = await validatePricedRequestInput(
+          valParams.endpointId,
+          valParams.rawPath,
+          valParams.method,
+          valParams.query,
+          valParams.body
+        );
+        if (!valResult.valid) {
+          const failure = valResult as any;
+          return res.json({
+            jsonrpc: "2.0",
+            id: id !== undefined ? id : null,
+            result: {
+              isError: true,
+              charged: false,
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({
+                    status: "error",
+                    code: failure.code,
+                    error: failure.error,
+                    message: failure.message,
+                    ...(failure.field ? { field: failure.field } : {}),
+                    charged: false
+                  }, null, 2)
+                }
+              ]
+            }
+          });
+        }
+      }
+
+      // If valid, but no x402 payment, return standard payment required response
+      // (Both anonymous and keyed callers without payment get the same response)
+      if (!effectivePayment) {
+        const pricing = MCP_TOOL_PRICING[name];
+        recordMachineCommerceEvent({
+          eventType: 'payment_required',
+          source: 'mcp',
+          endpoint: name,
+          amountUsd: pricing?.priceUsd
+        });
+        return res.json(buildMcpPaymentRequiredResponse(name, baseUrl, id));
+      }
     }
 
     if (effectivePayment) {
@@ -516,8 +657,8 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
       let toolOutputData: any;
 
       if (name === "analyze_sec_filing" || name === "sec_analyst") {
-        const ticker = String(args.ticker || "AAPL").toUpperCase().trim();
-        const filingType = String(args.filingType || "10-K").trim().toUpperCase();
+        const ticker = args.ticker ? String(args.ticker).toUpperCase().trim() : '';
+        const filingType = args.filingType ? String(args.filingType).trim().toUpperCase() : '10-K';
         fetchRes = await fetch(`${baseUrl}/api/v1/sec/job`, {
           method: "POST",
           headers: {
@@ -531,7 +672,7 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
           })
         });
       } else if (name === "get_stock_quote") {
-        const symbol = String(args.symbol || "AAPL").toUpperCase();
+        const symbol = args.symbol ? String(args.symbol).toUpperCase().trim() : '';
         fetchRes = await fetch(`${baseUrl}/api/live-quote/${symbol}`, {
           headers: forwardHeaders
         });
@@ -550,9 +691,9 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
             ...forwardHeaders
           },
           body: JSON.stringify({
-            tickers: args.tickers || ["NVDA", "AAPL"],
-            weights: args.weights || [0.6, 0.4],
-            allocation: allocation || { NVDA: 0.6, AAPL: 0.4 },
+            tickers: args.tickers,
+            weights: args.weights,
+            allocation: allocation,
             initialCapital: args.initialCapital || 10000,
           }),
         });
@@ -564,7 +705,7 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
             ...forwardHeaders
           },
           body: JSON.stringify({
-            allocation: args.allocation || { SPCX: 0.35, NVDA: 0.35, BE: 0.20, PLTR: 0.10 },
+            allocation: args.allocation,
             benchmark: args.benchmark || "super_sonic_tsunami",
             riskTolerance: args.riskTolerance || "moderate",
             horizonDays: args.horizonDays || 90
@@ -581,10 +722,10 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
             agentId: args.agentId,
             handle: args.handle,
             ticker: args.ticker,
-            action: args.action || "BUY",
+            action: args.action,
             targetPrice: args.targetPrice,
             timeframe: args.timeframe || "90-Day Horizon",
-            confidence: args.confidence || 90,
+            confidence: args.confidence,
             rationale: args.rationale
           })
         });
@@ -593,9 +734,9 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
           headers: forwardHeaders
         });
       } else if (name === "get_sb_score_history") {
-        const ticker = String(args.ticker || "NVDA").toUpperCase().trim();
+        const ticker = args.ticker ? String(args.ticker).toUpperCase().trim() : '';
         const url = new URL(`${baseUrl}/api/v1/intelligence/sb-score/history`);
-        url.searchParams.set("ticker", ticker);
+        if (ticker) url.searchParams.set("ticker", ticker);
         if (args.limit) url.searchParams.set("limit", String(args.limit));
         if (args.cursor) url.searchParams.set("cursor", String(args.cursor));
         if (args.methodologyVersion) url.searchParams.set("methodologyVersion", String(args.methodologyVersion));

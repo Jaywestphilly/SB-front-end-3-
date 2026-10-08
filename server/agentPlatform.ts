@@ -192,7 +192,7 @@ export async function debitAgentCredits(
     const currentAvailable = typeof walletData.availableBalance === 'number' ? walletData.availableBalance : currentBalance;
 
     if (currentBalance < cost || currentAvailable < cost) {
-      const err: any = new Error(`Trial credit balance exhausted (${currentBalance} credits remaining).`);
+      const err: any = new Error(`Insufficient balance (${currentBalance} credits remaining).`);
       err.code = 'INSUFFICIENT_FUNDS';
       err.creditsRemaining = currentBalance;
       throw err;
@@ -442,12 +442,11 @@ export async function verifyAndDebitAgentCredit(
     if (
       debitErr.code === 'INSUFFICIENT_FUNDS' ||
       debitErr.message?.includes('exhausted') ||
-      debitErr.message?.includes('Insufficient balance') ||
-      debitErr.message?.includes('Trial credit balance')
+      debitErr.message?.includes('Insufficient balance')
     ) {
       return {
         valid: false,
-        error: debitErr.message || 'Trial credit balance exhausted (0 credits remaining).',
+        error: debitErr.message || 'Insufficient balance (0 credits remaining).',
         statusCode: 402,
         code: 'INSUFFICIENT_FUNDS',
         agentId,
@@ -749,13 +748,13 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
     inMemoryKeyRegistry.set(rawKey, { ...keyRecord, secretHash: keyHash });
     inMemoryWalletRegistry.set(agentId, {
       agentId,
-      creditsBalance: 100,
-      availableBalance: 100,
+      creditsBalance: 0,
+      availableBalance: 0,
       paidCreditsBalance: 0,
       promoCreditsBalance: 0,
-      trialCreditsBalance: 100,
-      trialCredits: 100,
-      lastCreditTag: 'TRIAL',
+      trialCreditsBalance: 0,
+      trialCredits: 0,
+      lastCreditTag: 'NONE',
       lifetimeSpent: 0,
       simulationRuns: 0,
       verifiedSimulations: 0
@@ -779,13 +778,13 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
           }),
           db.collection('agent_wallets').doc(agentId).set({
             agentId,
-            creditsBalance: 100,
-            availableBalance: 100,
+            creditsBalance: 0,
+            availableBalance: 0,
             paidCreditsBalance: 0,
             promoCreditsBalance: 0,
-            trialCreditsBalance: 100,
-            trialCredits: 100,
-            lastCreditTag: 'TRIAL',
+            trialCreditsBalance: 0,
+            trialCredits: 0,
+            lastCreditTag: 'NONE',
             lifetimeGrossEarnings: 0,
             lifetimeSpent: 0,
             status: 'active'
@@ -822,7 +821,7 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
       displayName: finalDisplayName,
       description: finalDescription,
       apiKey: rawKey,
-      trialCredits: 100,
+      trialCredits: 0,
       scopes: keyRecord.scopes,
       marketplace: {
         enabled: true,
@@ -835,12 +834,12 @@ export const registerAutonomousAgentHandler = async (req: Request, res: Response
           "jobs:execute (Accept jobs & deliver verified quant outputs)",
           "payments:transact (Settle platform credits peer-to-peer)"
         ],
-        trialCredits: 100
+        trialCredits: 0
       },
       rateLimit: {
         global: "60 req/min (300 req/min with Bearer key)",
         publications: "10/hour",
-        simulations: "Metered (100 free trial credits included)"
+        simulations: "Metered"
       },
       endpoints: {
         // Registration & Discovery

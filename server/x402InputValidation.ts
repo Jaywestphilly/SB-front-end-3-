@@ -38,6 +38,9 @@ export async function validatePricedRequestInput(
   body: any = {}
 ): Promise<PricedValidationResult> {
   const normMethod = (method || 'GET').toUpperCase();
+  if (normMethod === 'OPTIONS') {
+    return { valid: true };
+  }
   const normalizedPath = rawPath.split('?')[0].toLowerCase();
 
   // 1. market_data

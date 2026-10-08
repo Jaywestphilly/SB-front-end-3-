@@ -194,7 +194,7 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
 
     it('returns HTTP 402 with real x402 Base USDC requirements for Deep SEC Job ($0.25)', async () => {
       const app = createTestApp();
-      const res = await request(app).post('/api/v1/sec/job').send({ ticker: 'NVDA' });
+      const res = await request(app).post('/api/v1/sec/job').send({ ticker: 'NVDA', filingType: '10-K' });
 
       expect(res.status).toBe(402);
       const headerObj = decodePaymentRequiredHeader(res.headers['payment-required']);
@@ -217,12 +217,23 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
     it('returns HTTP 402 with real x402 Base USDC requirements for Research ($0.10) & Forecast ($0.05)', async () => {
       const app = createTestApp();
 
-      const resResearch = await request(app).post('/api/v1/intelligence/research').send({ title: 'AI Infrastructure' });
+      const resResearch = await request(app).post('/api/v1/intelligence/research').send({
+        title: 'AI Infrastructure',
+        summary: 'Datacenter capex expansion',
+        thesis: 'GPU compute secular growth'
+      });
       expect(resResearch.status).toBe(402);
       const resObj1 = decodePaymentRequiredHeader(resResearch.headers['payment-required']);
       expect(resObj1.accepts[0].amount).toBe('100000'); // $0.10
 
-      const resForecast = await request(app).post('/api/v1/intelligence/forecasts').send({ symbol: 'NVDA', targetPrice: 160 });
+      const resForecast = await request(app).post('/api/v1/intelligence/forecasts').send({
+        question: 'Will NVDA reach $160?',
+        asset: 'NVDA',
+        direction: 'UP',
+        timeHorizon: '90-Day',
+        resolutionCriteria: 'Price target hit',
+        probability: 75
+      });
       expect(resForecast.status).toBe(402);
       const resObj2 = decodePaymentRequiredHeader(resForecast.headers['payment-required']);
       expect(resObj2.accepts[0].amount).toBe('50000'); // $0.05
@@ -451,12 +462,12 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       const app = createTestApp();
 
       const res = await request(app)
-        .get('/api/v1/intelligence/sb-score')
+        .get('/api/v1/intelligence/sb-score?ticker=NVDA')
         .set('Authorization', `Bearer ${rawKey}`);
 
-      expect(res.status).toBe(200);
-      expect(res.body.status).toBe('success');
-      expect(res.body.sbScore).toBe(88);
+      expect(res.status).toBe(402);
+      expect(res.body.status).toBe('payment_required');
+      expect(res.body.code).toBe('PAYMENT_REQUIRED');
     });
 
     it('includes Bazaar discovery extensions in the 402 challenge header and body with info, schema, and enriched resource', async () => {
@@ -598,22 +609,14 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
 
       const app = createTestApp();
 
-      // First call: spends 5 credits, drops balance to 0, succeeds with 200
+      // Calling priced endpoint with agent key but no PAYMENT-SIGNATURE gets 402 challenge immediately (no credit debit)
       const res1 = await request(app)
-        .get('/api/v1/intelligence/sb-score')
+        .get('/api/v1/intelligence/sb-score?ticker=NVDA')
         .set('Authorization', `Bearer ${rawApiKey}`);
 
-      expect(res1.status).toBe(200);
-      expect(res1.body.status).toBe('success');
-      expect(inMemoryWalletRegistry.get(agentId)!.creditsBalance).toBe(0);
-
-      // Second call: 0 credits remaining, must be rejected with 402 Payment Required
-      const res2 = await request(app)
-        .get('/api/v1/intelligence/sb-score')
-        .set('Authorization', `Bearer ${rawApiKey}`);
-
-      expect(res2.status).toBe(402);
-      expect(res2.body.error).toContain('Trial credit balance exhausted');
+      expect(res1.status).toBe(402);
+      expect(res1.body.status).toBe('payment_required');
+      expect(inMemoryWalletRegistry.get(agentId)!.creditsBalance).toBe(5);
     });
 
     it('manifest parity: every priced endpoint in manifest.json returns 402 for unauthenticated requests with no free-tier bypass', async () => {
@@ -629,12 +632,27 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
         const method = (ep.method || 'GET').toUpperCase();
         const path = ep.path;
 
-        let reqBuilder: request.Test;
-        if (method === 'POST') {
-          reqBuilder = request(app).post(path).send({ ticker: 'NVDA' });
-        } else {
-          reqBuilder = request(app).get(path);
+        const testPayload: Record<string, any> = {
+          ticker: 'NVDA',
+          symbol: 'NVDA',
+          filingType: '10-K',
+          title: 'NVDA Thesis',
+          summary: 'Compute moat',
+          thesis: 'Accelerating AI compute',
+          asset: 'NVDA',
+          direction: 'LONG',
+          question: 'Will NVDA beat earnings?',
+          timeHorizon: '90-Day Horizon',
+          resolutionCriteria: 'SEC 10-Q filing',
+          probability: 80,
+          rationale: 'Strong datacenter revenue'
+        };
+        let queryPath = path;
+        if (method === 'GET' && !path.includes('?')) {
+          queryPath = `${path}?ticker=NVDA&symbol=NVDA`;
         }
+
+        const reqBuilder = method === 'POST' ? request(app).post(path).send(testPayload) : request(app).get(queryPath);
 
         const res = await reqBuilder;
         expect(res.status, `Endpoint ${name} at ${path} must require payment (HTTP 402)`).toBe(402);

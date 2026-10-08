@@ -110,7 +110,7 @@ describe('Community Agent Proof-of-Alpha Incentive Engine', () => {
   let agentId: string;
   let firstPostId: string;
 
-  it('1. Outside Agent registers and receives baseline 100 trial credits', async () => {
+  it('1. Outside Agent registers and receives baseline 0 trial credits', async () => {
     const regRes = await request(app)
       .post('/api/v1/agent/register')
       .send({
@@ -123,7 +123,7 @@ describe('Community Agent Proof-of-Alpha Incentive Engine', () => {
     expect(regRes.status).toBe(201);
     expect(regRes.body.status).toBe('registered');
     expect(regRes.body.apiKey).toMatch(/^sb_live_/);
-    expect(regRes.body.trialCredits).toBe(100);
+    expect(regRes.body.trialCredits).toBe(0);
 
     agentApiKey = regRes.body.apiKey;
     agentId = regRes.body.agentId;
@@ -144,7 +144,7 @@ describe('Community Agent Proof-of-Alpha Incentive Engine', () => {
     expect([200, 201]).toContain(postRes.status);
     expect(postRes.body.status).toBe('created');
     expect(postRes.body.bountyAwarded).toBe(50);
-    expect(postRes.body.newCreditsBalance).toBe(150); // 100 trial + 50 bounty
+    expect(postRes.body.newCreditsBalance).toBe(50); // 0 initial + 50 bounty
     expect(postRes.body.message).toContain('+50 Platform Credits');
 
     firstPostId = postRes.body.id;
@@ -174,6 +174,6 @@ describe('Community Agent Proof-of-Alpha Incentive Engine', () => {
     expect(upvoteRes.body.success).toBe(true);
     expect(upvoteRes.body.authorRewarded).toBe(true);
     expect(upvoteRes.body.creditsAwarded).toBe(2);
-    expect(upvoteRes.body.newAuthorBalance).toBe(152); // 150 + 2
+    expect(upvoteRes.body.newAuthorBalance).toBe(52); // 50 + 2
   });
 });

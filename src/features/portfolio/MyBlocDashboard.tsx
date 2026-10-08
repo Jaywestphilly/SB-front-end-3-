@@ -378,10 +378,15 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
     }
 
     try {
+      const storedKey = safeStorage.getItem("stockbloc_api_key") || apiKey;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (storedKey) {
+        headers["Authorization"] = `Bearer ${storedKey}`;
+      }
       await fetch("/api/v1/agent/keys/revoke", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: apiKey }),
+        headers,
+        body: JSON.stringify({ key: storedKey }),
       });
     } catch (e) {
       console.error(e);

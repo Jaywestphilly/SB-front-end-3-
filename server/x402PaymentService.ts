@@ -10,9 +10,10 @@ import {
   encodePaymentResponseHeader,
 } from '@x402/core/http';
 import { declareDiscoveryExtension, validateDiscoveryExtension } from '@x402/extensions';
-import { inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit } from './agentPlatform.js';
+import { inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry } from './agentPlatform.js';
 import { inMemorySettlementRegistry } from './agentExchangeApi.js';
 import { recordMachineCommerceEvent } from './agentTelemetry.js';
+import { validatePricedRequestInput } from './x402InputValidation.js';
 
 // ============================================================================
 // COINBASE CDP X402 CONSTANTS & SPECIFICATION (BASE MAINNET)
@@ -604,11 +605,11 @@ export async function resolveAgentIdentityFromKey(
   const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7).trim() : authHeader.trim();
   if (!token) return null;
 
-  if (
-    token === process.env.AGENT_API_SECRET_KEY ||
-    token === 'YOUR_AGENT_SECRET_KEY' ||
-    token === 'stock_bloc_agent_secret_2026'
-  ) {
+  if (token === 'YOUR_AGENT_SECRET_KEY' || token === 'stock_bloc_agent_secret_2026') {
+    return null;
+  }
+
+  if (process.env.AGENT_API_SECRET_KEY && token === process.env.AGENT_API_SECRET_KEY) {
     return {
       agentId: 'agent_spark_01',
       handle: 'spark_agent',
@@ -718,6 +719,28 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       return forwardNext();
     }
 
+    // Pre-flight input validation before payment-header handling, verification, settlement, or 402 challenge
+    const validationResult = await validatePricedRequestInput(
+      endpointConfig.id,
+      req.originalUrl || fullPath,
+      req.method,
+      req.query,
+      req.body
+    );
+    if (!validationResult.valid) {
+      const failure = validationResult as any;
+      res.setHeader('Cache-Control', 'no-store');
+      res.removeHeader('PAYMENT-REQUIRED');
+      return res.status(failure.status).json({
+        status: 'error',
+        code: failure.code,
+        error: failure.error,
+        message: failure.message,
+        ...(failure.field ? { field: failure.field } : {}),
+        charged: false
+      });
+    }
+
     const paymentSource = ((req.headers['x-payment-source'] || req.headers['x-source'] || 'rest') as string) === 'mcp' ? 'mcp' : 'rest';
 
     const paymentHeader =
@@ -729,17 +752,15 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       req.header('X-402-Payment-Proof');
 
     const rawAuth = req.headers.authorization || (req.headers['x-agent-key'] as string);
-    const isAgentKey = rawAuth && (
+    const isAgentKey = Boolean(rawAuth && (
       rawAuth.includes('sb_live_') ||
       rawAuth.startsWith('sb_live_') ||
       req.headers['x-agent-key'] !== undefined ||
       (rawAuth.startsWith('Bearer ') && (
         rawAuth.substring(7).trim().startsWith('sb_live_') ||
-        rawAuth.substring(7).trim() === process.env.AGENT_API_SECRET_KEY ||
-        rawAuth.substring(7).trim() === 'YOUR_AGENT_SECRET_KEY' ||
-        rawAuth.substring(7).trim() === 'stock_bloc_agent_secret_2026'
+        Boolean(process.env.AGENT_API_SECRET_KEY && rawAuth.substring(7).trim() === process.env.AGENT_API_SECRET_KEY)
       ))
-    );
+    ) && !rawAuth.includes('YOUR_AGENT_SECRET_KEY') && !rawAuth.includes('stock_bloc_agent_secret_2026'));
 
     const recipientAddress = getX402RecipientAddress() || DEFAULT_X402_RECIPIENT_ADDRESS;
 
@@ -1224,90 +1245,44 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       }
     }
 
-    // ========================================================================
-    // REQUIRED FLOW STEP 2: Else if valid sb_live_ agent key is present
-    // Attempt platform-credit debit as today.
-    // 2a. Debit succeeds: serve the request (unchanged).
-    // 2b. Debit fails with INSUFFICIENT_FUNDS: do NOT return the plain error JSON.
-    //     Fall through to standard x402 flow and return HTTP 402 with complete
-    //     valid x402 PAYMENT-REQUIRED payload.
-    // ========================================================================
-    let isCreditsExhausted = false;
-    if (isAgentKey) {
-      const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
+    // Check if this request is an idempotent replay for sec_job
+    const idempotencyKey = (
+      req.body?.idempotencyKey ||
+      (req.headers['idempotency-key'] as string) ||
+      (req.headers['x-idempotency-key'] as string)
+    );
+    const jobId = req.body?.jobId as string | undefined;
+    const isIdempotentReplay = Boolean(
+      endpointConfig.id === 'sec_job' && (
+        (idempotencyKey && inMemorySettlementRegistry.has(idempotencyKey)) ||
+        (jobId && inMemorySettlementRegistry.has(jobId))
+      )
+    );
 
-      // Check if this request is an idempotent replay for sec_job
-      const idempotencyKey = (
-        req.body?.idempotencyKey ||
-        (req.headers['idempotency-key'] as string) ||
-        (req.headers['x-idempotency-key'] as string)
-      );
-      const jobId = req.body?.jobId as string | undefined;
-      const isIdempotentReplay = Boolean(
-        endpointConfig.id === 'sec_job' && (
-          (idempotencyKey && inMemorySettlementRegistry.has(idempotencyKey)) ||
-          (jobId && inMemorySettlementRegistry.has(jobId))
-        )
-      );
-
-      if (isIdempotentReplay) {
+    if (isIdempotentReplay) {
+      if (rawAuth) {
+        const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
         const resolvedAgent = await resolveAgentIdentityFromKey(authHeader);
         if (resolvedAgent) {
           (req as any).agent = resolvedAgent;
         }
-        return forwardNext();
       }
+      return forwardNext();
+    }
 
-      const creditCost = Math.max(1, Math.round(endpointConfig.priceUsd * 100));
-      const debitResult = await verifyAndDebitAgentCredit(authHeader, creditCost, {
-        endpoint: fullPath,
-        method: req.method,
-        description: `x402 credit access to ${endpointConfig.name} (${req.method} ${fullPath})`
-      });
-
-      // 2a: Debit succeeds
-      if (debitResult.valid) {
-        (req as any).creditsDebited = true;
-        (req as any).agent = {
-          agentId: debitResult.agentId,
-          handle: debitResult.handle,
-          displayName: debitResult.displayName
-        };
-        (req as any).creditsRemaining = debitResult.creditsRemaining;
-        recordMachineCommerceEvent({
-          eventType: 'trial_usage',
-          source: paymentSource,
-          endpoint: endpointConfig.id,
-          payer: debitResult.agentId,
-          amountUsd: endpointConfig.priceUsd
-        });
-        return forwardNext();
-      }
-
-      // If invalid/revoked/expired API key (401), return 401 Unauthorized
-      if (debitResult.statusCode === 401) {
-        return res.status(401).json({
-          status: 'error',
-          code: 'UNAUTHORIZED',
-          error: debitResult.error || 'Unauthorized: Invalid Agent API key.'
-        });
-      }
-
-      // 2b: Debit fails with INSUFFICIENT_FUNDS (402)
-      // Do NOT return early plain error JSON! Fall through to standard x402 flow below.
-      isCreditsExhausted = true;
-      if (debitResult.agentId) {
-        (req as any).agent = {
-          agentId: debitResult.agentId,
-          handle: debitResult.handle,
-          displayName: debitResult.displayName
-        };
-      }
+    if (isAgentKey && rawAuth) {
+      const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
+      try {
+        const resolvedAgent = await resolveAgentIdentityFromKey(authHeader);
+        if (resolvedAgent) {
+          (req as any).agent = resolvedAgent;
+        }
+      } catch {}
     }
 
     // ========================================================================
     // REQUIRED FLOW STEP 3: Return complete valid x402 PAYMENT-REQUIRED payload
-    // (Reached by anonymous requests, or registered agents with exhausted credits)
+    // (Reached by anonymous requests, or registered agents without payment)
     // ========================================================================
     const reqs = buildPaymentRequirements();
     const paymentRequiredPayload = reqs?.paymentRequiredPayload || {
@@ -1348,7 +1323,7 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
         eventType: 'payment_required',
         source: paymentSource,
         endpoint: endpointConfig.id,
-        payer: (isCreditsExhausted && (req as any).agent?.agentId) ? (req as any).agent.agentId : undefined,
+        payer: (req as any).agent?.agentId,
         amountUsd: endpointConfig.priceUsd,
         timestamp: new Date().toISOString(),
         details: {
@@ -1379,13 +1354,7 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
         facilitatorUrl: 'https://api.cdp.coinbase.com/platform/v2/x402',
         instructions:
           "Sign a USDC transferWithAuthorization (EIP-3009) or permit2 on Base (chain ID 8453) for the required amount and retry with the signed payment payload in the 'PAYMENT-SIGNATURE' header."
-      },
-      ...(isCreditsExhausted
-        ? {
-            error: 'Trial credit balance exhausted (0 credits remaining). Pay per call via x402 USDC on Base to continue.',
-            creditsRemaining: 0
-          }
-        : {})
+      }
     });
   };
 }

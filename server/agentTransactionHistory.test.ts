@@ -60,6 +60,23 @@ describe('Agent Transaction History & Itemized Receipts API', () => {
     };
 
     await registerAutonomousAgentHandler(req as any, res as any);
+    if (prefix !== 'empty_agent') {
+      const w = {
+        agentId: resData.agentId,
+        creditsBalance: 100,
+        availableBalance: 100,
+        paidCreditsBalance: 0,
+        promoCreditsBalance: 0,
+        trialCreditsBalance: 100,
+        trialCredits: 100,
+        lastCreditTag: 'TEST',
+        lifetimeSpent: 0,
+        simulationRuns: 0,
+        verifiedSimulations: 0
+      };
+      inMemoryWalletRegistry.set(resData.agentId, w);
+      dbStoreInstance.getCollection('agent_wallets').set(resData.agentId, w);
+    }
     return {
       agentId: resData.agentId,
       handle: resData.handle,

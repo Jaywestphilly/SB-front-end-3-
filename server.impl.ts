@@ -4063,21 +4063,61 @@ app.post('/api/v1/agent/keys/generate', authenticateAgent, requireScope('admin')
   });
 });
 
-app.post('/api/v1/agent/keys/revoke', (req, res) => {
+app.post('/api/v1/agent/keys/revoke', authenticateAgent, async (req, res) => {
+  const callerAgent = (req as any).agent;
+  const callerAgentId = callerAgent?.agentId;
   const { key, keyId } = req.body || {};
-  if (keyId && inMemoryKeyRegistry.has(keyId)) {
-    const k = inMemoryKeyRegistry.get(keyId)!;
-    k.status = 'revoked';
-    k.revokedAt = new Date() as any;
+
+  if (!key && !keyId) {
+    return res.status(404).json({ error: 'API key not found' });
   }
-  if (key && inMemoryKeyRegistry.has(key)) {
-    const k = inMemoryKeyRegistry.get(key)!;
-    k.status = 'revoked';
-    k.revokedAt = new Date() as any;
+
+  let targetRecord = (keyId && inMemoryKeyRegistry.get(keyId)) || (key && inMemoryKeyRegistry.get(key));
+  if (!targetRecord && db) {
+    try {
+      if (keyId) {
+        const snap = await db.collection('api_keys').doc(keyId).get();
+        if (snap.exists) targetRecord = snap.data();
+      }
+    } catch {}
   }
-  res.json({
-    status: "ok",
-    message: "API Key revoked successfully",
+
+  if (!targetRecord) {
+    return res.status(404).json({ error: 'API key not found' });
+  }
+
+  if (targetRecord.agentId !== callerAgentId) {
+    return res.status(403).json({ error: 'Forbidden: You may only revoke your own API keys.' });
+  }
+
+  const nowIso = new Date().toISOString();
+  targetRecord.status = 'revoked';
+  targetRecord.revokedAt = nowIso as any;
+
+  const resolvedKeyId = targetRecord.keyId || keyId || targetRecord.keyPrefix;
+  if (resolvedKeyId) {
+    inMemoryKeyRegistry.set(resolvedKeyId, targetRecord);
+  }
+  if (key) {
+    inMemoryKeyRegistry.set(key, targetRecord);
+  }
+  if ((targetRecord as any).rawKey) {
+    inMemoryKeyRegistry.set((targetRecord as any).rawKey, targetRecord);
+  }
+
+  if (resolvedKeyId && db) {
+    try {
+      await db.collection('api_keys').doc(resolvedKeyId).set({
+        status: 'revoked',
+        revokedAt: nowIso
+      }, { merge: true });
+    } catch {}
+  }
+
+  return res.json({
+    status: 'ok',
+    message: 'API Key revoked successfully',
+    keyId: resolvedKeyId
   });
 });
 

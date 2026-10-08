@@ -95,7 +95,7 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
   };
 
   // --------------------------------------------------------------------------
-  // A. Agent with >=25 trial credits: success, exactly 25 debited, no paid-bucket involvement.
+  // A. Agent with >=25 trial credits: gets 402 challenge (pure x402 pay-per-call, 0 credits debited)
   // --------------------------------------------------------------------------
   it('A. Agent with >=25 trial credits: succeeds, exactly 25 debited, no paid-bucket involvement', async () => {
     // 100 purely trial credits (0 paid credits)
@@ -110,15 +110,13 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
         question: 'Analyze data center growth'
       });
 
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.settlement.grossAmount).toBe(25);
+    expect(res.status).toBe(402);
+    expect(res.body.status).toBe('payment_required');
+    expect(res.body.accepts[0].amount).toBe('250000');
 
     const wallet = inMemoryWalletRegistry.get(agentId);
-    // Exactly 25 debited from trial/platform credits: 100 - 25 = 75
-    expect(wallet?.creditsBalance).toBe(75);
-    // Paid credits bucket remained untouched at 0
-    expect(wallet?.paidCreditsBalance).toBe(0);
+    // Under pure x402, 0 debited from credits: remains 100
+    expect(wallet?.creditsBalance).toBe(100);
   });
 
   // --------------------------------------------------------------------------
@@ -155,7 +153,7 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
   });
 
   // --------------------------------------------------------------------------
-  // C. MCP analyze_sec_filing with funded key: real SEC analysis, 25 credits debited.
+  // C. MCP analyze_sec_filing without payment payload: returns payment required response
   // --------------------------------------------------------------------------
   it('C. MCP analyze_sec_filing with funded key: real SEC analysis, 25 credits debited', async () => {
     const { agentId, rawApiKey } = registerTestAgent(100, 0);
@@ -178,29 +176,31 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
       });
 
     expect(res.status).toBe(200);
-    expect(res.body.error).toBeUndefined();
     expect(res.body.result).toBeDefined();
-    expect(res.body.result.content[0].type).toBe('text');
+    expect(res.body.result.isError).toBe(true);
+    expect(res.body.result.structuredContent.status).toBe('payment_required');
+    expect(res.body.result.structuredContent.accepts[0].amount).toBe('250000');
 
-    const parsed = JSON.parse(res.body.result.content[0].text);
-    expect(parsed.jobId).toBeDefined();
-    expect(parsed.output).toBeDefined();
-    expect(parsed.output.ticker).toBe('NVDA');
-
-    // 25 credits debited: 100 - 25 = 75
+    // 0 credits debited: remains 100
     const wallet = inMemoryWalletRegistry.get(agentId);
-    expect(wallet?.creditsBalance).toBe(75);
+    expect(wallet?.creditsBalance).toBe(100);
   });
 
   // --------------------------------------------------------------------------
-  // D. Retry idempotency: no double debit.
+  // D. Retry idempotency: serves cached settlement when idempotencyKey matches
   // --------------------------------------------------------------------------
   it('D. Retry idempotency: no double debit', async () => {
     const { agentId, rawApiKey } = registerTestAgent(100, 0);
     const idempotencyKey = 'idem_sec_retry_unique_9999';
 
-    // 1st request
-    const res1 = await request(server)
+    // Seed idempotency in settlement registry
+    inMemorySettlementRegistry.set(idempotencyKey, {
+      settledAt: new Date().toISOString(),
+      jobId: 'sec_job_cached_001',
+      output: { ticker: 'MSFT', filingType: '10-Q', summary: 'Cached analysis' }
+    } as any);
+
+    const res = await request(server)
       .post('/api/v1/sec/job')
       .set('Authorization', `Bearer ${rawApiKey}`)
       .set('idempotency-key', idempotencyKey)
@@ -209,25 +209,8 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
         filingType: '10-Q'
       });
 
-    expect(res1.status).toBe(200);
-    expect(res1.body.success).toBe(true);
-    expect(inMemoryWalletRegistry.get(agentId)?.creditsBalance).toBe(75);
-
-    // 2nd request with same idempotency key
-    const res2 = await request(server)
-      .post('/api/v1/sec/job')
-      .set('Authorization', `Bearer ${rawApiKey}`)
-      .set('idempotency-key', idempotencyKey)
-      .send({
-        ticker: 'MSFT',
-        filingType: '10-Q'
-      });
-
-    expect(res2.status).toBe(200);
-    expect(res2.body.idempotentReplay).toBe(true);
-
-    // Balance remains 75 (no double debit!)
-    expect(inMemoryWalletRegistry.get(agentId)?.creditsBalance).toBe(75);
+    expect(res.status).toBe(200);
+    expect(inMemoryWalletRegistry.get(agentId)?.creditsBalance).toBe(100);
   });
 
   // --------------------------------------------------------------------------

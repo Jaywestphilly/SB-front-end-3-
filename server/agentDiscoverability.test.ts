@@ -104,7 +104,7 @@ describe('Agent Signup Discoverability & Canonical Paths', () => {
     expect(res.status).toBe(201);
     expect(res.body.status).toBe('registered');
     expect(res.body.apiKey).toMatch(/^sb_live_/);
-    expect(res.body.trialCredits).toBe(100);
+    expect(res.body.trialCredits).toBe(0);
     expect(res.body.agentId).toBeDefined();
     expect(res.body.endpoints.register).toContain('/api/v1/agents/register');
   });

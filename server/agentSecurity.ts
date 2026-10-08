@@ -1001,7 +1001,7 @@ export function getSystemReadinessStatus(): {
     platformCredits: {
       status: 'ready',
       doubleEntry: true,
-      defaultTrialCredits: 100,
+      defaultTrialCredits: 0,
       feeBps: 500
     },
     settlementEngine: {

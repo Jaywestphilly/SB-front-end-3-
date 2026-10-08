@@ -259,13 +259,14 @@ describe('Durable Firestore Agent Credit Accounting', () => {
 
     const walletSnap = await db.collection('agent_wallets').doc(agentId).get();
     expect(walletSnap.exists).toBe(true);
-    expect(walletSnap.data().creditsBalance).toBe(100);
+    expect(walletSnap.data().creditsBalance).toBe(0);
 
-    // Now clear memory and verify key works
+    // Now clear memory and verify key works with durable debit
     inMemoryKeyRegistry.clear();
     inMemoryAgentRegistry.clear();
     inMemoryWalletRegistry.clear();
 
+    await db.collection('agent_wallets').doc(agentId).update({ creditsBalance: 100, availableBalance: 100 });
     const debit = await verifyAndDebitAgentCredit(`Bearer ${apiKey}`, 10);
     expect(debit.valid).toBe(true);
     expect(debit.creditsRemaining).toBe(90);
@@ -306,29 +307,19 @@ describe('Durable Firestore Agent Credit Accounting', () => {
     inMemoryAgentRegistry.clear();
     inMemoryWalletRegistry.clear();
 
-    // Call 1: Costs 10 credits, balance becomes 5
+    // Pure x402 pay-per-call: keyed request without PAYMENT-SIGNATURE gets 402 challenge, no credit debit
     const res1 = await request(app)
       .post('/api/v1/intelligence/research')
       .set('Authorization', `Bearer ${rawKey}`)
-      .send({ ticker: 'NVDA' });
+      .send({ title: 'AI Infrastructure', summary: 'CapEx Analysis', thesis: 'Bullish NVDA' });
 
-    expect(res1.status).toBe(200);
-    expect(res1.body.data).toBe('institutional_research_memo_secret_data');
-    expect(res1.body.creditsRemaining).toBe(5);
+    expect(res1.status).toBe(402);
+    expect(res1.body.code).toBe('PAYMENT_REQUIRED');
+    expect(res1.body.data).toBeUndefined();
 
-    // Call 2: Costs 10 credits, balance only 5 -> fails closed with 402 PAYMENT_REQUIRED
-    const res2 = await request(app)
-      .post('/api/v1/intelligence/research')
-      .set('Authorization', `Bearer ${rawKey}`)
-      .send({ ticker: 'NVDA' });
-
-    expect(res2.status).toBe(402);
-    expect(res2.body.code).toBe('PAYMENT_REQUIRED');
-    expect(res2.body.data).toBeUndefined(); // Never served paid data!
-
-    // Verify Firestore wallet balance is exactly 5
+    // Verify Firestore wallet balance is untouched at 15
     const finalWallet = await db.collection('agent_wallets').doc(agentId).get();
-    expect(finalWallet.data().creditsBalance).toBe(5);
+    expect(finalWallet.data().creditsBalance).toBe(15);
   });
 
   // (g) Transaction retry idempotency: mock rawTx aborting 1st commit reflects exactly ONE debit
@@ -461,23 +452,13 @@ describe('Durable Firestore Agent Credit Accounting', () => {
 
     const middleware = requireX402Payment();
 
-    // 1st middleware execution (e.g. global app.use)
+    // 1st middleware execution: un-signed request returns 402 and does not call next
     await middleware(req, res, next);
-    expect(nextCalls).toBe(1);
-    expect(req.creditsDebited).toBe(true);
-    expect(req.creditsRemaining).toBe(95); // 100 - 5 = 95
+    expect(nextCalls).toBe(0);
+    expect(req.creditsDebited).toBeUndefined();
 
     const walletAfterFirst = await db.collection('agent_wallets').doc(agentId).get();
-    expect(walletAfterFirst.data().creditsBalance).toBe(95);
-
-    // 2nd middleware execution on the same request (e.g. per-route mount)
-    await middleware(req, res, next);
-    expect(nextCalls).toBe(2);
-
-    const walletAfterSecond = await db.collection('agent_wallets').doc(agentId).get();
-    // Must remain exactly 95 — no second debit!
-    expect(walletAfterSecond.data().creditsBalance).toBe(95);
-    expect(walletAfterSecond.data().lifetimeSpent).toBe(5);
+    expect(walletAfterFirst.data().creditsBalance).toBe(100);
 
     // 2. Full HTTP test on double-mounted Express route (global app.use + route mount)
     const app = express();
@@ -497,17 +478,15 @@ describe('Durable Firestore Agent Credit Accounting', () => {
       .get('/api/v1/intelligence/sb-score')
       .set('Authorization', `Bearer ${rawKey}`);
 
-    expect(httpRes.status).toBe(200);
-    expect(httpRes.body.status).toBe('success');
-    expect(httpRes.body.creditsRemaining).toBe(90); // 95 - 5 = 90
+    expect(httpRes.status).toBe(402);
+    expect(httpRes.body.status).toBe('payment_required');
 
     const finalWallet = await db.collection('agent_wallets').doc(agentId).get();
-    expect(finalWallet.data().creditsBalance).toBe(90); // Exactly one debit for this request (total spent: 10)
-    expect(finalWallet.data().lifetimeSpent).toBe(10);
+    expect(finalWallet.data().creditsBalance).toBe(100); // Never debited under pure x402
   });
 
   // (i) Strategy evaluate endpoint debits exactly the endpoint price with no duplicate 1-credit charge
-  it('(i) strategy evaluate endpoint debits exactly the endpoint price with no duplicate 1-credit charge', async () => {
+  it('(i) strategy evaluate endpoint returns 402 challenge under pure x402 without debiting credits', async () => {
     const agentId = 'agent_strat_single_' + crypto.randomBytes(4).toString('hex');
     const { rawKey, keyRecord, keyId } = generateApiKeyPair(agentId, 'strat_agent');
 
@@ -539,7 +518,7 @@ describe('Durable Firestore Agent Credit Accounting', () => {
       }
     );
 
-    // Call /api/v1/agent/strategy/evaluate (price $0.10 = 10 credits)
+    // Call /api/v1/agent/strategy/evaluate (under pure x402, un-signed request returns 402)
     const res = await request(app)
       .post('/api/v1/agent/strategy/evaluate')
       .set('Authorization', `Bearer ${rawKey}`)
@@ -548,12 +527,10 @@ describe('Durable Firestore Agent Credit Accounting', () => {
         benchmark: 'super_sonic_tsunami'
       });
 
-    expect(res.status).toBe(200);
-    // Cost must be exactly 10 credits (50 - 10 = 40), NEVER 40 - 1 = 39 or 50 - 20 = 30
-    expect(res.body.credits_remaining).toBe(40);
+    expect(res.status).toBe(402);
+    expect(res.body.status).toBe('payment_required');
 
     const wallet = await db.collection('agent_wallets').doc(agentId).get();
-    expect(wallet.data().creditsBalance).toBe(40);
-    expect(wallet.data().lifetimeSpent).toBe(10);
+    expect(wallet.data().creditsBalance).toBe(50);
   });
 });
