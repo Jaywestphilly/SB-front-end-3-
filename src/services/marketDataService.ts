@@ -356,9 +356,15 @@ export class MarketDataService {
     }
   };
 
-  private static targetFiles = [
-    path.join(process.cwd(), "server", "data", "market_watchlist_data.json")
-  ];
+  public static getDataDir(): string {
+    return process.env.SB_DATA_DIR || path.join(process.cwd(), 'server', 'data');
+  }
+
+  public static getTargetFiles(): string[] {
+    return [
+      path.join(MarketDataService.getDataDir(), "market_watchlist_data.json")
+    ];
+  }
 
   private static cache: { data: MarketFeedData; timestamp: number } | null = null;
   private static CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes in-memory cache
@@ -405,7 +411,7 @@ export class MarketDataService {
    * Load existing verified dataset from file system
    */
   public static loadPersistedData(): MarketFeedData | null {
-    for (const filePath of MarketDataService.targetFiles) {
+    for (const filePath of MarketDataService.getTargetFiles()) {
       if (fs.existsSync(filePath)) {
         try {
           const content = fs.readFileSync(filePath, 'utf-8');
@@ -759,7 +765,7 @@ export class MarketDataService {
       watchlist: dataset.watchlist
     };
 
-    for (const filePath of MarketDataService.targetFiles) {
+    for (const filePath of MarketDataService.getTargetFiles()) {
       try {
         const dir = path.dirname(filePath);
         if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });

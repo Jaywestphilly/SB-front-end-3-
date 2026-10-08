@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
 import express from 'express';
 import fs from 'fs';
@@ -15,21 +15,44 @@ import { resetFacilitatorMock } from './testSetup/facilitatorMock.js';
 describe('13F & Market Feed Leak Security Suite', () => {
   let app: express.Application;
   const originalEnv = { ...process.env };
-  const serverDataDir = path.join(process.cwd(), 'server', 'data');
-  const secDataPath = path.join(serverDataDir, 'sec_intel_data.json');
+
+  // Track the state of the real database file to ensure it's never modified
+  const realDataDir = path.join(process.cwd(), 'server', 'data');
+  const realSecDataPath = path.join(realDataDir, 'sec_intel_data.json');
+  let realFileExists = false;
+  let realFileMtime = 0;
+  let realFileSize = 0;
+
+  beforeAll(() => {
+    realFileExists = fs.existsSync(realSecDataPath);
+    if (realFileExists) {
+      const stats = fs.statSync(realSecDataPath);
+      realFileMtime = stats.mtimeMs;
+      realFileSize = stats.size;
+    }
+  });
+
+  afterAll(() => {
+    // Assert the real production file was never written to or touched by this suite
+    const currentExists = fs.existsSync(realSecDataPath);
+    expect(currentExists).toBe(realFileExists);
+    if (realFileExists && currentExists) {
+      const stats = fs.statSync(realSecDataPath);
+      expect(stats.size).toBe(realFileSize);
+      expect(stats.mtimeMs).toBe(realFileMtime);
+    }
+  });
+
+  // Target directory for tests: process.env.SB_DATA_DIR (templated per-run)
+  const testDataDir = process.env.SB_DATA_DIR || path.join(process.cwd(), 'server', 'data_test');
+  const secDataPath = path.join(testDataDir, 'sec_intel_data.json');
   const publicSecDataPath = path.join(process.cwd(), 'public', 'sec_intel_data.json');
   const rootSecDataPath = path.join(process.cwd(), 'sec_intel_data.json');
 
-  beforeEach(() => {
-    resetFacilitatorMock();
-    clearX402SettlementRegistry();
-    process.env.X402_RECIPIENT_ADDRESS = '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708';
-
-    // Seed server/data/sec_intel_data.json for tests
-    if (!fs.existsSync(serverDataDir)) {
-      fs.mkdirSync(serverDataDir, { recursive: true });
+  const seedFixtureData = () => {
+    if (!fs.existsSync(testDataDir)) {
+      fs.mkdirSync(testDataDir, { recursive: true });
     }
-
     fs.writeFileSync(secDataPath, JSON.stringify({
       status: 'success',
       updated_at: new Date().toISOString(),
@@ -61,6 +84,16 @@ describe('13F & Market Feed Leak Security Suite', () => {
       ],
       macroSummary: 'Institutional capital reallocation into AI power grid infrastructure. Capital expansion continues across frontier silicon.'
     }, null, 2), 'utf-8');
+  };
+
+  beforeEach(() => {
+    resetFacilitatorMock();
+    clearX402SettlementRegistry();
+    process.env.X402_RECIPIENT_ADDRESS = '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708';
+    process.env.SB_DATA_DIR = testDataDir;
+
+    // Seed the file under process.env.SB_DATA_DIR
+    seedFixtureData();
 
     app = express();
     app.use(express.json());
@@ -145,6 +178,11 @@ describe('13F & Market Feed Leak Security Suite', () => {
   afterEach(() => {
     process.env = { ...originalEnv };
     vi.restoreAllMocks();
+
+    // Clean up created files under process.env.SB_DATA_DIR to maintain test isolation
+    if (fs.existsSync(secDataPath)) {
+      fs.unlinkSync(secDataPath);
+    }
   });
 
   it('(a) GET /sec_intel_data.json, /api/sec-intel, /market_watchlist_data.json, and /api/market-watchlist each return 404 JSON, not HTML', async () => {
@@ -196,18 +234,6 @@ describe('13F & Market Feed Leak Security Suite', () => {
     expect(res.body.funds).toBeDefined();
     expect(res.body.funds.length).toBeGreaterThan(0);
 
-    const excludedKeys = [
-      'shares',
-      'valueMillions',
-      'portfolioPercent',
-      'changePercent',
-      'thesis',
-      'filings',
-      'aum',
-      'sectorAllocation',
-      'quarterFlows'
-    ];
-
     for (const fund of res.body.funds) {
       expect(fund.topHoldings.length).toBeLessThanOrEqual(3);
       for (const exKey of ['filings', 'aum', 'sectorAllocation', 'quarterFlows']) {
@@ -221,7 +247,7 @@ describe('13F & Market Feed Leak Security Suite', () => {
     }
   });
 
-  it('(d) After SecIntelService refresh, public/sec_intel_data.json does not exist and server/data/sec_intel_data.json does', async () => {
+  it('(d) After SecIntelService refresh, public/sec_intel_data.json does not exist and server/data_test/sec_intel_data.json does', async () => {
     // Ensure clean state
     if (fs.existsSync(publicSecDataPath)) fs.unlinkSync(publicSecDataPath);
     if (fs.existsSync(rootSecDataPath)) fs.unlinkSync(rootSecDataPath);
@@ -245,5 +271,22 @@ describe('13F & Market Feed Leak Security Suite', () => {
     expect(res.body.code).toBe('LIVE_DATA_UNAVAILABLE');
     expect(res.body.charged).toBe(false);
     expect(res.headers['payment-required']).toBeUndefined();
+  });
+
+  it('(f) with empty funds in SB_DATA_DIR, and EDGAR mocked to fail, fetchLiveSecData(true) heals to >= TRACKED_CIKS.length', async () => {
+    // Seed empty funds list to emulate empty or bad persisted file
+    fs.writeFileSync(secDataPath, JSON.stringify({ funds: [] }), 'utf-8');
+
+    // Mock fetch to reject, simulating live EDGAR failure
+    const originalFetch = global.fetch;
+    global.fetch = vi.fn().mockRejectedValue(new Error('EDGAR network down'));
+
+    try {
+      const data = await SecIntelService.fetchLiveSecData(true);
+      expect(data).toBeDefined();
+      expect(data.funds.length).toBeGreaterThanOrEqual(SecIntelService.TRACKED_CIKS.length);
+    } finally {
+      global.fetch = originalFetch;
+    }
   });
 });

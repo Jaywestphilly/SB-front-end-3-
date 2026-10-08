@@ -89,20 +89,26 @@ export class SecIntelService {
   private static cache: { data: SecFeedData; timestamp: number } | null = null;
   private static CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-  private static targetFiles = [
-    path.join(process.cwd(), "server", "data", "sec_intel_data.json")
-  ];
+  public static getDataDir(): string {
+    return process.env.SB_DATA_DIR || path.join(process.cwd(), 'server', 'data');
+  }
+
+  public static getTargetFiles(): string[] {
+    return [
+      path.join(SecIntelService.getDataDir(), "sec_intel_data.json")
+    ];
+  }
 
   /**
    * Load baseline or persisted SEC data from disk
    */
   public static loadPersistedData(): SecFeedData | null {
-    for (const filePath of SecIntelService.targetFiles) {
+    for (const filePath of SecIntelService.getTargetFiles()) {
       if (fs.existsSync(filePath)) {
         try {
           const content = fs.readFileSync(filePath, 'utf-8');
           const json = JSON.parse(content);
-          if (json && Array.isArray(json.funds)) {
+          if (json && Array.isArray(json.funds) && json.funds.length > 0) {
             const updatedAt = json.updated_at || new Date().toISOString();
             const ageSeconds = Math.max(0, Math.floor((Date.now() - new Date(updatedAt).getTime()) / 1000));
             const isStale = ageSeconds > 86400; // 24 hours
@@ -206,9 +212,23 @@ export class SecIntelService {
         })
       );
 
-      // 2. Load base funds dataset
+      // 2. Load base funds dataset and build base as union by id (persisted wins)
       const persisted = SecIntelService.loadPersistedData();
-      const baseFunds: any[] = persisted?.funds || SecIntelService.getDefaultFunds();
+      const defaultFunds = SecIntelService.getDefaultFunds();
+      const persistedFunds = persisted?.funds || [];
+
+      const baseFundsMap = new Map<string, any>();
+      for (const fund of defaultFunds) {
+        if (fund && fund.id) {
+          baseFundsMap.set(fund.id, fund);
+        }
+      }
+      for (const fund of persistedFunds) {
+        if (fund && fund.id) {
+          baseFundsMap.set(fund.id, fund);
+        }
+      }
+      const baseFunds = Array.from(baseFundsMap.values());
 
       // 3. Merge live filings into tracked funds
       const mergedFunds: SecFundData[] = baseFunds.map((fund: any) => {
@@ -393,13 +413,15 @@ export class SecIntelService {
       };
 
       // Save to disk asynchronously so fallback remains fresh
-      for (const filePath of SecIntelService.targetFiles) {
-        try {
-          const dir = path.dirname(filePath);
-          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-          fs.writeFileSync(filePath, JSON.stringify(dataset, null, 2), 'utf-8');
-        } catch (e) {
-          // ignore disk write errors
+      if (mergedFunds.length >= SecIntelService.TRACKED_CIKS.length) {
+        for (const filePath of SecIntelService.getTargetFiles()) {
+          try {
+            const dir = path.dirname(filePath);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(filePath, JSON.stringify(dataset, null, 2), 'utf-8');
+          } catch (e) {
+            // ignore disk write errors
+          }
         }
       }
 

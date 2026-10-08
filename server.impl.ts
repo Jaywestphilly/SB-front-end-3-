@@ -2385,10 +2385,10 @@ const FEED_URLS: Record<string, string> = {
   news: "https://raw.githubusercontent.com/Jaywestphilly/stock-bloc-backend/main/intel_news_feed.json",
 };
 
-async function fetchAndProcessFeed(feedKey: 'market' | 'sec' | 'dyson' | 'news') {
+async function fetchAndProcessFeed(feedKey: 'market' | 'sec' | 'dyson' | 'news', forceRefresh = false) {
   if (feedKey === 'market') {
     try {
-      const marketData = await MarketDataService.refreshMarketData();
+      const marketData = await MarketDataService.refreshMarketData(forceRefresh);
       if (marketData && Array.isArray(marketData.watchlist) && marketData.watchlist.length > 0) {
         return marketData;
       }
@@ -2412,7 +2412,7 @@ async function fetchAndProcessFeed(feedKey: 'market' | 'sec' | 'dyson' | 'news')
 
   if (feedKey === 'sec') {
     try {
-      const secData = await SecIntelService.fetchLiveSecData();
+      const secData = await SecIntelService.fetchLiveSecData(forceRefresh);
       if (secData && Array.isArray(secData.funds) && secData.funds.length > 0) {
         return secData;
       }
@@ -5480,7 +5480,7 @@ async function startServer() {
 
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`Stock Bloc server running on http://0.0.0.0:${PORT}`);
-    fetchAndProcessFeed('sec').catch(() => {});
+    fetchAndProcessFeed('sec', true).catch(() => {});
   });
 }
 
