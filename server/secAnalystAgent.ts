@@ -887,69 +887,116 @@ export async function fetchLiveSecFiling(
     let cashFlowHighlights: any = undefined;
     let hasExactFigures = false;
 
-    // Fetch numeric highlights ONLY if they come from SEC companyfacts consistent with that exact accession
-    try {
-      const factsRes = await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik.padStart(10, '0')}.json`, {
-        headers: { 'User-Agent': 'StockBloc-SEC-Analyst/1.0 (contact@stockbloc.ai)' },
-        signal: AbortSignal.timeout(3000)
+    function findMatchingFact(
+      units: any[],
+      accNum: string,
+      repDate: string,
+      fType: string,
+      isDuration: boolean
+    ): any | null {
+      if (!Array.isArray(units)) return null;
+      const matches = units.filter((u: any) => {
+        if (u.accn !== accNum) return false;
+        if (u.end !== repDate) return false;
+        if (u.form !== fType) return false;
+        if (isDuration) {
+          if (!u.start) return false;
+          const startD = new Date(u.start);
+          const endD = new Date(u.end);
+          const diffMs = endD.getTime() - startD.getTime();
+          const diffDays = diffMs / (1000 * 60 * 60 * 24);
+          if (fType === '10-K') {
+            if (diffDays < 330 || diffDays > 400) return false;
+          } else if (fType === '10-Q') {
+            if (diffDays < 80 || diffDays > 100) return false;
+          } else {
+            return false;
+          }
+        }
+        return true;
       });
-      if (factsRes.ok) {
-        const factsData: any = await factsRes.json();
-        const gaap = factsData?.facts?.['us-gaap'];
-        if (gaap) {
-          const revConcepts = ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'SalesRevenueNet'];
-          let revVal: number | null = null;
-          for (const c of revConcepts) {
-            const units = gaap[c]?.units?.USD;
-            if (Array.isArray(units)) {
-              const match = units.find((u: any) => u.accn === accessionNumber);
+      if (matches.length === 0) return null;
+      const withFrame = matches.find((m: any) => m.frame);
+      return withFrame || matches[0];
+    }
+
+    // Fetch numeric highlights ONLY if they come from SEC companyfacts consistent with that exact accession
+    if (filingType === '10-K' || filingType === '10-Q') {
+      try {
+        const factsRes = await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik.padStart(10, '0')}.json`, {
+          headers: { 'User-Agent': 'StockBloc-SEC-Analyst/1.0 (contact@stockbloc.ai)' },
+          signal: AbortSignal.timeout(3000)
+        });
+        if (factsRes.ok) {
+          const factsData: any = await factsRes.json();
+          const gaap = factsData?.facts?.['us-gaap'];
+          if (gaap) {
+            const revConcepts = ['Revenues', 'RevenueFromContractWithCustomerExcludingAssessedTax', 'SalesRevenueNet'];
+            let revVal: number | null = null;
+            let revPeriod: { start: string; end: string } | null = null;
+            for (const c of revConcepts) {
+              const units = gaap[c]?.units?.USD;
+              const match = findMatchingFact(units, accessionNumber, reportDate, filingType, true);
               if (match && typeof match.val === 'number') {
                 revVal = match.val;
+                if (match.start && match.end) {
+                  revPeriod = { start: match.start, end: match.end };
+                }
                 break;
               }
             }
-          }
-          let netIncVal: number | null = null;
-          const netUnits = gaap['NetIncomeLoss']?.units?.USD;
-          if (Array.isArray(netUnits)) {
-            const match = netUnits.find((u: any) => u.accn === accessionNumber);
+            let netIncVal: number | null = null;
+            let netIncPeriod: { start: string; end: string } | null = null;
+            const netUnits = gaap['NetIncomeLoss']?.units?.USD;
+            const match = findMatchingFact(netUnits, accessionNumber, reportDate, filingType, true);
             if (match && typeof match.val === 'number') {
               netIncVal = match.val;
+              if (match.start && match.end) {
+                netIncPeriod = { start: match.start, end: match.end };
+              }
             }
-          }
 
-          if (revVal !== null || netIncVal !== null) {
-            hasExactFigures = true;
-            if (revVal !== null) {
-              const formattedRev = Math.abs(revVal) >= 1e9
-                ? `$${(revVal / 1e9).toFixed(2)}B`
-                : `$${(revVal / 1e6).toFixed(2)}M`;
-              revenueHighlights = {
-                totalRevenue: formattedRev,
-                source: `SEC EDGAR XBRL companyfacts for accession ${accessionNumber}`
-              };
-            }
-            if (netIncVal !== null) {
-              const formattedNet = Math.abs(netIncVal) >= 1e9
-                ? `$${(netIncVal / 1e9).toFixed(2)}B`
-                : `$${(netIncVal / 1e6).toFixed(2)}M`;
-              earningsHighlights = {
-                netIncome: formattedNet,
-                source: `SEC EDGAR XBRL companyfacts for accession ${accessionNumber}`
-              };
+            if (revVal !== null || netIncVal !== null) {
+              hasExactFigures = true;
+              if (revVal !== null) {
+                const formattedRev = Math.abs(revVal) >= 1e9
+                  ? `$${(revVal / 1e9).toFixed(2)}B`
+                  : `$${(revVal / 1e6).toFixed(2)}M`;
+                revenueHighlights = {
+                  totalRevenue: formattedRev,
+                  source: `SEC EDGAR XBRL companyfacts for accession ${accessionNumber} fiscal period ending ${reportDate}`,
+                  period: revPeriod || { start: reportDate, end: reportDate }
+                };
+              }
+              if (netIncVal !== null) {
+                const formattedNet = Math.abs(netIncVal) >= 1e9
+                  ? `$${(netIncVal / 1e9).toFixed(2)}B`
+                  : `$${(netIncVal / 1e6).toFixed(2)}M`;
+                earningsHighlights = {
+                  netIncome: formattedNet,
+                  source: `SEC EDGAR XBRL companyfacts for accession ${accessionNumber} fiscal period ending ${reportDate}`,
+                  period: netIncPeriod || { start: reportDate, end: reportDate }
+                };
+              }
             }
           }
         }
+      } catch {
+        // Non-blocking XBRL lookup
       }
-    } catch {
-      // Non-blocking XBRL lookup
+    }
+
+    const hasBothFigures = (revenueHighlights !== undefined && earningsHighlights !== undefined);
+    let confidence = hasExactFigures ? 0.99 : 0.6;
+    if (filingType === '8-K') {
+      confidence = 0.6;
+    } else if (!hasBothFigures) {
+      confidence = Math.min(confidence, 0.6);
     }
 
     const executiveSummary = hasExactFigures
       ? `[LIVE SEC DATA] ${companyName} (${normTicker}) official Form ${filingType} retrieved live from U.S. SEC EDGAR (Filing Date: ${filingDate}, Period: ${reportDate}, Accession: ${accessionNumber}). Verified under CIK ${cik}.${question ? ` Addressed query: "${question}".` : ''}`
       : `[LIVE SEC DATA] ${companyName} (${normTicker}) official Form ${filingType} retrieved live from U.S. SEC EDGAR for period ending ${reportDate} (Filed: ${filingDate}, Accession: ${accessionNumber}). Verified under CIK ${cik}. Official filing URL: ${filingUrl}. Detailed XBRL numeric figures were not available for this exact accession and period in companyfacts and have been omitted.${question ? ` Intelligence synthesized for: "${question}".` : ''}`;
-
-    const confidence = hasExactFigures ? 0.99 : 0.6;
 
     return {
       ticker: normTicker,

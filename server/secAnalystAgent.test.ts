@@ -656,4 +656,144 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     expect(buyerWallet?.creditsBalance).toBe(75);
     expect(buyerWallet?.lifetimeSpent).toBe(25);
   });
+
+  it('correctly filters fiscal period and reports the precise fiscal year figures instead of historical ones', async () => {
+    // 1. Mock submissions
+    const mockSubmissions = {
+      cik: '0000032019',
+      name: 'Apple Inc.',
+      filings: {
+        recent: {
+          form: ['10-K', '10-Q'],
+          accessionNumber: ['0000320193-25-000079', '0000320193-25-000080'],
+          filingDate: ['2025-10-31', '2026-02-01'],
+          reportDate: ['2025-09-27', '2025-12-27'],
+          primaryDocument: ['aapl-20250927.htm', 'aapl-20251227.htm']
+        }
+      }
+    };
+
+    // 2. Mock companyfacts (FY2023, FY2024, FY2025 annual rows sharing same accn, plus quarterly rows)
+    const mockFacts = {
+      cik: 32019,
+      entityName: 'Apple Inc.',
+      facts: {
+        'us-gaap': {
+          Revenues: {
+            units: {
+              USD: [
+                {
+                  val: 383290000000,
+                  accn: '0000320193-25-000079',
+                  start: '2022-09-25',
+                  end: '2023-09-30',
+                  form: '10-K',
+                  fy: 2023,
+                  fp: 'FY'
+                },
+                {
+                  val: 391040000000,
+                  accn: '0000320193-25-000079',
+                  start: '2023-10-01',
+                  end: '2024-09-28',
+                  form: '10-K',
+                  fy: 2024,
+                  fp: 'FY'
+                },
+                {
+                  val: 416160000000,
+                  accn: '0000320193-25-000079',
+                  start: '2024-09-29',
+                  end: '2025-09-27',
+                  form: '10-K',
+                  fy: 2025,
+                  fp: 'FY',
+                  frame: 'CY2025'
+                },
+                {
+                  val: 90000000000,
+                  accn: '0000320193-25-000080',
+                  start: '2025-09-28',
+                  end: '2025-12-27',
+                  form: '10-Q',
+                  fy: 2026,
+                  fp: 'Q1'
+                },
+                {
+                  val: 180000000000,
+                  accn: '0000320193-25-000080',
+                  start: '2025-09-28',
+                  end: '2026-03-27',
+                  form: '10-Q',
+                  fy: 2026,
+                  fp: 'Q2'
+                }
+              ]
+            }
+          },
+          NetIncomeLoss: {
+            units: {
+              USD: [
+                {
+                  val: 97000000000,
+                  accn: '0000320193-25-000079',
+                  start: '2022-09-25',
+                  end: '2023-09-30',
+                  form: '10-K',
+                  fy: 2023,
+                  fp: 'FY'
+                },
+                {
+                  val: 112010000000,
+                  accn: '0000320193-25-000079',
+                  start: '2024-09-29',
+                  end: '2025-09-27',
+                  form: '10-K',
+                  fy: 2025,
+                  fp: 'FY',
+                  frame: 'CY2025'
+                }
+              ]
+            }
+          }
+        }
+      }
+    };
+
+    const originalFetch = global.fetch;
+    global.fetch = (url: any) => {
+      const urlStr = String(url);
+      if (urlStr.includes('submissions')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockSubmissions)
+        } as any);
+      }
+      if (urlStr.includes('companyfacts')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockFacts)
+        } as any);
+      }
+      return Promise.resolve({ ok: false } as any);
+    };
+
+    try {
+      // Test 10-K Retrieval for FY2025 (should yield $416.16B and $112.01B)
+      const resK = await fetchLiveSecFiling('AAPL', '10-K');
+      expect(resK).toBeDefined();
+      expect(resK?.revenueHighlights).toBeDefined();
+      expect(resK?.revenueHighlights?.totalRevenue).toBe('$416.16B');
+      expect(resK?.earningsHighlights?.netIncome).toBe('$112.01B');
+      expect(resK?.confidence).toBe(0.99);
+
+      // Test 10-Q Retrieval (should yield $90.00B 90-day span value, not the $180.00B 180-day YTD value)
+      const resQ = await fetchLiveSecFiling('AAPL', '10-Q');
+      expect(resQ).toBeDefined();
+      expect(resQ?.revenueHighlights).toBeDefined();
+      expect(resQ?.revenueHighlights?.totalRevenue).toBe('$90.00B');
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
 });
