@@ -923,6 +923,93 @@ try {
   console.log('Note: Firebase Admin gRPC initialization skipped or restricted; using Resilient Hybrid Store.');
 }
 
+let strayKeyCleanupPromise: Promise<void> | null = null;
+
+export async function cleanupStrayTestKeys(): Promise<void> {
+  if (strayKeyCleanupPromise) {
+    return strayKeyCleanupPromise;
+  }
+  strayKeyCleanupPromise = (async () => {
+    const targetKeyId = 'ec81bfa616b7e2c6';
+    const targetAgentId = 'agent_quant_0926898a7c';
+    let removed = false;
+
+    try {
+      // 1. Direct Firestore admin deletion
+      if (rawAdminDb) {
+        try {
+          const docRef = rawAdminDb.collection('api_keys').doc(targetKeyId);
+          const docSnap = await docRef.get();
+          if (docSnap && docSnap.exists) {
+            await docRef.delete();
+            removed = true;
+          }
+        } catch {
+          // ignore error
+        }
+
+        try {
+          const querySnap = await rawAdminDb.collection('api_keys').where('agentId', '==', targetAgentId).get();
+          if (querySnap && !querySnap.empty) {
+            for (const doc of querySnap.docs) {
+              try {
+                await doc.ref.delete();
+                removed = true;
+              } catch {}
+            }
+          }
+        } catch {
+          // ignore error
+        }
+      }
+
+      // 2. Hybrid / local db store deletion
+      try {
+        const col = dbStoreInstance.getCollection('api_keys');
+        if (col && col.has(targetKeyId)) {
+          col.delete(targetKeyId);
+          dbStoreInstance.saveToDisk();
+          removed = true;
+        }
+        if (col) {
+          for (const [id, rec] of col.entries()) {
+            if (rec && (rec.agentId === targetAgentId || rec.id === targetKeyId || rec.keyId === targetKeyId)) {
+              col.delete(id);
+              dbStoreInstance.saveToDisk();
+              removed = true;
+            }
+          }
+        }
+      } catch {}
+
+      // 3. Clear from in-memory key registry if present
+      try {
+        const { inMemoryKeyRegistry } = await import('./agentPlatform.js');
+        if (inMemoryKeyRegistry && inMemoryKeyRegistry.has(targetKeyId)) {
+          inMemoryKeyRegistry.delete(targetKeyId);
+          removed = true;
+        }
+        if (inMemoryKeyRegistry) {
+          for (const [k, rec] of inMemoryKeyRegistry.entries()) {
+            if (rec && (rec.agentId === targetAgentId || rec.keyId === targetKeyId)) {
+              inMemoryKeyRegistry.delete(k);
+              removed = true;
+            }
+          }
+        }
+      } catch {}
+    } catch {}
+
+    if (removed) {
+      console.log('stray test key removed');
+    } else {
+      console.log('stray test key already absent');
+    }
+  })();
+
+  return strayKeyCleanupPromise;
+}
+
 let localTxQueue = Promise.resolve();
 export let customTransactionRunner: ((updateFunction: any) => Promise<any>) | null = null;
 export function setCustomTransactionRunner(runner: any) {

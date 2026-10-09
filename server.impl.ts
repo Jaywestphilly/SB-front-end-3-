@@ -18,7 +18,7 @@ import { agentIntelligenceRouter } from './server/agentIntelligenceApi.js';
 import { agentExchangeRouter, ensureSeedBountiesExist } from './server/agentExchangeApi.js';
 import { initializeSecAnalystAgent, secAnalystRouter } from './server/secAnalystAgent.js';
 import { web3DotBtcRouter } from './server/web3DotBtcApi.js';
-import { db } from './server/firebaseAdmin.js';
+import { db, cleanupStrayTestKeys } from './server/firebaseAdmin.js';
 import { FieldValue } from 'firebase-admin/firestore';
 import { validateProductionStartupSafety, authenticateAgent, getSystemReadinessStatus, ensurePersistentAgentSecret } from './server/agentSecurity.js';
 import { agentTelemetryRouter, trackAgentVisitMiddleware } from './server/agentTelemetry.js';
@@ -5410,6 +5410,8 @@ function getRouteMetadata(reqPath: string, query: Record<string, any>, host: str
 }
 
 async function startServer() {
+  await cleanupStrayTestKeys();
+
   app.use((req, res, next) => {
     if (req.method === 'GET' && !req.path.startsWith('/api')) {
       const basename = path.basename(req.path);
