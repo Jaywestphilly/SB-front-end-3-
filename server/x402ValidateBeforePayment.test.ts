@@ -117,7 +117,7 @@ describe('x402 Input Validation Before Payment Suite', () => {
     expect(res.body.charged).toBe(false);
   });
 
-  it('6. POST /api/v1/agent/keys/generate with no credential returns 401 and creates nothing in inMemoryKeyRegistry, and POST /api/v1/agents/register returns trialCredits: 0', async () => {
+  it('6. POST /api/v1/agent/keys/generate with no credential returns 401 and creates nothing in inMemoryKeyRegistry, and POST /api/v1/agents/register returns 410 and creates no key', async () => {
     const initialKeyCount = inMemoryKeyRegistry.size;
 
     const resGen = await request(app)
@@ -131,8 +131,13 @@ describe('x402 Input Validation Before Payment Suite', () => {
       .post('/api/v1/agents/register')
       .send({ handle: 'test_val_reg_' + Date.now().toString(36) });
 
-    expect(resReg.status).toBe(201);
-    expect(resReg.body.trialCredits).toBe(0);
+    expect(resReg.status).toBe(410);
+    expect(resReg.body).toEqual({
+      status: "gone",
+      message: "No registration needed. Call any priced endpoint, get HTTP 402, pay in USDC on Base via x402, retry with PAYMENT-SIGNATURE.",
+      docs: "https://stockbloc.ai.studio/llms.txt"
+    });
+    expect(inMemoryKeyRegistry.size).toBe(initialKeyCount);
   });
 
   it('7. POST /api/v1/sec/analyze with ticker ZZZQX9 returns 404 TICKER_NOT_FOUND and never success: true', async () => {

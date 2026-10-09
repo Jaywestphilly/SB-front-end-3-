@@ -661,287 +661,60 @@ export async function addCreditsToAgentWallet(
   };
 }
 
-// Helper to register autonomous agents without requiring human Firebase auth
-export const registerAutonomousAgentHandler = async (req: Request, res: Response) => {
-  try {
-    const { handle, displayName, description, avatar, specialties, webhookUrl, agentType } = req.body || {};
-    
-    // Auto-generate handle if missing
-    const finalHandle = handle && /^[a-zA-Z0-9_]{3,30}$/.test(handle)
-      ? handle
-      : `agent_${crypto.randomBytes(3).toString('hex')}`;
-
-    const finalDisplayName = displayName || `${finalHandle.replace(/_/g, ' ').toUpperCase()} Agent`;
-    const finalDescription = description || "Autonomous quant market intelligence & Super Sonic Tsunami trading agent.";
-    const finalSpecialties = Array.isArray(specialties) && specialties.length > 0 
-      ? specialties 
-      : ["Market Intelligence", "Super Sonic Tsunami", "Quantitative Backtesting", "Breakout Momentum"];
-
-    const publicId = crypto.randomBytes(8).toString('hex');
-    const secret = crypto.randomBytes(32).toString('hex');
-    const rawKey = `sb_live_${publicId}_${secret}`;
-    const keyPrefix = secret.substring(0, 4) + '...';
-    const keyHash = crypto.createHash('sha256').update(secret).digest('hex');
-    const agentId = `agent_auto_${crypto.randomBytes(5).toString('hex')}`;
-
-    const agentRecord: any = {
-      agentId,
-      handle: finalHandle,
-      handleLower: finalHandle.toLowerCase(),
-      displayName: finalDisplayName,
-      description: finalDescription,
-      avatar: avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${finalHandle}`,
-      ownerUid: 'autonomous_agent',
-      operatorUsername: 'autonomous_agent_runtime',
-      verificationStatus: 'arena_candidate',
-      specialties: finalSpecialties,
-      isTestAgent: false,
-      isAutonomousAgent: true,
-      verifiedSimulation: false,
-      followersCount: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      lastSeenAt: new Date().toISOString(),
-      status: 'active',
-      authorType: 'agent',
-      isAgent: true,
-      metrics: {
-        winRatePercent: null,
-        monthlyAlphaPercent: 0,
-        sharpeRatio: 0,
-        maxDrawdownPercent: 0,
-        simulationRuns: 0,
-        forecasts: { total: 0, correct: 0, incorrect: 0 },
-        badges: ["Arena Candidate", "Quant Vanguard"]
-      }
-    };
-
-    const requestedScopes = Array.isArray(req.body?.scopes) && req.body.scopes.length > 0
-      ? (req.body.scopes as AgentApiScope[])
-      : null;
-
-    // Autonomous register scopes: services:read, jobs:read, jobs:execute, payments:transact, community:read, community:write, community:reply
-    const allowedAutonomousScopes: AgentApiScope[] = [...DEFAULT_AUTONOMOUS_SCOPES];
-    const finalScopes: AgentApiScope[] = requestedScopes
-      ? requestedScopes.filter((s) => allowedAutonomousScopes.includes(s))
-      : allowedAutonomousScopes;
-    const resolvedScopes: AgentApiScope[] = finalScopes.length > 0 ? finalScopes : allowedAutonomousScopes;
-
-    const keyRecord: AgentApiKeyRecord = {
-      keyId: publicId,
-      agentId,
-      ownerUid: 'autonomous_agent',
-      keyPrefix,
-      keyHash,
-      scopes: resolvedScopes,
-      createdAt: new Date() as any,
-      lastUsedAt: null,
-      expiresAt: null,
-      revokedAt: null,
-      status: 'active'
-    };
-
-    // Store in memory for zero-latency retrieval
-    inMemoryAgentRegistry.set(agentId, agentRecord);
-    inMemoryAgentRegistry.set(finalHandle.toLowerCase(), agentRecord);
-    inMemoryKeyRegistry.set(publicId, { ...keyRecord, secretHash: keyHash });
-    inMemoryKeyRegistry.set(rawKey, { ...keyRecord, secretHash: keyHash });
-    inMemoryWalletRegistry.set(agentId, {
-      agentId,
-      creditsBalance: 0,
-      availableBalance: 0,
-      paidCreditsBalance: 0,
-      promoCreditsBalance: 0,
-      trialCreditsBalance: 0,
-      trialCredits: 0,
-      lastCreditTag: 'NONE',
-      lifetimeSpent: 0,
-      simulationRuns: 0,
-      verifiedSimulations: 0
-    });
-
-    // Await Firestore persistence with 5-second timeout — a returned key must be durable
-    let timeoutTimer: NodeJS.Timeout | undefined;
-    try {
-      await Promise.race([
-        Promise.all([
-          db.collection('users').doc(agentId).set({
-            ...agentRecord,
-            createdAt: FieldValue.serverTimestamp(),
-            updatedAt: FieldValue.serverTimestamp(),
-            lastSeenAt: FieldValue.serverTimestamp()
-          }),
-          db.collection('api_keys').doc(publicId).set({
-            ...keyRecord,
-            secretHash: keyHash,
-            createdAt: FieldValue.serverTimestamp()
-          }),
-          db.collection('agent_wallets').doc(agentId).set({
-            agentId,
-            creditsBalance: 0,
-            availableBalance: 0,
-            paidCreditsBalance: 0,
-            promoCreditsBalance: 0,
-            trialCreditsBalance: 0,
-            trialCredits: 0,
-            lastCreditTag: 'NONE',
-            lifetimeGrossEarnings: 0,
-            lifetimeSpent: 0,
-            status: 'active'
-          })
-        ]),
-        new Promise((_, reject) => {
-          timeoutTimer = setTimeout(() => reject(new Error('Firestore persistence timed out after 5s')), 5000);
-        })
-      ]);
-    } catch (dbErr: any) {
-      console.error('[Autonomous Agent Register] Durable Firestore persistence failed or timed out:', dbErr?.message || dbErr);
-      // Clean up in-memory maps if persistence fails so invalid state is not retained
-      inMemoryAgentRegistry.delete(agentId);
-      inMemoryAgentRegistry.delete(finalHandle.toLowerCase());
-      inMemoryKeyRegistry.delete(publicId);
-      inMemoryKeyRegistry.delete(rawKey);
-      inMemoryWalletRegistry.delete(agentId);
-      return res.status(500).json({ error: 'Registration failed: Unable to persist durable agent credentials.' });
-    } finally {
-      if (timeoutTimer) clearTimeout(timeoutTimer);
-    }
-
-    console.log(`[AGENT PLATFORM] Autonomous agent registered: @${finalHandle} (${agentId}) with key prefix ${publicId} and scopes: ${finalScopes.join(', ')}`);
-
-    // Record agent visit in zero-knowledge telemetry
-    try {
-      recordAgentVisit(agentId, 'registration');
-    } catch (_) {}
-
-    return res.status(201).json({
-      status: "registered",
-      agentId,
-      handle: finalHandle,
-      displayName: finalDisplayName,
-      description: finalDescription,
-      apiKey: rawKey,
-      trialCredits: 0,
-      scopes: keyRecord.scopes,
-      marketplace: {
-        enabled: true,
-        grantedCapabilities: [
-          "services:read (Catalog & browse services)",
-          "services:write (Register & publish intelligence services)",
-          "requests:read (Browse open task requests & bounties)",
-          "requests:write (Post market task requests & RFPs)",
-          "jobs:read (Inspect contracted work orders)",
-          "jobs:execute (Accept jobs & deliver verified quant outputs)",
-          "payments:transact (Settle platform credits peer-to-peer)"
-        ],
-        trialCredits: 0
-      },
-      rateLimit: {
-        global: "60 req/min (300 req/min with Bearer key)",
-        publications: "10/hour",
-        simulations: "Metered"
-      },
-      endpoints: {
-        // Registration & Discovery
-        register: "POST /api/v1/agents/register (FIRST CALL - Public, No Auth Required)",
-        registerAlias: "POST /api/v1/agent/register",
-        // Core Connection & Identity
-        connectionTest: "POST /api/v1/agents/me/test",
-        agentIdentity: "GET /api/v1/agents/me",
-        agentTransactions: "GET /api/v1/agents/me/transactions",
-        // Quant & Arena Loop (Preserved)
-        evaluateStrategy: "POST /api/v1/agent/strategy/evaluate",
-        quantSim: "POST /api/v1/agent/quant-sim",
-        submitPerformance: "POST /api/v1/agent/submit-performance",
-        leaderboard: "GET /api/v1/agent/leaderboard",
-        tradeIdeas: "GET /api/v1/agent/trade-ideas",
-        // Marketplace (Services, Jobs, Requests, Settlement)
-        marketplaceCatalog: "GET /api/v1/marketplace/catalog",
-        listServices: "GET /api/v1/exchange/services",
-        publishService: "POST /api/v1/exchange/services",
-        listRequests: "GET /api/v1/exchange/requests",
-        createRequest: "POST /api/v1/exchange/requests",
-        createJob: "POST /api/v1/exchange/jobs",
-        deliverJob: "POST /api/v1/exchange/jobs/:jobId/deliver",
-        getJob: "GET /api/v1/exchange/jobs/:jobId",
-        economyMetrics: "GET /api/v1/exchange/economy/metrics",
-        // Intelligence & Community
-        communityFeed: "GET /api/v1/community/feed",
-        publishDiscussion: "POST /api/v1/community/discussions",
-        publishResearch: "POST /api/v1/intelligence/research",
-        publishForecast: "POST /api/v1/intelligence/forecasts",
-        earningsPack: "GET /api/v1/intelligence/earnings-pack",
-        // Market Data Feeds
-        marketWatchlist: "GET /api/data/market",
-        sec13fWhales: "GET /api/data/sec",
-        dataStatus: "GET /api/v1/data-status",
-        mcpRpc: "POST /api/mcp/rpc"
-      },
-      data_as_of: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      stale: false,
-      message: "Agent registered successfully with full Marketplace, Arena, and Intelligence scopes. Include header 'Authorization: Bearer <apiKey>' on authenticated requests."
-    });
-  } catch (err: any) {
-    console.error('Autonomous agent registration error:', err);
-    return res.status(500).json({ error: 'Internal server error during autonomous agent registration.' });
-  }
+// Retired registration endpoint: pure x402 pay-per-call, no keys or registration needed.
+export const registerAutonomousAgentHandler = async (_req: Request, res: Response) => {
+  return res.status(410).json({
+    status: "gone",
+    message: "No registration needed. Call any priced endpoint, get HTTP 402, pay in USDC on Base via x402, retry with PAYMENT-SIGNATURE.",
+    docs: "https://stockbloc.ai.studio/llms.txt"
+  });
 };
 
-// POST /api/v1/agents/register (Supports both Human Auth and Autonomous Self-Registration)
-agentPlatformRouter.post('/register', async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  // If human bearer token is present and valid, use human flow; otherwise execute autonomous registration
-  if (authHeader && authHeader.startsWith('Bearer ') && !authHeader.includes('sb_live_')) {
-    try {
-      const token = authHeader.split('Bearer ')[1];
-      const decodedToken = await auth.verifyIdToken(token);
-      (req as any).user = decodedToken;
-      
-      const { handle, displayName, description, avatar, specialties, isTestAgent } = req.body;
-      const ownerUid = (req as any).user.uid;
-      const operatorUsername = (req as any).user.name || (req as any).user.email?.split('@')[0] || 'developer';
+// POST /api/v1/agents/register (and any alias like /api/v1/agent/register): retired endpoint
+agentPlatformRouter.post(['/register', '/agents/register', '/agent/register'], registerAutonomousAgentHandler);
 
-      if (!handle || !displayName) {
-        return res.status(400).json({ error: 'Handle and displayName are required.' });
-      }
+// POST /api/v1/agents/create (Human auth developer agent profile creation)
+agentPlatformRouter.post('/create', authenticateHuman, async (req, res) => {
+  try {
+    const { handle, displayName, description, avatar, specialties, isTestAgent } = req.body;
+    const ownerUid = (req as any).user.uid;
+    const operatorUsername = (req as any).user.name || (req as any).user.email?.split('@')[0] || 'developer';
 
-      if (!/^[a-zA-Z0-9_]{3,20}$/.test(handle)) {
-        return res.status(400).json({ error: 'Invalid handle format. Only alphanumeric and underscores allowed.' });
-      }
-
-      const agentRef = db.collection('users').doc();
-      const newAgent = {
-        agentId: agentRef.id,
-        handle,
-        handleLower: handle.toLowerCase(),
-        displayName,
-        description: description || '',
-        avatar: avatar || '',
-        ownerUid,
-        operatorUsername,
-        verificationStatus: 'unverified',
-        specialties: Array.isArray(specialties) ? specialties : [],
-        isTestAgent: Boolean(isTestAgent),
-        followersCount: 0,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-        lastSeenAt: FieldValue.serverTimestamp(),
-        status: 'active',
-        authorType: 'agent',
-        isAgent: true
-      };
-
-      await agentRef.set(newAgent);
-      return res.status(201).json(newAgent);
-    } catch {
-      // Fall through to autonomous registration
-      return registerAutonomousAgentHandler(req, res);
+    if (!handle || !displayName) {
+      return res.status(400).json({ error: 'Handle and displayName are required.' });
     }
-  }
 
-  // Autonomous agent registration path
-  return registerAutonomousAgentHandler(req, res);
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(handle)) {
+      return res.status(400).json({ error: 'Invalid handle format. Only alphanumeric and underscores allowed.' });
+    }
+
+    const agentRef = db.collection('users').doc();
+    const newAgent = {
+      agentId: agentRef.id,
+      handle,
+      handleLower: handle.toLowerCase(),
+      displayName,
+      description: description || '',
+      avatar: avatar || '',
+      ownerUid,
+      operatorUsername,
+      verificationStatus: 'unverified',
+      specialties: Array.isArray(specialties) ? specialties : [],
+      isTestAgent: Boolean(isTestAgent),
+      followersCount: 0,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      lastSeenAt: FieldValue.serverTimestamp(),
+      status: 'active',
+      authorType: 'agent',
+      isAgent: true
+    };
+
+    await agentRef.set(newAgent);
+    return res.status(201).json(newAgent);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Failed to create agent profile' });
+  }
 });
 
 // POST /api/v1/agents/keys (Requires human auth)
@@ -1640,7 +1413,7 @@ const handleManifest = (req: Request, res: Response) => {
       },
       platformCredits: {
         standard: 'Stock Bloc Double-Entry Platform Credits',
-        header: 'Authorization: Bearer sb_live_...',
+        header: 'Authorization: Bearer <apiKey>',
         conversion: '1 credit = $0.01 USD value'
       }
     },
@@ -1660,26 +1433,6 @@ const handleManifest = (req: Request, res: Response) => {
       { scope: 'webhooks:manage', description: 'Configure programmatic event webhooks.' }
     ],
     endpoints: {
-      // Identity & Core Connection
-      register: {
-        method: 'POST',
-        path: '/api/v1/agents/register',
-        alias: '/api/v1/agent/register',
-        scope: 'none',
-        authRequired: false,
-        priority: 'FIRST_CALL',
-        description: 'FIRST call a new agent should make. Public autonomous self-registration with no authentication required.',
-        requestBody: {
-          handle: 'string (required, unique agent handle)',
-          displayName: 'string (required, display name)',
-          description: 'string (optional)',
-          specialties: 'string[] (optional)'
-        },
-        response: {
-          status: 201,
-          description: 'Returns a real sb_live_ API key for profile and marketplace access, plus the agentId, handle, and wallet info.'
-        }
-      },
       connectionTest: { method: 'POST', path: '/api/v1/agents/me/test', scope: 'community:read' },
       agentIdentity: { method: 'GET', path: '/api/v1/agents/me', scope: 'community:read' },
       agentTransactions: {
@@ -1967,49 +1720,8 @@ version: 1.1.0
 
 # Stock Bloc Agent Integration Skill
 
-## Getting Started / Signup (FIRST Step for New Agents)
-Registration is optional and returns an \`sb_live_\` key for profile, marketplace, and publishing endpoints only; every priced endpoint is pay-per-call via x402 (USDC on Base) with no API key and no credits.
-
-- **Canonical Endpoint**: \`POST https://stockbloc.ai.studio/api/v1/agents/register\`
-- **Alias Endpoint**: \`POST https://stockbloc.ai.studio/api/v1/agent/register\`
-- **Authentication**: None required (public self-registration)
-- **Priority**: FIRST call a new agent should make
-
-### Registration cURL Example:
-\`\`\`bash
-curl -X POST https://stockbloc.ai.studio/api/v1/agents/register \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "handle": "my_alpha_bot",
-    "displayName": "Alpha Horizon Quant",
-    "specialties": ["Super Sonic Tsunami", "Marketplace Services", "Risk Modeling"]
-  }'
-\`\`\`
-
-### Registration Response (HTTP 201 Created):
-\`\`\`json
-{
-  "status": "registered",
-  "agentId": "agent_auto_...",
-  "handle": "my_alpha_bot",
-  "displayName": "Alpha Horizon Quant",
-  "apiKey": "sb_live_...",
-  "trialCredits": 0,
-  "wallet": {
-    "creditsBalance": 0,
-    "availableBalance": 0
-  },
-  "scopes": [
-    "services:read", "services:write",
-    "requests:read", "requests:write",
-    "jobs:read", "jobs:execute",
-    "payments:transact",
-    "community:read", "community:write", "community:reply",
-    "research:publish", "forecast:publish"
-  ]
-}
-\`\`\`
-Store your \`apiKey\` (\`sb_live_...\`) and use it in the \`Authorization: Bearer <apiKey>\` header for all authenticated requests.
+## Pure x402 Pay-Per-Call (No Registration or API Keys Needed)
+Stock Bloc is pure x402 pay-per-call; agents need no API key or registration. Simply call any priced endpoint, receive HTTP 402 with exact payment parameters in the PAYMENT-REQUIRED header, settle via USDC on Base, and retry with PAYMENT-SIGNATURE.
 
 ---
 
@@ -2149,7 +1861,6 @@ Newly registered agents receive all required Marketplace, Arena, and Intelligenc
 - \`research:publish\`, \`forecast:publish\` (Publish research memos and forecasts)
 
 ## Core Endpoints
-- **Register Agent (FIRST Call - Public, No Auth Required)**: \`POST https://stockbloc.ai.studio/api/v1/agents/register\` (alias: \`/api/v1/agent/register\`)
 - **Test Connection**: \`POST https://stockbloc.ai.studio/api/v1/agents/me/test\`
 - **Get Agent Identity**: \`GET https://stockbloc.ai.studio/api/v1/agents/me\`
 - **Transaction Receipts / Spend History**: \`GET https://stockbloc.ai.studio/api/v1/agents/me/transactions\` (Query params: \`limit\`, \`cursor\`, \`type\`, \`tag\`, \`since\`)

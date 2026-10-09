@@ -33,36 +33,55 @@ describe('Agent Transaction History & Itemized Receipts API', () => {
 
   // Helper to register an autonomous agent and return credentials
   async function createTestAgent(prefix = 'test_agent') {
-    const handle = `${prefix}_${crypto.randomBytes(4).toString('hex')}`;
-    const req = {
-      body: {
-        handle,
-        displayName: `Agent ${handle}`,
-        specialties: ['Market Intel']
-      }
-    };
-    let resData: any = null;
-    let resStatus = 200;
-    const res = {
-      status: (code: number) => {
-        resStatus = code;
-        return {
-          json: (data: any) => {
-            resData = data;
-            return resData;
-          }
-        };
-      },
-      json: (data: any) => {
-        resData = data;
-        return resData;
-      }
+    const publicId = crypto.randomBytes(8).toString('hex');
+    const secret = crypto.randomBytes(24).toString('hex');
+    const apiKey = `sb_live_${publicId}_${secret}`;
+    const keyHash = crypto.createHash('sha256').update(secret).digest('hex');
+    const agentId = `agent_${prefix}_${publicId}`;
+    const handle = `${prefix}_${publicId.substring(0, 6)}`;
+
+    const keyRecord: any = {
+      keyId: publicId,
+      agentId,
+      handle,
+      ownerUid: 'dashboard_user',
+      keyPrefix: secret.substring(0, 4) + '...',
+      keyHash,
+      secretHash: keyHash,
+      scopes: [
+        'services:read',
+        'jobs:read',
+        'jobs:execute',
+        'payments:transact',
+        'community:read',
+        'community:write',
+        'community:reply'
+      ],
+      createdAt: new Date(),
+      status: 'active'
     };
 
-    await registerAutonomousAgentHandler(req as any, res as any);
+    const agentRecord = {
+      agentId,
+      handle,
+      handleLower: handle.toLowerCase(),
+      displayName: `Agent ${handle}`,
+      status: 'active',
+      authorType: 'agent',
+      isAgent: true
+    };
+
+    inMemoryKeyRegistry.set(publicId, keyRecord);
+    inMemoryKeyRegistry.set(apiKey, keyRecord);
+    inMemoryAgentRegistry.set(agentId, agentRecord);
+    inMemoryAgentRegistry.set(handle.toLowerCase(), agentRecord);
+
+    dbStoreInstance.getCollection('api_keys').set(publicId, keyRecord);
+    dbStoreInstance.getCollection('users').set(agentId, agentRecord);
+
     if (prefix !== 'empty_agent') {
       const w = {
-        agentId: resData.agentId,
+        agentId,
         creditsBalance: 100,
         availableBalance: 100,
         paidCreditsBalance: 0,
@@ -74,14 +93,14 @@ describe('Agent Transaction History & Itemized Receipts API', () => {
         simulationRuns: 0,
         verifiedSimulations: 0
       };
-      inMemoryWalletRegistry.set(resData.agentId, w);
-      dbStoreInstance.getCollection('agent_wallets').set(resData.agentId, w);
+      inMemoryWalletRegistry.set(agentId, w);
+      dbStoreInstance.getCollection('agent_wallets').set(agentId, w);
     }
     return {
-      agentId: resData.agentId,
-      handle: resData.handle,
-      apiKey: resData.apiKey,
-      wallet: resData.wallet
+      agentId,
+      handle,
+      apiKey,
+      wallet: prefix !== 'empty_agent' ? { creditsBalance: 100 } : undefined
     };
   }
 

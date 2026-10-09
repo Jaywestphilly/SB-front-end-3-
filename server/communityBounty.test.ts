@@ -110,7 +110,71 @@ describe('Community Agent Proof-of-Alpha Incentive Engine', () => {
   let agentId: string;
   let firstPostId: string;
 
-  it('1. Outside Agent registers and receives baseline 0 trial credits', async () => {
+  beforeAll(async () => {
+    const { inMemoryKeyRegistry, inMemoryAgentRegistry, inMemoryWalletRegistry } = await import('./agentPlatform.js');
+    const crypto = await import('crypto');
+    const publicId = crypto.randomBytes(8).toString('hex');
+    const secret = crypto.randomBytes(24).toString('hex');
+    const keyHash = crypto.createHash('sha256').update(secret).digest('hex');
+    agentApiKey = `sb_live_${publicId}_${secret}`;
+    agentId = 'agent_deep_alpha_01';
+
+    const keyRecord: any = {
+      keyId: publicId,
+      agentId,
+      handle: 'deep_alpha_miner',
+      ownerUid: 'dashboard_user',
+      keyPrefix: secret.substring(0, 4) + '...',
+      keyHash,
+      secretHash: keyHash,
+      scopes: [
+        'services:read',
+        'jobs:read',
+        'jobs:execute',
+        'payments:transact',
+        'community:read',
+        'community:write',
+        'community:reply'
+      ],
+      createdAt: new Date(),
+      status: 'active'
+    };
+
+    const agentRecord = {
+      agentId,
+      handle: 'deep_alpha_miner',
+      handleLower: 'deep_alpha_miner',
+      displayName: 'Deep Alpha Miner 01',
+      description: 'Autonomous quantitative thesis miner',
+      status: 'active',
+      authorType: 'agent',
+      isAgent: true
+    };
+
+    const walletRecord = {
+      agentId,
+      creditsBalance: 0,
+      availableBalance: 0,
+      paidCreditsBalance: 0,
+      promoCreditsBalance: 0,
+      trialCreditsBalance: 0,
+      trialCredits: 0,
+      status: 'active'
+    };
+
+    inMemoryKeyRegistry.set(publicId, keyRecord);
+    inMemoryKeyRegistry.set(agentApiKey, keyRecord);
+    inMemoryAgentRegistry.set(agentId, agentRecord);
+    inMemoryAgentRegistry.set('deep_alpha_miner', agentRecord);
+    inMemoryWalletRegistry.set(agentId, walletRecord);
+
+    const { db } = await import('./firebaseAdmin.js');
+    await db.collection('api_keys').doc(publicId).set(keyRecord);
+    await db.collection('users').doc(agentId).set(agentRecord);
+    await db.collection('agent_wallets').doc(agentId).set(walletRecord);
+  });
+
+  it('1. POST /api/v1/agent/register returns 410 and creates no key', async () => {
     const regRes = await request(app)
       .post('/api/v1/agent/register')
       .send({
@@ -120,13 +184,12 @@ describe('Community Agent Proof-of-Alpha Incentive Engine', () => {
         specialties: ['Semiconductors', 'Macro']
       });
 
-    expect(regRes.status).toBe(201);
-    expect(regRes.body.status).toBe('registered');
-    expect(regRes.body.apiKey).toMatch(/^sb_live_/);
-    expect(regRes.body.trialCredits).toBe(0);
-
-    agentApiKey = regRes.body.apiKey;
-    agentId = regRes.body.agentId;
+    expect(regRes.status).toBe(410);
+    expect(regRes.body).toEqual({
+      status: "gone",
+      message: "No registration needed. Call any priced endpoint, get HTTP 402, pay in USDC on Base via x402, retry with PAYMENT-SIGNATURE.",
+      docs: "https://stockbloc.ai.studio/llms.txt"
+    });
   });
 
   it('2. First Thesis Onboarding Bounty: Agent publishes 1st thesis and is automatically rewarded +50 Platform Credits', async () => {

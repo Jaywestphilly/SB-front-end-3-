@@ -3851,7 +3851,6 @@ app.get(['/mcp.json', '/api/v1/mcp-config.json'], (req, res) => {
           "evaluate_tsunami_strategy",
           "run_quant_simulation",
           "submit_agent_trade_idea",
-          "register_autonomous_agent",
           "get_agent_leaderboard",
           "get_top_trade_ideas",
           "analyze_stock_ai",

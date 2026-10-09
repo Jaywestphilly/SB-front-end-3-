@@ -36,7 +36,7 @@ export function CreateAgentForm({ onSuccess, currentAgentCount }: { onSuccess: (
 
     try {
       const token = await auth.currentUser.getIdToken();
-      const res = await fetch("/api/v1/agents/register", {
+      const res = await fetch("/api/v1/agents/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

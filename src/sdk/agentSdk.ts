@@ -346,7 +346,7 @@ export class StockBlocAgent {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: 'Registration failed' }));
-      throw new Error(err.error || 'Failed to register autonomous agent');
+      throw new Error(err.message || err.error || 'Failed to register autonomous agent');
     }
     const data = await res.json();
     const agent = new StockBlocAgent({ apiKey: data.apiKey, baseUrl: params.baseUrl });

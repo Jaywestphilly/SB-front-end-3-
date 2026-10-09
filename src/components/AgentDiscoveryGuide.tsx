@@ -55,14 +55,6 @@ export const AgentDiscoveryGuide: React.FC = () => {
 
   const discoveryEndpoints = [
     {
-      title: "Autonomous Agent Self-Registration",
-      path: "/api/v1/agents/register",
-      alias: "/api/v1/agent/register",
-      type: "POST REST Endpoint",
-      status: "201 CREATED",
-      description: "Self-register autonomous AI agents without human UI interaction (no auth required). Returns an agent ID, handle, and live API key (sb_live_*) for profile and marketplace access. Alias: /api/v1/agent/register.",
-    },
-    {
       title: "Super Sonic Tsunami Strategy Evaluation",
       path: "/api/v1/agent/strategy/evaluate",
       type: "POST REST Endpoint",
@@ -161,10 +153,10 @@ export const AgentDiscoveryGuide: React.FC = () => {
         <div className="p-4 rounded-xl bg-black/80 border border-emerald-500/30 space-y-2">
           <div className="flex items-center gap-2 text-emerald-400 font-bold font-tech text-xs uppercase">
             <Globe className="w-4 h-4" />
-            <span>1. Self-Registration</span>
+            <span>1. Pure x402 Pay-Per-Call</span>
           </div>
           <p className="text-xs text-neutral-300 font-sans leading-relaxed">
-            Agents POST to <span className="text-emerald-300 font-mono">/api/v1/agents/register</span> to receive an instant API Key (<span className="text-cyan-300 font-mono">sb_live_*</span>) for profile and marketplace access.
+            Stock Bloc is pure x402 pay-per-call. Agents need no API key. Call any priced endpoint, receive HTTP 402 with price details, and settle via USDC on Base.
           </p>
         </div>
 
@@ -192,7 +184,7 @@ export const AgentDiscoveryGuide: React.FC = () => {
       {/* Tab Navigation */}
       <div className="flex flex-wrap items-center gap-2 border-b border-neutral-800 pb-3">
         {[
-          { id: "registration", label: "Self-Registration (REST)", icon: ShieldCheck },
+          { id: "registration", label: "Pure x402 Pay-Per-Call", icon: ShieldCheck },
           { id: "tsunami", label: "Super Sonic Tsunami Engine", icon: Flame },
           { id: "mcp", label: "MCP Server (Claude / Cursor)", icon: Cpu },
           { id: "python", label: "Python & LangChain / CrewAI", icon: Code2 },
@@ -230,10 +222,10 @@ export const AgentDiscoveryGuide: React.FC = () => {
               </div>
               <div>
                 <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest bg-emerald-950 border border-emerald-500/50 px-2 py-0.5 rounded">
-                  ZERO-HUMAN REGISTRATION
+                  PURE X402 PAY-PER-CALL
                 </span>
                 <h3 className="text-lg font-black font-tech text-white uppercase tracking-wide mt-0.5">
-                  POST /api/v1/agents/register
+                  NO API KEYS OR REGISTRATION NEEDED
                 </h3>
               </div>
             </div>
@@ -241,43 +233,32 @@ export const AgentDiscoveryGuide: React.FC = () => {
             <button
               onClick={() =>
                 handleCopy(
-                  `curl -X POST https://stockbloc.ai.studio/api/v1/agents/register \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "handle": "my_quant_agent",\n    "displayName": "My Quant Agent",\n    "description": "Multi-factor momentum tracking Super Sonic Tsunami infrastructure.",\n    "specialties": ["Super Sonic Tsunami", "Breakout Momentum"]\n  }'`,
+                  `curl -i https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL`,
                   "curl-register"
                 )
               }
               className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black font-tech text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shrink-0"
             >
               {copiedPath === "curl-register" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              <span>{copiedPath === "curl-register" ? "COPIED CURL!" : "COPY REGISTRATION CURL"}</span>
+              <span>{copiedPath === "curl-register" ? "COPIED CURL!" : "COPY 402 CURL"}</span>
             </button>
           </div>
 
           <p className="text-xs text-neutral-300 font-sans leading-relaxed">
-            External agents do not need human sign-up or OAuth to participate. An agent simply makes a single <code className="text-emerald-300 font-mono bg-black/60 px-1.5 py-0.5 rounded">POST /api/v1/agents/register</code> call with its handle and description to receive its API key.
+            Stock Bloc is pure x402 pay-per-call. No registration or API keys needed. Call any priced endpoint, receive an HTTP 402 response with price terms, pay in USDC on Base via x402, and retry with the <code className="text-emerald-300 font-mono bg-black/60 px-1.5 py-0.5 rounded">PAYMENT-SIGNATURE</code> header.
           </p>
 
           <pre className="p-3 bg-black/90 border border-emerald-500/40 rounded-xl text-[11px] font-mono text-emerald-200/90 leading-tight overflow-x-auto select-all">
-{`// 1. Request Payload:
-POST https://stockbloc.ai.studio/api/v1/agents/register
-Content-Type: application/json
+{`// 1. Initial Unpaid Call:
+curl -i https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL
 
-{
-  "handle": "tsunami_quant_v1",
-  "displayName": "Tsunami Quant Alpha V1",
-  "description": "Autonomous multi-factor agent tracking space, AI compute, and energy microgrids.",
-  "specialties": ["Super Sonic Tsunami", "Breakout Momentum"]
-}
+// 2. Returns HTTP 402 Payment Required:
+HTTP/1.1 402 Payment Required
+PAYMENT-REQUIRED: eyJhbW91bnQiOiIxMDAwMCIsImFzc2V0IjoiMHg4MzM1ODlmQ0Q2ZURiNkUwOGY0YzdDMkQ0ZjcxYjU0YmRBMDI5MTMiLCJuZXR3b3JrIjoiZWlwMTU1Ojg0NTMifQ...
 
-// 2. Response:
-{
-  "status": "success",
-  "message": "Autonomous agent registered successfully.",
-  "agentId": "agent_tsunami_quant_v1",
-  "handle": "tsunami_quant_v1",
-  "apiKey": "sb_live_a1b2c3d4e5f6g7h8",
-  "creditsRemaining": 100,
-  "rateLimit": "300 req/min"
-}`}
+// 3. Sign & Retry with PAYMENT-SIGNATURE:
+curl -X GET "https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL" \\
+  -H "PAYMENT-SIGNATURE: <base64-authorization>"`}
           </pre>
         </div>
       )}

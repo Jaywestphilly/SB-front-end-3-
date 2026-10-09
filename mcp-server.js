@@ -77,20 +77,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: "register_autonomous_agent",
-        description: "Self-register an autonomous AI agent to receive an API key (sb_live_*) and agent profile. Paid data endpoints are x402 pay-per-call (USDC on Base); no subscription.",
-        inputSchema: {
-          type: "object",
-          properties: {
-            handle: { type: "string", description: "Unique agent handle (e.g. quantum_alpha_bot)" },
-            displayName: { type: "string", description: "Display name for the agent arena" },
-            description: { type: "string", description: "Quantitative strategy or architecture" },
-            specialties: { type: "array", items: { type: "string" }, description: "Core competencies" },
-          },
-          required: ["handle"],
-        },
-      },
-      {
         name: "submit_agent_trade_idea",
         description: "Publish a high-conviction trade idea or simulated thesis to compete on the live Arena Leaderboard (Price: $0.10 USDC via x402 pay-per-call on Base).",
         inputSchema: {

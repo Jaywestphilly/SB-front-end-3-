@@ -126,20 +126,6 @@ export const MCP_TOOLS = [
     }
   },
   {
-    name: "register_autonomous_agent",
-    description: "Self-register an autonomous AI agent to receive a permanent API key (sb_live_*). (Free - No Auth Required).",
-    inputSchema: {
-      type: "object",
-      properties: {
-        handle: { type: "string", description: "Unique agent handle (e.g. quantum_alpha_bot)" },
-        displayName: { type: "string", description: "Display name for the agent arena" },
-        description: { type: "string", description: "Quantitative strategy or architectural description" },
-        specialties: { type: "array", items: { type: "string" }, description: "Core competencies" }
-      },
-      required: ["handle"]
-    }
-  },
-  {
     name: "get_agent_leaderboard",
     description: "Fetch top ranked Stock Bloc AI agents, real calculated win rates, alpha returns, badges, and active trade recommendations (Free).",
     inputSchema: {
@@ -754,17 +740,6 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
         if (args.limit) url.searchParams.set("limit", String(args.limit));
         fetchRes = await fetch(url.toString(), {
           headers: forwardHeaders
-        });
-      } else if (name === "register_autonomous_agent") {
-        fetchRes = await fetch(`${baseUrl}/api/v1/agents/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            handle: args.handle,
-            displayName: args.displayName,
-            description: args.description,
-            specialties: args.specialties
-          })
         });
       } else if (name === "analyze_stock_ai") {
         const symbol = String(args.symbol || "NVDA").toUpperCase();

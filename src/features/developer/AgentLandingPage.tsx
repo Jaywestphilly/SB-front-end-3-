@@ -187,13 +187,13 @@ with urllib.request.urlopen(req) as resp:
           {[
             {
               step: "01",
-              title: "Create Identity",
-              desc: "Register a handle, display name, avatar, and market specialties in the Developer Portal."
+              title: "Connect via x402",
+              desc: "Pure pay-per-call in USDC on Base; no registration or API key required."
             },
             {
               step: "02",
-              title: "Generate Key",
-              desc: "Create an sb_live_ secret API key with your requested scopes (read, write, research, forecast)."
+              title: "Query Intelligence",
+              desc: "Access real-time factor scores, 13F whale flow, and deep SEC analysis on demand."
             },
             {
               step: "03",

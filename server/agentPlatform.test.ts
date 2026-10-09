@@ -103,7 +103,7 @@ describe('Agent Platform API', () => {
   let rawKey: string;
   let publicId: string;
 
-  it('1. Agent registration', async () => {
+  it('1. Agent registration returns 410 and creates no key', async () => {
     const res = await request(app)
       .post('/api/v1/agents/register')
       .set('Authorization', 'Bearer valid_human_token')
@@ -111,11 +111,27 @@ describe('Agent Platform API', () => {
         handle: 'test_agent',
         displayName: 'Test Agent',
       });
-    expect(res.status).toBe(201);
-    expect(res.body.handle).toBe('test_agent');
-    expect(res.body.authorType).toBe('agent');
-    expect(res.body.ownerUid).toBe('human_uid_123');
-    validAgentId = res.body.agentId;
+    expect(res.status).toBe(410);
+    expect(res.body).toEqual({
+      status: "gone",
+      message: "No registration needed. Call any priced endpoint, get HTTP 402, pay in USDC on Base via x402, retry with PAYMENT-SIGNATURE.",
+      docs: "https://stockbloc.ai.studio/llms.txt"
+    });
+    expect(dbStore.api_keys.size).toBe(0);
+
+    // Create developer agent via /create for subsequent authenticated tests
+    const createRes = await request(app)
+      .post('/api/v1/agents/create')
+      .set('Authorization', 'Bearer valid_human_token')
+      .send({
+        handle: 'test_agent',
+        displayName: 'Test Agent',
+      });
+    expect(createRes.status).toBe(201);
+    expect(createRes.body.handle).toBe('test_agent');
+    expect(createRes.body.authorType).toBe('agent');
+    expect(createRes.body.ownerUid).toBe('human_uid_123');
+    validAgentId = createRes.body.agentId;
   });
 
   it('2 & 3. API key generation and raw secret not persisted', async () => {
@@ -175,9 +191,9 @@ describe('Agent Platform API', () => {
   });
 
   it('7 & 8. Scope enforcement and no spoofing', async () => {
-    // Register agent
+    // Create developer agent via /create
     const reg = await request(app)
-      .post('/api/v1/agents/register')
+      .post('/api/v1/agents/create')
       .set('Authorization', 'Bearer valid_human_token')
       .send({ handle: 'scope_agent', displayName: 'Scope Agent' });
     
@@ -217,9 +233,9 @@ describe('Agent Platform API', () => {
   });
 
   it('11. SSE Authentication middleware works', async () => {
-     // Register agent
+     // Create developer agent via /create
      const reg = await request(app)
-       .post('/api/v1/agents/register')
+       .post('/api/v1/agents/create')
        .set('Authorization', 'Bearer valid_human_token')
        .send({ handle: 'sse_agent', displayName: 'SSE Agent' });
      
@@ -248,16 +264,11 @@ describe('Agent Platform API', () => {
      expect(res2.status).toBe(200);
   });
 
-  it('12. Autonomous Agent self-registration grants autonomous scopes including community write and reply', async () => {
-    const { registerAutonomousAgentHandler, authenticateAgent, requireScope } = await import('./agentPlatform.js');
+  it('12. Autonomous Agent self-registration returns 410 and creates no key', async () => {
+    const { registerAutonomousAgentHandler } = await import('./agentPlatform.js');
     const autoApp = express();
     autoApp.use(express.json());
     autoApp.post('/api/v1/agent/register', registerAutonomousAgentHandler);
-    
-    // Add dummy endpoints to verify scope access
-    autoApp.post('/api/v1/exchange/jobs', authenticateAgent, requireScope('jobs:execute'), (req, res) => res.status(201).json({ success: true, action: 'job_executed' }));
-    autoApp.post('/api/v1/community/posts', authenticateAgent, requireScope('community:write'), (req, res) => res.status(200).json({ success: true, action: 'post_created' }));
-    autoApp.post('/api/v1/community/replies', authenticateAgent, requireScope('community:reply'), (req, res) => res.status(200).json({ success: true, action: 'reply_created' }));
 
     const regRes = await request(autoApp)
       .post('/api/v1/agent/register')
@@ -267,45 +278,13 @@ describe('Agent Platform API', () => {
         specialties: ['Super Sonic Tsunami', 'Marketplace Services']
       });
 
-    expect(regRes.status).toBe(201);
-    expect(regRes.body.status).toBe('registered');
-    expect(regRes.body.apiKey).toContain('sb_live_');
-    expect(regRes.body.trialCredits).toBe(0);
-    expect(regRes.body.scopes).toContain('services:read');
-    expect(regRes.body.scopes).toContain('jobs:read');
-    expect(regRes.body.scopes).toContain('jobs:execute');
-    expect(regRes.body.scopes).toContain('payments:transact');
-    expect(regRes.body.scopes).toContain('community:read');
-    expect(regRes.body.scopes).toContain('community:write');
-    expect(regRes.body.scopes).toContain('community:reply');
-    expect(regRes.body.marketplace).toBeDefined();
-    expect(regRes.body.marketplace.enabled).toBe(true);
-
-    const apiKey = regRes.body.apiKey;
-
-    // Verify jobs:execute access
-    const jobRes = await request(autoApp)
-      .post('/api/v1/exchange/jobs')
-      .set('Authorization', `Bearer ${apiKey}`)
-      .send({ taskId: 'task_001' });
-    expect(jobRes.status).toBe(201);
-    expect(jobRes.body.action).toBe('job_executed');
-
-    // Verify community:write access
-    const postRes = await request(autoApp)
-      .post('/api/v1/community/posts')
-      .set('Authorization', `Bearer ${apiKey}`)
-      .send({ content: 'Autonomous thesis test post' });
-    expect(postRes.status).toBe(200);
-    expect(postRes.body.action).toBe('post_created');
-
-    // Verify community:reply access
-    const replyRes = await request(autoApp)
-      .post('/api/v1/community/replies')
-      .set('Authorization', `Bearer ${apiKey}`)
-      .send({ threadId: 'thread_1', content: 'Autonomous reply test' });
-    expect(replyRes.status).toBe(200);
-    expect(replyRes.body.action).toBe('reply_created');
+    expect(regRes.status).toBe(410);
+    expect(regRes.body).toEqual({
+      status: "gone",
+      message: "No registration needed. Call any priced endpoint, get HTTP 402, pay in USDC on Base via x402, retry with PAYMENT-SIGNATURE.",
+      docs: "https://stockbloc.ai.studio/llms.txt"
+    });
+    expect(regRes.body.apiKey).toBeUndefined();
   });
 
   it('13. key generation succeeds for authenticated human with no pro subscription required', async () => {
@@ -320,5 +299,12 @@ describe('Agent Platform API', () => {
     expect(res.status).toBe(201);
     expect(res.body.key).toBeDefined();
     expect(res.body.key.startsWith('sb_live_')).toBe(true);
+  });
+
+  it('14. tools/list has 13 tools and no register_autonomous_agent', async () => {
+    const { MCP_TOOLS } = await import('./mcpService.js');
+    expect(MCP_TOOLS.length).toBe(13);
+    const names = MCP_TOOLS.map((t: any) => t.name);
+    expect(names).not.toContain('register_autonomous_agent');
   });
 });

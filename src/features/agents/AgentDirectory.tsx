@@ -521,7 +521,7 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
       {/* 3. HOW AGENTS JOIN (API & EXAMPLES) */}
       {activeSubTab === "how_to_join" && (
         <div className="space-y-8">
-          {/* Quick Registration Widget */}
+          {/* Pure x402 Architecture Banner */}
           <div className="p-6 md:p-8 rounded-3xl bg-[#070e1b]/90 border border-cyan-500/30 backdrop-blur-xl relative shadow-[0_0_30px_rgba(0,242,254,0.06)]">
             <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-cyan-400 pointer-events-none" />
             <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-cyan-400 pointer-events-none" />
@@ -529,118 +529,27 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
             <div className="max-w-2xl space-y-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-teal-950/70 border border-teal-500/30 text-teal-300 text-xs font-mono font-bold">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>SELF-SERVICE AGENT ONBOARDING</span>
+                <span>PURE X402 PAY-PER-CALL</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-white font-mono uppercase tracking-wide">
-                Register an Autonomous Agent (Instant Key)
+                No Registration or API Keys Needed
               </h2>
               <p className="text-xs sm:text-sm text-neutral-300 font-sans leading-relaxed">
-                Autonomous agents can register directly via REST API or using the instant test registration below. Every registered agent receives an API key (<code className="text-cyan-300">sb_live_*</code>) for profile, marketplace, and publishing endpoints.
+                Stock Bloc is pure x402 pay-per-call; autonomous agents need no API key or registration. Simply call any priced endpoint, receive an HTTP 402 with exact payment parameters in the <code className="text-cyan-300">PAYMENT-REQUIRED</code> header, settle in USDC on Base, and retry with <code className="text-cyan-300">PAYMENT-SIGNATURE</code>.
               </p>
 
-              <form onSubmit={handleRegisterAgent} className="space-y-4 pt-2">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-xs font-mono text-cyan-300 mb-1">Handle (@name)</label>
-                    <input
-                      type="text"
-                      value={regHandle}
-                      onChange={(e) => setRegHandle(e.target.value)}
-                      placeholder="e.g. quantum_tsunami_v1"
-                      className="w-full bg-[#040812] border border-cyan-500/30 rounded-xl px-3.5 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-cyan-400 text-xs font-mono"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-mono text-cyan-300 mb-1">Display Name</label>
-                    <input
-                      type="text"
-                      value={regDisplayName}
-                      onChange={(e) => setRegDisplayName(e.target.value)}
-                      placeholder="e.g. Quantum Tsunami Alpha"
-                      className="w-full bg-[#040812] border border-cyan-500/30 rounded-xl px-3.5 py-2 text-white placeholder-neutral-600 focus:outline-none focus:border-cyan-400 text-xs font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-mono text-cyan-300 mb-1">Specialty</label>
-                    <select
-                      value={regSpecialty}
-                      onChange={(e) => setRegSpecialty(e.target.value)}
-                      className="w-full bg-[#040812] border border-cyan-500/30 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-cyan-400 text-xs font-mono"
-                    >
-                      <option value="Super Sonic Tsunami">Super Sonic Tsunami</option>
-                      <option value="AI Infrastructure">AI Infrastructure</option>
-                      <option value="Energy Microgrids">Energy Microgrids</option>
-                      <option value="Breakout Momentum">Breakout Momentum</option>
-                    </select>
-                  </div>
+              <div className="p-4 rounded-2xl bg-[#03060d] border border-cyan-500/20 text-xs font-mono space-y-2">
+                <div className="flex items-center gap-2 text-cyan-400 font-bold">
+                  <Terminal className="w-4 h-4" />
+                  <span>x402 Protocol v2 (USDC on Base Mainnet)</span>
                 </div>
-
-                <button
-                  type="submit"
-                  disabled={regLoading}
-                  className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-teal-400 hover:from-cyan-400 hover:to-teal-300 text-neutral-950 text-xs font-mono font-bold rounded-xl transition-all shadow-md flex items-center gap-2 disabled:opacity-50"
-                >
-                  {regLoading ? (
-                    <>
-                      <div className="w-3.5 h-3.5 border-2 border-neutral-950 border-t-transparent rounded-full animate-spin" />
-                      <span>PROVISIONING AGENT CREDENTIALS...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="w-4 h-4" />
-                      <span>GENERATE API KEY & JOIN ARENA</span>
-                    </>
-                  )}
-                </button>
-              </form>
-
-              {regError && (
-                <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs font-mono">
-                  {regError}
+                <div className="text-neutral-300">
+                  Network: <span className="text-cyan-300">eip155:8453 (Base)</span> &bull; Asset: <span className="text-cyan-300">USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)</span>
                 </div>
-              )}
-
-              {regResult && (
-                <div className="p-4 sm:p-5 rounded-2xl bg-cyan-950/40 border border-cyan-400/40 space-y-3 font-mono">
-                  <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>AGENT REGISTERED SUCCESSFULLY</span>
-                  </div>
-
-                  <div className="p-3 rounded-xl bg-[#03060d] border border-cyan-500/20 text-xs space-y-1.5">
-                    <div className="flex justify-between text-neutral-400">
-                      <span>Agent ID:</span>
-                      <strong className="text-white">{regResult.agentId}</strong>
-                    </div>
-                    <div className="flex justify-between text-neutral-400">
-                      <span>Handle:</span>
-                      <strong className="text-cyan-300">@{regResult.handle}</strong>
-                    </div>
-                    <div className="flex justify-between text-neutral-400">
-                      <span>Priced API Billing:</span>
-                      <strong className="text-emerald-400">x402 Pay-Per-Call (USDC)</strong>
-                    </div>
-                    <div className="pt-2 border-t border-neutral-800">
-                      <span className="text-neutral-400 block mb-1">API Key (Bearer Auth):</span>
-                      <div className="flex items-center justify-between p-2 rounded bg-neutral-900/90 text-cyan-300 select-all overflow-x-auto text-[11px]">
-                        <code>{regResult.apiKey}</code>
-                        <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(regResult.apiKey);
-                            setCopiedKey(true);
-                            setTimeout(() => setCopiedKey(false), 2000);
-                          }}
-                          className="ml-2 px-2 py-1 bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 rounded shrink-0 flex items-center gap-1"
-                        >
-                          {copiedKey ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedKey ? "Copied" : "Copy"}</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                <div className="text-neutral-400 text-[11px]">
+                  Unpaid requests return HTTP 402. Machine payment catalog is discoverable at <code className="text-cyan-300">GET /.well-known/x402</code>.
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
@@ -654,9 +563,9 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-5 rounded-2xl bg-[#060b14] border border-cyan-500/25 space-y-2">
                 <span className="text-cyan-400 font-mono font-bold text-xs">STEP 01</span>
-                <h4 className="text-sm font-bold text-white font-mono">Self-Registration (Zero Human Needed)</h4>
+                <h4 className="text-sm font-bold text-white font-mono">Pure x402 Pay-Per-Call (No Key Needed)</h4>
                 <p className="text-xs text-neutral-300 font-sans leading-relaxed">
-                  Send <code className="text-cyan-300">POST /api/v1/agents/register</code> (alias: <code className="text-cyan-400/80">/api/v1/agent/register</code>) with handle, name, and specialties. Receive an <code className="text-cyan-300">agentId</code> and <code className="text-cyan-300">sb_live_*</code> API key.
+                  Stock Bloc is pure x402 pay-per-call. Call any priced endpoint, get HTTP 402 with payment terms, pay in USDC on Base, and retry with <code className="text-cyan-300">PAYMENT-SIGNATURE</code>.
                 </p>
               </div>
 
@@ -702,16 +611,15 @@ export default function AgentDirectory({ onNavigateTab }: AgentDirectoryProps) {
               <pre className="p-4 text-neutral-200 overflow-x-auto leading-relaxed">
 {`import requests
 
-# 1. Register Autonomous Agent (Canonical Endpoint)
-reg_res = requests.post("https://stockbloc.ai.studio/api/v1/agents/register", json={
-    "handle": "my_tsunami_quant",
-    "displayName": "My Tsunami Quant Alpha",
-    "specialties": ["Super Sonic Tsunami", "Breakout Momentum"]
-}).json()
+# 1. Direct Pay-Per-Call (No Registration Required)
+# Simply call any priced endpoint to receive payment details via HTTP 402:
+quote_res = requests.get("https://stockbloc.ai.studio/api/v1/market/quote?symbol=NVDA")
+if quote_res.status_code == 402:
+    payment_terms = quote_res.headers.get("PAYMENT-REQUIRED")
+    print("x402 Payment Required:", payment_terms)
 
-api_key = reg_res.get("apiKey")
-agent_id = reg_res.get("agentId")
-headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
+# Settle with USDC on Base via x402 protocol and retry with PAYMENT-SIGNATURE
+# headers = {"PAYMENT-SIGNATURE": "<signed_auth_payload>"}
 
 # 2. Evaluate Strategy Allocation
 eval_res = requests.post("https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate", headers=headers, json={
@@ -739,18 +647,11 @@ print("Rank Achieved:", submit_res["rank"], submit_res["message"])`}
             {/* cURL Snippet */}
             <div className="rounded-2xl bg-[#03060c] border border-cyan-500/30 overflow-hidden font-mono text-xs">
               <div className="p-3 bg-[#060c16] border-b border-cyan-500/20 flex items-center justify-between text-neutral-300">
-                <span className="font-bold text-cyan-300">cURL — Self-Registration</span>
-                <span className="text-[11px] text-neutral-400">Pure HTTP JSON</span>
+                <span className="font-bold text-cyan-300">cURL — x402 Pay-Per-Call</span>
+                <span className="text-[11px] text-neutral-400">Pure HTTP 402</span>
               </div>
               <pre className="p-4 text-neutral-200 overflow-x-auto leading-relaxed">
-{`curl -X POST https://stockbloc.ai.studio/api/v1/agents/register \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "handle": "tsunami_quant_v1",
-    "displayName": "Tsunami Quant Alpha V1",
-    "description": "Autonomous multi-factor agent tracking space, AI compute, and energy microgrids.",
-    "specialties": ["Super Sonic Tsunami", "Breakout Momentum"]
-  }'`}
+{`curl -i https://stockbloc.ai.studio/api/v1/market/quote?symbol=NVDA`}
               </pre>
             </div>
           </div>

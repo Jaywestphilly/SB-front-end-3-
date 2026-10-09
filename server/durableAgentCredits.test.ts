@@ -228,8 +228,8 @@ describe('Durable Firestore Agent Credit Accounting', () => {
     }
   });
 
-  // (e) Registration durability: registration awaits Firestore writes before returning 201
-  it('(e) registration persists durable agent credentials to Firestore before 201', async () => {
+  // (e) Registration durability: retired registration returns 410 and creates no key, while existing keys continue to work
+  it('(e) retired registration returns 410 and creates no key, and existing persisted keys continue to work', async () => {
     const app = express();
     app.use(express.json());
     app.post('/api/v1/agents/register', registerAutonomousAgentHandler);
@@ -242,32 +242,60 @@ describe('Durable Firestore Agent Credit Accounting', () => {
         displayName: 'Durable Test Bot'
       });
 
-    expect(res.status).toBe(201);
-    expect(res.body.apiKey).toBeDefined();
-    expect(res.body.agentId).toBeDefined();
+    expect(res.status).toBe(410);
+    expect(res.body).toEqual({
+      status: "gone",
+      message: "No registration needed. Call any priced endpoint, get HTTP 402, pay in USDC on Base via x402, retry with PAYMENT-SIGNATURE.",
+      docs: "https://stockbloc.ai.studio/llms.txt"
+    });
+    expect(res.body.apiKey).toBeUndefined();
 
-    const agentId = res.body.agentId;
-    const apiKey = res.body.apiKey;
-    const publicId = apiKey.split('_')[2];
+    // Verify nothing written to Firestore for this handle
+    const usersQuery = await db.collection('users').where('handle', '==', handle).get();
+    expect(usersQuery.empty).toBe(true);
 
-    // Verify durable storage in Firestore
-    const userSnap = await db.collection('users').doc(agentId).get();
-    expect(userSnap.exists).toBe(true);
+    // Verify existing persisted keys in Firestore continue to work exactly as today
+    const publicId = crypto.randomBytes(8).toString('hex');
+    const secret = crypto.randomBytes(24).toString('hex');
+    const existingKey = `sb_live_${publicId}_${secret}`;
+    const keyHash = crypto.createHash('sha256').update(secret).digest('hex');
+    const existingAgentId = 'agent_' + publicId;
 
-    const keySnap = await db.collection('api_keys').doc(publicId).get();
-    expect(keySnap.exists).toBe(true);
+    const keyRecord = {
+      keyId: publicId,
+      agentId: existingAgentId,
+      handle: 'existing_agent',
+      keyHash,
+      secretHash: keyHash,
+      scopes: ['services:read', 'services:write', 'jobs:execute', 'payments:transact'],
+      status: 'active',
+      createdAt: new Date().toISOString()
+    };
 
-    const walletSnap = await db.collection('agent_wallets').doc(agentId).get();
-    expect(walletSnap.exists).toBe(true);
-    expect(walletSnap.data().creditsBalance).toBe(0);
+    const userRecord = {
+      agentId: existingAgentId,
+      handle: 'existing_agent',
+      displayName: 'Existing Agent',
+      status: 'active'
+    };
 
-    // Now clear memory and verify key works with durable debit
+    const walletRecord = {
+      agentId: existingAgentId,
+      creditsBalance: 100,
+      availableBalance: 100,
+      status: 'active'
+    };
+
+    await db.collection('api_keys').doc(publicId).set(keyRecord);
+    await db.collection('users').doc(existingAgentId).set(userRecord);
+    await db.collection('agent_wallets').doc(existingAgentId).set(walletRecord);
+
+    // Clear in-memory caches to force Firestore hydration
     inMemoryKeyRegistry.clear();
     inMemoryAgentRegistry.clear();
     inMemoryWalletRegistry.clear();
 
-    await db.collection('agent_wallets').doc(agentId).update({ creditsBalance: 100, availableBalance: 100 });
-    const debit = await verifyAndDebitAgentCredit(`Bearer ${apiKey}`, 10);
+    const debit = await verifyAndDebitAgentCredit(`Bearer ${existingKey}`, 10);
     expect(debit.valid).toBe(true);
     expect(debit.creditsRemaining).toBe(90);
   });

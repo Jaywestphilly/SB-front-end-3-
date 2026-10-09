@@ -18,6 +18,61 @@ import crypto from 'crypto';
 describe('HARDENED PAYMENT PATH & UNIFIED PRICING AUDIT', () => {
   let app: express.Application;
 
+  function createTestAgent(handle: string, displayName: string) {
+    const publicId = crypto.randomBytes(8).toString('hex');
+    const secret = crypto.randomBytes(24).toString('hex');
+    const rawKey = `sb_live_${publicId}_${secret}`;
+    const keyHash = crypto.createHash('sha256').update(secret).digest('hex');
+    const agentId = `agent_${publicId}`;
+
+    const keyRecord: any = {
+      keyId: publicId,
+      agentId,
+      ownerUid: 'dashboard_user',
+      keyPrefix: secret.substring(0, 4) + '...',
+      keyHash,
+      secretHash: keyHash,
+      scopes: [
+        'services:read',
+        'services:write',
+        'jobs:read',
+        'jobs:execute',
+        'payments:transact',
+        'community:read',
+        'community:write',
+        'community:reply'
+      ],
+      createdAt: new Date(),
+      status: 'active'
+    };
+
+    const agentRecord: any = {
+      agentId,
+      handle,
+      handleLower: handle.toLowerCase(),
+      displayName,
+      status: 'active',
+      authorType: 'agent',
+      isAgent: true
+    };
+
+    const walletRecord: any = {
+      agentId,
+      creditsBalance: 0,
+      availableBalance: 0,
+      paidCreditsBalance: 0,
+      status: 'active'
+    };
+
+    inMemoryKeyRegistry.set(publicId, keyRecord);
+    inMemoryKeyRegistry.set(rawKey, keyRecord);
+    inMemoryAgentRegistry.set(agentId, agentRecord);
+    inMemoryAgentRegistry.set(handle.toLowerCase(), agentRecord);
+    inMemoryWalletRegistry.set(agentId, walletRecord);
+
+    return { apiKey: rawKey, agentId, handle };
+  }
+
   beforeEach(async () => {
     app = express();
     app.use(express.json());
@@ -108,6 +163,19 @@ describe('HARDENED PAYMENT PATH & UNIFIED PRICING AUDIT', () => {
     app.use('/api/v1', agentExchangeRouter);
   });
 
+  it('0. POST /api/v1/agents/register returns 410 Gone and mints no key', async () => {
+    const regRes = await request(app)
+      .post('/api/v1/agents/register')
+      .send({ handle: 'retired_test_agent' });
+
+    expect(regRes.status).toBe(410);
+    expect(regRes.body).toEqual({
+      status: "gone",
+      message: "No registration needed. Call any priced endpoint, get HTTP 402, pay in USDC on Base via x402, retry with PAYMENT-SIGNATURE.",
+      docs: "https://stockbloc.ai.studio/llms.txt"
+    });
+  });
+
   it('1. POST /api/v1/agent/keys/generate produces an active, registered key that passes auth', async () => {
     const genRes = await request(app)
       .post('/api/v1/agent/keys/generate')
@@ -129,16 +197,11 @@ describe('HARDENED PAYMENT PATH & UNIFIED PRICING AUDIT', () => {
   });
 
   it('2. verify-and-pay rejects requests where passed is missing or not a boolean', async () => {
-    // Register verifier and claimant agents
-    const verifierRes = await request(app)
-      .post('/api/v1/agents/register')
-      .send({ handle: 'verifier_agent_1', displayName: 'Verifier Agent 1' });
-    const verifierKey = verifierRes.body.apiKey;
+    const verifier = createTestAgent('verifier_agent_1', 'Verifier Agent 1');
+    const verifierKey = verifier.apiKey;
 
-    const claimantRes = await request(app)
-      .post('/api/v1/agents/register')
-      .send({ handle: 'claimant_agent_1', displayName: 'Claimant Agent 1' });
-    const claimantAgentId = claimantRes.body.agentId;
+    const claimant = createTestAgent('claimant_agent_1', 'Claimant Agent 1');
+    const claimantAgentId = claimant.agentId;
 
     const bountyId = 'test_bounty_val_' + Date.now();
     inMemoryBounties.set(bountyId, {
@@ -175,11 +238,9 @@ describe('HARDENED PAYMENT PATH & UNIFIED PRICING AUDIT', () => {
   });
 
   it('3. verify-and-pay rejects self-verification with 403 Forbidden', async () => {
-    const claimantRes = await request(app)
-      .post('/api/v1/agents/register')
-      .send({ handle: 'self_claimant_agent', displayName: 'Self Claimant' });
-    const claimantKey = claimantRes.body.apiKey;
-    const claimantId = claimantRes.body.agentId;
+    const claimant = createTestAgent('self_claimant_agent', 'Self Claimant');
+    const claimantKey = claimant.apiKey;
+    const claimantId = claimant.agentId;
 
     const bountyId = 'test_bounty_self_' + Date.now();
     inMemoryBounties.set(bountyId, {
@@ -231,15 +292,11 @@ describe('HARDENED PAYMENT PATH & UNIFIED PRICING AUDIT', () => {
       await db.collection('agent_wallets').doc(PLATFORM_TREASURY_ACCOUNT_ID).set(treasuryRecord);
     } catch (_) {}
 
-    const verifierRes = await request(app)
-      .post('/api/v1/agents/register')
-      .send({ handle: 'independent_verifier', displayName: 'Independent Verifier' });
-    const verifierKey = verifierRes.body.apiKey;
+    const verifier = createTestAgent('independent_verifier', 'Independent Verifier');
+    const verifierKey = verifier.apiKey;
 
-    const claimantRes = await request(app)
-      .post('/api/v1/agents/register')
-      .send({ handle: 'hard_worker_agent', displayName: 'Hard Worker Agent' });
-    const claimantId = claimantRes.body.agentId;
+    const claimant = createTestAgent('hard_worker_agent', 'Hard Worker Agent');
+    const claimantId = claimant.agentId;
     const initialWorkerBalance = inMemoryWalletRegistry.get(claimantId)?.creditsBalance || 0;
 
     const rewardCredits = 250;
@@ -299,15 +356,11 @@ describe('HARDENED PAYMENT PATH & UNIFIED PRICING AUDIT', () => {
       await db.collection('agent_wallets').doc(PLATFORM_TREASURY_ACCOUNT_ID).set(emptyTreasury);
     } catch (_) {}
 
-    const verifierRes = await request(app)
-      .post('/api/v1/agents/register')
-      .send({ handle: 'verifier_audit_2', displayName: 'Verifier Audit 2' });
-    const verifierKey = verifierRes.body.apiKey;
+    const verifier = createTestAgent('verifier_audit_2', 'Verifier Audit 2');
+    const verifierKey = verifier.apiKey;
 
-    const claimantRes = await request(app)
-      .post('/api/v1/agents/register')
-      .send({ handle: 'worker_bounty_2', displayName: 'Worker 2' });
-    const claimantId = claimantRes.body.agentId;
+    const claimant = createTestAgent('worker_bounty_2', 'Worker 2');
+    const claimantId = claimant.agentId;
 
     const bountyId = 'test_bounty_empty_treasury_' + Date.now();
     inMemoryBounties.set(bountyId, {

@@ -1865,10 +1865,10 @@ export const CommunityHub: React.FC<CommunityHubProps> = ({ onOpenAuth, onSelect
             {/* Incentive Workflow Steps */}
             <div className="my-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div className="p-3 alien-block-cut-sm bg-black/70 border border-cyan-500/30">
-                <div className="text-[10px] font-alien-hud text-cyan-400 font-bold">STEP 1: REGISTER</div>
-                <div className="text-xs font-zen font-bold text-white mt-1">Get API Key</div>
+                <div className="text-[10px] font-alien-hud text-cyan-400 font-bold">STEP 1: PURE X402</div>
+                <div className="text-xs font-zen font-bold text-white mt-1">Direct Micropayments</div>
                 <div className="text-[11px] font-martian text-neutral-400 mt-1">
-                  Self-register via POST endpoint; receive an sb_live_ API key instantly.
+                  Pure x402 pay-per-call. No registration or API key needed.
                 </div>
               </div>
               <div className="p-3 alien-block-cut-sm bg-black/70 border border-cyan-400/60 shadow-lg shadow-cyan-950/50">

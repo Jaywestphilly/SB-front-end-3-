@@ -16,7 +16,62 @@ describe('Autonomous Agent Community:Write Acceptance Test', () => {
   let agentHandle: string;
   let createdPostId: string;
 
-  it('1) Fresh POST /api/v1/agent/register returns community:write in scopes', async () => {
+  beforeAll(async () => {
+    const { inMemoryKeyRegistry, inMemoryAgentRegistry } = await import('./agentPlatform.js');
+    const crypto = await import('crypto');
+    const publicId = 'solaris_key_001';
+    const secret = crypto.randomBytes(32).toString('hex');
+    const keyHash = crypto.createHash('sha256').update(secret).digest('hex');
+    agentApiKey = `sb_live_${publicId}_${secret}`;
+    agentId = 'agent_solaris_macro';
+    agentHandle = 'solaris_macro_agent';
+
+    const keyRecord: any = {
+      keyId: publicId,
+      agentId,
+      ownerUid: 'dashboard_user',
+      keyPrefix: secret.substring(0, 4) + '...',
+      keyHash,
+      secretHash: keyHash,
+      scopes: [
+        'services:read',
+        'jobs:read',
+        'jobs:execute',
+        'payments:transact',
+        'community:read',
+        'community:write',
+        'community:reply'
+      ],
+      createdAt: new Date(),
+      status: 'active'
+    };
+
+    const agentRecord = {
+      agentId,
+      handle: agentHandle,
+      handleLower: agentHandle.toLowerCase(),
+      displayName: 'Solaris Macro Analyst',
+      description: 'Autonomous quant agent analyzing energy transition and sovereign debt flows',
+      status: 'active',
+      authorType: 'agent',
+      isAgent: true
+    };
+
+    inMemoryKeyRegistry.set(publicId, keyRecord);
+    inMemoryKeyRegistry.set(agentApiKey, keyRecord);
+    inMemoryAgentRegistry.set(agentId, agentRecord);
+    inMemoryAgentRegistry.set(agentHandle.toLowerCase(), agentRecord);
+
+    const keysCol = dbStoreInstance.getCollection('api_keys');
+    if (keysCol) {
+      keysCol.set(publicId, keyRecord);
+      keysCol.set(agentApiKey, keyRecord);
+    }
+    const usersCol = dbStoreInstance.getCollection('users');
+    if (usersCol) usersCol.set(agentId, agentRecord);
+  });
+
+  it('1) Fresh POST /api/v1/agent/register returns 410 and creates no key', async () => {
     const regRes = await request(app)
       .post('/api/v1/agent/register')
       .send({
@@ -26,23 +81,12 @@ describe('Autonomous Agent Community:Write Acceptance Test', () => {
         specialties: ['Energy', 'Macro', 'Commodities']
       });
 
-    expect(regRes.status).toBe(201);
-    expect(regRes.body.status).toBe('registered');
-    expect(regRes.body.apiKey).toMatch(/^sb_live_/);
-    expect(regRes.body.trialCredits).toBe(0);
-
-    // Verify granted scopes include community:write and community:reply
-    expect(regRes.body.scopes).toContain('community:write');
-    expect(regRes.body.scopes).toContain('community:read');
-    expect(regRes.body.scopes).toContain('community:reply');
-    expect(regRes.body.scopes).toContain('services:read');
-    expect(regRes.body.scopes).toContain('jobs:read');
-    expect(regRes.body.scopes).toContain('jobs:execute');
-    expect(regRes.body.scopes).toContain('payments:transact');
-
-    agentApiKey = regRes.body.apiKey;
-    agentId = regRes.body.agentId;
-    agentHandle = regRes.body.handle;
+    expect(regRes.status).toBe(410);
+    expect(regRes.body).toEqual({
+      status: "gone",
+      message: "No registration needed. Call any priced endpoint, get HTTP 402, pay in USDC on Base via x402, retry with PAYMENT-SIGNATURE.",
+      docs: "https://stockbloc.ai.studio/llms.txt"
+    });
   });
 
   it('2) That key POST /api/v1/community/posts returns 200 (not 403)', async () => {
