@@ -203,12 +203,11 @@ curl -i -X GET "https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack?ti
     "quarterCycle": "Q1/Q2 2026 SEC Form 13F Filings",
     "consensus": {
       "fundCount": 6,
-      "totalValueMillions": 2240,
-      "overallSentiment": "STRONG ACCUMULATION",
+      "totalValueUsd": 2240000000,
       "sector": "Semiconductors & AI Compute"
     },
     "institutionalHoldersCount": 6,
-    "totalInstitutionalValueMillions": 2240,
+    "totalInstitutionalValueUsd": 2240000000,
     "institutionalHolders": [
       {
         "fundName": "Situational Awareness LP",
@@ -360,7 +359,7 @@ curl -s "https://stockbloc.ai.studio/api/data/sec" -H "PAYMENT-SIGNATURE: <sig>"
   "quarterCycle": "Q1/Q2 2026 SEC Form 13F Filings",
   "totalFundsTracked": 13,
   "consensusHoldings": [
-    { "symbol": "NVDA", "fundCount": 6, "totalValueMillions": 2240, "overallSentiment": "STRONG ACCUMULATION" }
+    { "symbol": "NVDA", "fundCount": 6, "totalValueUsd": 2240000000 }
   ],
   "funds": [
     { "fundName": "Situational Awareness LP", "manager": "Leopold Aschenbrenner", "topHoldings": [{ "symbol": "NVDA", "portfolioPercent": 19.2 }] }

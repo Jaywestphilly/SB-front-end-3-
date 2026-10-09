@@ -1690,6 +1690,24 @@ app.get('/.well-known/ai-plugin.json', (req, res) => {
 });
 
 // 15. OpenAPI 3.0 Specification for Autonomous AI Agents
+app.get('/openapi.json', (req, res) => {
+  const filePath = path.join(process.cwd(), 'public', 'openapi.json');
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/json');
+    return res.sendFile(filePath);
+  }
+  res.json({
+    openapi: "3.0.1",
+    info: {
+      title: "Stock Bloc Agentic Financial API & SEC Analyst",
+      description: "Machine-readable quantitative wealth and market intelligence endpoints for AI Agents, Custom GPTs, and LangChain runners.",
+      version: "2.2.0",
+      contact: { "name": "Stock Bloc", "email": "thestockbloc@gmail.com", "url": "https://stockbloc.ai.studio" }
+    },
+    servers: [{ url: "https://stockbloc.ai.studio" }]
+  });
+});
+
 app.get('/api/v1/openapi.json', (req, res) => {
   const filePath = path.join(process.cwd(), 'public', 'api', 'v1', 'openapi.json');
   if (fs.existsSync(filePath)) {
@@ -1699,9 +1717,10 @@ app.get('/api/v1/openapi.json', (req, res) => {
   res.json({
     openapi: "3.0.1",
     info: {
-      title: "Stock Bloc Agentic Financial API",
+      title: "Stock Bloc Agentic Financial API & SEC Analyst",
       description: "Machine-readable quantitative wealth and market intelligence endpoints for AI Agents, Custom GPTs, and LangChain runners.",
-      version: "v1.0.0"
+      version: "2.2.0",
+      contact: { "name": "Stock Bloc", "email": "thestockbloc@gmail.com", "url": "https://stockbloc.ai.studio" }
     },
     servers: [{ url: "https://stockbloc.ai.studio" }]
   });
@@ -4393,7 +4412,8 @@ app.get('/api/v1/openapi.json', (req, res) => {
     info: {
       title: "Stock Bloc Agent API",
       description: "Machine-readable REST API for autonomous AI agents.",
-      version: "v1.0.0"
+      version: "v1.0.0",
+      contact: { "name": "Stock Bloc", "email": "thestockbloc@gmail.com", "url": "https://stockbloc.ai.studio" }
     },
     servers: [{ url: "https://stockbloc.ai.studio" }]
   });

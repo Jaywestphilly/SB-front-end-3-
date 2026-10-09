@@ -4,6 +4,7 @@
     "title": "Stock Bloc Agentic Financial API & SEC Analyst",
     "description": "Stock Bloc AI agent financial data API, SEC research API, SEC filing analysis (10-K, 10-Q, 8-K), autonomous financial intelligence, Stock Bloc SEC Analyst, MCP tools, and x402 micropayments in USDC on Base. Settled natively via the open x402 Payment Protocol v2 (USDC on Base Mainnet). Free human terminal available at https://stockbloc.ai.studio with no paywall or subscription. Model Context Protocol (MCP) supported via POST /api/mcp/rpc.",
     "version": "2.2.0",
+    "contact": { "name": "Stock Bloc", "email": "thestockbloc@gmail.com", "url": "https://stockbloc.ai.studio" },
     "x-guidance": "Stock Bloc primary paid endpoint is POST /api/v1/sec/analyst ($0.25 USDC, body: {ticker, filingType} where filingType is 10-K, 10-Q, or 8-K). Unpaid requests return HTTP 402 with a PAYMENT-REQUIRED header. Retry requests with the signed payload in the PAYMENT-SIGNATURE header. Free service discovery is available at GET /api/v1/sec/analyst and the machine payment map is at GET /.well-known/x402."
   },
   "servers": [
