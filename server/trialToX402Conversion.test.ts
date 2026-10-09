@@ -9,6 +9,7 @@ import {
   BASE_USDC_CONTRACT,
   getX402RecipientAddress
 } from './x402PaymentService.js';
+import { issueUiCookie } from './uiSession.js';
 import { decodePaymentRequiredHeader } from '@x402/core/http';
 import {
   resetFacilitatorMock,
@@ -336,12 +337,15 @@ describe('Trial-to-x402 Payment Conversion Engine', () => {
   // --------------------------------------------------------------------------
   // H. Human browser free paths: behavior unchanged.
   // --------------------------------------------------------------------------
-  it('H. Human browser free paths: serves data freely for same-origin browser visits', async () => {
+  it('H. Human browser free paths: serves data freely for browser visits with valid UI cookie', async () => {
     const app = createTestApp();
+    const mockRes: any = { cookie: vi.fn(), setHeader: vi.fn() };
+    const cookieVal = issueUiCookie(mockRes);
 
-    // Same-origin browser fetch without any agent key or payment signature
+    // Same-origin browser fetch with authentic UI session cookie
     const res = await request(app)
       .get('/api/v1/intelligence/sb-score?ticker=NVDA')
+      .set('Cookie', `sb_ui=${cookieVal}`)
       .set('sec-fetch-site', 'same-origin');
 
     expect(res.status).toBe(200);

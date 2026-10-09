@@ -28,6 +28,7 @@ export async function fetchWithPaywallHandling<T = any>(
 
   try {
     const res = await fetch(input, {
+      credentials: 'same-origin',
       ...init,
       headers,
     });

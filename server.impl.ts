@@ -23,6 +23,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { validateProductionStartupSafety, authenticateAgent, getSystemReadinessStatus, ensurePersistentAgentSecret } from './server/agentSecurity.js';
 import { agentTelemetryRouter, trackAgentVisitMiddleware } from './server/agentTelemetry.js';
 import { requireX402Payment, PRICED_ENDPOINTS, getX402RecipientAddress, X402_ROUTE_PATHS } from './server/x402PaymentService.js';
+import { issueUiCookie } from './server/uiSession.js';
 import { fetchRealStockQuote, fetchYahooQuote } from './server/marketQuoteService.js';
 
 const app = express();
@@ -5409,6 +5410,16 @@ function getRouteMetadata(reqPath: string, query: Record<string, any>, host: str
 }
 
 async function startServer() {
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api')) {
+      const basename = path.basename(req.path);
+      if (!basename.includes('.')) {
+        issueUiCookie(res);
+      }
+    }
+    next();
+  });
+
   const isProduction = process.env.NODE_ENV === 'production' || 
     (typeof __filename !== 'undefined' && __filename.includes('dist')) ||
     (!process.argv[1]?.endsWith('server.ts') && fs.existsSync(path.join(process.cwd(), 'dist', 'index.html')));

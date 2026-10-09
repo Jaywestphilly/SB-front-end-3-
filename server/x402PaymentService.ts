@@ -15,6 +15,7 @@ import { inMemorySettlementRegistry } from './agentExchangeApi.js';
 import { recordMachineCommerceEvent } from './agentTelemetry.js';
 import { validatePricedRequestInput } from './x402InputValidation.js';
 import { SecIntelService } from '../src/services/secIntelService.js';
+import { verifyUiCookie, uiBypassAllowed } from './uiSession.js';
 
 // ============================================================================
 // COINBASE CDP X402 CONSTANTS & SPECIFICATION (BASE MAINNET)
@@ -455,9 +456,7 @@ export const HUMAN_UI_FREE_PATHS = new Set([
   '/api/v1/intelligence/earnings-pack',
   '/api/intelligence/sb-score',
   '/api/intelligence/signal',
-  '/api/intelligence/earnings-pack',
-  '/api/sec/job',
-  '/api/v1/sec/job'
+  '/api/intelligence/earnings-pack'
 ]);
 
 export function isHumanUiFreePath(path: string): boolean {
@@ -715,8 +714,8 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
     }
 
     // 2. Free Human Browser UI Access (Server-side allowlist for web terminal frontend)
-    // Server decides based on authentic browser request headers matching UI free paths (never trusts client bypass headers)
-    if (isFrontendWebRequest(req) && isHumanUiFreePath(fullPath)) {
+    // Server decides based on authentic UI session cookie and per-IP limiter matching UI free paths
+    if (isHumanUiFreePath(fullPath) && verifyUiCookie(req) && uiBypassAllowed(req)) {
       return forwardNext();
     }
 

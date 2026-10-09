@@ -13,6 +13,7 @@ import {
   BAZAAR_DISCOVERY_EXTENSIONS,
   clearX402SettlementRegistry
 } from './x402PaymentService.js';
+import { issueUiCookie } from './uiSession.js';
 import { decodePaymentRequiredHeader } from '@x402/core/http';
 import { validateDiscoveryExtension } from '@x402/extensions';
 import {
@@ -375,23 +376,29 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       process.env.X402_RECIPIENT_ADDRESS = TEST_RECIPIENT_ADDRESS;
     });
 
-    it('browser-style request with sec-fetch-site same-origin returns 200 with no key on free UI paths', async () => {
+    it('browser-style request with sec-fetch-site same-origin and valid cookie returns 200 with no key on free UI paths', async () => {
       const app = createTestApp();
+      const mockRes: any = { cookie: vi.fn(), setHeader: vi.fn() };
+      const cookieVal = issueUiCookie(mockRes);
 
       const res = await request(app)
         .get('/api/v1/intelligence/sb-score')
-        .set('sec-fetch-site', 'same-origin');
+        .set('sec-fetch-site', 'same-origin')
+        .set('Cookie', `sb_ui=${cookieVal}`);
 
       expect(res.status).toBe(200);
       expect(res.body.status).toBe('success');
       expect(res.body.sbScore).toBe(88);
     });
 
-    it('browser-style request with matching Referer header returns 200 with no key on free UI paths', async () => {
+    it('browser-style request with matching Referer header and valid cookie returns 200 with no key on free UI paths', async () => {
       const app = createTestApp();
+      const mockRes: any = { cookie: vi.fn(), setHeader: vi.fn() };
+      const cookieVal = issueUiCookie(mockRes);
 
       const res = await request(app)
         .get('/api/data/market')
+        .set('Cookie', `sb_ui=${cookieVal}`)
         .set('referer', 'https://stockbloc.ai.studio/')
         .set('host', 'stockbloc.ai.studio');
 
