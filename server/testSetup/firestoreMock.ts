@@ -327,6 +327,7 @@ vi.mock('../firebaseAdmin.js', () => {
     auth,
     dbStoreInstance: fakeStore,
     dbStore: dbStoreProxy,
-    setCustomTransactionRunner
+    setCustomTransactionRunner,
+    cleanupStrayTestKeys: vi.fn(async () => {})
   };
 });

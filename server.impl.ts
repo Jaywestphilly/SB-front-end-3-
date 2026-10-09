@@ -25,6 +25,7 @@ import { agentTelemetryRouter, trackAgentVisitMiddleware } from './server/agentT
 import { requireX402Payment, PRICED_ENDPOINTS, getX402RecipientAddress, X402_ROUTE_PATHS } from './server/x402PaymentService.js';
 import { issueUiCookie } from './server/uiSession.js';
 import { fetchRealStockQuote, fetchYahooQuote } from './server/marketQuoteService.js';
+import { handleToolPageRequest } from './server/toolPagesSsr.js';
 
 const app = express();
 const portArgIndex = process.argv.indexOf('--port');
@@ -4941,6 +4942,21 @@ app.get("/api/ticker-news/:symbol", async (req, res) => {
 // Tombstone route for retired raw json feed endpoints to prevent 200 HTML fallthrough
 app.get(['/market_watchlist_data.json','/api/market-watchlist','/sec_intel_data.json','/api/sec-intel'], (req, res) => res.status(404).json({ status: 'error', code: 'NOT_FOUND', message: 'Not available. Full 13F dataset: GET /api/data/sec ($0.10 USDC via x402). Market data: GET /api/data/market ($0.01 USDC via x402).' }));
 
+// Explicit route for sitemap.xml
+app.get('/sitemap.xml', (_req, res) => {
+  const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+  if (fs.existsSync(sitemapPath)) {
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    return res.sendFile(sitemapPath);
+  }
+  res.status(404).end();
+});
+
+// SSR and 404 handling for tool pages (/tools/*) before static/SPA fallbacks
+app.get('/tools', handleToolPageRequest);
+app.get('/tools/:slug', handleToolPageRequest);
+app.all('/tools/*', handleToolPageRequest);
+
 // Explicit Public Static Serving for Raw JSON Backend Feeds
 const publicFolder = path.join(process.cwd(), 'public');
 app.use(express.static(publicFolder));
@@ -5396,6 +5412,61 @@ function getRouteMetadata(reqPath: string, query: Record<string, any>, host: str
       description: "Comparison matrix: Stock Bloc vs Tavily vs Twelve Data across what it sells, SEC filing analysis, payment rails (x402 on Base), signup requirements, machine-readable pricing, and agent discovery.",
       image: `${baseUrl}/api/og?title=${encodeURIComponent('Stock Bloc vs Tavily vs Twelve Data')}&subtitle=${encodeURIComponent('Architecture & Settlement Comparison')}&badge=AGENT+COMPARISON&category=Research`,
       url: `${baseUrl}/compare`
+    };
+  }
+
+  // Tool Pages
+  if (normalizedPath === '/tools/sec') {
+    return {
+      title: "Stock Bloc SEC Analyst | Form 10-K, 10-Q & 8-K Filing Analysis",
+      description: "Stock Bloc SEC Analyst: Autonomous Form 10-K, 10-Q, and 8-K filing analysis, revenue quality checks, and risk factor audits. Paid endpoint: POST /api/v1/sec/job with {\"ticker\":\"AAPL\",\"filingType\":\"10-K\"} ($0.25 USDC). Free info page: GET /api/v1/sec/analyst.",
+      image: `${baseUrl}/api/og?title=${encodeURIComponent('Stock Bloc SEC Analyst')}&subtitle=${encodeURIComponent('$0.25 USDC via x402 on Base')}&badge=SEC+ANALYST&category=Tools`,
+      url: `${baseUrl}/tools/sec`
+    };
+  }
+
+  if (normalizedPath === '/tools/market-data') {
+    return {
+      title: "Stock Bloc Market Data | Stock quotes for US tickers",
+      description: "Stock quotes for US tickers with pricing, market capitalization, volume, and valuation ratios. Endpoint: GET /api/v1/market/quote?symbol=AAPL ($0.01 USDC via x402 on Base).",
+      image: `${baseUrl}/api/og?title=${encodeURIComponent('Stock quotes for US tickers')}&subtitle=${encodeURIComponent('$0.01 USDC via x402 on Base')}&badge=MARKET+DATA&category=Tools`,
+      url: `${baseUrl}/tools/market-data`
+    };
+  }
+
+  if (normalizedPath === '/tools/13f') {
+    return {
+      title: "Stock Bloc 13F Whale Intel | Institutional Holdings & Filings",
+      description: "Holdings are from quarterly SEC 13F-HR filings, not real-time. Paid endpoint: GET /api/data/sec ($0.10 USDC via x402 on Base).",
+      image: `${baseUrl}/api/og?title=${encodeURIComponent('SEC 13F Institutional Whale Holdings')}&subtitle=${encodeURIComponent('$0.10 USDC via x402 on Base')}&badge=13F+INTEL&category=Tools`,
+      url: `${baseUrl}/tools/13f`
+    };
+  }
+
+  if (normalizedPath === '/tools/forecast') {
+    return {
+      title: "Stock Bloc Price Forecasts | Brier-Calibrated Market Forecasts",
+      description: "Brier-calibrated quantitative stock price forecasts with probabilistic confidence intervals. Paid endpoint: POST /api/v1/intelligence/forecasts ($0.05 USDC via x402 on Base).",
+      image: `${baseUrl}/api/og?title=${encodeURIComponent('Quantitative Price Forecasts')}&subtitle=${encodeURIComponent('$0.05 USDC via x402 on Base')}&badge=FORECASTS&category=Tools`,
+      url: `${baseUrl}/tools/forecast`
+    };
+  }
+
+  if (normalizedPath === '/tools/research') {
+    return {
+      title: "Stock Bloc Research Memos | Institutional Quant Theses",
+      description: "Institutional quantitative investment research memos and peer-reviewed market theses. Paid endpoint: POST /api/v1/intelligence/research ($0.10 USDC via x402 on Base).",
+      image: `${baseUrl}/api/og?title=${encodeURIComponent('Institutional Research Memos')}&subtitle=${encodeURIComponent('$0.10 USDC via x402 on Base')}&badge=RESEARCH+MEMOS&category=Tools`,
+      url: `${baseUrl}/tools/research`
+    };
+  }
+
+  if (normalizedPath === '/tools/sb-score') {
+    return {
+      title: "Stock Bloc SB Score | Quant Factor Model & Stock Rating",
+      description: "Audited 0-100 composite quantitative factor score across Momentum, Trend, RSI, Volume, and Volatility. Paid endpoint: GET /api/v1/intelligence/sb-score?ticker=AAPL ($0.05 USDC via x402 on Base).",
+      image: `${baseUrl}/api/og?title=${encodeURIComponent('Stock Bloc SB Score')}&subtitle=${encodeURIComponent('$0.05 USDC via x402 on Base')}&badge=SB+SCORE&category=Tools`,
+      url: `${baseUrl}/tools/sb-score`
     };
   }
 
