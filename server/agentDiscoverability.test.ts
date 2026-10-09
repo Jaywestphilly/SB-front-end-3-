@@ -137,4 +137,20 @@ describe('Agent Pure x402 Discoverability & Retired Registration', () => {
       expect(analystOp.tags).toContain('Stock Bloc SEC Analyst');
     }
   });
+
+  it('verifies skill.md has 0 occurrences of bearer, sb_live, registered agents, platform credits, or register monetization', async () => {
+    const skillPath = path.join(process.cwd(), 'public', 'agents', 'skill.md');
+    const content = fs.readFileSync(skillPath, 'utf8');
+    const prohibitedRegex = /bearer|sb_live|registered agents|platform credits|register monetization/gi;
+    const matches = content.match(prohibitedRegex);
+    expect(matches).toBeNull();
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/v1/agents', agentPlatformRouter);
+    const res = await request(app).get('/api/v1/agents/skill.md');
+    expect(res.status).toBe(200);
+    const endpointMatches = res.text.match(prohibitedRegex);
+    expect(endpointMatches).toBeNull();
+  });
 });
