@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TAB_TITLES, TAB_DESCRIPTIONS, TAB_IMAGES, pushAppRoute } from './router';
+import { TAB_TITLES, TAB_DESCRIPTIONS, TAB_IMAGES, pushAppRoute, resolveToolRedirect } from './router';
 
 describe('router metadata and social previews', () => {
   it('defines distinct titles, descriptions, and images for /watchlist, /news, and /dyson-swarm', () => {
@@ -28,5 +28,25 @@ describe('router metadata and social previews', () => {
     pushAppRoute('watchlist', false, 'AAOI');
     expect(document.title).toContain('AAOI');
     expect(document.title).toContain('Stock Analysis');
+  });
+
+  describe('legacy tool URL redirects', () => {
+    it('redirects old tool URLs preserving path, query, and hash', () => {
+      expect(resolveToolRedirect('/tools/sec-analyst')).toBe('/tools/sec');
+      expect(resolveToolRedirect('/tools/sec-13f')).toBe('/tools/13f');
+      expect(resolveToolRedirect('/tools/research-memo')).toBe('/tools/research');
+
+      // Preserves sub-path, query, and hash
+      expect(resolveToolRedirect('/tools/sec-analyst/filing', '?ticker=AAPL', '#details')).toBe('/tools/sec/filing?ticker=AAPL#details');
+      expect(resolveToolRedirect('/tools/sec-13f/whale', '?fund=buffett')).toBe('/tools/13f/whale?fund=buffett');
+      expect(resolveToolRedirect('/tools/research-memo/model', '?format=json')).toBe('/tools/research/model?format=json');
+
+      // Non-legacy paths return null
+      expect(resolveToolRedirect('/tools/sec')).toBeNull();
+      expect(resolveToolRedirect('/tools/13f')).toBeNull();
+      expect(resolveToolRedirect('/tools/research')).toBeNull();
+      expect(resolveToolRedirect('/tools/market-data')).toBeNull();
+      expect(resolveToolRedirect('/watchlist')).toBeNull();
+    });
   });
 });

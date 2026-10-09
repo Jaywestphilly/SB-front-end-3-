@@ -115,6 +115,30 @@ export const ROUTE_MAP: Record<string, ViewTab> = {
   "/mit-courses": "mit_courses",
 };
 
+export const TOOL_REDIRECTS: Record<string, string> = {
+  "/tools/sec-analyst": "/tools/sec",
+  "/tools/sec-13f": "/tools/13f",
+  "/tools/research-memo": "/tools/research",
+};
+
+/**
+ * Resolves client-side redirect for legacy tool page URLs, preserving any nested path, query, and hash.
+ */
+export function resolveToolRedirect(pathname: string, search = "", hash = ""): string | null {
+  if (!pathname) return null;
+  const lower = pathname.toLowerCase();
+  for (const [oldPath, newPath] of Object.entries(TOOL_REDIRECTS)) {
+    if (lower === oldPath) {
+      return newPath + search + hash;
+    }
+    if (lower.startsWith(oldPath + "/")) {
+      const remainder = pathname.slice(oldPath.length);
+      return newPath + remainder + search + hash;
+    }
+  }
+  return null;
+}
+
 export const TAB_TO_ROUTE: Record<ViewTab, string> = {
   brand: "/",
   macro: "/macro",
@@ -423,6 +447,17 @@ export function getRouteFromLocation(): RouteState {
   if (typeof window === "undefined") {
     return { tab: "watchlist", isTerminalOpen: false };
   }
+
+  // Handle client-side redirects for legacy tool URLs preserving path, query, and hash
+  const toolRedirect = resolveToolRedirect(window.location.pathname, window.location.search, window.location.hash);
+  if (toolRedirect) {
+    try {
+      window.location.replace(toolRedirect);
+    } catch {
+      // In non-browser environments or jsdom
+    }
+  }
+
   const path = window.location.pathname.toLowerCase().replace(/\/$/, "") || "/";
 
   // Check query parameters for stock ticker deep-linking
@@ -651,9 +686,10 @@ export function pushAppRoute(tab: ViewTab, isTerminalOpen = false, stockSymbol?:
       (targetPath === "/ai-revolution" && window.location.pathname.startsWith("/ai-revolution/")) ||
       (targetPath === "/intelligence" && window.location.pathname.startsWith("/intelligence/")) ||
       (targetPath === "/war-gov-ufo" && window.location.pathname.startsWith("/war-gov-ufo/")) ||
-      (targetPath === "/agents" && window.location.pathname.startsWith("/agents/") && window.location.pathname !== "/agents/feed"))
+      (targetPath === "/agents" && window.location.pathname.startsWith("/agents/") && window.location.pathname !== "/agents/feed") ||
+      window.location.pathname.startsWith("/tools"))
     ) {
-      // Don't push over existing sub-tab
+      // Don't push over existing sub-tab or tool route
     } else {
       window.history.pushState({ tab, isTerminalOpen, stockSymbol }, "", targetPath);
     }

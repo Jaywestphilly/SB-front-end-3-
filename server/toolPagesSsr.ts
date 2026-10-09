@@ -380,6 +380,31 @@ export function renderToolPageHtml(tool: ToolPageSpec, reqHost: string): string 
 export function handleToolPageRequest(req: Request, res: Response): void {
   const rawParam = req.params?.slug || (req.params as any)?.[0] || req.path.replace(/^\/tools\/?/, '');
   const slug = (rawParam || '').trim().toLowerCase();
+
+  // Legacy tool URL redirects: preserve path and query
+  const LEGACY_TOOL_REDIRECTS: Record<string, string> = {
+    'sec-analyst': '/tools/sec',
+    'sec-13f': '/tools/13f',
+    'research-memo': '/tools/research',
+  };
+
+  let redirectTarget: string | null = null;
+  for (const [oldSlug, newPath] of Object.entries(LEGACY_TOOL_REDIRECTS)) {
+    if (slug === oldSlug) {
+      redirectTarget = newPath;
+      break;
+    } else if (slug.startsWith(oldSlug + '/')) {
+      redirectTarget = newPath + slug.slice(oldSlug.length);
+      break;
+    }
+  }
+
+  if (redirectTarget) {
+    const search = req.url && req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    res.redirect(301, redirectTarget + search);
+    return;
+  }
+
   const tool = resolveToolSpec(slug);
 
   if (!tool) {

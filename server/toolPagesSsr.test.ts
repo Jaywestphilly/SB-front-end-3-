@@ -152,4 +152,23 @@ describe('Tool Pages SSR & 404 Routing', () => {
       expect(followingSlice).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/);
     }
   });
+
+  it('redirects old tool URLs to current locations preserving path and query', async () => {
+    const resSec = await request(app).get('/tools/sec-analyst');
+    expect(resSec.status).toBe(301);
+    expect(resSec.headers.location).toBe('/tools/sec');
+
+    const res13f = await request(app).get('/tools/sec-13f');
+    expect(res13f.status).toBe(301);
+    expect(res13f.headers.location).toBe('/tools/13f');
+
+    const resResearch = await request(app).get('/tools/research-memo');
+    expect(resResearch.status).toBe(301);
+    expect(resResearch.headers.location).toBe('/tools/research');
+
+    // Preserves sub-path and query
+    const resSub = await request(app).get('/tools/sec-analyst/history?ticker=NVDA');
+    expect(resSub.status).toBe(301);
+    expect(resSub.headers.location).toBe('/tools/sec/history?ticker=NVDA');
+  });
 });

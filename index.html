@@ -96,6 +96,28 @@
           console.error("Failed to polyfill sessionStorage", err);
         }
       }
+
+      // 3. Client-side redirects for legacy tool page URLs preserving path, query, and hash
+      try {
+        var legacyToolRedirects = {
+          '/tools/sec-analyst': '/tools/sec',
+          '/tools/sec-13f': '/tools/13f',
+          '/tools/research-memo': '/tools/research'
+        };
+        var currentPath = window.location.pathname || '';
+        var normalizedPath = currentPath.toLowerCase();
+        for (var oldToolPath in legacyToolRedirects) {
+          if (normalizedPath === oldToolPath || normalizedPath.indexOf(oldToolPath + '/') === 0) {
+            var targetPrefix = legacyToolRedirects[oldToolPath];
+            var trailingPath = currentPath.slice(oldToolPath.length);
+            var destination = targetPrefix + trailingPath + (window.location.search || '') + (window.location.hash || '');
+            window.location.replace(destination);
+            break;
+          }
+        }
+      } catch (redirectErr) {
+        console.warn("Client tool redirect error:", redirectErr);
+      }
     })();
     </script>
     <meta charset="UTF-8" />
