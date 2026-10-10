@@ -100,8 +100,8 @@ export async function validatePricedRequestInput(
       };
     }
 
-    // Exact /api/v1/market/quote (requires symbol or ticker)
-    if (normalizedPath === '/api/v1/market/quote') {
+    // Exact /api/v1/market/quote and /api/live-quote (requires symbol or ticker)
+    if (normalizedPath === '/api/v1/market/quote' || normalizedPath === '/api/live-quote') {
       const sym = query.symbol || query.ticker;
       if (!sym || typeof sym !== 'string' || !sym.trim()) {
         return {
@@ -125,6 +125,20 @@ export async function validatePricedRequestInput(
           charged: false
         };
       }
+      try {
+        const { cik, secReachable } = await lookupTickerCik(String(sym));
+        if (!cik && secReachable) {
+          return {
+            valid: false,
+            status: 404,
+            code: 'UNKNOWN_TICKER',
+            error: 'unknown_ticker',
+            message: 'unknown_ticker',
+            customJson: { error: 'unknown_ticker' },
+            charged: false
+          } as any;
+        }
+      } catch {}
       return { valid: true };
     }
 
@@ -146,6 +160,20 @@ export async function validatePricedRequestInput(
           charged: false
         };
       }
+      try {
+        const { cik, secReachable } = await lookupTickerCik(decoded);
+        if (!cik && secReachable) {
+          return {
+            valid: false,
+            status: 404,
+            code: 'UNKNOWN_TICKER',
+            error: 'unknown_ticker',
+            message: 'unknown_ticker',
+            customJson: { error: 'unknown_ticker' },
+            charged: false
+          } as any;
+        }
+      } catch {}
       return { valid: true };
     }
 

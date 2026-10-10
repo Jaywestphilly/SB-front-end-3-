@@ -734,6 +734,9 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
       if (failure.allowHeader) {
         res.setHeader('Allow', failure.allowHeader);
       }
+      if (failure.customJson) {
+        return res.status(failure.status).json(failure.customJson);
+      }
       return res.status(failure.status).json({
         status: 'error',
         code: failure.code,
@@ -1204,7 +1207,8 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
           endpointId: endpointConfig.id,
           amountUsd: endpointConfig.priceUsd,
           amountAtomic: endpointConfig.atomicAmount,
-          txHash: settlementRecord.txHash
+          txHash: settlementRecord.txHash,
+          source: paymentSource
         }).catch(() => {});
 
         (req as any).x402Payment = {

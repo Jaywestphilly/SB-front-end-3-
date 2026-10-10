@@ -98,6 +98,18 @@ const activeAgentHashes = new Map<string, number>();
 // Array of ping timestamps within rolling 24-hour window
 let recentPingTimestamps: number[] = [];
 
+// Known self-wallet addresses (never counted as external agents)
+export const KNOWN_SELF_WALLETS = new Set<string>([
+  '0x26b610a059de2488ebe3e0eda02ae17907917419',
+  '0xb4807865a786e9e9e26e6a9610f2078e7fc507fb',
+  '0xd86cadb414171d1155aa88076504763f7de32805'
+]);
+
+export function isSelfWallet(payer?: string): boolean {
+  if (!payer || typeof payer !== 'string') return false;
+  return KNOWN_SELF_WALLETS.has(payer.toLowerCase().trim());
+}
+
 // ============================================================================
 // MACHINE COMMERCE & REVENUE TRACKING (Zero Fabricated Data)
 // ============================================================================
@@ -139,6 +151,7 @@ export function clearTelemetryState(): void {
 }
 
 export function clearMachineCommerceState(): void {
+  hasHydratedFromDb = false;
   externalDiscoveryCount = 0;
   externalAgentsSet.clear();
   trialUsageCount = 0;
@@ -184,7 +197,10 @@ export function recordMachineCommerceEvent(event: MachineCommerceEvent): void {
   }
 
   if (event.payer) {
-    externalAgentsSet.add(event.payer.toLowerCase());
+    const payerLower = event.payer.toLowerCase();
+    if (!isSelfWallet(payerLower)) {
+      externalAgentsSet.add(payerLower);
+    }
   }
 
   if (event.eventType === 'trial_usage') {
@@ -256,6 +272,10 @@ export function recordMachineCommerceEvent(event: MachineCommerceEvent): void {
 
     if (isNewSettlement) {
       paymentSuccessCount++;
+      if (event.payer && isSelfWallet(event.payer)) {
+        event.source = 'self' as any;
+      }
+
       const amt = typeof event.amountUsd === 'number' && !isNaN(event.amountUsd) ? event.amountUsd : 0;
       if (amt > 0) {
         totalUsdcRevenue = Number((totalUsdcRevenue + amt).toFixed(6));
@@ -271,42 +291,45 @@ export function recordMachineCommerceEvent(event: MachineCommerceEvent): void {
 
       if (event.payer) {
         const payerKey = event.payer.toLowerCase();
+        const isSelf = isSelfWallet(payerKey);
         const priorCount = payerPaidCallCount.get(payerKey) || 0;
         const newCount = priorCount + 1;
         payerPaidCallCount.set(payerKey, newCount);
         agentLifetimeSpend.set(payerKey, Number(((agentLifetimeSpend.get(payerKey) || 0) + amt).toFixed(6)));
 
-        if (newCount === 1) {
-          firstPaidCallsCount++;
-          machineCommerceEvents.push({
-            eventType: 'first_paid_call',
-            source: event.source,
-            endpoint: event.endpoint,
-            payer: payerKey,
-            amountUsd: amt,
-            timestamp: nowIso
-          });
-        } else if (newCount === 2) {
-          secondPaidCallsCount++;
-          repeatPayersSet.add(payerKey);
-          machineCommerceEvents.push({
-            eventType: 'second_paid_call',
-            source: event.source,
-            endpoint: event.endpoint,
-            payer: payerKey,
-            amountUsd: amt,
-            timestamp: nowIso
-          });
-          machineCommerceEvents.push({
-            eventType: 'repeat_payer',
-            source: event.source,
-            endpoint: event.endpoint,
-            payer: payerKey,
-            amountUsd: amt,
-            timestamp: nowIso
-          });
-        } else if (newCount > 2) {
-          repeatPayersSet.add(payerKey);
+        if (!isSelf) {
+          if (newCount === 1) {
+            firstPaidCallsCount++;
+            machineCommerceEvents.push({
+              eventType: 'first_paid_call',
+              source: event.source,
+              endpoint: event.endpoint,
+              payer: payerKey,
+              amountUsd: amt,
+              timestamp: nowIso
+            });
+          } else if (newCount === 2) {
+            secondPaidCallsCount++;
+            repeatPayersSet.add(payerKey);
+            machineCommerceEvents.push({
+              eventType: 'second_paid_call',
+              source: event.source,
+              endpoint: event.endpoint,
+              payer: payerKey,
+              amountUsd: amt,
+              timestamp: nowIso
+            });
+            machineCommerceEvents.push({
+              eventType: 'repeat_payer',
+              source: event.source,
+              endpoint: event.endpoint,
+              payer: payerKey,
+              amountUsd: amt,
+              timestamp: nowIso
+            });
+          } else if (newCount > 2) {
+            repeatPayersSet.add(payerKey);
+          }
         }
       }
     }
@@ -443,6 +466,44 @@ export function recordAgentVisit(rawIdentifier?: string, _visitType: string = 'a
 }
 
 /**
+ * Rebuild repeat-payer stats, revenue metrics, and lifetime spend from Firestore x402_settlements collection.
+ */
+export async function rebuildTelemetryFromFirestore(): Promise<void> {
+  if (!db || typeof db.collection !== 'function') return;
+  try {
+    const coll = db.collection('x402_settlements');
+    if (!coll || typeof coll.get !== 'function') return;
+    const snapshot = await coll.get();
+    if (!snapshot || snapshot.empty || !Array.isArray(snapshot.docs)) return;
+
+    for (const doc of snapshot.docs) {
+      const data = doc.data();
+      const rawPayer = data.payer || '0x0000000000000000000000000000000000000000';
+      const isSelf = isSelfWallet(rawPayer);
+      const source = isSelf ? 'self' : (data.source || 'rest');
+      const endpoint = data.endpointId || data.endpoint || 'market_data';
+      const amountUsd = typeof data.amountUsd === 'number' ? data.amountUsd : (parseFloat(data.amountUsd || '0') || 0);
+      const txHash = data.txHash || doc.id;
+      const paymentId = doc.id;
+      const timestamp = data.timestamp || data.settledAt || new Date().toISOString();
+
+      recordMachineCommerceEvent({
+        eventType: 'payment_success',
+        source: source as any,
+        endpoint,
+        payer: rawPayer,
+        amountUsd,
+        txHash,
+        paymentId,
+        timestamp
+      });
+    }
+  } catch (err) {
+    console.warn('[TELEMETRY] Failed to rebuild telemetry from x402_settlements:', err);
+  }
+}
+
+/**
  * Hydrate telemetry aggregates from Firestore if server recently rebooted.
  * Ensures zero manufactured data is restored or seeded.
  */
@@ -451,6 +512,7 @@ export async function hydrateTelemetryFromFirestore(): Promise<void> {
   hasHydratedFromDb = true;
 
   try {
+    await rebuildTelemetryFromFirestore();
     if (!db) return;
     const docRef = db.collection('telemetry_aggregates').doc('agents_24h');
     const docSnap = await docRef.get();
