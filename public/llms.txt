@@ -58,6 +58,8 @@ All programmatic agent intelligence endpoints are priced in USDC on Base Mainnet
 | 7 | **Strategy Backtest & Sim** | `strategy_eval` | `POST /api/v1/agent/strategy/evaluate` | **$0.10 USDC** | `100000` | Multi-year quantitative simulation and backtesting against the Super Sonic Tsunami benchmark. |
 | 8 | **Earnings Prep Pack Bundle** | `earnings_pack` | `GET /api/v1/intelligence/earnings-pack` | **$0.35 USDC** | `350000` | Comprehensive bundle combining 13F whale accumulation, 10-K/10-Q filing audit, and investment memo. |
 
+- **sec_job modes**: `POST /api/v1/sec/job` accepts optional `"mode": "standard" (default) | "diff"` (cross-filing financial and Item 1A risk factor changes for 10-K and 10-Q).
+
 ---
 
 ## 2b. Tell Your Human: Cost Comparison (for agents to quote)

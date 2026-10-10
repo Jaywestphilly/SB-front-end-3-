@@ -33,6 +33,7 @@ import {
 } from './agentExchangeApi.js';
 import { computeCompositeReputation, AgentReputationMetrics } from './agentReputation.js';
 import { requireX402Payment, PRICED_ENDPOINTS } from './x402PaymentService.js';
+import { buildFilingDiff } from './secFilingDiff.js';
 
 // ==========================================
 // 1. AGENT IDENTITY & CONSTANTS
@@ -73,6 +74,7 @@ export interface SecFilingAnalysisInput {
   filingType: SecFilingType;
   question?: string;
   forceFixture?: boolean;
+  mode?: 'standard' | 'diff';
 }
 
 export interface SecSourceReference {
@@ -825,6 +827,40 @@ const GROUNDED_SEC_FILINGS: Record<string, Record<SecFilingType, Partial<SecFili
 import { TICKER_TO_CIK, resolveTickerCik } from './secTickerLookup.js';
 export { TICKER_TO_CIK, resolveTickerCik };
 
+// Exported fact finder for reusable XBRL metric matching
+export function findMatchingFact(
+  units: any[],
+  accNum: string,
+  repDate?: string,
+  fType?: string,
+  isDuration: boolean = false
+): any | null {
+  if (!Array.isArray(units)) return null;
+  const matches = units.filter((u: any) => {
+    if (u.accn !== accNum) return false;
+    if (repDate && u.end !== repDate) return false;
+    if (fType && u.form !== fType) return false;
+    if (isDuration) {
+      if (!u.start) return false;
+      const startD = new Date(u.start);
+      const endD = new Date(u.end);
+      const diffMs = endD.getTime() - startD.getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      if (fType === '10-K') {
+        if (diffDays < 330 || diffDays > 400) return false;
+      } else if (fType === '10-Q') {
+        if (diffDays < 80 || diffDays > 100) return false;
+      } else {
+        return false;
+      }
+    }
+    return true;
+  });
+  if (matches.length === 0) return null;
+  const withFrame = matches.find((m: any) => m.frame);
+  return withFrame || matches[0];
+}
+
 // Live Dynamic SEC EDGAR Filing Retrieval
 export async function fetchLiveSecFiling(
   ticker: string,
@@ -887,39 +923,6 @@ export async function fetchLiveSecFiling(
     let balanceSheetHighlights: any = undefined;
     let cashFlowHighlights: any = undefined;
     let hasExactFigures = false;
-
-    function findMatchingFact(
-      units: any[],
-      accNum: string,
-      repDate: string,
-      fType: string,
-      isDuration: boolean
-    ): any | null {
-      if (!Array.isArray(units)) return null;
-      const matches = units.filter((u: any) => {
-        if (u.accn !== accNum) return false;
-        if (u.end !== repDate) return false;
-        if (u.form !== fType) return false;
-        if (isDuration) {
-          if (!u.start) return false;
-          const startD = new Date(u.start);
-          const endD = new Date(u.end);
-          const diffMs = endD.getTime() - startD.getTime();
-          const diffDays = diffMs / (1000 * 60 * 60 * 24);
-          if (fType === '10-K') {
-            if (diffDays < 330 || diffDays > 400) return false;
-          } else if (fType === '10-Q') {
-            if (diffDays < 80 || diffDays > 100) return false;
-          } else {
-            return false;
-          }
-        }
-        return true;
-      });
-      if (matches.length === 0) return null;
-      const withFrame = matches.find((m: any) => m.frame);
-      return withFrame || matches[0];
-    }
 
     // Fetch numeric highlights ONLY if they come from SEC companyfacts consistent with that exact accession
     if (filingType === '10-K' || filingType === '10-Q') {
@@ -1940,7 +1943,8 @@ secAnalystRouter.post(
         filingType,
         question,
         buyerAgentId,
-        forceFixture
+        forceFixture,
+        mode = 'standard'
       } = req.body || {};
 
       // Reject spoofed buyerAgentId in request body if mismatched with verified API credential
@@ -1971,6 +1975,20 @@ secAnalystRouter.post(
         });
       }
 
+      if (mode !== 'standard' && mode !== 'diff') {
+        return res.status(400).json({
+          error: 'Validation error: "mode" must be one of: standard, diff.',
+          code: 'INVALID_INPUT'
+        });
+      }
+
+      if (mode === 'diff' && normalizedFilingType === '8-K') {
+        return res.status(400).json({
+          error: 'Validation error: mode "diff" supports 10-K and 10-Q only. Received: 8-K.',
+          code: 'INVALID_FILING_TYPE'
+        });
+      }
+
       const idempotencyKey = (
         req.body?.idempotencyKey ||
         (req.headers['idempotency-key'] as string) ||
@@ -1993,7 +2011,8 @@ secAnalystRouter.post(
           input: {
             ticker: normTicker,
             filingType: normalizedFilingType,
-            question: question ? String(question).trim() : undefined
+            question: question ? String(question).trim() : undefined,
+            mode: mode === 'diff' ? 'diff' : 'standard'
           },
           requesterAgentId: authenticatedBuyerId,
           requesterHandle: authenticatedHandle,
@@ -2001,6 +2020,60 @@ secAnalystRouter.post(
           creditsAlreadyDebited: Boolean((req as any).creditsDebited || (req as any).x402Payment),
           paymentRail: (req as any).x402Payment ? 'X402_BASE_USDC' : 'PLATFORM_CREDITS'
         });
+        return res.status(200).json(result);
+      }
+
+      // When mode === "diff", build cross-filing difference analysis
+      if (mode === 'diff') {
+        let diffOutput: any = null;
+        try {
+          diffOutput = await buildFilingDiff(normTicker, normalizedFilingType as '10-K' | '10-Q');
+        } catch (diffErr: any) {
+          return res.status(503).json({
+            error: 'sec_unavailable',
+            retryable: true
+          });
+        }
+
+        if (!diffOutput) {
+          return res.status(503).json({
+            error: 'sec_unavailable',
+            retryable: true
+          });
+        }
+
+        // Settle x402 payment only AFTER real data is ready
+        if ((req as any).x402Payment && !(req as any).x402Payment.settled) {
+          try {
+            if (typeof (req as any).x402Payment.settle === 'function') {
+              await (req as any).x402Payment.settle();
+            }
+          } catch (settleErr: any) {
+            return res.status(402).json({
+              status: 'payment_settlement_failed',
+              code: 402,
+              error: 'x402 payment settlement failed through Coinbase CDP facilitator.',
+              reason: settleErr?.message || 'On-chain settlement transaction could not be executed.'
+            });
+          }
+        }
+
+        const result = await executeSecAnalystJob({
+          jobId,
+          input: {
+            ticker: normTicker,
+            filingType: normalizedFilingType,
+            question: question ? String(question).trim() : undefined,
+            mode: 'diff'
+          },
+          requesterAgentId: authenticatedBuyerId,
+          requesterHandle: authenticatedHandle,
+          idempotencyKey,
+          creditsAlreadyDebited: Boolean((req as any).creditsDebited || (req as any).x402Payment?.settled),
+          paymentRail: (req as any).x402Payment ? 'X402_BASE_USDC' : 'PLATFORM_CREDITS',
+          resolvedOutput: diffOutput
+        });
+
         return res.status(200).json(result);
       }
 

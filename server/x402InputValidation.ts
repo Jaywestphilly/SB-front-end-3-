@@ -309,7 +309,7 @@ export async function validatePricedRequestInput(
         charged: false
       };
     }
-    const { ticker, filingType } = body || {};
+    const { ticker, filingType, mode } = body || {};
     if (!ticker || typeof ticker !== 'string' || !ticker.trim()) {
       return {
         valid: false,
@@ -344,6 +344,31 @@ export async function validatePricedRequestInput(
         field: 'filingType',
         charged: false
       };
+    }
+
+    if (mode !== undefined && mode !== null) {
+      if (typeof mode !== 'string' || (mode !== 'standard' && mode !== 'diff')) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Validation error: "mode" must be one of: standard, diff.',
+          message: 'Validation error: "mode" must be one of: standard, diff.',
+          field: 'mode',
+          charged: false
+        };
+      }
+      if (mode === 'diff' && normFilingType === '8-K') {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Validation error: mode "diff" supports 10-K and 10-Q only. Received: 8-K.',
+          message: 'Validation error: mode "diff" supports 10-K and 10-Q only. Received: 8-K.',
+          field: 'filingType',
+          charged: false
+        };
+      }
     }
 
     // Pre-402 CIK lookup

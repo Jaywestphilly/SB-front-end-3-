@@ -212,7 +212,7 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
   sec_job: declareDiscovery({
     method: 'POST',
     bodyType: 'json',
-    input: { ticker: 'AAPL', filingType: '10-K' },
+    input: { ticker: 'AAPL', filingType: '10-K', mode: 'standard' },
     output: {
       example: {
         success: true,

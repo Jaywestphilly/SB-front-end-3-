@@ -58,6 +58,7 @@ export const TOOL_PAGES: Record<string, ToolPageSpec> = {
       <p class="price-badge">Price: <strong>$0.25 USDC</strong> (via x402 pay-per-call on Base)</p>
       <p>Request payload example:</p>
       <pre><code>{"ticker":"AAPL","filingType":"10-K"}</code></pre>
+      <pre><code>{"ticker":"AAPL","filingType":"10-K","mode":"diff"}</code></pre>
     </div>
     <div class="endpoint-item free-endpoint">
       <h3>Free Information &amp; Status Page: <code>GET /api/v1/sec/analyst</code></h3>
