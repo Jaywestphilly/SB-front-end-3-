@@ -23,6 +23,7 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sb-data-test-'));
     process.env.SB_DATA_DIR = tempDir;
+    process.env.X402_RECIPIENT_ADDRESS = '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708';
     clearDiffCache();
   });
 
@@ -710,5 +711,68 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     expect(diff.riskFactorChanges).toBeDefined();
     expect(diff.riskSectionChars).toBeDefined();
     expect(diff.riskSectionChars!.current).toBeGreaterThan(20000);
+  });
+
+  it('9. AAPL-style fixture with TOC <div>s, cross-reference, Item 1 Business, real Item 1A heading, and >25K risk text', async () => {
+    const aaplStyleFixture = `
+      <html>
+        <body>
+          <div>Table of Contents</div>
+          <div>Item 1A.</div>
+          <div>Risk Factors</div>
+          <div>5</div>
+          <div>Item 1B.</div>
+          <div>Unresolved Staff Comments</div>
+          <p>For more information, see the discussion in Part I, Item 1A of this Form 10-K under the heading “Risk Factors.”</p>
+          <p>Item 1. Business Summary</p>
+          <p>Apple Arcade is a game service that offers unlimited access to a curated catalog of games.</p>
+          <div>Item 1A.    Risk Factors</div>
+          <p>The following summarizes the principal risks facing the company.</p>
+          <p><b>Artificial Intelligence competition risk.</b> The markets for AI technology are rapidly evolving with increasing competitive pressures from major hyperscalers and emerging startups worldwide across consumer devices and cloud platforms.</p>
+          <p><b>Global supply chain disruptions.</b> Geopolitical trade restrictions and semiconductor component allocation constraints may adversely affect manufacturing yields and product availability across multiple jurisdictions globally.</p>
+          ${longFillerP.repeat(30)}
+          <div>Item 1B.</div>
+          <div>Unresolved Staff Comments</div>
+        </body>
+      </html>
+    `;
+
+    global.fetch = (url: any) => {
+      const urlStr = String(url);
+      if (urlStr.includes('submissions')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockSubmissionsTwoYears) } as any);
+      }
+      if (urlStr.includes('companyfacts')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockCompanyFacts) } as any);
+      }
+      if (urlStr.includes('aapl-20250927.htm')) {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(aaplStyleFixture) } as any);
+      }
+      if (urlStr.includes('aapl-20240928.htm')) {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(mockHtmlPrior) } as any);
+      }
+      return Promise.resolve({ ok: false } as any);
+    };
+
+    const diff = await buildFilingDiff('AAPL', '10-K');
+    expect(diff.riskFactorChanges).toBeDefined();
+    expect(diff.riskSectionChars).toBeDefined();
+
+    // Assert riskSectionChars.current > 20000
+    expect(diff.riskSectionChars!.current).toBeGreaterThan(20000);
+
+    // Assert no snippet contains "Apple Arcade"
+    const allSnippets = [
+      ...diff.riskFactorChanges!.added.map(r => r.snippet),
+      ...diff.riskFactorChanges!.removed.map(r => r.snippet),
+      ...diff.riskFactorChanges!.changed.map(r => r.snippet)
+    ].join(' ');
+    expect(allSnippets).not.toContain('Apple Arcade');
+
+    // Assert no title appears in both added and removed
+    const addedTitles = new Set(diff.riskFactorChanges!.added.map(r => r.title));
+    for (const rem of diff.riskFactorChanges!.removed) {
+      expect(addedTitles.has(rem.title)).toBe(false);
+    }
   });
 });

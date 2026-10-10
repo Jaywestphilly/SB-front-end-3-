@@ -155,82 +155,49 @@ function preprocessItem1AHtml(html: string): string {
 }
 
 function sliceItem1A(text: string): string | null {
-  // 1. Remove blank lines BEFORE checking candidates
-  const lines = text
-    .split('\n')
-    .map(l => l.trim())
-    .filter(l => l.length > 0);
+  // Non-empty, trimmed lines. Matching ignores <RISK_HEADING> markers; output keeps them.
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const clean = (l: string) => l.replace(/<\/?RISK_HEADING>/gi, '').replace(/\s+/g, ' ').trim();
 
-  // Split-tolerant regexes for headings
-  const item1ARegex = /(?:I\s*t\s*e\s*m|ITEM)\s*1\s*A[\s.:\u2013\-]/i;
-  const riskFactorsRegex = /R\s*I\s*S\s*K\s+F\s*A\s*C\s*T\s*O\s*R\s*S/i;
+  // Split-tolerant patterns (SEC iXBRL often splits words across spans, e.g. "RIS K FACTORS").
+  const RF = /R\s*I\s*S\s*K\s+F\s*A\s*C\s*T\s*O\s*R\s*S/i;
+  const START = /^(?:P\s*A\s*R\s*T\s+I\s*[,.\-\u2013]?\s*)?I\s*t\s*e\s*m\s*1\s*A\b\s*[.:\-\u2013]?\s*/i;
+  const END_ITEM = /^(?:P\s*A\s*R\s*T\s+I\s*[,.\-\u2013]?\s*)?I\s*t\s*e\s*m\s*(?:1\s*B|1\s*C|2)\b/i;
+  const END_TITLE = /U\s*n\s*r\s*e\s*s\s*o\s*l\s*v\s*e\s*d\s+S\s*t\s*a\s*f\s*f|C\s*y\s*b\s*e\s*r\s*s\s*e\s*c\s*u\s*r\s*i\s*t\s*y|P\s*r\s*o\s*p\s*e\s*r\s*t\s*i\s*e\s*s/i;
+  const MIN_CHARS = 5000;
 
-  const item1BRegex = /(?:I\s*t\s*e\s*m|ITEM)\s*(?:1\s*B|2)[\s.:\u2013\-]|U\s*n\s*r\s*e\s*s\s*o\s*l\s*v\s*e\s*d\s+S\s*t\s*a\s*f\s*f\s+C\s*o\s*m\s*m\s*e\s*n\s*t\s*s/i;
+  // A start is a line beginning with "Item 1A" (optionally "PART I"), with "Risk Factors"
+  // immediately after it on the same line or the next two lines (<= 40 chars of gap).
+  const isStart = (i: number): boolean => {
+    const c = clean(lines[i]);
+    const m = c.match(START);
+    if (!m) return false;
+    const rest = [c.slice(m[0].length), clean(lines[i + 1] || ''), clean(lines[i + 2] || '')].join(' ');
+    const rf = rest.match(RF);
+    return !!rf && (rf.index ?? 99) <= 40;
+  };
 
-  // Find candidate start line indices
-  const candidates: number[] = [];
+  // An end is a line beginning with Item 1B / 1C / 2 whose title (same or next 2 lines) is
+  // Unresolved Staff Comments / Cybersecurity / Properties, or a bare "Unresolved Staff Comments" line.
+  const isEnd = (j: number): boolean => {
+    const c = clean(lines[j]);
+    if (/^U\s*n\s*r\s*e\s*s\s*o\s*l\s*v\s*e\s*d\s+S\s*t\s*a\s*f\s*f/i.test(c)) return true;
+    if (!END_ITEM.test(c)) return false;
+    const win = [c, clean(lines[j + 1] || ''), clean(lines[j + 2] || '')].join(' ');
+    return END_TITLE.test(win);
+  };
 
+  // Take the first start whose section reaches MIN_CHARS. Table-of-contents entries end
+  // within a few lines and are skipped; cross-references never start a line.
   for (let i = 0; i < lines.length; i++) {
-    const rawLine = lines[i];
-    const cleanLine = rawLine.replace(/<\/?RISK_HEADING>/gi, '').trim();
-
-    // Line must start with Item 1A (or RISK_HEADING wrapping Item 1A)
-    const match1A = cleanLine.match(/(?:I\s*t\s*e\s*m|ITEM)\s*1\s*A[\s.:\u2013\-]/i);
-    if (!match1A || cleanLine.indexOf(match1A[0]) > 30) continue;
-
-    // "Risk Factors" must follow within 40 characters
-    const lookaheadWindow = lines.slice(i, i + 15).join(' ').replace(/<\/?RISK_HEADING>/gi, '');
-    const item1AMatch = lookaheadWindow.match(item1ARegex);
-    if (!item1AMatch) continue;
-    const pos1A = item1AMatch.index || 0;
-    const textAfter1A = lookaheadWindow.slice(pos1A + item1AMatch[0].length);
-    const rfMatch = textAfter1A.match(riskFactorsRegex);
-    if (!rfMatch || rfMatch.index! > 40) {
-      continue;
+    if (!isStart(i)) continue;
+    let end = lines.length;
+    for (let j = i + 1; j < lines.length; j++) {
+      if (isEnd(j)) { end = j; break; }
     }
-
-    // Reject candidate if Item 1B, Item 2, or Unresolved Staff Comments appears within 300 CHARACTERS after "Risk Factors"
-    const textAfterRF = textAfter1A.slice(rfMatch.index! + rfMatch[0].length);
-    const textAfterRF300 = textAfterRF.slice(0, 300);
-    if (item1BRegex.test(textAfterRF300)) {
-      continue;
-    }
-
-    // Reject cross-references: preceded by "Part I," or "see", or followed by "of this Form 10-K"
-    const windowContext = lines.slice(Math.max(0, i - 2), i + 3).join(' ').replace(/<\/?RISK_HEADING>/gi, '');
-    const lineUpTo1A = cleanLine.slice(0, cleanLine.search(item1ARegex));
-    const lineBefore = i > 0 ? lines[i - 1].replace(/<\/?RISK_HEADING>/gi, '') : '';
-    if (
-      /Part\s+I\s*,\s*$/i.test(lineBefore.trim()) ||
-      /Part\s+I\s*,\s*$/i.test(lineUpTo1A.trim()) ||
-      /\bsee\b/i.test(lineUpTo1A) ||
-      /\bsee\s+(?:Part\s+I\s*,\s*)?$/i.test(lineBefore.trim()) ||
-      /\bsee\b/i.test(windowContext.slice(0, windowContext.search(item1ARegex))) ||
-      /\bof\s+this\s+Form\s+10-K\b/i.test(windowContext)
-    ) {
-      continue;
-    }
-
-    candidates.push(i);
+    const sliced = lines.slice(i, end).join('\n\n').trim();
+    if (sliced.length >= MIN_CHARS) return sliced;
   }
-
-  // 2. If the slice from a candidate is under 5,000 characters, skip to the next candidate instead of returning it
-  for (const startLineIdx of candidates) {
-    let endLineIdx = lines.length;
-    for (let j = startLineIdx + 1; j < lines.length; j++) {
-      const lineClean = lines[j].replace(/<\/?RISK_HEADING>/gi, '').trim();
-      if (item1BRegex.test(lineClean)) {
-        endLineIdx = j;
-        break;
-      }
-    }
-
-    const sliced = lines.slice(startLineIdx, endLineIdx).join('\n\n').trim();
-    if (sliced.length >= 5000) {
-      return sliced;
-    }
-  }
-
   return null;
 }
 
