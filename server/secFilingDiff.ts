@@ -16,6 +16,7 @@ export interface FinancialChange {
   prior: number | null;
   current: number;
   changePct: number | null;
+  marginChangePp?: number | null;
   unit: string;
   xbrlTag: string;
   priorAccession: string;
@@ -32,6 +33,9 @@ export interface RiskFactorChanges {
   added: RiskFactorItem[];
   removed: RiskFactorItem[];
   changed: RiskFactorItem[];
+  addedTotal: number;
+  removedTotal: number;
+  changedTotal: number;
 }
 
 export interface FilingDiffResult {
@@ -129,6 +133,28 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+function preprocessItem1AHtml(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<(?:h[1-6]|b|strong|i|em)\b[^>]*>([\s\S]*?)<\/(?:h[1-6]|b|strong|i|em)>/gi, (_, inner) => {
+      const clean = inner.replace(/<[^>]+>/g, '').trim();
+      return clean.length >= 8 ? `\n\n<RISK_HEADING>${clean}</RISK_HEADING>\n\n` : clean;
+    })
+    .replace(/<(?:p|div|br|tr)\b[^>]*>/gi, '\n\n')
+    .replace(/<(?!\/?RISK_HEADING\b)[^>]+>/gi, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/\r/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n\s*\n/g, '\n\n')
+    .trim();
+}
+
 function extractFirstSentence(text: string): string {
   const trimmed = text.trim();
   const match = trimmed.match(/^([^.?!]+[.?!])(\s|$)/);
@@ -136,17 +162,27 @@ function extractFirstSentence(text: string): string {
   return sentence.length > 120 ? sentence.slice(0, 120).trim() : sentence;
 }
 
+function normWord(w: string): string {
+  const clean = w.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (clean.length > 4 && clean.endsWith('s')) {
+    return clean.slice(0, -1);
+  }
+  return clean;
+}
+
 function normTitle(t: string): string {
   return t
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .map(normWord)
+    .filter(Boolean)
+    .join(' ');
 }
 
 function wordJaccard(a: string, b: string): number {
-  const wordsA = a.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
-  const wordsB = b.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
+  const wordsA = normTitle(a).split(/\s+/).filter(Boolean);
+  const wordsB = normTitle(b).split(/\s+/).filter(Boolean);
   const setA = new Set(wordsA);
   const setB = new Set(wordsB);
   if (setA.size === 0 && setB.size === 0) return 1.0;
@@ -157,6 +193,25 @@ function wordJaccard(a: string, b: string): number {
   }
   const unionSize = setA.size + setB.size - intersectionCount;
   return unionSize > 0 ? intersectionCount / unionSize : 1.0;
+}
+
+function titleSimilarity(titleA: string, titleB: string): number {
+  const normA = normTitle(titleA);
+  const normB = normTitle(titleB);
+  if (normA === normB) return 1.0;
+  return wordJaccard(normA, normB);
+}
+
+function isIntroParagraph(text: string): boolean {
+  const norm = text.replace(/<\/?RISK_HEADING>/gi, '').trim().toLowerCase();
+  if (/^(?:item|ITEM)\s+1A/i.test(norm)) return true;
+  if (/^table of contents/i.test(norm)) return true;
+  if (norm.startsWith('the following summarizes')) return true;
+  if (norm.startsWith('because of the following factors')) return true;
+  if (norm.startsWith('the following')) return true;
+  if (norm.startsWith('because of the following')) return true;
+  if (norm.startsWith('an investment in')) return true;
+  return false;
 }
 
 function sliceItem1A(text: string): string | null {
@@ -220,24 +275,162 @@ interface ParsedRisk {
 }
 
 function parseRisksFromItem1A(text: string, accession: string): ParsedRisk[] {
-  const paragraphs = text
+  const rawParagraphs = text
     .split(/\n\n+/)
     .map(p => p.trim())
-    .filter(p => p.length > 40 && !/^(?:Item|ITEM)\s+1A/i.test(p) && !/^Table of Contents/i.test(p));
+    .filter(p => p.length > 0);
 
   const risks: ParsedRisk[] = [];
-  for (const para of paragraphs) {
-    const title = extractFirstSentence(para);
-    if (!title || title.length < 10) continue;
-    const snippet = para.slice(0, 300).trim();
-    risks.push({
-      title,
-      normTitle: normTitle(title),
-      snippet,
-      accession
+
+  for (let i = 0; i < rawParagraphs.length; i++) {
+    const para = rawParagraphs[i];
+    if (isIntroParagraph(para)) continue;
+
+    const headingMatch = para.match(/<RISK_HEADING>([\s\S]*?)<\/RISK_HEADING>/i);
+    if (headingMatch) {
+      const headingText = headingMatch[1].replace(/<\/?RISK_HEADING>/gi, '').trim();
+      const bodyText = para.replace(/<\/?RISK_HEADING>/gi, '').trim();
+
+      // If the paragraph is only the heading and there is a next paragraph that is body
+      if (
+        bodyText === headingText &&
+        i + 1 < rawParagraphs.length &&
+        !rawParagraphs[i + 1].includes('<RISK_HEADING>') &&
+        !isIntroParagraph(rawParagraphs[i + 1])
+      ) {
+        const nextPara = rawParagraphs[i + 1].replace(/<\/?RISK_HEADING>/gi, '').trim();
+        const fullSnippet = `${headingText} ${nextPara}`.slice(0, 300).trim();
+        risks.push({
+          title: headingText.length > 120 ? headingText.slice(0, 120).trim() : headingText,
+          normTitle: normTitle(headingText),
+          snippet: fullSnippet,
+          accession
+        });
+        i++; // skip nextPara since consumed as body
+        continue;
+      }
+
+      // Paragraph contains heading and body inline
+      const fullSnippet = bodyText.slice(0, 300).trim();
+      risks.push({
+        title: headingText.length > 120 ? headingText.slice(0, 120).trim() : headingText,
+        normTitle: normTitle(headingText),
+        snippet: fullSnippet,
+        accession
+      });
+      continue;
+    }
+
+    // Fallback: no explicit RISK_HEADING tag
+    if (para.length > 40 && !/^(?:Item|ITEM)\s+1A/i.test(para) && !/^Table of Contents/i.test(para)) {
+      const title = extractFirstSentence(para);
+      if (title && title.length >= 10) {
+        risks.push({
+          title: title.length > 120 ? title.slice(0, 120).trim() : title,
+          normTitle: normTitle(title),
+          snippet: para.slice(0, 300).trim(),
+          accession
+        });
+      }
+    }
+  }
+
+  return risks;
+}
+
+function compareRiskFactors(
+  currentRisks: ParsedRisk[],
+  priorRisks: ParsedRisk[],
+  currentAccession: string,
+  priorAccession: string
+): RiskFactorChanges {
+  // Compute similarities for all pairs
+  const candidates: Array<{ curIdx: number; priIdx: number; sim: number }> = [];
+
+  for (let c = 0; c < currentRisks.length; c++) {
+    for (let p = 0; p < priorRisks.length; p++) {
+      const sim = titleSimilarity(currentRisks[c].title, priorRisks[p].title);
+      if (sim >= 0.6) {
+        candidates.push({ curIdx: c, priIdx: p, sim });
+      }
+    }
+  }
+
+  // Sort by similarity descending for greedy best-match pairing
+  candidates.sort((a, b) => b.sim - a.sim);
+
+  const matchedCur = new Set<number>();
+  const matchedPri = new Set<number>();
+  const changed: RiskFactorItem[] = [];
+
+  for (const match of candidates) {
+    if (matchedCur.has(match.curIdx) || matchedPri.has(match.priIdx)) continue;
+    matchedCur.add(match.curIdx);
+    matchedPri.add(match.priIdx);
+
+    const cur = currentRisks[match.curIdx];
+    const pri = priorRisks[match.priIdx];
+
+    // If identical: unchanged (omit from all lists)
+    if (match.sim >= 0.999 || cur.normTitle === pri.normTitle) {
+      continue;
+    }
+
+    // Similar (0.6 <= sim < 1.0): changed!
+    changed.push({
+      title: cur.title,
+      snippet: cur.snippet,
+      accession: currentAccession
     });
   }
-  return risks;
+
+  const candidateAdded: RiskFactorItem[] = [];
+  for (let c = 0; c < currentRisks.length; c++) {
+    if (!matchedCur.has(c)) {
+      candidateAdded.push({
+        title: currentRisks[c].title,
+        snippet: currentRisks[c].snippet,
+        accession: currentAccession
+      });
+    }
+  }
+
+  const candidateRemoved: RiskFactorItem[] = [];
+  for (let p = 0; p < priorRisks.length; p++) {
+    if (!matchedPri.has(p)) {
+      candidateRemoved.push({
+        title: priorRisks[p].title,
+        snippet: priorRisks[p].snippet,
+        accession: priorAccession
+      });
+    }
+  }
+
+  // Any title that would appear in both added and removed must go to changed
+  for (let i = candidateAdded.length - 1; i >= 0; i--) {
+    const add = candidateAdded[i];
+    const remIdx = candidateRemoved.findIndex(
+      rem => titleSimilarity(add.title, rem.title) >= 0.6 || normTitle(add.title) === normTitle(rem.title)
+    );
+    if (remIdx !== -1) {
+      changed.push(add);
+      candidateAdded.splice(i, 1);
+      candidateRemoved.splice(remIdx, 1);
+    }
+  }
+
+  const addedTotal = candidateAdded.length;
+  const removedTotal = candidateRemoved.length;
+  const changedTotal = changed.length;
+
+  return {
+    added: candidateAdded.slice(0, 10),
+    removed: candidateRemoved.slice(0, 10),
+    changed: changed.slice(0, 10),
+    addedTotal,
+    removedTotal,
+    changedTotal
+  };
 }
 
 function roundToTenth(n: number | null): number | null {
@@ -357,7 +550,7 @@ export async function buildFilingDiff(
 
   // Handle case where no prior filing exists
   if (priorIdx === null) {
-    const noPriorNote = `Financials from SEC XBRL companyfacts. No prior Form ${filingType} found in EDGAR submissions history for comparison.`;
+    const noPriorNote = `Financials from SEC XBRL companyfacts. total debt = LongTermDebt and excludes commercial paper. shares are cover-page counts with their dates (${currentPeriodEnd}). risk lists capped at 10; risk matching is heuristic. No prior Form ${filingType} found in EDGAR submissions history for comparison.`;
     return {
       mode: 'diff',
       ticker: normTicker,
@@ -511,11 +704,16 @@ export async function buildFilingDiff(
   ) {
     const curMargin = curGrossProfit.val / curRev.val;
     const priMargin = priGrossProfit.val / priRev.val;
+    const curMarginPct = curMargin * 100;
+    const priMarginPct = priMargin * 100;
+    const marginChangePp = Math.round((curMarginPct - priMarginPct) * 100) / 100;
+
     financialChanges.push({
       metric: 'Gross margin',
       prior: Math.round(priMargin * 10000) / 10000,
       current: Math.round(curMargin * 10000) / 10000,
       changePct: calcChangePct(curMargin, priMargin),
+      marginChangePp,
       unit: 'derived',
       xbrlTag: 'GrossProfit/Revenue',
       priorAccession,
@@ -640,11 +838,19 @@ export async function buildFilingDiff(
         riskOmissionReason = `Primary document HTTP retrieval failed (current: ${curDocRes.status}, prior: ${priDocRes.status})`;
       } else {
         const [curHtml, priHtml] = await Promise.all([curDocRes.text(), priDocRes.text()]);
-        const curText = stripHtml(curHtml);
-        const priText = stripHtml(priHtml);
 
-        const cur1A = sliceItem1A(curText);
-        const pri1A = sliceItem1A(priText);
+        const curProcessed = preprocessItem1AHtml(curHtml);
+        const priProcessed = preprocessItem1AHtml(priHtml);
+
+        let cur1A = sliceItem1A(curProcessed);
+        let pri1A = sliceItem1A(priProcessed);
+
+        if (!cur1A || cur1A.length < 500) {
+          cur1A = sliceItem1A(stripHtml(curHtml));
+        }
+        if (!pri1A || pri1A.length < 500) {
+          pri1A = sliceItem1A(stripHtml(priHtml));
+        }
 
         if (!cur1A || cur1A.length < 500 || !pri1A || pri1A.length < 500) {
           riskOmissionReason = 'Item 1A risk factors text could not be identified or is under 500 characters';
@@ -652,45 +858,7 @@ export async function buildFilingDiff(
           const curRisks = parseRisksFromItem1A(cur1A, currentAccession);
           const priRisks = parseRisksFromItem1A(pri1A, priorAccession);
 
-          const curMap = new Map<string, ParsedRisk>();
-          for (const r of curRisks) {
-            if (!curMap.has(r.normTitle)) curMap.set(r.normTitle, r);
-          }
-
-          const priMap = new Map<string, ParsedRisk>();
-          for (const r of priRisks) {
-            if (!priMap.has(r.normTitle)) priMap.set(r.normTitle, r);
-          }
-
-          const added: RiskFactorItem[] = [];
-          for (const [nTitle, r] of curMap.entries()) {
-            if (!priMap.has(nTitle)) {
-              added.push({ title: r.title, snippet: r.snippet, accession: currentAccession });
-              if (added.length >= 10) break;
-            }
-          }
-
-          const removed: RiskFactorItem[] = [];
-          for (const [nTitle, r] of priMap.entries()) {
-            if (!curMap.has(nTitle)) {
-              removed.push({ title: r.title, snippet: r.snippet, accession: priorAccession });
-              if (removed.length >= 10) break;
-            }
-          }
-
-          const changed: RiskFactorItem[] = [];
-          for (const [nTitle, curR] of curMap.entries()) {
-            const priR = priMap.get(nTitle);
-            if (priR) {
-              const sim = wordJaccard(curR.snippet, priR.snippet);
-              if (sim < 0.85) {
-                changed.push({ title: curR.title, snippet: curR.snippet, accession: currentAccession });
-                if (changed.length >= 10) break;
-              }
-            }
-          }
-
-          riskFactorChanges = { added, removed, changed };
+          riskFactorChanges = compareRiskFactors(curRisks, priRisks, currentAccession, priorAccession);
         }
       }
     } catch (err: any) {
@@ -702,18 +870,39 @@ export async function buildFilingDiff(
 
   // Summary generation: at most 5 strings, built by template only
   const summary: string[] = [];
-  const sortedFinancials = [...financialChanges]
-    .filter(fc => fc.changePct !== null)
+  const maxFinancialSummarySlots = riskFactorChanges ? 4 : 5;
+
+  // If Gross margin is present, prioritize it in the summary as requested
+  const grossMarginItem = financialChanges.find(
+    fc => fc.metric === 'Gross margin' && typeof fc.marginChangePp === 'number'
+  );
+
+  const otherSortedFinancials = [...financialChanges]
+    .filter(fc => fc.metric !== 'Gross margin' && fc.changePct !== null)
     .sort((a, b) => Math.abs(b.changePct!) - Math.abs(a.changePct!));
 
-  for (const fc of sortedFinancials.slice(0, 4)) {
-    const sign = (fc.changePct ?? 0) > 0 ? '+' : '';
-    summary.push(`${fc.metric} changed ${sign}${fc.changePct}% (from ${fc.prior} to ${fc.current} ${fc.unit})`);
+  const chosenFinancials: FinancialChange[] = [];
+  if (grossMarginItem) {
+    chosenFinancials.push(grossMarginItem);
+  }
+  for (const item of otherSortedFinancials) {
+    if (chosenFinancials.length >= maxFinancialSummarySlots) break;
+    chosenFinancials.push(item);
+  }
+
+  for (const fc of chosenFinancials) {
+    if (fc.metric === 'Gross margin' && typeof fc.marginChangePp === 'number') {
+      const signPp = fc.marginChangePp > 0 ? '+' : '';
+      summary.push(`Gross margin changed ${signPp}${fc.marginChangePp} pp (from ${fc.prior} to ${fc.current} ${fc.unit})`);
+    } else {
+      const sign = (fc.changePct ?? 0) > 0 ? '+' : '';
+      summary.push(`${fc.metric} changed ${sign}${fc.changePct}% (from ${fc.prior} to ${fc.current} ${fc.unit})`);
+    }
   }
 
   if (riskFactorChanges) {
     summary.push(
-      `Risk factors: ${riskFactorChanges.added.length} added, ${riskFactorChanges.removed.length} removed, ${riskFactorChanges.changed.length} modified`
+      `Risk factors: ${riskFactorChanges.addedTotal} added, ${riskFactorChanges.removedTotal} removed, ${riskFactorChanges.changedTotal} modified (showing up to 10)`
     );
   }
 
@@ -723,7 +912,12 @@ export async function buildFilingDiff(
   }
 
   // Assemble dataNote
-  const dataNoteParts = ['Financials from SEC XBRL companyfacts.'];
+  const dataNoteParts = [
+    'Financials from SEC XBRL companyfacts.',
+    'total debt = LongTermDebt and excludes commercial paper.',
+    `shares are cover-page counts with their dates (${currentFiling.periodEnd}${priorFiling ? ` / ${priorFiling.periodEnd}` : ''}).`,
+    'risk lists capped at 10; risk matching is heuristic.'
+  ];
   if (omittedMetrics.length > 0) {
     dataNoteParts.push(`Omitted metrics missing in prior or current filing: ${omittedMetrics.join(', ')}.`);
   }
