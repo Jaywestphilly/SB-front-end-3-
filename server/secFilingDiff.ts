@@ -425,6 +425,49 @@ function roundToTenth(n: number | null): number | null {
   return Math.round(n * 10) / 10;
 }
 
+export function formatSummaryValue(val: number, unit: string): string {
+  if (val === null || val === undefined || isNaN(val)) return '';
+
+  const absVal = Math.abs(val);
+  const sign = val < 0 ? '-' : '';
+
+  const formatNumber = (num: number): string => {
+    return num.toFixed(2).replace(/\.?0+$/, '');
+  };
+
+  if (unit === 'USD') {
+    if (absVal >= 1e9) {
+      return `${sign}$${formatNumber(absVal / 1e9)}B`;
+    }
+    if (absVal >= 1e6) {
+      return `${sign}$${formatNumber(absVal / 1e6)}M`;
+    }
+    if (absVal >= 1e3) {
+      return `${sign}$${formatNumber(absVal / 1e3)}K`;
+    }
+    return `${sign}$${formatNumber(absVal)}`;
+  }
+
+  if (unit === 'shares') {
+    if (absVal >= 1e9) {
+      return `${sign}${formatNumber(absVal / 1e9)}B shares`;
+    }
+    if (absVal >= 1e6) {
+      return `${sign}${formatNumber(absVal / 1e6)}M shares`;
+    }
+    if (absVal >= 1e3) {
+      return `${sign}${formatNumber(absVal / 1e3)}K shares`;
+    }
+    return `${sign}${formatNumber(absVal)} shares`;
+  }
+
+  if (unit === 'derived') {
+    return `${val}`;
+  }
+
+  return `${val} ${unit}`;
+}
+
 function calcChangePct(current: number, prior: number | null): number | null {
   if (prior === null || prior === 0) return null;
   const pct = ((current - prior) / Math.abs(prior)) * 100;
@@ -892,12 +935,15 @@ export async function buildFilingDiff(
   }
 
   for (const fc of chosenFinancials) {
+    const priorFormatted = formatSummaryValue(fc.prior, fc.unit);
+    const curFormatted = formatSummaryValue(fc.current, fc.unit);
+
     if (fc.metric === 'Gross margin' && typeof fc.marginChangePp === 'number') {
       const signPp = fc.marginChangePp > 0 ? '+' : '';
-      summary.push(`Gross margin changed ${signPp}${fc.marginChangePp} pp (from ${fc.prior} to ${fc.current} ${fc.unit})`);
+      summary.push(`Gross margin changed ${signPp}${fc.marginChangePp} pp (from ${priorFormatted} to ${curFormatted})`);
     } else {
       const sign = (fc.changePct ?? 0) > 0 ? '+' : '';
-      summary.push(`${fc.metric} changed ${sign}${fc.changePct}% (from ${fc.prior} to ${fc.current} ${fc.unit})`);
+      summary.push(`${fc.metric} changed ${sign}${fc.changePct}% (from ${priorFormatted} to ${curFormatted})`);
     }
   }
 

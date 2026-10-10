@@ -102,7 +102,8 @@ let recentPingTimestamps: number[] = [];
 export const KNOWN_SELF_WALLETS = new Set<string>([
   '0x26b610a059de2488ebe3e0eda02ae17907917419',
   '0xb4807865a786e9e9e26e6a9610f2078e7fc507fb',
-  '0xd86cadb414171d1155aa88076504763f7de32805'
+  '0xd86cadb414171d1155aa88076504763f7de32805',
+  '0x40ebc1ac8d4fedd2e144b75fe9c0420be82750c6'
 ]);
 
 export function isSelfWallet(payer?: string): boolean {

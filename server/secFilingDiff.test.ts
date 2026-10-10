@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { secAnalystRouter, executeSecAnalystJob } from './secAnalystAgent.js';
-import { buildFilingDiff, clearDiffCache } from './secFilingDiff.js';
+import { buildFilingDiff, clearDiffCache, formatSummaryValue } from './secFilingDiff.js';
 import {
   setFacilitatorVerifyHandler,
   setFacilitatorSettleHandler
@@ -774,5 +774,30 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     for (const rem of diff.riskFactorChanges!.removed) {
       expect(addedTitles.has(rem.title)).toBe(false);
     }
+  });
+
+  it('10. formatSummaryValue unit test: billions as "$9.45B", millions as "$512.3M", share counts as "14.78B shares"', () => {
+    // Billions money formatting
+    expect(formatSummaryValue(9450000000, 'USD')).toBe('$9.45B');
+    expect(formatSummaryValue(12720000000, 'USD')).toBe('$12.72B');
+    expect(formatSummaryValue(416160000000, 'USD')).toBe('$416.16B');
+
+    // Millions money formatting
+    expect(formatSummaryValue(512300000, 'USD')).toBe('$512.3M');
+    expect(formatSummaryValue(10000000, 'USD')).toBe('$10M');
+
+    // Thousands / small values money formatting
+    expect(formatSummaryValue(500000, 'USD')).toBe('$500K');
+    expect(formatSummaryValue(750, 'USD')).toBe('$750');
+
+    // Negative money formatting
+    expect(formatSummaryValue(-1250000000, 'USD')).toBe('-$1.25B');
+
+    // Share counts formatting
+    expect(formatSummaryValue(14780000000, 'shares')).toBe('14.78B shares');
+    expect(formatSummaryValue(500000000, 'shares')).toBe('500M shares');
+
+    // Derived / other unit formatting
+    expect(formatSummaryValue(0.4357, 'derived')).toBe('0.4357');
   });
 });
