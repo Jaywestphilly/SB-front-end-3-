@@ -1743,6 +1743,7 @@ Stock Bloc natively implements the open **x402 Payment Protocol** (v2) powered b
 - **Scheme**: \`exact\` (EIP-3009 \`transferWithAuthorization\` or \`permit2\`)
 - **Facilitator**: Coinbase Developer Platform (CDP) Facilitator (\`https://api.cdp.coinbase.com/platform/v2/x402\`)
 - **Recipient Address**: Read from server's \`X402_RECIPIENT_ADDRESS\` configuration.
+Always pay the payTo returned in the live 402 response.
 
 ### Endpoint Per-Call Pricing Schedule:
 - **Market Data Feed** (\`GET /api/data/market\`): **$0.01 USDC** (\`10000\` atomic units)
@@ -1781,7 +1782,7 @@ PAYMENT-REQUIRED: eyJ4NDAyVmVyc2lvbiI6MiwiYWNjZXB0cyI6...
       "network": "eip155:8453",
       "amount": "50000",
       "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-      "payTo": "0x0123456789abcdef0123456789abcdef01234567",
+      "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
       "maxTimeoutSeconds": 300,
       "extra": {
         "name": "USD Coin",
@@ -1803,7 +1804,7 @@ PAYMENT-REQUIRED: eyJ4NDAyVmVyc2lvbiI6MiwiYWNjZXB0cyI6...
     "network": "Base",
     "chainId": 8453,
     "priceUsd": 0.05,
-    "recipientAddress": "0x0123456789abcdef0123456789abcdef01234567",
+    "recipientAddress": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
     "facilitator": "Coinbase Developer Platform (CDP) Facilitator"
   }
 }

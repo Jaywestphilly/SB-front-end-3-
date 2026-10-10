@@ -22,6 +22,7 @@ Stock Bloc natively implements the open **x402 Payment Protocol** (v2) powered b
 - **Scheme**: `exact` (EIP-3009 `transferWithAuthorization` or `permit2`)
 - **Facilitator**: Coinbase Developer Platform (CDP) Facilitator (`https://api.cdp.coinbase.com/platform/v2/x402`)
 - **Recipient Address**: Read from server's `X402_RECIPIENT_ADDRESS` configuration.
+Always pay the payTo returned in the live 402 response.
 
 ### Endpoint Per-Call Pricing Schedule:
 - **Market Data Feed** (`GET /api/data/market`): **$0.01 USDC** (`10000` atomic units)
@@ -48,7 +49,7 @@ curl -i -X GET "https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=
 ```http
 HTTP/1.1 402 Payment Required
 Content-Type: application/json
-PAYMENT-REQUIRED: eyJ4NDAyVmVyc2lvbiI6MiwiYWNjZXB0cyI6W3sic2NoZW1lIjoiZXhhY3QiLCJuZXR3b3JrIjoiZWlwMTU1Ojg0NTMiLCJhbW91bnQiOiI1MDAwMCIsImFzc2V0IjoiMHg4MzM1ODlmQ0Q2ZURiNkUwOGY0YzdDMzJENGY3MWI1NGJkQTAyOTEzIiwicGF5VG8iOiIweDAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmMDEyMzQ1NjciLCJtYXhUaW1lb3V0U2Vjb25kcyI6MzAwLCJleHRyYSI6eyJuYW1lIjoiVVNEIENvaW4iLCJ2ZXJzaW9uIjoiMiIsInN5bWJvbCI6IlVTREMiLCJkZWNpbWFscyI6NiwicHJpY2VVc2QiOiIkMC4wNSJ9fV0sInJlc291cmNlIjp7InVybCI6Imh0dHBzOi8vc3RvY2tibG9jLmFpLnN0dWRpby9hcGkvdjEvaW50ZWxsaWdlbmNlL3NiLXNjb3JlP3RpY2tlcj1OVkRBIiwiZGVzY3JpcHRpb24iOiJTdG9jayBCbG9jIFNCIFNjb3JlIFF1YW50IEludGVsbGlnZW5jZSIsIm1pbWVUeXBlIjoiYXBwbGljYXRpb24vanNvbiJ9fQ==
+PAYMENT-REQUIRED: eyJ4NDAyVmVyc2lvbiI6MiwiYWNjZXB0cyI6W3sic2NoZW1lIjoiZXhhY3QiLCJuZXR3b3JrIjoiZWlwMTU1Ojg0NTMiLCJhbW91bnQiOiI1MDAwMCIsImFzc2V0IjoiMHg4MzM1ODlmQ0Q2ZURiNkUwOGY0YzdDMzJENGY3MWI1NGJkQTAyOTEzIiwicGF5VG8iOiIweDZBNmY1MjZkODY4NkQwYzllZEVmYzY1MjUyZTcyMGJGYTVlQTU3MDgiLCJtYXhUaW1lb3V0U2Vjb25kcyI6MzAwLCJleHRyYSI6eyJuYW1lIjoiVVNEIENvaW4iLCJ2ZXJzaW9uIjoiMiIsInN5bWJvbCI6IlVTREMiLCJkZWNpbWFscyI6NiwicHJpY2VVc2QiOiIkMC4wNSJ9fV0sInJlc291cmNlIjp7InVybCI6Imh0dHBzOi8vc3RvY2tibG9jLmFpLnN0dWRpby9hcGkvdjEvaW50ZWxsaWdlbmNlL3NiLXNjb3JlP3RpY2tlcj1OVkRBIiwiZGVzY3JpcHRpb24iOiJTdG9jayBCbG9jIFNCIFNjb3JlIFF1YW50IEludGVsbGlnZW5jZSIsIm1pbWVUeXBlIjoiYXBwbGljYXRpb24vanNvbiJ9fQ==
 
 {
   "status": "payment_required",
@@ -60,7 +61,7 @@ PAYMENT-REQUIRED: eyJ4NDAyVmVyc2lvbiI6MiwiYWNjZXB0cyI6W3sic2NoZW1lIjoiZXhhY3QiLC
       "network": "eip155:8453",
       "amount": "50000",
       "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-      "payTo": "0x0123456789abcdef0123456789abcdef01234567",
+      "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
       "maxTimeoutSeconds": 300,
       "extra": {
         "name": "USD Coin",
@@ -84,7 +85,7 @@ PAYMENT-REQUIRED: eyJ4NDAyVmVyc2lvbiI6MiwiYWNjZXB0cyI6W3sic2NoZW1lIjoiZXhhY3QiLC
     "contractAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     "priceUsd": 0.05,
     "amountAtomic": "50000",
-    "recipientAddress": "0x0123456789abcdef0123456789abcdef01234567",
+    "recipientAddress": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
     "facilitator": "Coinbase Developer Platform (CDP) Facilitator"
   }
 }
@@ -98,7 +99,7 @@ Retry the exact same request, attaching the signed payment payload in the `PAYME
 ```bash
 curl -i -X GET "https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=NVDA" \
   -H "Accept: application/json" \
-  -H "PAYMENT-SIGNATURE: eyJ4NDAyVmVyc2lvbiI6MiwiYXV0aG9yaXphdGlvbiI6eyJmcm9tIjoiMHhBZ2VudFdhbGxldEFkZHJlc3MiLCJ0byI6IjB4MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2NyIsInZhbHVlIjoiNTAwMDAiLCJ2YWxpZEJlZm9yZSI6MTc5MDEwMDAwMCwidmFsaWRBZnRlciI6MCwibm9uY2UiOiIweDAx...IiwidiI6MjcsInIiOiIweDAx...IiwicyI6IjB4MDI...\"}}"
+  -H "PAYMENT-SIGNATURE: eyJ4NDAyVmVyc2lvbiI6MiwiYXV0aG9yaXphdGlvbiI6eyJmcm9tIjoiMHhBZ2VudFdhbGxldEFkZHJlc3MiLCJ0byI6IjB4NkE2ZjUyNmQ4Njg2RDBjOWVkRWZjNjUyNTJlNzIwYkZhNWVBNTcwOCIsInZhbHVlIjoiNTAwMDAiLCJ2YWxpZEJlZm9yZSI6MTc5MDEwMDAwMCwidmFsaWRBZnRlciI6MCwibm9uY2UiOiIweDAx...IiwidiI6MjcsInIiOiIweDAx...IiwicyI6IjB4MDI...\"}}"
 ```
 
 **Verified Response: `HTTP/1.1 200 OK`**
@@ -219,7 +220,7 @@ The **Stock Bloc SEC Analyst** is the primary autonomous financial intelligence 
 - **Canonical Callable Endpoint**: `POST https://stockbloc.ai.studio/api/v1/sec/analyst`
 - **Alias Callable Endpoint**: `POST https://stockbloc.ai.studio/api/v1/sec/job`
 - **Service Discovery**: `GET https://stockbloc.ai.studio/api/v1/sec/analyst` or `GET https://stockbloc.ai.studio/api/v1/sec/service`
-- **Free Demo**: `POST https://stockbloc.ai.studio/api/v1/sec/analyze` (Unmetered, zero credits)
+- **Free Demo**: `POST https://stockbloc.ai.studio/api/v1/sec/analyze` (free)
 - **Supported Forms**: `10-K` (Annual Report), `10-Q` (Quarterly Report), `8-K` (Current Report / Material Catalyst)
 - **Pricing**: $0.25 USDC (250,000 atomic units) via x402 on Base.
 - **Payload Schema**:
@@ -231,38 +232,6 @@ The **Stock Bloc SEC Analyst** is the primary autonomous financial intelligence 
 }
 ```
 - **Response**: Audited breakdown with executive summary, revenue quality score (0-100), management tone (BULLISH/NEUTRAL/BEARISH), key financial metrics, and forensic risk audit.
-
----
-
-## Agent Spending & Transaction Receipts (`GET /api/v1/agents/me/transactions`)
-Query itemized receipts and running credit balance history for spend reconciliation and budget management.
-- **Parameters**: `limit` (default 25, max 100), `cursor` (opaque pagination token based on createdAt), `type` (optional filter: `DEBIT` or `CREDIT`), `tag` (optional filter, e.g. `METERED_API`), `since` (optional ISO-8601 timestamp filter).
-- **Rule**: `usdEquivalent = amountCredits * 0.01` (1 credit = $0.01).
-- **Example request:**
-```bash
-curl -s "https://stockbloc.ai.studio/api/v1/agents/me/transactions?limit=10"
-```
-- **Example response:**
-```json
-{
-  "status": "ok",
-  "agentId": "agent_auto_a1b2c3d4e5",
-  "entries": [
-    {
-      "entryId": "led_91af238c",
-      "timestamp": "2026-10-01T12:00:00.000Z",
-      "type": "DEBIT",
-      "amountCredits": 5,
-      "usdEquivalent": 0.05,
-      "endpoint": "GET /api/v1/intelligence/sb-score",
-      "method": "GET",
-      "description": "x402 credit access to SB Score (GET /api/v1/intelligence/sb-score)",
-      "balanceAfter": 95
-    }
-  ],
-  "pagination": { "limit": 10, "nextCursor": null, "hasMore": false }
-}
-```
 
 ---
 
