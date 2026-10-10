@@ -47,6 +47,7 @@ export interface FilingDiffResult {
   priorFiling: FilingRef | null;
   financialChanges: FinancialChange[];
   riskFactorChanges?: RiskFactorChanges;
+  riskSectionChars?: { prior: number; current: number };
   summary: string[];
   sources: string[];
   dataNote: string;
@@ -215,8 +216,9 @@ function isIntroParagraph(text: string): boolean {
 }
 
 function sliceItem1A(text: string): string | null {
-  const item1ARegex = /(?:Item|ITEM)\s+1A[.:\s\u2013\-]/g;
-  const nextItemRegex = /(?:Item|ITEM)\s+(?:1B|2)[.:\s\u2013\-]/g;
+  // Regexes for Item 1A and Item 1B / Item 2 / Unresolved Staff Comments
+  const item1ARegex = /(?:Item|ITEM)\s+1A[.:\s\u2013\-]/gi;
+  const nextItemRegex = /(?:Item|ITEM)\s+(?:1B|2)[.:\s\u2013\-]|Unresolved\s+Staff\s+Comments/gi;
 
   const item1AMatches: number[] = [];
   let m: RegExpExecArray | null;
@@ -231,40 +233,46 @@ function sliceItem1A(text: string): string | null {
     nextItemMatches.push(m.index);
   }
 
-  // Find the last Item 1A match before an Item 1B or Item 2 heading
+  // Look for candidates where Item 1A is followed by "Risk Factors"
+  let maxSpan = 0;
   let chosen1A = -1;
   let chosenNext = -1;
 
-  for (const nextIdx of nextItemMatches) {
-    const prior1AMatches = item1AMatches.filter(idx => idx < nextIdx);
-    if (prior1AMatches.length > 0) {
-      const candidate1A = prior1AMatches[prior1AMatches.length - 1];
-      const sliceLen = nextIdx - candidate1A;
-      if (sliceLen >= 500) {
-        chosen1A = candidate1A;
-        chosenNext = nextIdx;
+  for (const startIdx of item1AMatches) {
+    // Check if followed by "Risk Factors" within 200 chars
+    const after1A = text.slice(startIdx, startIdx + 200);
+    const hasRiskFactors = /Risk\s+Factors/i.test(after1A);
+
+    // Find first next item heading after startIdx
+    const nextMatchIdx = nextItemMatches.find(idx => idx > startIdx);
+    if (nextMatchIdx !== undefined) {
+      const span = nextMatchIdx - startIdx;
+      // Prefer matches with "Risk Factors" heading; among candidates, pick the longest span
+      if (hasRiskFactors) {
+        if (span > maxSpan) {
+          maxSpan = span;
+          chosen1A = startIdx;
+          chosenNext = nextMatchIdx;
+        }
+      } else if (chosen1A === -1 && span > maxSpan) {
+        maxSpan = span;
+        chosen1A = startIdx;
+        chosenNext = nextMatchIdx;
       }
     }
   }
 
-  // Fallback: If no Item 1B/2 match was found with >= 500 chars, search next generic Item heading after last Item 1A
+  // Fallback: If no valid match, pick the last Item 1A match before next item or text end
   if (chosen1A === -1) {
     const last1A = item1AMatches[item1AMatches.length - 1];
-    const genericNextItem = /(?:Item|ITEM)\s+\d+[A-Z]?[.:\s\u2013\-]/g;
-    genericNextItem.lastIndex = last1A + 8;
-    const nextGeneric = genericNextItem.exec(text);
-    if (nextGeneric && nextGeneric.index - last1A >= 500) {
-      chosen1A = last1A;
-      chosenNext = nextGeneric.index;
-    } else if (text.length - last1A >= 500) {
-      chosen1A = last1A;
-      chosenNext = text.length;
-    }
+    const nextMatchIdx = nextItemMatches.find(idx => idx > last1A);
+    chosen1A = last1A;
+    chosenNext = nextMatchIdx !== undefined ? nextMatchIdx : text.length;
   }
 
   if (chosen1A === -1 || chosenNext <= chosen1A) return null;
   const sliced = text.slice(chosen1A, chosenNext).trim();
-  return sliced.length >= 500 ? sliced : null;
+  return sliced;
 }
 
 interface ParsedRisk {
@@ -779,6 +787,11 @@ export async function buildFilingDiff(
   const sharesUnits = dei['EntityCommonStockSharesOutstanding']?.units?.shares;
   const curShares = findMatchingFact(sharesUnits, currentAccession, undefined, undefined, false);
   const priShares = findMatchingFact(sharesUnits, priorAccession, undefined, undefined, false);
+  let shareDatesNoteStr = `${currentFiling.periodEnd}${priorFiling ? ` / ${priorFiling.periodEnd}` : ''}`;
+  if (curShares && curShares.end) {
+    shareDatesNoteStr = curShares.end + (priShares && priShares.end ? ` / ${priShares.end}` : '');
+  }
+
   if (curShares && typeof curShares.val === 'number' && priShares && typeof priShares.val === 'number') {
     financialChanges.push({
       metric: 'Shares',
@@ -814,6 +827,7 @@ export async function buildFilingDiff(
 
   // Fetch Item 1A primary documents for Risk Factor Changes
   let riskFactorChanges: RiskFactorChanges | undefined = undefined;
+  let riskSectionChars: { prior: number; current: number } | undefined = undefined;
   let riskOmissionReason: string | null = null;
 
   if (currentPrimaryDoc && priorPrimaryDoc) {
@@ -852,8 +866,16 @@ export async function buildFilingDiff(
           pri1A = sliceItem1A(stripHtml(priHtml));
         }
 
-        if (!cur1A || cur1A.length < 500 || !pri1A || pri1A.length < 500) {
-          riskOmissionReason = 'Item 1A risk factors text could not be identified or is under 500 characters';
+        const curLen = cur1A ? cur1A.length : 0;
+        const priLen = pri1A ? pri1A.length : 0;
+        riskSectionChars = { prior: priLen, current: curLen };
+
+        if (!cur1A || !pri1A) {
+          riskOmissionReason = 'Item 1A risk factors text could not be identified';
+        } else if (curLen < 20000 || priLen < 20000) {
+          riskOmissionReason = `Item 1A risk section length check failed: current section is ${curLen.toLocaleString()} chars, prior section is ${priLen.toLocaleString()} chars (minimum 20,000 required)`;
+        } else if (curLen < 0.3 * priLen || priLen < 0.3 * curLen) {
+          riskOmissionReason = `Item 1A risk section length ratio check failed: current section is ${curLen.toLocaleString()} chars, prior section is ${priLen.toLocaleString()} chars (must be at least 30% of each other)`;
         } else {
           const curRisks = parseRisksFromItem1A(cur1A, currentAccession);
           const priRisks = parseRisksFromItem1A(pri1A, priorAccession);
@@ -915,7 +937,7 @@ export async function buildFilingDiff(
   const dataNoteParts = [
     'Financials from SEC XBRL companyfacts.',
     'total debt = LongTermDebt and excludes commercial paper.',
-    `shares are cover-page counts with their dates (${currentFiling.periodEnd}${priorFiling ? ` / ${priorFiling.periodEnd}` : ''}).`,
+    `shares are cover-page counts with their dates (${shareDatesNoteStr}).`,
     'risk lists capped at 10; risk matching is heuristic.'
   ];
   if (omittedMetrics.length > 0) {
@@ -935,6 +957,7 @@ export async function buildFilingDiff(
     priorFiling,
     financialChanges,
     ...(riskFactorChanges ? { riskFactorChanges } : {}),
+    ...(riskSectionChars ? { riskSectionChars } : {}),
     summary: finalSummary,
     sources,
     dataNote

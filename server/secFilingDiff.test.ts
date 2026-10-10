@@ -204,11 +204,13 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
               {
                 val: 15200000000,
                 accn: '0000320193-25-000079',
+                end: '2025-10-24',
                 form: '10-K'
               },
               {
                 val: 15400000000,
                 accn: '0000320193-24-000106',
+                end: '2024-10-25',
                 form: '10-K'
               }
             ]
@@ -217,6 +219,14 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
       }
     }
   };
+
+  const repeatPageHeaders = `
+    <div>Page 24</div>
+    <div>Item 1A. Risk Factors</div>
+    <div>Header Note</div>
+  `.repeat(10);
+
+  const longFillerP = `<p><b>General Operational and Compliance Risk Item.</b> ${'This is a comprehensive detailed paragraph discussing operational risks, regulatory considerations, market fluctuations, and supply chain dynamics across global regions. '.repeat(80)}</p>`;
 
   const mockHtmlCurrent = `
     <html>
@@ -228,8 +238,10 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
         <h2>Item 1A. Risk Factors</h2>
         <p>The following summarizes the principal risks and uncertainties that could materially affect our business, financial condition, and operating results.</p>
         <p><b>Artificial Intelligence competition risk.</b> The markets for AI technology are rapidly evolving with increasing competitive pressures from major hyperscalers and emerging startups worldwide across consumer devices and cloud platforms.</p>
+        ${repeatPageHeaders}
         <p><b>Global supply chain disruptions.</b> Geopolitical trade restrictions and semiconductor component allocation constraints may adversely affect manufacturing yields and product availability across multiple jurisdictions globally.</p>
         <p><b>Macroeconomic uncertainty and currency fluctuations.</b> Global inflationary environments and foreign exchange movements between the U.S. dollar and other international currencies may pressure operating margins.</p>
+        ${longFillerP.repeat(30)}
         <h2>Item 1B. Unresolved Staff Comments</h2>
         <p>None.</p>
       </body>
@@ -246,8 +258,10 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
         <h2>Item 1A. Risk Factors</h2>
         <p>Because of the following factors, as well as other factors affecting the Company's business, our financial condition may vary.</p>
         <p><b>Global supply chain disruptions.</b> Geopolitical trade restrictions and semiconductor component allocation constraints may adversely affect manufacturing yields and product availability across multiple jurisdictions globally.</p>
+        ${repeatPageHeaders}
         <p><b>Legacy telecommunications regulatory risks.</b> Compliance with diverse carrier frequency bands and regional cellular approvals poses ongoing operational requirements across overseas markets.</p>
         <p><b>Macroeconomic uncertainty and currency fluctuations.</b> Global inflationary environments and foreign exchange movements between the U.S. dollar and other international currencies may pressure operating margins.</p>
+        ${longFillerP.repeat(30)}
         <h2>Item 1B. Unresolved Staff Comments</h2>
         <p>None.</p>
       </body>
@@ -337,9 +351,14 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     expect(summaryText).toContain('Risk factors: 1 added, 1 removed, 0 modified (showing up to 10)');
     expect(summaryText).toContain('Gross margin changed +0.65 pp');
 
+    // Check riskSectionChars
+    expect(diff.riskSectionChars).toBeDefined();
+    expect(diff.riskSectionChars!.current).toBeGreaterThanOrEqual(20000);
+    expect(diff.riskSectionChars!.prior).toBeGreaterThanOrEqual(20000);
+
     // Check dataNote requirements
     expect(diff.dataNote).toContain('total debt = LongTermDebt and excludes commercial paper');
-    expect(diff.dataNote).toContain('shares are cover-page counts with their dates');
+    expect(diff.dataNote).toContain('shares are cover-page counts with their dates (2025-10-24 / 2024-10-25)');
     expect(diff.dataNote).toContain('risk lists capped at 10');
     expect(diff.dataNote).toContain('risk matching is heuristic');
   });
@@ -493,11 +512,16 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     const htmlCurrentReworded = `
       <html>
         <body>
+          <div>Table of Contents</div>
+          <div>Item 1A. Risk Factors</div>
+          <div>Item 1B. Unresolved Staff Comments</div>
           <h2>Item 1A. Risk Factors</h2>
           <p>The following summarizes the principal risk factors facing the company.</p>
           <p><b>Risks Related to Competition in Artificial Intelligence and Cloud.</b> Highly aggressive competitive investments by global technology companies could pressure margins and adoption.</p>
+          ${repeatPageHeaders}
           <p><b>Global supply chain disruptions and semiconductor shortages.</b> Complex manufacturing logistics may result in delivery delays.</p>
           <p><b>Cybersecurity quantum encryption vulnerabilities.</b> Next generation post-quantum computing attacks could threaten infrastructure.</p>
+          ${longFillerP.repeat(30)}
           <h2>Item 1B. Unresolved Staff Comments</h2>
           <p>None.</p>
         </body>
@@ -511,11 +535,16 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     const htmlPriorReworded = `
       <html>
         <body>
+          <div>Table of Contents</div>
+          <div>Item 1A. Risk Factors</div>
+          <div>Item 1B. Unresolved Staff Comments</div>
           <h2>Item 1A. Risk Factors</h2>
           <p>Because of the following factors, operations may be adversely impacted.</p>
           <p><b>Risks Related to Competition in Artificial Intelligence.</b> Competitive investments by global tech companies could pressure margins.</p>
+          ${repeatPageHeaders}
           <p><b>Global supply chain disruptions and semiconductor shortages.</b> Complex manufacturing logistics may result in delivery delays.</p>
           <p><b>Legacy telecommunications roaming agreements.</b> Wireless carrier interoperability mandates create ongoing overseas friction.</p>
+          ${longFillerP.repeat(30)}
           <h2>Item 1B. Unresolved Staff Comments</h2>
           <p>None.</p>
         </body>
