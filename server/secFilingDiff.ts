@@ -27,6 +27,8 @@ export interface RiskFactorItem {
   title: string;
   snippet: string;
   accession: string;
+  priorSnippet?: string;
+  priorAccession?: string;
 }
 
 export interface RiskFactorChanges {
@@ -116,22 +118,18 @@ function setCachedDiff(cacheKey: string, result: FilingDiffResult): void {
   }
 }
 
-function stripHtml(html: string): string {
+function stripHtmlTagsOnly(html: string): string {
   return html
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<(?:p|div|br|tr|h\d)[^>]*>/gi, '\n\n')
-    .replace(/<[^>]+>/g, ' ')
+    .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
     .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
-    .replace(/\r/g, '\n')
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n\s*\n/g, '\n\n')
-    .trim();
+    .replace(/\r/g, '\n');
 }
 
 function preprocessItem1AHtml(html: string): string {
@@ -143,7 +141,7 @@ function preprocessItem1AHtml(html: string): string {
       return clean.length >= 8 ? `\n\n<RISK_HEADING>${clean}</RISK_HEADING>\n\n` : clean;
     })
     .replace(/<(?:p|div|br|tr)\b[^>]*>/gi, '\n\n')
-    .replace(/<(?!\/?RISK_HEADING\b)[^>]+>/gi, ' ')
+    .replace(/<(?!\/?RISK_HEADING\b)[^>]+>/gi, '')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
@@ -156,123 +154,130 @@ function preprocessItem1AHtml(html: string): string {
     .trim();
 }
 
-function extractFirstSentence(text: string): string {
-  const trimmed = text.trim();
-  const match = trimmed.match(/^([^.?!]+[.?!])(\s|$)/);
-  const sentence = match ? match[1].trim() : trimmed.split('\n')[0].trim();
-  return sentence.length > 120 ? sentence.slice(0, 120).trim() : sentence;
+function sliceItem1A(text: string): string | null {
+  // 1. Split text into lines
+  const lines = text.split('\n');
+
+  // Split-tolerant regexes for headings
+  const item1ARegex = /(?:I\s*t\s*e\s*m|ITEM)\s*1\s*A[\s.:\u2013\-]/i;
+  const riskFactorsRegex = /R\s*I\s*S\s*K\s+F\s*A\s*C\s*T\s*O\s*R\s*S/i;
+
+  const item1BRegex = /(?:I\s*t\s*e\s*m|ITEM)\s*(?:1\s*B|2)[\s.:\u2013\-]|U\s*n\s*r\s*e\s*s\s*o\s*l\s*v\s*e\s*d\s+S\s*t\s*a\s*f\s*f\s+C\s*o\s*m\s*m\s*e\s*n\s*t\s*s/i;
+
+  // Find candidate start line indices
+  const candidates: number[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const rawLine = lines[i];
+    const cleanLine = rawLine.replace(/<\/?RISK_HEADING>/gi, '').trim();
+
+    // Line must start with Item 1A (or RISK_HEADING wrapping Item 1A)
+    const match1A = cleanLine.match(/(?:I\s*t\s*e\s*m|ITEM)\s*1\s*A[\s.:\u2013\-]/i);
+    if (!match1A || cleanLine.indexOf(match1A[0]) > 30) continue;
+
+    // "Risk Factors" must follow within 40 characters
+    const lookaheadWindow = lines.slice(i, i + 15).join(' ').replace(/<\/?RISK_HEADING>/gi, '');
+    const item1AMatch = lookaheadWindow.match(item1ARegex);
+    if (!item1AMatch) continue;
+    const pos1A = item1AMatch.index || 0;
+    const textAfter1A = lookaheadWindow.slice(pos1A + item1AMatch[0].length);
+    const rfMatch = textAfter1A.match(riskFactorsRegex);
+    if (!rfMatch || rfMatch.index! > 40) {
+      continue;
+    }
+
+    // Reject table of contents hits (Item 1B / Item 2 / Unresolved Staff Comments appears within 300 chars after)
+    // Check if within 300 chars after Item 1A match there is an Item 1B / Item 2 / Unresolved Staff Comments heading line
+    const textAfter1A300 = textAfter1A.slice(0, 300);
+    if (item1BRegex.test(textAfter1A300)) {
+      // If Item 1B appears within 300 chars, reject unless it's the actual end of section (>10k chars away in total document)
+      // Standard TOC entries have Item 1B immediately in the next line/few lines without paragraphs between
+      const linesWindow = lines.slice(i, i + 5).join(' ');
+      if (item1BRegex.test(linesWindow)) {
+        continue;
+      }
+    }
+
+    // Reject cross-references: preceded by "Part I," or "see", or followed by "of this Form 10-K"
+    const windowContext = lines.slice(Math.max(0, i - 2), i + 3).join(' ').replace(/<\/?RISK_HEADING>/gi, '');
+    const lineUpTo1A = cleanLine.slice(0, cleanLine.search(item1ARegex));
+    const lineBefore = i > 0 ? lines[i - 1].replace(/<\/?RISK_HEADING>/gi, '') : '';
+    if (
+      /Part\s+I\s*,\s*$/i.test(lineBefore.trim()) ||
+      /Part\s+I\s*,\s*$/i.test(lineUpTo1A.trim()) ||
+      /\bsee\b/i.test(lineUpTo1A) ||
+      /\bsee\s+(?:Part\s+I\s*,\s*)?$/i.test(lineBefore.trim()) ||
+      /\bof\s+this\s+Form\s+10-K\b/i.test(windowContext)
+    ) {
+      continue;
+    }
+
+    candidates.push(i);
+  }
+
+  if (candidates.length === 0) return null;
+
+  // Requirement 4: Use the FIRST remaining candidate (not the longest span)
+  const startLineIdx = candidates[0];
+
+  // End at the first line starting with an Item 1B / Unresolved Staff Comments heading after it
+  let endLineIdx = lines.length;
+  for (let j = startLineIdx + 1; j < lines.length; j++) {
+    const lineClean = lines[j].replace(/<\/?RISK_HEADING>/gi, '').trim();
+    if (item1BRegex.test(lineClean)) {
+      endLineIdx = j;
+      break;
+    }
+  }
+
+  const sliced = lines.slice(startLineIdx, endLineIdx).join('\n').trim();
+  return sliced.length > 0 ? sliced : null;
 }
 
-function normWord(w: string): string {
-  const clean = w.toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (clean.length > 4 && clean.endsWith('s')) {
-    return clean.slice(0, -1);
-  }
-  return clean;
+function isIntroParagraph(text: string): boolean {
+  const clean = text.replace(/<\/?RISK_HEADING>/gi, '').trim();
+  return (
+    /^(?:The following summarizes|Because of the following factors|Our business, financial condition|The following risks and uncertainties|Risk Factors Summary)/i.test(
+      clean
+    )
+  );
 }
 
 function normTitle(t: string): string {
   return t
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .map(normWord)
-    .filter(Boolean)
-    .join(' ');
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-function wordJaccard(a: string, b: string): number {
-  const wordsA = normTitle(a).split(/\s+/).filter(Boolean);
-  const wordsB = normTitle(b).split(/\s+/).filter(Boolean);
-  const setA = new Set(wordsA);
-  const setB = new Set(wordsB);
-  if (setA.size === 0 && setB.size === 0) return 1.0;
-  if (setA.size === 0 || setB.size === 0) return 0.0;
-  let intersectionCount = 0;
-  for (const w of setA) {
-    if (setB.has(w)) intersectionCount++;
-  }
-  const unionSize = setA.size + setB.size - intersectionCount;
-  return unionSize > 0 ? intersectionCount / unionSize : 1.0;
-}
-
-function titleSimilarity(titleA: string, titleB: string): number {
-  const normA = normTitle(titleA);
-  const normB = normTitle(titleB);
+function titleSimilarity(a: string, b: string): number {
+  const normA = normTitle(a);
+  const normB = normTitle(b);
   if (normA === normB) return 1.0;
-  return wordJaccard(normA, normB);
+  if (!normA || !normB) return 0.0;
+
+  const wordsA = new Set(normA.split(' ').filter(w => w.length > 1));
+  const wordsB = new Set(normB.split(' ').filter(w => w.length > 1));
+  if (wordsA.size === 0 || wordsB.size === 0) return 0.0;
+
+  let intersection = 0;
+  for (const w of wordsA) {
+    if (wordsB.has(w)) intersection++;
+  }
+
+  const union = new Set([...wordsA, ...wordsB]).size;
+  return union === 0 ? 0 : intersection / union;
 }
 
-function isIntroParagraph(text: string): boolean {
-  const norm = text.replace(/<\/?RISK_HEADING>/gi, '').trim().toLowerCase();
-  if (/^(?:item|ITEM)\s+1A/i.test(norm)) return true;
-  if (/^table of contents/i.test(norm)) return true;
-  if (norm.startsWith('the following summarizes')) return true;
-  if (norm.startsWith('because of the following factors')) return true;
-  if (norm.startsWith('the following')) return true;
-  if (norm.startsWith('because of the following')) return true;
-  if (norm.startsWith('an investment in')) return true;
-  return false;
-}
-
-function sliceItem1A(text: string): string | null {
-  // Regexes for Item 1A and Item 1B / Item 2 / Unresolved Staff Comments
-  const item1ARegex = /(?:Item|ITEM)\s+1A[.:\s\u2013\-]/gi;
-  const nextItemRegex = /(?:Item|ITEM)\s+(?:1B|2)[.:\s\u2013\-]|Unresolved\s+Staff\s+Comments/gi;
-
-  const item1AMatches: number[] = [];
-  let m: RegExpExecArray | null;
-  while ((m = item1ARegex.exec(text)) !== null) {
-    item1AMatches.push(m.index);
+function extractFirstSentence(text: string): string {
+  const clean = text.replace(/<\/?RISK_HEADING>/gi, '').trim();
+  const match = clean.match(/^([^.!?]+[.!?])/);
+  if (match) {
+    const sentence = match[1].trim();
+    return sentence.length > 120 ? sentence.slice(0, 120).trim() : sentence;
   }
-
-  if (item1AMatches.length === 0) return null;
-
-  const nextItemMatches: number[] = [];
-  while ((m = nextItemRegex.exec(text)) !== null) {
-    nextItemMatches.push(m.index);
-  }
-
-  // Look for candidates where Item 1A is followed by "Risk Factors"
-  let maxSpan = 0;
-  let chosen1A = -1;
-  let chosenNext = -1;
-
-  for (const startIdx of item1AMatches) {
-    // Check if followed by "Risk Factors" within 200 chars
-    const after1A = text.slice(startIdx, startIdx + 200);
-    const hasRiskFactors = /Risk\s+Factors/i.test(after1A);
-
-    // Find first next item heading after startIdx
-    const nextMatchIdx = nextItemMatches.find(idx => idx > startIdx);
-    if (nextMatchIdx !== undefined) {
-      const span = nextMatchIdx - startIdx;
-      // Prefer matches with "Risk Factors" heading; among candidates, pick the longest span
-      if (hasRiskFactors) {
-        if (span > maxSpan) {
-          maxSpan = span;
-          chosen1A = startIdx;
-          chosenNext = nextMatchIdx;
-        }
-      } else if (chosen1A === -1 && span > maxSpan) {
-        maxSpan = span;
-        chosen1A = startIdx;
-        chosenNext = nextMatchIdx;
-      }
-    }
-  }
-
-  // Fallback: If no valid match, pick the last Item 1A match before next item or text end
-  if (chosen1A === -1) {
-    const last1A = item1AMatches[item1AMatches.length - 1];
-    const nextMatchIdx = nextItemMatches.find(idx => idx > last1A);
-    chosen1A = last1A;
-    chosenNext = nextMatchIdx !== undefined ? nextMatchIdx : text.length;
-  }
-
-  if (chosen1A === -1 || chosenNext <= chosen1A) return null;
-  const sliced = text.slice(chosen1A, chosenNext).trim();
-  return sliced;
+  return clean.length > 120 ? clean.slice(0, 120).trim() : clean;
 }
 
 interface ParsedRisk {
@@ -388,7 +393,9 @@ function compareRiskFactors(
     changed.push({
       title: cur.title,
       snippet: cur.snippet,
-      accession: currentAccession
+      accession: currentAccession,
+      priorSnippet: pri.snippet,
+      priorAccession
     });
   }
 
@@ -421,7 +428,12 @@ function compareRiskFactors(
       rem => titleSimilarity(add.title, rem.title) >= 0.6 || normTitle(add.title) === normTitle(rem.title)
     );
     if (remIdx !== -1) {
-      changed.push(add);
+      const rem = candidateRemoved[remIdx];
+      changed.push({
+        ...add,
+        priorSnippet: rem.snippet,
+        priorAccession
+      });
       candidateAdded.splice(i, 1);
       candidateRemoved.splice(remIdx, 1);
     }
@@ -860,10 +872,10 @@ export async function buildFilingDiff(
         let pri1A = sliceItem1A(priProcessed);
 
         if (!cur1A || cur1A.length < 500) {
-          cur1A = sliceItem1A(stripHtml(curHtml));
+          cur1A = sliceItem1A(stripHtmlTagsOnly(curHtml));
         }
         if (!pri1A || pri1A.length < 500) {
-          pri1A = sliceItem1A(stripHtml(priHtml));
+          pri1A = sliceItem1A(stripHtmlTagsOnly(priHtml));
         }
 
         const curLen = cur1A ? cur1A.length : 0;

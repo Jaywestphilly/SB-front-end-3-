@@ -578,6 +578,9 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     expect(changed.length).toBe(1);
     expect(changed[0].title).toBe('Risks Related to Competition in Artificial Intelligence and Cloud.');
     expect(changed[0].accession).toBe('0000320193-25-000079');
+    expect(changed[0].priorSnippet).toBeDefined();
+    expect(changed[0].priorSnippet).toContain('Risks Related to Competition in Artificial Intelligence');
+    expect(changed[0].priorAccession).toBe('0000320193-24-000106');
 
     // The reworded risk MUST NOT appear in added or removed!
     const rewordedInAdded = added.find(r => r.title.includes('Competition in Artificial Intelligence'));
@@ -600,5 +603,60 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     expect(added.find(r => r.title.includes('Global supply chain disruptions'))).toBeUndefined();
     expect(removed.find(r => r.title.includes('Global supply chain disruptions'))).toBeUndefined();
     expect(changed.find(r => r.title.includes('Global supply chain disruptions'))).toBeUndefined();
+  });
+
+  it('7. Requirement 6: "<span>RIS</span><span>K FACTORS</span>" splits slice over 20K chars, and cross-reference / TOC hits are rejected', async () => {
+    const splitTagCurrent = `
+      <html>
+        <body>
+          <div>Table of Contents</div>
+          <div>Item 1. Business</div>
+          <p>We operate in technology. See Part I, Item 1A "Risk Factors" of this Form 10-K for details.</p>
+          <div>Item 1A. <span>RIS</span><span>K FACTORS</span> (see page 15)</div>
+          <div>Item 1B. Unresolved Staff Comments</div>
+          <hr/>
+          <p>Item 1. Business Summary</p>
+          <p>This is Item 1 Business text that MUST NOT appear in results.</p>
+          <h2>Item 1A. <span>RIS</span><span>K FACTORS</span></h2>
+          <p>The following summarizes the principal risks facing the company.</p>
+          <p><b>Artificial Intelligence competition risk.</b> The markets for AI technology are rapidly evolving with increasing competitive pressures from major hyperscalers and emerging startups worldwide across consumer devices and cloud platforms.</p>
+          <p><b>Global supply chain disruptions.</b> Geopolitical trade restrictions and semiconductor component allocation constraints may adversely affect manufacturing yields and product availability across multiple jurisdictions globally.</p>
+          ${longFillerP.repeat(30)}
+          <h2>Item 1B. Unresolved Staff Comments</h2>
+          <p>None.</p>
+        </body>
+      </html>
+    `;
+
+    global.fetch = (url: any) => {
+      const urlStr = String(url);
+      if (urlStr.includes('submissions')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockSubmissionsTwoYears) } as any);
+      }
+      if (urlStr.includes('companyfacts')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockCompanyFacts) } as any);
+      }
+      if (urlStr.includes('aapl-20250927.htm')) {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(splitTagCurrent) } as any);
+      }
+      if (urlStr.includes('aapl-20240928.htm')) {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(mockHtmlPrior) } as any);
+      }
+      return Promise.resolve({ ok: false } as any);
+    };
+
+    const diff = await buildFilingDiff('AAPL', '10-K');
+    expect(diff.riskFactorChanges).toBeDefined();
+    expect(diff.riskSectionChars).toBeDefined();
+    expect(diff.riskSectionChars!.current).toBeGreaterThan(20000);
+
+    // Verify Item 1 Business text NEVER appears in risk factor results or snippets
+    const allTitlesAndSnippets = [
+      ...diff.riskFactorChanges!.added.map(r => r.title + ' ' + r.snippet),
+      ...diff.riskFactorChanges!.removed.map(r => r.title + ' ' + r.snippet),
+      ...diff.riskFactorChanges!.changed.map(r => r.title + ' ' + r.snippet)
+    ].join(' ');
+
+    expect(allTitlesAndSnippets).not.toContain('Item 1 Business text that MUST NOT appear');
   });
 });
