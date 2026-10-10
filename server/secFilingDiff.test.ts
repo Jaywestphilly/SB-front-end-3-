@@ -610,11 +610,20 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
       <html>
         <body>
           <div>Table of Contents</div>
-          <div>Item 1. Business</div>
+          <table>
+            <tr><td>Item 1.</td><td>Business</td><td>1</td></tr>
+            <tr>
+              <td>Item 1A.</td>
+              <td><span>RIS</span><span>K FACTORS</span></td>
+              <td>15</td>
+            </tr>
+            <tr>
+              <td>Item 1B.</td>
+              <td>Unresolved Staff Comments</td>
+              <td>25</td>
+            </tr>
+          </table>
           <p>We operate in technology. See Part I, Item 1A "Risk Factors" of this Form 10-K for details.</p>
-          <div>Item 1A. <span>RIS</span><span>K FACTORS</span> (see page 15)</div>
-          <div>Item 1B. Unresolved Staff Comments</div>
-          <hr/>
           <p>Item 1. Business Summary</p>
           <p>This is Item 1 Business text that MUST NOT appear in results.</p>
           <h2>Item 1A. <span>RIS</span><span>K FACTORS</span></h2>
@@ -658,5 +667,48 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     ].join(' ');
 
     expect(allTitlesAndSnippets).not.toContain('Item 1 Business text that MUST NOT appear');
+  });
+
+  it('8. Requirement 4: Fixture with repeated "PART I / Item 1A" page header right before "ITEM 1A. RISK FACTORS"', async () => {
+    const repeatedHeaderFixture = `
+      <html>
+        <body>
+          <div>Table of Contents</div>
+          <table>
+            <tr><td>Item 1A.</td><td>Risk Factors</td><td>15</td></tr>
+            <tr><td>Item 1B.</td><td>Unresolved Staff Comments</td><td>25</td></tr>
+          </table>
+          <div>PART I | Item 1A. Risk Factors Page Header</div>
+          <h2>ITEM 1A. RISK FACTORS</h2>
+          <p>The following summarizes the principal risks facing the company.</p>
+          <p><b>Artificial Intelligence competition risk.</b> The markets for AI technology are rapidly evolving with increasing competitive pressures from major hyperscalers and emerging startups worldwide across consumer devices and cloud platforms.</p>
+          ${longFillerP.repeat(30)}
+          <h2>Item 1B. Unresolved Staff Comments</h2>
+          <p>None.</p>
+        </body>
+      </html>
+    `;
+
+    global.fetch = (url: any) => {
+      const urlStr = String(url);
+      if (urlStr.includes('submissions')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockSubmissionsTwoYears) } as any);
+      }
+      if (urlStr.includes('companyfacts')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(mockCompanyFacts) } as any);
+      }
+      if (urlStr.includes('aapl-20250927.htm')) {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(repeatedHeaderFixture) } as any);
+      }
+      if (urlStr.includes('aapl-20240928.htm')) {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(mockHtmlPrior) } as any);
+      }
+      return Promise.resolve({ ok: false } as any);
+    };
+
+    const diff = await buildFilingDiff('AAPL', '10-K');
+    expect(diff.riskFactorChanges).toBeDefined();
+    expect(diff.riskSectionChars).toBeDefined();
+    expect(diff.riskSectionChars!.current).toBeGreaterThan(20000);
   });
 });

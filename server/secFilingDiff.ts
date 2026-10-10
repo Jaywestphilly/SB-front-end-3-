@@ -155,8 +155,11 @@ function preprocessItem1AHtml(html: string): string {
 }
 
 function sliceItem1A(text: string): string | null {
-  // 1. Split text into lines
-  const lines = text.split('\n');
+  // 1. Remove blank lines BEFORE checking candidates
+  const lines = text
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
 
   // Split-tolerant regexes for headings
   const item1ARegex = /(?:I\s*t\s*e\s*m|ITEM)\s*1\s*A[\s.:\u2013\-]/i;
@@ -186,16 +189,11 @@ function sliceItem1A(text: string): string | null {
       continue;
     }
 
-    // Reject table of contents hits (Item 1B / Item 2 / Unresolved Staff Comments appears within 300 chars after)
-    // Check if within 300 chars after Item 1A match there is an Item 1B / Item 2 / Unresolved Staff Comments heading line
-    const textAfter1A300 = textAfter1A.slice(0, 300);
-    if (item1BRegex.test(textAfter1A300)) {
-      // If Item 1B appears within 300 chars, reject unless it's the actual end of section (>10k chars away in total document)
-      // Standard TOC entries have Item 1B immediately in the next line/few lines without paragraphs between
-      const linesWindow = lines.slice(i, i + 5).join(' ');
-      if (item1BRegex.test(linesWindow)) {
-        continue;
-      }
+    // Reject candidate if Item 1B, Item 2, or Unresolved Staff Comments appears within 300 CHARACTERS after "Risk Factors"
+    const textAfterRF = textAfter1A.slice(rfMatch.index! + rfMatch[0].length);
+    const textAfterRF300 = textAfterRF.slice(0, 300);
+    if (item1BRegex.test(textAfterRF300)) {
+      continue;
     }
 
     // Reject cross-references: preceded by "Part I," or "see", or followed by "of this Form 10-K"
@@ -207,6 +205,7 @@ function sliceItem1A(text: string): string | null {
       /Part\s+I\s*,\s*$/i.test(lineUpTo1A.trim()) ||
       /\bsee\b/i.test(lineUpTo1A) ||
       /\bsee\s+(?:Part\s+I\s*,\s*)?$/i.test(lineBefore.trim()) ||
+      /\bsee\b/i.test(windowContext.slice(0, windowContext.search(item1ARegex))) ||
       /\bof\s+this\s+Form\s+10-K\b/i.test(windowContext)
     ) {
       continue;
@@ -215,23 +214,24 @@ function sliceItem1A(text: string): string | null {
     candidates.push(i);
   }
 
-  if (candidates.length === 0) return null;
+  // 2. If the slice from a candidate is under 5,000 characters, skip to the next candidate instead of returning it
+  for (const startLineIdx of candidates) {
+    let endLineIdx = lines.length;
+    for (let j = startLineIdx + 1; j < lines.length; j++) {
+      const lineClean = lines[j].replace(/<\/?RISK_HEADING>/gi, '').trim();
+      if (item1BRegex.test(lineClean)) {
+        endLineIdx = j;
+        break;
+      }
+    }
 
-  // Requirement 4: Use the FIRST remaining candidate (not the longest span)
-  const startLineIdx = candidates[0];
-
-  // End at the first line starting with an Item 1B / Unresolved Staff Comments heading after it
-  let endLineIdx = lines.length;
-  for (let j = startLineIdx + 1; j < lines.length; j++) {
-    const lineClean = lines[j].replace(/<\/?RISK_HEADING>/gi, '').trim();
-    if (item1BRegex.test(lineClean)) {
-      endLineIdx = j;
-      break;
+    const sliced = lines.slice(startLineIdx, endLineIdx).join('\n\n').trim();
+    if (sliced.length >= 5000) {
+      return sliced;
     }
   }
 
-  const sliced = lines.slice(startLineIdx, endLineIdx).join('\n').trim();
-  return sliced.length > 0 ? sliced : null;
+  return null;
 }
 
 function isIntroParagraph(text: string): boolean {
