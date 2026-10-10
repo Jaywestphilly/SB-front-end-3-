@@ -212,17 +212,21 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
   sec_job: declareDiscovery({
     method: 'POST',
     bodyType: 'json',
-    input: { ticker: 'NVDA', filingType: '10-Q' },
+    input: { ticker: 'AAPL', filingType: '10-K' },
     output: {
       example: {
         success: true,
         jobId: 'job_sec_1790616000000_a1b2',
         output: {
-          ticker: 'NVDA',
-          filingType: '10-Q',
-          companyName: 'NVIDIA CORP',
-          managementTone: 'BULLISH',
-          executiveSummary: 'Form 10-Q filed with SEC EDGAR. Datacenter revenue accelerated.'
+          ticker: 'AAPL',
+          filingType: '10-K',
+          companyName: 'Apple Inc.',
+          accession: '0000320193-25-000079',
+          period: '2025-09-27',
+          revenue: '$416.16B',
+          netIncome: '$112.01B',
+          filingUrl: 'https://www.sec.gov/ix?doc=/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm',
+          dataNote: 'Financials from SEC XBRL. Filing text analysis not included.'
         }
       }
     }
@@ -666,7 +670,7 @@ export async function resolveAgentIdentityFromKey(
 // EXPRESS MIDDLEWARE: REAL COINBASE X402 ENFORCEMENT
 // ============================================================================
 
-export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
+export function requireX402Payment(forcedConfig?: X402PricedEndpoint, options?: { deferSettlement?: boolean }) {
   return async (req: Request, res: Response, next: NextFunction) => {
     // Defense-in-depth: If already verified & settled or credits debited on this request, avoid duplicate payment/debit
     if ((req as any).x402Payment?.verified && (req as any).x402Payment?.settled) {
@@ -1097,184 +1101,209 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint) {
           // Non-fatal telemetry error
         }
 
-        // Step B: Settle payment through facilitator BEFORE serving response
-        let settleResult: any;
-        const settleExecutionPromise = (async () => {
-          return await facilitatorClient.settle(paymentPayload, paymentRequirement as any);
-        })();
+        // Step B: Settle payment through facilitator
+        const executeSettlement = async () => {
+          let settleResult: any;
+          const settleExecutionPromise = (async () => {
+            return await facilitatorClient.settle(paymentPayload, paymentRequirement as any);
+          })();
 
-        inFlightX402SettlementRegistry.set(keys.payloadHash, settleExecutionPromise as any);
-        if (keys.nonceKey) {
-          inFlightX402SettlementRegistry.set(keys.nonceKey, settleExecutionPromise as any);
-        }
-
-        try {
-          settleResult = await settleExecutionPromise;
-        } catch (settleErr: any) {
-          try {
-            recordMachineCommerceEvent({
-              eventType: 'settlement_failed',
-              source: paymentSource,
-              endpoint: endpointConfig.id,
-              payer: safeAttemptPayer,
-              amountUsd: endpointConfig.priceUsd,
-              txHash: paymentPayload?.txHash,
-              paymentId: keys.payloadHash,
-              timestamp: new Date().toISOString(),
-              details: {
-                paymentId: keys.payloadHash,
-                reason: settleErr?.message || 'Coinbase CDP facilitator settle failed'
-              }
-            });
-          } catch {
-            // Non-fatal telemetry error
-          }
-          throw settleErr;
-        } finally {
-          inFlightX402SettlementRegistry.delete(keys.payloadHash);
+          inFlightX402SettlementRegistry.set(keys.payloadHash, settleExecutionPromise as any);
           if (keys.nonceKey) {
-            inFlightX402SettlementRegistry.delete(keys.nonceKey);
+            inFlightX402SettlementRegistry.set(keys.nonceKey, settleExecutionPromise as any);
           }
+
+          try {
+            settleResult = await settleExecutionPromise;
+          } catch (settleErr: any) {
+            try {
+              recordMachineCommerceEvent({
+                eventType: 'settlement_failed',
+                source: paymentSource,
+                endpoint: endpointConfig.id,
+                payer: safeAttemptPayer,
+                amountUsd: endpointConfig.priceUsd,
+                txHash: paymentPayload?.txHash,
+                paymentId: keys.payloadHash,
+                timestamp: new Date().toISOString(),
+                details: {
+                  paymentId: keys.payloadHash,
+                  reason: settleErr?.message || 'Coinbase CDP facilitator settle failed'
+                }
+              });
+            } catch {
+              // Non-fatal telemetry error
+            }
+            throw settleErr;
+          } finally {
+            inFlightX402SettlementRegistry.delete(keys.payloadHash);
+            if (keys.nonceKey) {
+              inFlightX402SettlementRegistry.delete(keys.nonceKey);
+            }
+          }
+
+          const txHash = (settleResult as any)?.txHash || (settleResult as any)?.transaction;
+          const isSettleSuccess = Boolean(
+            settleResult && (
+              settleResult.success === true ||
+              (typeof txHash === 'string' && txHash.length > 0)
+            )
+          );
+
+          if (!isSettleSuccess) {
+            try {
+              recordMachineCommerceEvent({
+                eventType: 'settlement_failed',
+                source: paymentSource,
+                endpoint: endpointConfig.id,
+                payer: safeAttemptPayer || (settleResult as any)?.payer,
+                amountUsd: endpointConfig.priceUsd,
+                txHash: paymentPayload?.txHash,
+                paymentId: keys.payloadHash,
+                timestamp: new Date().toISOString(),
+                details: {
+                  paymentId: keys.payloadHash,
+                  reason: (settleResult as any)?.error || (settleResult as any)?.errorMessage || 'On-chain settlement transaction could not be executed.'
+                }
+              });
+            } catch {
+              // Non-fatal telemetry error
+            }
+
+            const err: any = new Error((settleResult as any)?.error || (settleResult as any)?.errorMessage || 'On-chain settlement transaction could not be executed.');
+            err.isSettleResultFailure = true;
+            throw err;
+          }
+
+          // Settlement succeeded! Authoritative on-chain transaction hash acquired.
+          let responseHeader = '';
+          try {
+            responseHeader = encodePaymentResponseHeader(settleResult);
+          } catch (headerErr) {
+            console.error('Non-fatal error encoding payment response header:', headerErr);
+            responseHeader = Buffer.from(JSON.stringify({
+              success: true,
+              txHash: txHash || '0x_settled',
+              payer: (settleResult as any)?.payer || paymentPayload?.payer
+            })).toString('base64');
+          }
+
+          res.setHeader('PAYMENT-RESPONSE', responseHeader);
+
+          const settlementRecord: SettledX402Record = {
+            txHash: txHash || '0x_settled',
+            payer: (settleResult as any)?.payer || paymentPayload?.payer,
+            settleResult,
+            responseHeader,
+            settledAt: new Date().toISOString(),
+            endpointId: endpointConfig.id
+          };
+
+          saveX402Settlement(keys, settlementRecord);
+
+          // Requirement 7: Persist settlement to Firestore x402_settlements
+          db.collection('x402_settlements').doc(keys.payloadHash).set({
+            timestamp: settlementRecord.settledAt,
+            payer: settlementRecord.payer || '0x0000000000000000000000000000000000000000',
+            route: req.originalUrl || req.path,
+            endpointId: endpointConfig.id,
+            amountUsd: endpointConfig.priceUsd,
+            amountAtomic: endpointConfig.atomicAmount,
+            txHash: settlementRecord.txHash,
+            source: paymentSource
+          }).catch(() => {});
+
+          (req as any).x402Payment = {
+            ...((req as any).x402Payment || {}),
+            verified: true,
+            settled: true,
+            settleResult,
+            payer: settlementRecord.payer,
+            txHash: settlementRecord.txHash
+          };
+
+          recordMachineCommerceEvent({
+            eventType: 'payment_success',
+            source: paymentSource,
+            endpoint: endpointConfig.id,
+            payer: settlementRecord.payer,
+            amountUsd: endpointConfig.priceUsd,
+            txHash: settlementRecord.txHash,
+            paymentId: keys.payloadHash,
+            timestamp: settlementRecord.settledAt,
+            details: {
+              paymentId: keys.payloadHash
+            }
+          });
+
+          return settlementRecord;
+        };
+
+        const setupAgentIdentity = async (payerAddr?: string) => {
+          try {
+            if (isAgentKey) {
+              const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
+              const resolvedAgent = await resolveAgentIdentityFromKey(authHeader);
+              if (resolvedAgent) {
+                (req as any).agent = resolvedAgent;
+              }
+            } else {
+              const payer = payerAddr || '0x_payer';
+              const payerHandle = payer.startsWith('0x') && payer.length > 10
+                ? `wallet_${payer.substring(0, 6)}...${payer.substring(payer.length - 4)}`
+                : `wallet_${payer}`;
+              if (!(req as any).agent) {
+                (req as any).agent = {
+                  agentId: payer.toLowerCase(),
+                  handle: payerHandle,
+                  displayName: `Web3 Payer (${payer.substring(0, 6)}...${payer.substring(payer.length - 4)})`,
+                  walletAddress: payer,
+                  status: 'active',
+                  isX402Payer: true,
+                  createdAt: new Date().toISOString()
+                };
+              }
+              if (!(req as any).agentKey) {
+                (req as any).agentKey = {
+                  keyId: `x402_${payer.toLowerCase()}`,
+                  agentId: payer.toLowerCase(),
+                  handle: payerHandle,
+                  scopes: ['*'],
+                  status: 'active',
+                  isX402Payment: true
+                };
+              }
+            }
+          } catch (bookkeepingErr: any) {
+            console.error('Post-settlement bookkeeping error (non-fatal):', bookkeepingErr?.message || bookkeepingErr);
+          }
+        };
+
+        const shouldDefer = Boolean(options?.deferSettlement || endpointConfig.id === 'sec_job');
+
+        if (shouldDefer) {
+          (req as any).x402Payment = {
+            verified: true,
+            settled: false,
+            payer: safeAttemptPayer || (verifyResult as any)?.payer,
+            settle: executeSettlement
+          };
+          await setupAgentIdentity((req as any).x402Payment.payer);
+          return forwardNext();
         }
 
-        const txHash = (settleResult as any)?.txHash || (settleResult as any)?.transaction;
-        const isSettleSuccess = Boolean(
-          settleResult && (
-            settleResult.success === true ||
-            (typeof txHash === 'string' && txHash.length > 0)
-          )
-        );
-
-        if (!isSettleSuccess) {
-          try {
-            recordMachineCommerceEvent({
-              eventType: 'settlement_failed',
-              source: paymentSource,
-              endpoint: endpointConfig.id,
-              payer: safeAttemptPayer || (settleResult as any)?.payer,
-              amountUsd: endpointConfig.priceUsd,
-              txHash: paymentPayload?.txHash,
-              paymentId: keys.payloadHash,
-              timestamp: new Date().toISOString(),
-              details: {
-                paymentId: keys.payloadHash,
-                reason: (settleResult as any)?.error || (settleResult as any)?.errorMessage || 'On-chain settlement transaction could not be executed.'
-              }
-            });
-          } catch {
-            // Non-fatal telemetry error
-          }
-
+        const settlementRecord = await executeSettlement();
+        await setupAgentIdentity(settlementRecord.payer);
+        return forwardNext();
+      } catch (err: any) {
+        if (err?.isSettleResultFailure) {
           return res.status(402).json({
             status: 'payment_settlement_failed',
             code: 402,
             error: 'x402 payment settlement failed through Coinbase CDP facilitator.',
-            reason: (settleResult as any)?.error || (settleResult as any)?.errorMessage || 'On-chain settlement transaction could not be executed.'
+            reason: err.message
           });
         }
-
-        // Settlement succeeded! Authoritative on-chain transaction hash acquired.
-        let responseHeader = '';
-        try {
-          responseHeader = encodePaymentResponseHeader(settleResult);
-        } catch (headerErr) {
-          console.error('Non-fatal error encoding payment response header:', headerErr);
-          responseHeader = Buffer.from(JSON.stringify({
-            success: true,
-            txHash: txHash || '0x_settled',
-            payer: (settleResult as any)?.payer || paymentPayload?.payer
-          })).toString('base64');
-        }
-
-        res.setHeader('PAYMENT-RESPONSE', responseHeader);
-
-        const settlementRecord: SettledX402Record = {
-          txHash: txHash || '0x_settled',
-          payer: (settleResult as any)?.payer || paymentPayload?.payer,
-          settleResult,
-          responseHeader,
-          settledAt: new Date().toISOString(),
-          endpointId: endpointConfig.id
-        };
-
-        saveX402Settlement(keys, settlementRecord);
-
-        // Requirement 7: Persist settlement to Firestore x402_settlements
-        db.collection('x402_settlements').doc(keys.payloadHash).set({
-          timestamp: settlementRecord.settledAt,
-          payer: settlementRecord.payer || '0x0000000000000000000000000000000000000000',
-          route: req.originalUrl || req.path,
-          endpointId: endpointConfig.id,
-          amountUsd: endpointConfig.priceUsd,
-          amountAtomic: endpointConfig.atomicAmount,
-          txHash: settlementRecord.txHash,
-          source: paymentSource
-        }).catch(() => {});
-
-        (req as any).x402Payment = {
-          verified: true,
-          settled: true,
-          settleResult,
-          payer: settlementRecord.payer,
-          txHash: settlementRecord.txHash
-        };
-
-        recordMachineCommerceEvent({
-          eventType: 'payment_success',
-          source: paymentSource,
-          endpoint: endpointConfig.id,
-          payer: settlementRecord.payer,
-          amountUsd: endpointConfig.priceUsd,
-          txHash: settlementRecord.txHash,
-          paymentId: keys.payloadHash,
-          timestamp: settlementRecord.settledAt,
-          details: {
-            paymentId: keys.payloadHash
-          }
-        });
-
-        // Post-settlement bookkeeping (ISOLATED: MUST NEVER REJECT OR CONVERT A SETTLED PAYMENT TO 402)
-        try {
-          if (isAgentKey) {
-            const authHeader = rawAuth.startsWith('Bearer ') ? rawAuth : `Bearer ${rawAuth}`;
-            const resolvedAgent = await resolveAgentIdentityFromKey(authHeader);
-            if (resolvedAgent) {
-              (req as any).agent = resolvedAgent;
-            }
-          } else {
-            const payer = settlementRecord.payer || '0x_payer';
-            const payerHandle = payer.startsWith('0x') && payer.length > 10
-              ? `wallet_${payer.substring(0, 6)}...${payer.substring(payer.length - 4)}`
-              : `wallet_${payer}`;
-            if (!(req as any).agent) {
-              (req as any).agent = {
-                agentId: payer.toLowerCase(),
-                handle: payerHandle,
-                displayName: `Web3 Payer (${payer.substring(0, 6)}...${payer.substring(payer.length - 4)})`,
-                walletAddress: payer,
-                status: 'active',
-                isX402Payer: true,
-                createdAt: new Date().toISOString()
-              };
-            }
-            if (!(req as any).agentKey) {
-              (req as any).agentKey = {
-                keyId: `x402_${payer.toLowerCase()}`,
-                agentId: payer.toLowerCase(),
-                handle: payerHandle,
-                scopes: ['*'],
-                status: 'active',
-                isX402Payment: true
-              };
-            }
-          }
-        } catch (bookkeepingErr: any) {
-          console.error('Post-settlement bookkeeping error (non-fatal):', bookkeepingErr?.message || bookkeepingErr);
-        }
-
-        // Do not also debit credits (no double charge).
-        return forwardNext();
-      } catch (err: any) {
         // If an error occurs, check if this payment was actually settled (authoritative check)
         const settledCheck = getX402Settlement(keys.payloadHash, keys.nonceKey);
         if (settledCheck) {

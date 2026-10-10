@@ -1,7 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { dbStoreInstance } from './firebaseAdmin.js';
+import { BAZAAR_DISCOVERY_EXTENSIONS } from './x402PaymentService.js';
+import { setFacilitatorVerifyHandler, setFacilitatorSettleHandler } from './testSetup/facilitatorMock.js';
 import {
   inMemoryWalletRegistry,
   inMemoryAgentRegistry,
@@ -792,6 +794,251 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       expect(resQ).toBeDefined();
       expect(resQ?.revenueHighlights).toBeDefined();
       expect(resQ?.revenueHighlights?.totalRevenue).toBe('$90.00B');
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it('Requirement Honesty 1: Forced SEC failure on paid POST /api/v1/sec/job returns 503 and no settlement (no debit)', async () => {
+    const originalFetch = global.fetch;
+    global.fetch = vi.fn().mockRejectedValue(new Error('SEC EDGAR connection timeout'));
+
+    const settleSpy = vi.fn().mockResolvedValue({
+      success: true,
+      payer: '0xPayerWallet123',
+      txHash: '0x_should_not_be_called'
+    });
+
+    setFacilitatorVerifyHandler(async () => ({ isValid: true, payer: '0xPayerWallet123' }));
+    setFacilitatorSettleHandler(settleSpy);
+
+    const paymentHeader = Buffer.from(
+      JSON.stringify({
+        x402Version: 2,
+        authorization: { from: '0xPayerWallet123', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '250000' }
+      })
+    ).toString('base64');
+
+    try {
+      const res = await request(app)
+        .post('/api/v1/sec/job')
+        .set('PAYMENT-SIGNATURE', paymentHeader)
+        .set('Authorization', `Bearer ${buyerApiKey}`)
+        .send({
+          ticker: 'AAPL',
+          filingType: '10-K'
+        });
+
+      expect(res.status).toBe(503);
+      expect(res.body).toEqual({
+        error: 'sec_unavailable',
+        retryable: true
+      });
+
+      // No settlement
+      expect(settleSpy).not.toHaveBeenCalled();
+      expect(res.headers['payment-response']).toBeUndefined();
+
+      // Verify retry occurred (fetch was called at least twice)
+      expect((global.fetch as any).mock.calls.length).toBeGreaterThanOrEqual(2);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it('Requirement Honesty 2: Output from paid POST /api/v1/sec/job has no placeholder strings and returns only real SEC data fields + dataNote', async () => {
+    const mockSubmissions = {
+      cik: '0000032019',
+      name: 'Apple Inc.',
+      filings: {
+        recent: {
+          form: ['10-K'],
+          accessionNumber: ['0000320193-25-000079'],
+          filingDate: ['2025-10-31'],
+          reportDate: ['2025-09-27'],
+          primaryDocument: ['aapl-20250927.htm']
+        }
+      }
+    };
+
+    const mockFacts = {
+      cik: 32019,
+      entityName: 'Apple Inc.',
+      facts: {
+        'us-gaap': {
+          Revenues: {
+            units: {
+              USD: [
+                {
+                  val: 416160000000,
+                  accn: '0000320193-25-000079',
+                  start: '2024-09-29',
+                  end: '2025-09-27',
+                  form: '10-K',
+                  fy: 2025,
+                  fp: 'FY'
+                }
+              ]
+            }
+          },
+          NetIncomeLoss: {
+            units: {
+              USD: [
+                {
+                  val: 112010000000,
+                  accn: '0000320193-25-000079',
+                  start: '2024-09-29',
+                  end: '2025-09-27',
+                  form: '10-K',
+                  fy: 2025,
+                  fp: 'FY'
+                }
+              ]
+            }
+          }
+        }
+      }
+    };
+
+    const originalFetch = global.fetch;
+    global.fetch = (url: any) => {
+      const urlStr = String(url);
+      if (urlStr.includes('submissions')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockSubmissions)
+        } as any);
+      }
+      if (urlStr.includes('companyfacts')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockFacts)
+        } as any);
+      }
+      return Promise.resolve({ ok: false } as any);
+    };
+
+    const settleSpy = vi.fn().mockResolvedValue({
+      success: true,
+      payer: '0xPayerWallet123',
+      txHash: '0x_settled_tx_test_123'
+    });
+
+    setFacilitatorVerifyHandler(async () => ({ isValid: true, payer: '0xPayerWallet123' }));
+    setFacilitatorSettleHandler(settleSpy);
+
+    const paymentHeader = Buffer.from(
+      JSON.stringify({
+        x402Version: 2,
+        authorization: { from: '0xPayerWallet123', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '250000' }
+      })
+    ).toString('base64');
+
+    try {
+      const res = await request(app)
+        .post('/api/v1/sec/job')
+        .set('PAYMENT-SIGNATURE', paymentHeader)
+        .set('Authorization', `Bearer ${buyerApiKey}`)
+        .send({
+          ticker: 'AAPL',
+          filingType: '10-K'
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(settleSpy).toHaveBeenCalled();
+
+      const output = res.body.output;
+      expect(output.ticker).toBe('AAPL');
+      expect(output.filingType).toBe('10-K');
+      expect(output.companyName).toBe('Apple Inc.');
+      expect(output.accession).toBe('0000320193-25-000079');
+      expect(output.period).toBe('2025-09-27');
+      expect(output.revenue).toBe('$416.16B');
+      expect(output.netIncome).toBe('$112.01B');
+      expect(output.filingUrl).toContain('000032019325000079/aapl-20250927.htm');
+      expect(output.dataNote).toBe('Financials from SEC XBRL. Filing text analysis not included.');
+
+      // Zero placeholder fields in output
+      expect(output.risks).toBeUndefined();
+      expect(output.guidance).toBeUndefined();
+      expect(output.notableChanges).toBeUndefined();
+      expect(output.materialEvents).toBeUndefined();
+      expect(output.managementCommentary).toBeUndefined();
+
+      // Zero placeholder strings in JSON
+      const outputJson = JSON.stringify(output);
+      expect(outputJson).not.toContain('Management forward guidance');
+      expect(outputJson).not.toContain('Item 1A Risk Factors');
+      expect(outputJson).not.toContain('Market, credit, and operational risk');
+      expect(outputJson).not.toContain('parsed and indexed in Stock Bloc SEC intelligence registry');
+    } finally {
+      global.fetch = originalFetch;
+    }
+  });
+
+  it('Requirement Honesty 3: BAZAAR_DISCOVERY_EXTENSIONS.sec_job uses real AAPL FY2025 10-K example', () => {
+    const ext = BAZAAR_DISCOVERY_EXTENSIONS.sec_job;
+    expect(ext).toBeDefined();
+    const input = ext.bazaar.info?.input?.body || ext.bazaar.input;
+    expect(input.ticker).toBe('AAPL');
+    expect(input.filingType).toBe('10-K');
+
+    const exOut = ext.bazaar.info?.output?.example?.output || ext.bazaar.output.example.output;
+    expect(exOut.ticker).toBe('AAPL');
+    expect(exOut.filingType).toBe('10-K');
+    expect(exOut.companyName).toBe('Apple Inc.');
+    expect(exOut.revenue).toBe('$416.16B');
+    expect(exOut.netIncome).toBe('$112.01B');
+    expect(exOut.accession).toBe('0000320193-25-000079');
+    expect(exOut.period).toBe('2025-09-27');
+    expect(exOut.filingUrl).toContain('000032019325000079');
+    expect(exOut.dataNote).toBe('Financials from SEC XBRL. Filing text analysis not included.');
+  });
+
+  it('Requirement Honesty 4: x402 payment with forced SEC failure verifies only and does NOT settle', async () => {
+    const originalFetch = global.fetch;
+    global.fetch = vi.fn().mockRejectedValue(new Error('SEC Network unreachable'));
+
+    const settleSpy = vi.fn().mockResolvedValue({
+      success: true,
+      payer: '0xPayerWalletHonesty4',
+      txHash: '0x_should_not_be_called'
+    });
+
+    setFacilitatorVerifyHandler(async () => ({ isValid: true, payer: '0xPayerWalletHonesty4' }));
+    setFacilitatorSettleHandler(settleSpy);
+
+    const paymentHeader = Buffer.from(
+      JSON.stringify({
+        x402Version: 2,
+        authorization: {
+          from: '0xPayerWalletHonesty4',
+          to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708',
+          value: '250000',
+          nonce: '0x_nonce_honesty_4'
+        }
+      })
+    ).toString('base64');
+
+    try {
+      const res = await request(app)
+        .post('/api/v1/sec/job')
+        .set('PAYMENT-SIGNATURE', paymentHeader)
+        .send({
+          ticker: 'AAPL',
+          filingType: '10-K'
+        });
+
+      expect(res.status).toBe(503);
+      expect(res.body).toEqual({
+        error: 'sec_unavailable',
+        retryable: true
+      });
+
+      // Verify only, settle was NOT called!
+      expect(settleSpy).not.toHaveBeenCalled();
+      expect(res.headers['payment-response']).toBeUndefined();
     } finally {
       global.fetch = originalFetch;
     }

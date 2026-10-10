@@ -829,7 +829,8 @@ export { TICKER_TO_CIK, resolveTickerCik };
 export async function fetchLiveSecFiling(
   ticker: string,
   filingType: SecFilingType,
-  question?: string
+  question?: string,
+  timeoutMs: number = 4000
 ): Promise<SecFilingAnalysisOutput | null> {
   const normTicker = ticker.toUpperCase().trim();
   const cik = await resolveTickerCik(normTicker);
@@ -838,7 +839,7 @@ export async function fetchLiveSecFiling(
   try {
     const subRes = await fetch(`https://data.sec.gov/submissions/CIK${cik.padStart(10, '0')}.json`, {
       headers: { 'User-Agent': 'StockBloc-SEC-Analyst/1.0 (contact@stockbloc.ai)' },
-      signal: AbortSignal.timeout(4000)
+      signal: AbortSignal.timeout(timeoutMs)
     });
 
     if (!subRes.ok) return null;
@@ -925,7 +926,7 @@ export async function fetchLiveSecFiling(
       try {
         const factsRes = await fetch(`https://data.sec.gov/api/xbrl/companyfacts/CIK${cik.padStart(10, '0')}.json`, {
           headers: { 'User-Agent': 'StockBloc-SEC-Analyst/1.0 (contact@stockbloc.ai)' },
-          signal: AbortSignal.timeout(3000)
+          signal: AbortSignal.timeout(timeoutMs)
         });
         if (factsRes.ok) {
           const factsData: any = await factsRes.json();
@@ -1007,25 +1008,17 @@ export async function fetchLiveSecFiling(
       isLiveSecData: true,
       dataTier: 'LIVE_SEC_EDGAR',
       executiveSummary,
+      accession: accessionNumber,
+      accessionNumber,
+      period: reportDate,
+      revenue: revenueHighlights?.totalRevenue || null,
+      netIncome: earningsHighlights?.netIncome || null,
+      filingUrl,
+      dataNote: 'Financials from SEC XBRL. Filing text analysis not included.',
       ...(revenueHighlights ? { revenueHighlights } : {}),
       ...(earningsHighlights ? { earningsHighlights } : {}),
       ...(balanceSheetHighlights ? { balanceSheetHighlights } : {}),
       ...(cashFlowHighlights ? { cashFlowHighlights } : {}),
-      guidance: {
-        outlookSummary: 'Management forward guidance section in official SEC EDGAR filing.'
-      },
-      risks: [
-        'Item 1A Risk Factors disclosed in live SEC EDGAR submission.',
-        'Market, credit, and operational risk exposure details filed under SEC rules.'
-      ],
-      materialEvents: [
-        `Form ${filingType} successfully ingested and verified from U.S. SEC EDGAR system on ${filingDate}.`,
-        `Accession Number ${accessionNumber} registered in EDGAR repository.`
-      ],
-      managementCommentary: `Management commentary and operating discussion from Form ${filingType} filed by ${companyName}.`,
-      notableChanges: [
-        `Accession ${accessionNumber} parsed and indexed in Stock Bloc SEC intelligence registry.`
-      ],
       sourceReferences,
       confidence
     } as any;
@@ -1311,6 +1304,7 @@ export async function executeSecAnalystJob(params: {
   idempotencyKey?: string;
   creditsAlreadyDebited?: boolean;
   paymentRail?: string;
+  resolvedOutput?: any;
 }): Promise<{
   success: boolean;
   jobId: string;
@@ -1392,7 +1386,7 @@ export async function executeSecAnalystJob(params: {
 
   const runExecution = async () => {
     // 5. Perform filing retrieval & analysis (dynamic live retrieval prioritized)
-    const output = await analyzeSecFilingAsync(input);
+    const output = params.resolvedOutput || await analyzeSecFilingAsync(input);
 
     // 6. Mark job delivered and verified
     const deliveredAt = new Date().toISOString();
@@ -1400,7 +1394,7 @@ export async function executeSecAnalystJob(params: {
 
     const deliveryRecord = {
       deliveredAt,
-      summary: output.executiveSummary,
+      summary: (output as any).executiveSummary || `Form ${input.filingType} filing analysis for ${input.ticker}`,
       payload: output,
       latencyMs
     };
@@ -1409,10 +1403,10 @@ export async function executeSecAnalystJob(params: {
       verifiedAt: deliveredAt,
       verifier: 'system' as const,
       passed: true,
-      verificationScore: output.isLiveSecData ? 100 : 99,
-      notes: output.isLiveSecData
-        ? 'Automated verification passed: All 12 SEC intelligence fields verified against live U.S. SEC EDGAR submission.'
-        : 'Automated verification passed: All 12 SEC intelligence fields present and cited from grounded test fixture.'
+      verificationScore: output.isLiveSecData !== false ? 100 : 99,
+      notes: output.isLiveSecData !== false
+        ? 'Automated verification passed: SEC intelligence fields verified against live U.S. SEC EDGAR submission.'
+        : 'Automated verification passed: SEC intelligence fields present and cited from grounded test fixture.'
     };
 
     // 7. Atomic Double-Entry Settlement via PlatformCreditsProvider or Credited from Gateway
@@ -1626,7 +1620,7 @@ export async function executeSecAnalystJob(params: {
         status: 'VERIFIED',
         delivery: deliveryRecord,
         verification: verificationRecord,
-        evidenceSources: output.sourceReferences,
+        evidenceSources: output.sourceReferences || [],
         completedAt: deliveredAt
       }, { merge: true });
 
@@ -1922,7 +1916,7 @@ secAnalystRouter.get(['/service', '/info', '/analyst', '/analyst/info'], (_req: 
 // Strictly protected by canonical agent authentication and required scopes
 secAnalystRouter.post(
   ['/job', '/analyst', '/analyst/job'],
-  requireX402Payment(PRICED_ENDPOINTS.sec_job),
+  requireX402Payment(PRICED_ENDPOINTS.sec_job, { deferSettlement: true }),
   authenticateAgent,
   requireScope('payments:transact'),
   requireScope('jobs:execute'),
@@ -1983,19 +1977,111 @@ secAnalystRouter.post(
         (req.headers['x-idempotency-key'] as string)
       );
 
+      const normTicker = String(ticker).toUpperCase().trim();
+      const canonicalIdempotencyKey = idempotencyKey || `settle_sec_${jobId}_${SEC_ANALYST_SERVICE_PRICE_CREDITS}`;
+      const isIdempotentReplay = Boolean(
+        (idempotencyKey && inMemorySettlementRegistry.has(idempotencyKey)) ||
+        (canonicalIdempotencyKey && inMemorySettlementRegistry.has(canonicalIdempotencyKey)) ||
+        (idempotencyKey && inMemorySecIdempotencyMap.has(idempotencyKey)) ||
+        (jobId && inMemorySettlementRegistry.has(jobId)) ||
+        (jobId && inMemorySecJobRegistry.has(jobId))
+      );
+
+      if (isIdempotentReplay) {
+        const result = await executeSecAnalystJob({
+          jobId,
+          input: {
+            ticker: normTicker,
+            filingType: normalizedFilingType,
+            question: question ? String(question).trim() : undefined
+          },
+          requesterAgentId: authenticatedBuyerId,
+          requesterHandle: authenticatedHandle,
+          idempotencyKey,
+          creditsAlreadyDebited: Boolean((req as any).creditsDebited || (req as any).x402Payment),
+          paymentRail: (req as any).x402Payment ? 'X402_BASE_USDC' : 'PLATFORM_CREDITS'
+        });
+        return res.status(200).json(result);
+      }
+
+      // Requirement 1: Paid job must NEVER return generateDynamicSecIntelligence / DEMO_FIXTURE_DATA.
+      // If fetchLiveSecFiling fails or times out, retry once with an 8s timeout; if it still fails,
+      // return HTTP 503 {"error":"sec_unavailable","retryable":true} and do NOT settle payment.
+      let liveFiling: any = null;
+      try {
+        liveFiling = await fetchLiveSecFiling(
+          normTicker,
+          normalizedFilingType,
+          question ? String(question).trim() : undefined,
+          4000
+        );
+      } catch {
+        liveFiling = null;
+      }
+
+      if (!liveFiling) {
+        try {
+          liveFiling = await fetchLiveSecFiling(
+            normTicker,
+            normalizedFilingType,
+            question ? String(question).trim() : undefined,
+            8000
+          );
+        } catch {
+          liveFiling = null;
+        }
+      }
+
+      if (!liveFiling || !liveFiling.isLiveSecData || liveFiling.dataSource === 'DEMO_FIXTURE_DATA') {
+        return res.status(503).json({
+          error: 'sec_unavailable',
+          retryable: true
+        });
+      }
+
+      // Settle x402 payment only AFTER real data is ready
+      if ((req as any).x402Payment && !(req as any).x402Payment.settled) {
+        try {
+          if (typeof (req as any).x402Payment.settle === 'function') {
+            await (req as any).x402Payment.settle();
+          }
+        } catch (settleErr: any) {
+          return res.status(402).json({
+            status: 'payment_settlement_failed',
+            code: 402,
+            error: 'x402 payment settlement failed through Coinbase CDP facilitator.',
+            reason: settleErr?.message || 'On-chain settlement transaction could not be executed.'
+          });
+        }
+      }
+
+      // Requirement 2: Clean output backed only by real SEC data + dataNote
+      const cleanPaidOutput = {
+        ticker: normTicker,
+        filingType: normalizedFilingType,
+        companyName: liveFiling.companyName,
+        filingDate: liveFiling.filingDate,
+        accession: liveFiling.accession || liveFiling.accessionNumber,
+        period: liveFiling.period,
+        revenue: liveFiling.revenue || liveFiling.revenueHighlights?.totalRevenue || null,
+        netIncome: liveFiling.netIncome || liveFiling.earningsHighlights?.netIncome || null,
+        filingUrl: liveFiling.filingUrl,
+        dataNote: 'Financials from SEC XBRL. Filing text analysis not included.'
+      };
+
       const result = await executeSecAnalystJob({
         jobId,
         input: {
-          ticker: String(ticker).toUpperCase().trim(),
+          ticker: normTicker,
           filingType: normalizedFilingType,
-          question: question ? String(question).trim() : undefined,
-          forceFixture: Boolean(forceFixture)
+          question: question ? String(question).trim() : undefined
         },
         requesterAgentId: authenticatedBuyerId,
         requesterHandle: authenticatedHandle,
         idempotencyKey,
-        creditsAlreadyDebited: Boolean((req as any).creditsDebited || (req as any).x402Payment),
-        paymentRail: (req as any).x402Payment ? 'X402_BASE_USDC' : 'PLATFORM_CREDITS'
+        creditsAlreadyDebited: Boolean((req as any).creditsDebited || (req as any).x402Payment?.settled),
+        paymentRail: (req as any).x402Payment ? 'X402_BASE_USDC' : 'PLATFORM_CREDITS',
+        resolvedOutput: cleanPaidOutput
       });
 
       return res.status(200).json(result);

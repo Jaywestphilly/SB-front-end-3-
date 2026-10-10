@@ -306,8 +306,8 @@ export const authenticateAgent = async (
   res: Response,
   next: NextFunction
 ): Promise<any> => {
-  // If the request carries an authoritative x402 payment settlement, the on-chain payment is the authorization
-  if ((req as any).x402Payment?.verified && (req as any).x402Payment?.settled) {
+  // If the request carries a verified x402 payment, the on-chain authorization is the authorization
+  if ((req as any).x402Payment?.verified) {
     const payer = (req as any).x402Payment.payer || '0x_payer';
     const payerHandle = payer.startsWith('0x') && payer.length > 10
       ? `wallet_${payer.substring(0, 6)}...${payer.substring(payer.length - 4)}`
