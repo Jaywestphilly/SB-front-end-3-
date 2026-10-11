@@ -136,30 +136,41 @@ Object.values(PRICED_ENDPOINTS).forEach((ep) => {
 
 const declareDiscovery = declareDiscoveryExtension as (config: any) => { bazaar: any };
 
+export function fillDiscoveryFields(original: any, advertised: { resource: any; extensions?: any }): any {
+  if (!original || typeof original !== 'object') return original;
+  if (original.x402Version !== 2 || !advertised?.extensions?.bazaar) {
+    return { ...original };
+  }
+
+  const result = { ...original };
+
+  if (!result.resource || typeof result.resource !== 'object') {
+    result.resource = structuredClone(advertised.resource);
+  }
+
+  if (!result.extensions || typeof result.extensions !== 'object') {
+    result.extensions = { bazaar: structuredClone(advertised.extensions.bazaar) };
+  } else if (!result.extensions.bazaar) {
+    result.extensions = {
+      ...result.extensions,
+      bazaar: structuredClone(advertised.extensions.bazaar)
+    };
+  }
+
+  return result;
+}
+
 export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
   earnings_pack: declareDiscovery({
     method: 'GET',
-    input: { ticker: 'NVDA' },
-    output: {
-      example: {
-        ticker: 'NVDA',
-        asOf: '2026-09-29T00:00:00.000Z',
-        thirteenF: {
-          quarterCycle: 'Q1/Q2 2026 SEC Form 13F Filings',
-          consensus: { fundCount: 6, totalValueUsd: 2240000000 }
-        },
-        filingAudit: {
-          accessionNumber: '0001045810-26-000075',
-          filingType: '10-Q',
-          companyName: 'NVIDIA CORP',
-          managementTone: 'BULLISH',
-          executiveSummary: 'Form 10-Q filed with SEC EDGAR. Datacenter revenue accelerated.'
-        },
-        memo: {
-          title: 'Earnings Prep & Institutional Positioning: NVDA',
-          thesis: 'NVDA displays high fundCount with BULLISH management tone.'
-        }
-      }
+    input: { ticker: 'AAPL' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ticker: { type: 'string', description: 'US ticker' }
+      },
+      required: ['ticker'],
+      additionalProperties: false
     }
   }),
 
@@ -189,17 +200,14 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
 
   sb_score: declareDiscovery({
     method: 'GET',
-    input: { ticker: 'NVDA' },
-    output: {
-      example: {
-        status: 'success',
-        ticker: 'NVDA',
-        price: 138.25,
-        sbScore: 88,
-        signalLabel: 'STRONG BUY',
-        confidence: 'HIGH',
-        factorBreakdown: { momentum: 24, trend: 24, relativeStrength: 18, volume: 12, volatility: 10 }
-      }
+    input: { ticker: 'AAPL' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ticker: { type: 'string', description: 'US ticker' }
+      },
+      required: ['ticker'],
+      additionalProperties: false
     }
   }),
 
@@ -950,6 +958,8 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint, options?: 
         typeof paymentHeader === 'string' ? paymentHeader : undefined
       );
 
+      const settlePayload = fillDiscoveryFields(paymentPayload, reqs.paymentRequiredPayload);
+
       const safeAttemptPayer = paymentPayload?.payer || (req as any).agent?.agentId;
       try {
         recordMachineCommerceEvent({
@@ -1052,7 +1062,7 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint, options?: 
         // Step A: Verify payment through facilitator
         let verifyResult: any;
         try {
-          verifyResult = await facilitatorClient.verify(paymentPayload, paymentRequirement as any);
+          verifyResult = await facilitatorClient.verify(settlePayload, paymentRequirement as any);
         } catch (verifyErr: any) {
           // If verify throws due to execution reverted / used nonce, check if already settled
           const postCheck = getX402Settlement(keys.payloadHash, keys.nonceKey);
@@ -1156,7 +1166,7 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint, options?: 
         const executeSettlement = async () => {
           let settleResult: any;
           const settleExecutionPromise = (async () => {
-            return await facilitatorClient.settle(paymentPayload, paymentRequirement as any);
+            return await facilitatorClient.settle(settlePayload, paymentRequirement as any);
           })();
 
           inFlightX402SettlementRegistry.set(keys.payloadHash, settleExecutionPromise as any);
