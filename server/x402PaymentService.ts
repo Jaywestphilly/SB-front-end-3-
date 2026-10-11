@@ -165,15 +165,23 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
 
   market_data: declareDiscovery({
     method: 'GET',
-    input: { bloc: 'super_sonic_tsunami' },
+    input: { symbol: 'AAPL' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        symbol: { type: 'string', description: 'US ticker. Optional; omit for the full market watchlist.' },
+        format: { type: 'string', enum: ['json', 'csv'], description: 'Optional. Defaults to json.' }
+      },
+      additionalProperties: false
+    },
     output: {
       example: {
         status: 'success',
         feed: 'market',
-        updated_at: '2026-09-29T00:00:00.000Z',
-        total_assets: 20,
+        updated_at: '2026-10-10T21:29:30.983Z',
+        total_assets: 1,
         watchlist: [
-          { symbol: 'NVDA', price: 138.25, changePercent: 2.45, sbScore: 88, action: 'ACCUMULATE' }
+          { symbol: 'AAPL', name: 'Apple Inc.', price: 336.64, change: 2.95, percent_change: 0.88, high52: 345.34, low52: 243.42, bloc: 'market' }
         ]
       }
     }
@@ -198,13 +206,18 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
   sec_13f_intel: declareDiscovery({
     method: 'GET',
     input: {},
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     output: {
       example: {
         status: 'success',
         source: 'SEC EDGAR Form 13F-HR information tables',
-        parsedFunds: 0,
+        dataNote: "Positions as of each fund's latest 13F-HR period end; not real-time.",
+        parsedFunds: 13,
         totalFundsTracked: 13,
-        consensusHoldings: []
+        consensusHoldings: [
+          { symbol: 'AMZN', name: 'AMAZON COM INC', cusip: '023135106', fundCount: 10, totalValueUsd: 11799348566 },
+          { symbol: null, name: 'ALPHABET INC', cusip: '02079K305', fundCount: 6, totalValueUsd: 32140052117 }
+        ]
       }
     }
   }),
@@ -212,12 +225,27 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
   sec_job: declareDiscovery({
     method: 'POST',
     bodyType: 'json',
-    input: { ticker: 'AAPL', filingType: '10-K', mode: 'standard' },
+    input: { ticker: 'AAPL', filingType: '10-K', mode: 'diff' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ticker: { type: 'string', description: 'US ticker, e.g. AAPL' },
+        filingType: { type: 'string', enum: ['10-K', '10-Q', '8-K'] },
+        mode: {
+          type: 'string',
+          enum: ['standard', 'diff'],
+          default: 'standard',
+          description: 'diff compares the latest 10-K/10-Q with the prior comparable filing (10-K and 10-Q only)'
+        }
+      },
+      required: ['ticker', 'filingType'],
+      additionalProperties: false
+    },
     output: {
       example: {
         success: true,
-        jobId: 'job_sec_1790616000000_a1b2',
         output: {
+          mode: 'diff',
           ticker: 'AAPL',
           filingType: '10-K',
           companyName: 'Apple Inc.',
@@ -226,7 +254,30 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
           revenue: '$416.16B',
           netIncome: '$112.01B',
           filingUrl: 'https://www.sec.gov/ix?doc=/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm',
-          dataNote: 'Financials from SEC XBRL. Filing text analysis not included.'
+          dataNote: 'Financials from SEC XBRL. Filing text analysis not included.',
+          comparisonBasis: 'annual',
+          currentFiling: {
+            accession: '0000320193-25-000079',
+            periodEnd: '2025-09-27',
+            form: '10-K',
+            filedDate: '2025-10-31'
+          },
+          priorFiling: {
+            accession: '0000320193-24-000123',
+            periodEnd: '2024-09-28',
+            form: '10-K',
+            filedDate: '2024-11-01'
+          },
+          financialChanges: [
+            { metric: 'Revenue', prior: 391035000000, current: 416161000000, changePct: 6.4, unit: 'USD', xbrlTag: 'RevenueFromContractWithCustomerExcludingAssessedTax' },
+            { metric: 'Net income', prior: 93736000000, current: 112010000000, changePct: 19.5, unit: 'USD', xbrlTag: 'NetIncomeLoss' }
+          ],
+          riskFactorChanges: { addedTotal: 13, removedTotal: 22, changedTotal: 20 },
+          summary: [
+            'Net income changed +19.5% (from $93.74B to $112.01B)',
+            'Risk factors: 13 added, 22 removed, 20 modified (showing up to 10)'
+          ],
+          sources: ['https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json']
         }
       }
     }
