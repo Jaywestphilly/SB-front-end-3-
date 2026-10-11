@@ -8,12 +8,15 @@ export interface RealQuoteResult {
   changePercent: number;
   high52?: number;
   low52?: number;
-  volume: string;
+  volume: number | string;
+  dollarVolume?: string;
   lastUpdated: string;
   isRealTime: boolean;
+  priceLabel?: string;
   isStale?: boolean;
   staleReason?: string;
   refreshSchedule: string;
+  marketState?: string;
   dataAgeHours?: number;
 }
 
@@ -26,13 +29,76 @@ const quoteCache = new Map<string, CachedQuoteEntry>();
 const QUOTE_CACHE_DURATION_MS = 30 * 1000; // 30 seconds
 
 /**
+ * Checks whether US stock markets are currently open (9:30 AM - 4:00 PM Eastern Time, Mon-Fri, excluding holidays).
+ */
+export function isUSMarketOpen(date: Date = new Date()): boolean {
+  try {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/New_York',
+      weekday: 'short',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+
+    const parts = formatter.formatToParts(date);
+    const getPart = (type: string) => parts.find(p => p.type === type)?.value || '';
+
+    const weekday = getPart('weekday');
+    if (weekday === 'Sat' || weekday === 'Sun') {
+      return false;
+    }
+
+    const month = parseInt(getPart('month'), 10);
+    const day = parseInt(getPart('day'), 10);
+    const year = parseInt(getPart('year'), 10);
+    const hour = parseInt(getPart('hour'), 10);
+    const minute = parseInt(getPart('minute'), 10);
+
+    const mmdd = `${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const yyyymmdd = `${year}-${mmdd}`;
+
+    // Standard fixed US market holidays
+    const fixedHolidays = new Set([
+      '01-01', // New Year's Day
+      '06-19', // Juneteenth
+      '07-04', // Independence Day
+      '12-25'  // Christmas
+    ]);
+    if (fixedHolidays.has(mmdd)) {
+      return false;
+    }
+
+    // Common floating market holidays
+    const floatingHolidays = new Set([
+      // 2025
+      '2025-01-20', '2025-02-17', '2025-04-18', '2025-05-26', '2025-09-01', '2025-11-27',
+      // 2026
+      '2026-01-19', '2026-02-16', '2026-04-03', '2026-05-25', '2026-09-07', '2026-11-26',
+      // 2027
+      '2027-01-18', '2027-02-15', '2027-03-26', '2027-05-31', '2027-09-06', '2027-11-25'
+    ]);
+    if (floatingHolidays.has(yyyymmdd)) {
+      return false;
+    }
+
+    // Trading hours: 9:30 AM (570 mins) to 4:00 PM (960 mins)
+    const totalMinutes = hour * 60 + minute;
+    if (totalMinutes < 570 || totalMinutes >= 960) {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Normalizes ticker symbols for upstream Yahoo Finance lookup.
- * Supports:
- * - US equities: NVDA, AAPL, MSFT, TSLA, VST, ASTS, etc.
- * - Hong Kong: 0700.HK, 9988.HK, etc.
- * - India NSE: RELIANCE.NS, TCS.NS, INFY.NS, etc.
- * - India BSE: RELIANCE.BO, 500325.BO, etc.
- * - Crypto: BTC, ETH, SOL, DOGE, DOT -> mapped to *-USD
  */
 export function normalizeYahooSymbol(symbol: string): string {
   const symUpper = symbol.toUpperCase().trim();
@@ -53,14 +119,11 @@ export function isValidSymbolFormat(symbol: string): boolean {
   if (!symbol || typeof symbol !== 'string') return false;
   const s = symbol.trim();
   if (s.length === 0 || s.length > 20) return false;
-  // Allow alphanumeric characters, dots, dashes, and underscores (e.g. 0700.HK, RELIANCE.NS, BRK.B, BTC-USD)
   return /^[A-Z0-9.\-_]+$/i.test(s);
 }
 
 /**
  * Fetches real stock quote directly from Yahoo Finance API.
- * Uses strict timeouts (3500ms max per attempt) with AbortController so connections never hang.
- * Returns null if symbol is not found (404/empty) or upstream fails. Never returns synthetic data.
  */
 export async function fetchYahooQuote(symbol: string, timeoutMs = 3500): Promise<RealQuoteResult | null> {
   const symUpper = symbol.toUpperCase().trim();
@@ -92,10 +155,30 @@ export async function fetchYahooQuote(symbol: string, timeoutMs = 3500): Promise
           const prevClose = meta.chartPreviousClose || meta.previousClose || price;
           const change = Number((price - prevClose).toFixed(2));
           const changePercent = prevClose > 0 ? Number(((change / prevClose) * 100).toFixed(2)) : 0;
-          const vol = meta.regularMarketVolume;
-          const volumeFormatted = vol 
-            ? (vol > 1e9 ? `$${(vol/1e9).toFixed(1)}B` : vol > 1e6 ? `$${(vol/1e6).toFixed(1)}M` : `${vol}`)
+          const shareVol = typeof meta.regularMarketVolume === 'number' ? meta.regularMarketVolume : 0;
+          
+          const dollarVol = shareVol * price;
+          const dollarVolumeFormatted = dollarVol > 0
+            ? (dollarVol >= 1e9 ? `$${(dollarVol/1e9).toFixed(1)}B` : dollarVol >= 1e6 ? `$${(dollarVol/1e6).toFixed(1)}M` : `$${Math.round(dollarVol).toLocaleString()}`)
             : 'N/A';
+
+          const open = isUSMarketOpen();
+          const yahooState = meta.marketState ? String(meta.marketState).toUpperCase() : '';
+          const isAfterHours = yahooState === 'POST' || yahooState === 'POSTPOST' || yahooState === 'PRE' || yahooState === 'PREPRE';
+
+          let priceLabel = 'Last Close';
+          let refreshSchedule = 'Market Closed - Last Close';
+
+          if (open) {
+            priceLabel = 'Real-Time Live';
+            refreshSchedule = 'Real-Time Live Streaming';
+          } else if (isAfterHours) {
+            priceLabel = 'After-Hours';
+            refreshSchedule = 'After-Hours Close';
+          } else {
+            priceLabel = 'Last Close';
+            refreshSchedule = 'Market Closed - Last Close';
+          }
 
           return {
             symbol: symUpper,
@@ -105,10 +188,13 @@ export async function fetchYahooQuote(symbol: string, timeoutMs = 3500): Promise
             changePercent,
             high52: meta.fiftyTwoWeekHigh ? Number(meta.fiftyTwoWeekHigh.toFixed(2)) : undefined,
             low52: meta.fiftyTwoWeekLow ? Number(meta.fiftyTwoWeekLow.toFixed(2)) : undefined,
-            volume: volumeFormatted,
+            volume: shareVol,
+            dollarVolume: dollarVolumeFormatted,
             lastUpdated: new Date().toISOString(),
-            isRealTime: true,
-            refreshSchedule: "Real-Time Live Streaming"
+            isRealTime: open,
+            priceLabel,
+            marketState: meta.marketState,
+            refreshSchedule
           };
         }
       }
@@ -122,7 +208,6 @@ export async function fetchYahooQuote(symbol: string, timeoutMs = 3500): Promise
 
 /**
  * Fetches real stock quote with caching and verified watchlist lookup failover.
- * NEVER returns synthetic or fabricated data.
  */
 export async function fetchRealStockQuote(symbol: string, forceRefresh = false, timeoutMs = 3500): Promise<RealQuoteResult | null> {
   const symUpper = symbol.toUpperCase().trim();
@@ -131,17 +216,22 @@ export async function fetchRealStockQuote(symbol: string, forceRefresh = false, 
   // 1. Check 30-second in-memory cache
   const cached = quoteCache.get(symUpper);
   if (!forceRefresh && cached && (now - cached.cachedAt < QUOTE_CACHE_DURATION_MS)) {
+    const open = isUSMarketOpen();
     return {
       ...cached.quote,
+      isRealTime: open ? cached.quote.isRealTime : false,
       dataAgeHours: Number(((now - cached.cachedAt) / 3600000).toFixed(2)),
-      refreshSchedule: "Real-Time Live Streaming"
+      priceLabel: open ? (cached.quote.priceLabel || 'Real-Time Live') : 'Last Close',
+      refreshSchedule: open
+        ? "Real-Time Live Streaming"
+        : (cached.quote.priceLabel === 'After-Hours' ? "After-Hours Close" : "Market Closed - Last Close")
     };
   }
 
   // 2. Upstream Yahoo Finance real lookup
   let resultQuote = await fetchYahooQuote(symUpper, timeoutMs);
 
-  // 3. Failover: Check persisted verified Super Sonic Tsunami dataset (for pre-computed snapshots)
+  // 3. Failover: Check persisted verified Super Sonic Tsunami dataset
   if (!resultQuote) {
     try {
       const persisted = MarketDataService.loadPersistedData();
@@ -150,6 +240,12 @@ export async function fetchRealStockQuote(symbol: string, forceRefresh = false, 
         (symUpper === 'SPACEX' && s.symbol.toUpperCase() === 'SPCX')
       );
       if (found && typeof found.price === 'number' && found.price > 0) {
+        const shareVol = typeof found.volume === 'number' ? found.volume : (parseFloat(String(found.volume || '0')) || 0);
+        const dollarVol = shareVol * found.price;
+        const dollarVolumeFormatted = dollarVol > 0
+          ? (dollarVol >= 1e9 ? `$${(dollarVol/1e9).toFixed(1)}B` : dollarVol >= 1e6 ? `$${(dollarVol/1e6).toFixed(1)}M` : `$${Math.round(dollarVol).toLocaleString()}`)
+          : 'N/A';
+
         resultQuote = {
           symbol: symUpper,
           name: found.name || symUpper,
@@ -158,11 +254,13 @@ export async function fetchRealStockQuote(symbol: string, forceRefresh = false, 
           changePercent: found.percent_change || 0,
           high52: found.high52,
           low52: found.low52,
-          volume: found.volume ? String(found.volume) : "N/A",
+          volume: shareVol,
+          dollarVolume: dollarVolumeFormatted,
           lastUpdated: found.last_updated || persisted?.updated_at || new Date().toISOString(),
           isRealTime: false,
           isStale: true,
           staleReason: "Live feed unavailable. Displaying last verified dataset snapshot.",
+          priceLabel: "Last Close",
           refreshSchedule: "Verified Snapshot Cache"
         };
       }

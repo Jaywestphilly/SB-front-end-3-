@@ -10,7 +10,9 @@ import {
   recordMachineCommerceEvent,
   getTransactionFunnelMetrics,
   getMachineRevenueMetrics,
-  getRecentCommerceEvents
+  getRecentCommerceEvents,
+  isSelfWallet,
+  KNOWN_SELF_WALLETS
 } from './agentTelemetry.js';
 
 describe('Zero-Knowledge 24-Hour Agent Telemetry Counter (Honest Metrics)', () => {
@@ -426,5 +428,26 @@ describe('Transaction Funnel Telemetry & Conversion Engine (Blocker 3)', () => {
     const serialized = JSON.stringify(events);
     expect(serialized).not.toContain('privateKey');
     expect(serialized).not.toContain('secret');
+  });
+
+  it('7. Recognizes 0x1985EA6E9c68E1C272d8209f3B478AC2Fdb25c87 as self/test wallet case-insensitively', () => {
+    const testWalletMixed = '0x1985EA6E9c68E1C272d8209f3B478AC2Fdb25c87';
+    const testWalletLower = '0x1985ea6e9c68e1c272d8209f3b478ac2fdb25c87';
+
+    expect(isSelfWallet(testWalletMixed)).toBe(true);
+    expect(isSelfWallet(testWalletLower)).toBe(true);
+    expect(KNOWN_SELF_WALLETS.has(testWalletLower)).toBe(true);
+
+    // Record commerce event from test wallet and verify it is not counted as external agent
+    recordMachineCommerceEvent({
+      eventType: 'payment_success',
+      payer: testWalletMixed,
+      amountUsd: 10.0,
+      endpoint: 'sec_job'
+    });
+
+    const metrics = getMachineRevenueMetrics();
+    expect(metrics.externalAgentsCount).toBe(0);
+    expect(metrics.revenueBySource['self']).toBe(10.0);
   });
 });
