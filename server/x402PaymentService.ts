@@ -256,12 +256,6 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
           mode: 'diff',
           ticker: 'AAPL',
           filingType: '10-K',
-          companyName: 'Apple Inc.',
-          accession: '0000320193-25-000079',
-          period: '2025-09-27',
-          revenue: '$416.16B',
-          netIncome: '$112.01B',
-          filingUrl: 'https://www.sec.gov/ix?doc=/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm',
           dataNote: 'Financials from SEC XBRL. Filing text analysis not included.',
           comparisonBasis: 'annual',
           currentFiling: {
