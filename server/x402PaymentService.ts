@@ -256,7 +256,7 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
           mode: 'diff',
           ticker: 'AAPL',
           filingType: '10-K',
-          dataNote: 'Financials from SEC XBRL. Filing text analysis not included.',
+          dataNote: 'Financials from SEC XBRL companyfacts. Total debt = LongTermDebt and excludes commercial paper. Risk lists capped at 10; risk matching is heuristic.',
           comparisonBasis: 'annual',
           currentFiling: {
             accession: '0000320193-25-000079',
