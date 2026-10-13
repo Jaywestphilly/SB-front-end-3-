@@ -596,3 +596,23 @@ export async function validatePricedRequestInput(
 
   return { valid: true };
 }
+
+/**
+ * Validates the optional 'limit' query parameter for SEC 13F intelligence (GET /api/data/sec, /api/v1/data/sec).
+ * Valid limits are integers between 1 and 50 inclusive.
+ * Rejects bad values with 400 (to be evaluated AFTER payment verification).
+ */
+export function validateSecLimit(limitParam: any): { valid: boolean; limit?: number; error?: string } {
+  if (limitParam === undefined || limitParam === null || limitParam === '') {
+    return { valid: true };
+  }
+  const str = String(limitParam).trim();
+  if (!/^-?\d+$/.test(str)) {
+    return { valid: false, error: 'Query parameter "limit" must be an integer between 1 and 50.' };
+  }
+  const parsed = parseInt(str, 10);
+  if (parsed < 1 || parsed > 50) {
+    return { valid: false, error: 'Query parameter "limit" must be an integer between 1 and 50.' };
+  }
+  return { valid: true, limit: parsed };
+}

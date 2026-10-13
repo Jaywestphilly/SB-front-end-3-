@@ -45,7 +45,8 @@
     },
     "/api/data/market": {
       "get": {
-        "summary": "Real-Time Market Data Feed (x402: $0.01 USDC)",
+        "deprecated": true,
+        "summary": "Deprecated alias of /api/v1/market/quote. Real-Time Market Data Feed (x402: $0.01 USDC)",
         "description": "Verified real-time stock prices, 24h percentage changes, volume, and Super Sonic Tsunami watchlist metrics. Supports single symbol lookups (?symbol=...) across US (NYSE, NASDAQ), Hong Kong (.HK), and India (NSE .NS, BSE .BO). Unsupported symbols return 404. Settled via x402 USDC micropayment ($0.01 USDC).",
         "operationId": "getMarketData",
         "parameters": [
@@ -273,9 +274,13 @@
     },
     "/api/data/sec": {
       "get": {
-        "summary": "SEC 13F Institutional Accumulation & Filing Intel (x402: $0.10 USDC)",
+        "deprecated": true,
+        "summary": "Deprecated alias of /api/v1/data/sec. SEC 13F Institutional Accumulation & Filing Intel (x402: $0.10 USDC)",
         "description": "Institutional 13F whale filings, hedge fund shifts, and audited EDGAR risk intelligence. Settled via x402 USDC micropayment ($0.10 USDC).",
         "operationId": "getSec13fIntel",
+        "parameters": [
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 50 } }
+        ],
         "x-payment-info": {
           "price": { "mode": "fixed", "currency": "USD", "amount": "0.100000" },
           "protocols": [{
@@ -328,6 +333,9 @@
         "summary": "SEC 13F Institutional Accumulation Alias (x402: $0.10 USDC)",
         "description": "Alias for /api/data/sec. Settled via x402 USDC micropayment ($0.10 USDC).",
         "operationId": "getSec13fIntelAlias",
+        "parameters": [
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 50 } }
+        ],
         "x-payment-info": {
           "price": { "mode": "fixed", "currency": "USD", "amount": "0.100000" },
           "protocols": [{
@@ -835,7 +843,8 @@
     },
     "/api/v1/agent/evaluate-strategy": {
       "post": {
-        "summary": "Evaluate Strategy Alias (x402: $0.10 USDC)",
+        "deprecated": true,
+        "summary": "Deprecated alias of /api/v1/agent/strategy/evaluate. Evaluate Strategy Alias (x402: $0.10 USDC)",
         "description": "Alias endpoint for strategy evaluation. Settled via x402 USDC micropayment ($0.10 USDC).",
         "operationId": "evaluateStrategyAlias",
         "requestBody": {

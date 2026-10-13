@@ -23,6 +23,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { validateProductionStartupSafety, authenticateAgent, getSystemReadinessStatus, ensurePersistentAgentSecret } from './server/agentSecurity.js';
 import { agentTelemetryRouter, trackAgentVisitMiddleware } from './server/agentTelemetry.js';
 import { requireX402Payment, PRICED_ENDPOINTS, getX402RecipientAddress, X402_ROUTE_PATHS } from './server/x402PaymentService.js';
+import { validateSecLimit } from './server/x402InputValidation.js';
 import { issueUiCookie } from './server/uiSession.js';
 import { fetchRealStockQuote, fetchYahooQuote } from './server/marketQuoteService.js';
 import { handleToolPageRequest } from './server/toolPagesSsr.js';
@@ -3661,9 +3662,34 @@ const secReadinessMiddleware = async (req: express.Request, res: express.Respons
 };
 
 app.get(['/api/data/sec', '/api/v1/data/sec'], secReadinessMiddleware, requireX402Payment(PRICED_ENDPOINTS.sec_13f_intel), async (req, res) => {
+  if (req.query.limit !== undefined) {
+    const limitResult = validateSecLimit(req.query.limit);
+    if (!limitResult.valid) {
+      return res.status(400).json({
+        status: 'error',
+        code: 'INVALID_INPUT',
+        error: limitResult.error || 'Invalid limit parameter. Must be an integer between 1 and 50.',
+        message: limitResult.error || 'Invalid limit parameter. Must be an integer between 1 and 50.'
+      });
+    }
+  }
+
   const data = res.locals.secFeed || await fetchAndProcessFeed('sec');
   res.setHeader('Cache-Control', 'public, max-age=180');
   res.setHeader('X-Data-As-Of', data.updated_at || 'unknown');
+
+  if (req.query.limit !== undefined) {
+    const limitResult = validateSecLimit(req.query.limit);
+    const limit = limitResult.limit!;
+    const consensusHoldings = Array.isArray(data.consensusHoldings)
+      ? data.consensusHoldings.slice(0, limit)
+      : [];
+    return res.json({
+      ...data,
+      consensusHoldings
+    });
+  }
+
   return res.json(data);
 });
 

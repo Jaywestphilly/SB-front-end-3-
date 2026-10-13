@@ -987,13 +987,14 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     const exOut = ext.bazaar.info?.output?.example?.output || ext.bazaar.output.example.output;
     expect(exOut.ticker).toBe('AAPL');
     expect(exOut.filingType).toBe('10-K');
-    expect(exOut.companyName).toBe('Apple Inc.');
-    expect(exOut.revenue).toBe('$416.16B');
-    expect(exOut.netIncome).toBe('$112.01B');
-    expect(exOut.accession).toBe('0000320193-25-000079');
-    expect(exOut.period).toBe('2025-09-27');
-    expect(exOut.filingUrl).toContain('000032019325000079');
-    expect(exOut.dataNote).toBe('Financials from SEC XBRL. Filing text analysis not included.');
+    expect(exOut.mode).toBe('diff');
+    expect(exOut.currentFiling.accession).toBe('0000320193-25-000079');
+    expect(exOut.currentFiling.periodEnd).toBe('2025-09-27');
+    expect(exOut.financialChanges).toBeDefined();
+    expect(exOut.riskFactorChanges).toBeDefined();
+    expect(exOut.summary).toBeDefined();
+    expect(exOut.sources).toBeDefined();
+    expect(exOut.dataNote).toBe('Financials from SEC XBRL companyfacts. Total debt = LongTermDebt and excludes commercial paper. Risk lists capped at 10; risk matching is heuristic.');
   });
 
   it('Requirement Honesty 4: x402 payment with forced SEC failure verifies only and does NOT settle', async () => {

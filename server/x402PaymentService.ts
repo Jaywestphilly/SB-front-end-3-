@@ -171,6 +171,47 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
       },
       required: ['ticker'],
       additionalProperties: false
+    },
+    output: {
+      example: {
+        ticker: 'string',
+        asOf: 'ISO 8601 string',
+        thirteenF: {
+          quarterCycle: 'string',
+          consensus: 'object or null',
+          institutionalHoldersCount: 'number',
+          totalInstitutionalValueMillions: 'number',
+          institutionalHolders: ['object']
+        },
+        filingAudit: {
+          accessionNumber: 'string',
+          filingType: 'string',
+          filingDate: 'string',
+          fiscalPeriod: 'string',
+          companyName: 'string',
+          managementTone: 'string',
+          executiveSummary: 'string',
+          keyFinancialMetrics: 'object',
+          materialRisks: ['string'],
+          guidanceCommentary: 'string',
+          capitalAllocation: 'object',
+          notableDisclosures: ['object'],
+          sourceUrl: 'string',
+          isLiveSecData: 'boolean'
+        },
+        memo: {
+          title: 'string',
+          summary: 'string',
+          thesis: 'string',
+          bullCase: 'string',
+          bearCase: 'string',
+          catalysts: ['string'],
+          risks: ['string'],
+          evidence: ['string'],
+          timeHorizon: 'string',
+          relatedAssets: ['string']
+        }
+      }
     }
   }),
 
@@ -208,13 +249,57 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
       },
       required: ['ticker'],
       additionalProperties: false
+    },
+    output: {
+      example: {
+        status: 'string',
+        queryType: 'string',
+        ticker: 'string',
+        name: 'string',
+        price: 'number',
+        changePercent: 'number',
+        sbScore: 'number 0-100',
+        signalLabel: 'string',
+        confidence: 'string',
+        summary: 'string',
+        components: ['object'],
+        factorBreakdown: {
+          momentum: 'number',
+          trend: 'number',
+          relativeStrength: 'number',
+          volume: 'number',
+          volatility: 'number'
+        },
+        quantMetrics: {
+          rsi14: 'number',
+          sma20: 'number',
+          sma50: 'number',
+          volumeVsAvg20Ratio: 'number',
+          volatility: 'number'
+        },
+        settlementType: 'string',
+        x402Payment: 'object or null',
+        calculatedAt: 'ISO 8601 string',
+        disclaimer: 'string'
+      }
     }
   }),
 
   sec_13f_intel: declareDiscovery({
     method: 'GET',
     input: {},
-    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'integer',
+          minimum: 1,
+          maximum: 50,
+          description: 'Optional maximum number of consensus holdings to return (1 to 50).'
+        }
+      },
+      additionalProperties: false
+    },
     output: {
       example: {
         status: 'success',
