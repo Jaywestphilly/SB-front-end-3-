@@ -3409,19 +3409,16 @@ async function syncServerYouTubeIntelFeed() {
 
   if (combined.length > 0) {
     combined.sort((a, b) => {
-      
-      
-      
-      
+      const aIsSb = (a.channelName || "").toLowerCase().includes("stock bloc");
+      const bIsSb = (b.channelName || "").toLowerCase().includes("stock bloc");
+      if (aIsSb && !bIsSb) return -1;
+      if (!aIsSb && bIsSb) return 1;
       const aTime = a.timestamp || 0;
       const bTime = b.timestamp || 0;
       return bTime - aTime;
-      
-      return 0;
     });
 
     serverYouTubeIntelFeed = combined;
-    console.log("TOP 3:", combined.slice(0, 3).map(c => `${c.channelName} - ${c.timestamp}`));
   }
 
   serverYouTubeLastSyncedAt = Date.now();

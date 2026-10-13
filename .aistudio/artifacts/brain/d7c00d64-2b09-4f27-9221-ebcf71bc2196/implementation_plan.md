@@ -1,126 +1,131 @@
-# Stock Bloc — Obsidian Glassmorphic UI & Navigation Upgrade
+# Intel Feed Video Sequencing Fix & Dyson Swarm Command Upgrade
 
-An architectural and visual refinement of the Stock Bloc quantitative workstation that elevates the signature dark obsidian, cyan, and bronze aesthetic with richer glassmorphic depth, fluid micro-interactions, a streamlined command header, and decluttered watchlist controls.
-
----
+This update resolves video ordering, timestamp parsing, and deduplication issues across the YouTube & Intel Feed so official Stock Bloc releases always lead the stream followed by newest chronological dispatches, while elevating the Dyson Swarm hub into an obsidian-glass aerospace telemetry command deck.
 
 ## User Review & Critical Decisions
 
 > [!IMPORTANT]
-> The following design and architectural decisions incorporate your confirmed preferences from the clarification step. Please review and click **Proceed** to execute the upgrade.
+> All core product and design priorities have been confirmed from your answers:
 
-- **Confirmed Decision 1 — Priority Scope**: Focus the UI upgrade on the **Main Watchlist**, **Stock Cards**, and **Header Navigation** so the core quantitative workstation feels cohesive, fast, and uncluttered.
-- **Confirmed Decision 2 — Visual Direction**: Elevate the existing dark obsidian, electric cyan, and bronze palette using **richer multi-layered glassmorphic depth**, subtle specular border highlights, and **smooth spring-driven micro-interactions**.
-- **Confirmed Decision 3 — Navigation & Banner Decluttering**: **Streamline top navigation** and consolidate redundant stacked banners, action rows, and status strips above the watchlist so market data takes center stage immediately above the fold.
+- **Confirmed Decision 1 — Default Video Sequencing**: Official Stock Bloc (`@stockbloc`) videos are pinned first (sorted newest-to-oldest among official releases), immediately followed by all other monitored channels and dispatches in strict newest-to-oldest chronological order. Users can still switch to strict chronological, catalyst-priority, or popularity sorting at any time via the sort bar.
+- **Confirmed Decision 2 — Timestamp Parsing & Deduplication**: Canonical 11-character YouTube video ID extraction and epoch-millisecond timestamp preservation across server RSS sync, client RSS fallback, and static JSON feeds eliminate duplicate cards and midnight-rounding sort collisions.
+- **Confirmed Decision 3 — Dyson Swarm Full-Suite Upgrade**: We will deliver all four prioritized Dyson Swarm enhancements:
+  1. **Obsidian-Glass Command Deck & Grouped Sub-Tab Navigation**
+  2. **Live 1Hz T-Minus Launch Countdown Telemetry Strip & Mission Readiness Matrix**
+  3. **Upgraded Interactive 3D Orbital Globe & Solar Swarm Telemetry HUD**
+  4. **Expanded Starship $/kg Launch Economics & Orbital Compute Arbitrage Models**
 
 ---
 
 ## 1. Overview & Core Concept
 
-- **What It Does**: Transforms the primary Stock Bloc market workstation from a densely stacked multi-bar interface into a sleek, institutional-grade glassmorphic terminal where navigation, live ticker tape, intelligence status, and interactive stock cards flow with clear visual hierarchy.
-- **Target Audience / Persona**: Quantitative retail traders, institutional researchers, and Web3/AI market analysts who rely on rapid visual scanning of price action, SB Scores, and intraday sparklines without visual fatigue.
-- **Key Value**: Significantly increases above-the-fold data density and visual clarity by removing duplicate navigation buttons and merging fragmented control bars into a unified glassmorphic command deck.
+- **What It Does**:
+  1. **Deterministic Intel Feed Sequencing**: Ensures every sync path (5:00 AM EST server background sync, client RSS sync, and unified Intel Feed merger) preserves exact upload timestamps, deduplicates items by canonical YouTube ID, and pins official Stock Bloc videos at the top of the feed followed by the latest chronological dispatches.
+  2. **Dyson Swarm Aerospace Command Deck**: Transforms the Dyson Swarm section into a high-precision space infrastructure and orbital economics workstation with live launch countdowns, grouped module navigation, an interactive 3D constellation & solar collector HUD, and expanded Starship/SBSP financial arbitrage modeling.
+- **Target Audience / Persona**: Quantitative retail and institutional investors tracking AI compute power bottlenecks, orbital broadband constellations, SpaceX launch economics, and high-conviction market intelligence.
+- **Key Value**: Eliminates buried official content and out-of-order video dispatches while turning the Dyson Swarm section into an interactive, empirically grounded aerospace telemetry and financial modeling suite.
 
 ---
 
 ## 2. User Experience & Visual Design
 
-### Key User Flows
-1. **Streamlined Command Header & Navigation**:
-   - Users land on a unified, floating obsidian-glass header bar featuring the Stock Bloc identity, live feed status pill, global command search (`⌘K`), AI Copilot trigger, and primary workspace switcher.
-   - Redundant duplicate links between the top action toolbar and desktop navigation bar (such as duplicate Community, Compare, YouTube, and Web3 buttons) are consolidated into clean, categorized navigation groups with smooth glass dropdown menus and active indicator beams.
-2. **Consolidated Watchlist Control Deck**:
-   - Instead of five separate stacked horizontal bars above the stock list (Marquee Ticker, Intelligence Header, Affiliate Bar, Quick Action Row, Category Tabs, and Sort Bar), the workspace presents a **compact, high-contrast Ticker Ribbon** followed by a **Unified Watchlist Command Deck**.
-   - The Unified Watchlist Command Deck combines live feed freshness, Line/Candlestick chart mode toggles, collapsible SB Score tier legend, sector category filters, and sorting pills into a cohesive two-tier glassmorphic panel.
-3. **Elevated Glassmorphic Stock Cards**:
-   - Each stock card features refined dark-matter glassmorphic depth (`backdrop-blur-2xl`), crisp 1px specular top-edge illumination, tabular numeral alignment (`tabular-nums`), an interactive 24H Line/Heikin-Ashi Candlestick scrubbable chart, and a cleaner, high-contrast bottom metrics strip (24H range bar, Relative Volume, Market Cap, 52W range, and RSI).
+- **Key User Flows**:
+  1. **Intel Feed Discovery & Playback**:
+     - Upon opening the **YouTube & Intel Feed** (or **YouTube Hub**), the user immediately sees official `@stockbloc` releases pinned at the top of the stream, followed by the newest dispatches from All-In, Peter Diamandis, Limitless, and Alexander Wissner-Gross in exact chronological sequence.
+     - Users can toggle between **Official Pin + Newest (Default)**, **Strict Newest**, **Oldest First**, **Catalysts & Breaking**, and **Most Viewed**, with instant client-side re-sequencing and zero duplicate entries.
+  2. **Dyson Swarm Command & Telemetry**:
+     - Users land on the **Dyson Swarm Obsidian Command Deck**, featuring a live 1Hz ticking `T-Minus` launch countdown banner, fleet telemetry KPIs, and a **Mission Readiness & Orbital Shell Matrix**.
+     - Instead of scrolling through 13 flat buttons, users navigate via 4 structured mission groups (**Live Telemetry & Launches**, **Orbital Economics & Power Arbitrage**, **Constellation & Vehicles**, and **Deep Research & Video Vault**) with instant sub-tab switching.
+  3. **3D Globe & Orbital Economics Exploration**:
+     - In the **Interactive 3D Starlink & Dyson Globe**, users can filter orbital shells, toggle the **Dyson Solar Collector Ring** and **Optical Laser Mesh**, adjust orbital propagation speed (`0.5x` to `5x`), and inspect real-time shell telemetry (altitude, inclination, orbital velocity, solar capture GW).
+     - In the **Starship $/kg Engine** and **SBSP vs AI Microgrids** modules, users can click one-click mission presets or scrub interactive sliders to model orbital AI compute radiative cooling and launch cost decay curves.
 
-### Visual Identity & Theme
-- **Aesthetic Direction**: Atmospheric Minimalism & High-Craft Dark UI fused with Stock Bloc's signature Cyber-Quant Obsidian identity.
-- **Color Palette & Mood**:
-  - **Canvas**: Deep Obsidian Void (`#02060D` to `#050D1A`) with subtle radial cyan/bronze ambient luminescence.
-  - **Glass Surfaces**: Multi-layered translucent slate-obsidian (`rgba(6, 16, 28, 0.72)`) with specular inner top borders (`rgba(34, 211, 238, 0.22)`) and theme-adaptive radial glows for special assets (Bitcoin Orange `#F7931A`, Gold `#F59E0B`, Silver `#CBD5E1`, Copper `#EA580C`, Polkadot Purple `#A855F7`, Bullish Emerald `#10B981`, Bearish Crimson `#EF4444`).
-  - **Accents**: Electric Cyan (`#00F0FF` / `#22D3EE`) for primary interactive focus, Warm Bronze/Amber (`#F59E0B`) for high-conviction/pinned highlights, and Emerald (`#10B981`) for positive momentum.
-- **Typography & Hierarchy**:
-  - **Display & Tickers**: Crisp geometric display typography (`Zen Dots` / `Orbitron`) for ticker symbols and brand headers.
-  - **Financial Telemetry**: Strict `JetBrains Mono` / `Martian Mono` with `tabular-nums` on all prices, percentage changes, SB Scores, volume counters, and range bars to guarantee zero horizontal jitter during live quote syncs.
+- **Visual Identity & Theme**:
+  - *Aesthetic Direction*: Calibrated aerospace telemetry meets Stock Bloc dark obsidian glassmorphism—evoking mission control precision and institutional authority.
+  - *Color Palette & Mood*:
+    - **60% Dominant Canvas**: Deep space obsidian (`#030812` / `#060D1A`).
+    - **30% Structural Surfaces**: Multi-layered smoked obsidian glass (`rgba(7, 17, 30, 0.82)`) with 1px specular cyan/slate hairline borders (`rgba(34, 211, 238, 0.22)`).
+    - **10% Precision Telemetry Accents**: Electric Cyan (`#22D3EE`) for primary orbital/laser telemetry, Telemetry Bronze/Amber (`#F59E0B`) for solar irradiance and countdown alerts, and Emerald (`#10B981`) for nominal mission readiness.
+  - *Typography & Hierarchy*: Bold geometric display headers paired with `font-mono tabular-nums` across all countdown clocks, orbital velocities, $/kg readouts, and timestamps to prevent layout jitter.
+  - *Component Styling & Layout*: Asymmetric split consoles for economic simulators (parameter scrubbers on the left, live multi-curve charts and telemetry readouts on the right) and full-bleed 3D WebGL viewport with translucent HUD overlays.
 
-### Interactive Feedback & Motion
-- **Spring Micro-Interactions**: Smooth hover elevation (`translateY(-2px)`), subtle border luminance intensification, and tactile press scaling (`scale(0.985)`) across stock cards and filter pills.
-- **Live Sync & Price Flash Polish**: Refined directional price update flashes (emerald/crimson ambient sweep) and non-intrusive live sync indicators.
-- **Interactive Sparkline Scrubbing**: Responsive crosshair beacon and floating glass HUD pill when scrubbing across 24H intraday line or Heikin-Ashi candlestick charts.
+- **Interactive Feedback & Motion**:
+  - Real-time 1Hz countdown clock updates with tabular numerals.
+  - Smooth 150ms spring micro-interactions on mission group pills, preset buttons, and 3D camera transitions.
+  - Text-first semantic status indicators (`● Nominal`, `▲ Deploying`, `● Active`) for immediate visual clarity.
 
 ---
 
 ## 3. Key Product Decisions & Trade-Offs
 
-- **Decision 1: Consolidating Top Navigation & Eliminating Duplicate Buttons**
-  - *Chosen Approach*: Keep global utilities (Search `⌘K`, AI Copilot, Live Data Status, My Bloc, and Account/Pro access) in the top Header bar, and house all primary domain destinations (Watchlist & Markets, AI & Tech, Real Estate, Credit, Agents & Web3, Education, Community, and Store) in the streamlined Navigation Bar directly below.
-  - *Why*: Previously, items like Community, Compare, Web3, and YouTube appeared simultaneously in both the Header toolbar and the TopNavbar, creating horizontal crowding and visual noise.
-  - *Alternatives Considered*: Moving all navigation into a collapsible sidebar — passed over to preserve full horizontal width for the watchlist and multi-column intelligence hubs.
+- **Decision 1: Two-Tier Default Video Sequencing (`Stock Bloc Official First -> Chronological Newest`)**
+  - *Chosen Approach*: Restore the Stock Bloc priority comparator in both server-side and client-side sync pipelines, and set the unified feed's default sort mode to pin `isStockBloc` items first (ordered newest-to-oldest among Stock Bloc videos) followed by all other items ordered by exact epoch timestamp (`b.timestamp - a.timestamp`). Also provide a separate **"Strict Newest"** sort button for users who want unpinned pure chronological order across all channels.
+  - *Why*: Previously, the Stock Bloc comparator was blanked out in the sort function, causing official Stock Bloc videos from May/Dec to sink to the very bottom of the 50-video array below daily podcast uploads. Pinning official videos first while keeping third-party channels strictly chronological satisfies both brand priority and real-time freshness.
+  - *Alternatives Considered*: Interleaving channels round-robin was considered, but it obscures true chronological order for breaking daily dispatches.
 
-- **Decision 2: Merging Fragmented Watchlist Banners into a Unified Command Deck**
-  - *Chosen Approach*: Integrate the quick-sync actions, SB Score explainer trigger, chart style switcher (Line vs. Candles), and brokerage partner link directly into the Watchlist Intelligence & Filter Deck, while making the 4-tier SB Score legend compact and toggleable.
-  - *Why*: Reclaims over 160px of vertical viewport height so users immediately see more live stock cards above the fold on both desktop and mobile viewports.
-  - *Alternatives Considered*: Hiding sorting or category tabs behind a modal — rejected because one-click sector filtering and SB Score sorting are core high-frequency trader workflows.
+- **Decision 2: Canonical 11-Character YouTube ID Deduplication & Epoch Timestamp Preservation**
+  - *Chosen Approach*: Extract the canonical 11-character YouTube video ID from any `youtubeId`, `video_id`, `watch_url`, `embed_url`, or `link` field before building the `unifiedMap` in `normalizeAndUnifyFeed`, and prioritize the numeric `v.timestamp` epoch field before falling back to `parseFeedDate(v.publishedDate)`.
+  - *Why*: Previously, `normalizeAndUnifyFeed` ignored `v.timestamp` on `YouTubeVideo` objects and re-parsed the formatted string `"@allin • Aug 10, 2026"`, which stripped hours/minutes/seconds and caused videos published on the same day to sort arbitrarily. Moreover, items present in both `intel_news_feed.json` (keyed by `id: "sb_official_01"`) and `INITIAL_YOUTUBE_VIDEOS` (keyed by `youtubeId: "r9mDbMcMemg"`) could duplicate or overwrite newer timestamps with older ones.
 
-- **Decision 3: Multi-Layered Specular Glassmorphism on Stock Cards**
-  - *Chosen Approach*: Upgrade stock card surfaces with refined inner top-edge specular highlights, cleaner badge spacing, and a structured tabular bottom telemetry bar with a visual 24H range progress track.
-  - *Why*: Preserves every custom asset theme (Gold, Silver, Copper, Bitcoin Orange, Purple, Bullish/Bearish) and alien corner hieroglyphs while making the typography and charts effortless to scan at a glance.
+- **Decision 3: Categorized Dyson Swarm Navigation & Integrated Live Telemetry**
+  - *Chosen Approach*: Organize the 13 Dyson Swarm sub-tabs into 4 high-level mission categories while preserving direct URL deep-linking (`useSubTabUrl`) and all existing sub-tab IDs.
+  - *Why*: Grouping the 13 modules into 4 scannable mission categories eliminates horizontal tab overflow while keeping every existing module 1 click away and preserving backward compatibility with deep links.
 
 ---
 
 ## 4. Technical Architecture & Data Strategy *(Technical Reference)*
 
-### Architecture & Component Diagram
+- **Architecture & Component Diagram**:
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        STOCK BLOC WORKSTATION SHELL                         │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │ 1. Streamlined Glass Header                                           │  │
-│  │    [Brand Identity] ── [Live Feed Status Pill] ── [⌘K | Copilot | Pro]│  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │ 2. Unified Desktop Navigation Bar & Categorized Glass Dropdowns       │  │
-│  │    [Markets] [AI & Tech] [Real Estate] [Credit] [Agents/Web3] [More]  │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │ 3. Compact Live Ticker Tape Ribbon (SPCX • QQQ • DXYZ • Watchlist)    │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                        MAIN WATCHLIST WORKSPACE                             │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │ 4. Watchlist Intelligence & Filter Command Deck                       │  │
-│  │    • Row A: Market Status, Data Freshness, SB Score Guide, Line/Candle│  │
-│  │    • Row B: Sector Bloc Tabs (All, My Bloc, Robotics, Tsunami, etc.)  │  │
-│  │    • Row C: Unified Sort Controls (SB Score, Cap, Gainers, Vol, CSV)  │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │ 5. Glassmorphic Stock Card Grid / List                                │  │
-│  │    ┌───────────────────────────────────────────────────────────────┐  │  │
-│  │    │ [★] $SYMBOL [SB 88]    │  24H Interactive   │     $184.50     │  │  │
-│  │    │ Company Name & Badges  │  Line / HA Candle  │  [1D +4.25% ▲]  │  │  │
-│  │    ├────────────────────────┴────────────────────┴─────────────────┤  │  │
-│  │    │ 24H [$178 ━━●━ $186]  •  VOL 42M (1.4x)  •  CAP $2.1T  •  RSI │  │  │
-│  │    └───────────────────────────────────────────────────────────────┘  │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│                        YOUTUBE & INTEL FEED PIPELINE                       │
+├──────────────────────┬───────────────────────────┬─────────────────────────┤
+│ Server 5AM RSS Sync  │ Client RSS / Seed Store   │ Static Intel JSON Feed  │
+│ (/api/intel/youtube) │ (youtubeSync + youtube.ts)│ (/api/data/news)        │
+└──────────┬───────────┴─────────────┬─────────────┴────────────┬────────────┘
+           │                         │                          │
+           ▼                         ▼                          ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│            Canonical Deduplication & Timestamp Normalizer                  │
+│  • Extracts 11-char YouTube ID across video_id / watch_url / embed_url     │
+│  • Preserves exact numeric epoch ms (v.timestamp) before string parsing    │
+│  • Merges takeaways, summaries, and latest timestamps without duplicates   │
+└────────────────────────────────────┬───────────────────────────────────────┘
+                                     │
+                                     ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│             Deterministic Sequencer (sortUnifiedFeed)                      │
+│  • Default (OFFICIAL_NEWEST): Pins @stockbloc first, then newest epoch ms  │
+│  • Modes: Official+Newest | Strict Newest | Oldest | Catalysts | Popular   │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────────┐
+│                      DYSON SWARM AEROSPACE COMMAND DECK                    │
+├────────────────────────────────────────────────────────────────────────────┤
+│  1. Hero Command Deck & Live 1Hz T-Minus Launch Countdown Telemetry Strip  │
+│  2. Mission Readiness & Orbital Shell Status Matrix                        │
+│  3. Categorized 4-Zone Module Navigator (13 Sub-Tabs Preserved)            │
+├─────────────────────────┬─────────────────────────┬────────────────────────┤
+│ Interactive 3D Globe    │ Starship $/kg Engine    │ SBSP & Orbital Compute │
+│ • 5 LEO Shells + Dyson  │ • Presets (F9, V2, V3)  │ • Power + Radiative    │
+│   Solar Collector Ring  │ • Reusability & Cadence │   Cooling Arbitrage    │
+│ • Speed Scrubber (0.5-5x│   Sensitivity Curves    │ • Grid Queue Bypass    │
+│ • Live Shell Inspector  │ • Payload Mass Matrix   │   Alpha Calculator     │
+└─────────────────────────┴─────────────────────────┴────────────────────────┘
 ```
 
-### Data Model & State
-- **Market State (`useMarketStore`)**: Continues to drive live quote synchronization (`/api/data/market`), `watchlistChartStyle` (`"line"` | `"candlestick"`), `watchlistDataDensity` (`"detailed"` | `"compact"`), and data freshness timestamps without altering any backend routes or payment configurations.
-- **User State (`useUserStore`)**: Preserves starred tickers (`My Bloc`), pinned state, and portfolio quick-save actions.
+- **Data Model & State**:
+  - `UnifiedFeedItem`: Retains `id`, `youtubeId`, `timestamp` (exact epoch ms), `publishedDate`, `isStockBloc`, `isAlexWg`, `itemCategory`, `keyTakeaways`, and `viewCount`.
+  - `FeedSortOption`: Supports `"OFFICIAL"` (default: Stock Bloc pinned first, then newest chronological), `"NEWEST"` (strict newest chronological across all channels), `"OLDEST"`, `"CATALYSTS"`, and `"POPULAR"`.
+  - `DysonSwarmHub` State:
+    - Live 1Hz countdown state (`TimeRemaining`) computed every second from the next upcoming launch target ISO timestamp.
+    - Active Mission Category + `activeSubTab` synced with URL query parameters via `useSubTabUrl`.
+    - `Starlink3DGlobe` state: `selectedShellFilter`, `showLaserMesh`, `showDysonSolarRing`, `orbitSpeedMultiplier` (`0.5 | 1 | 2 | 5`), and interactive shell telemetry readout.
 
-### Interactive Component & State Mapping
-- **Header & Navigation Bar**:
-  - Clicking any primary tab or dropdown item triggers haptic feedback, updates `activeTab` and URL route state, and smoothly transitions the main viewport.
-  - Clicking the live feed health pill opens the `DataStatusPanel` modal; clicking `⌘K` opens the `CommandPalette`; clicking `Copilot` opens `AiCopilotModal`.
-- **Watchlist Command Deck**:
-  - Toggling `Line` vs `Candles` immediately updates all rendered `StockCard` sparklines between smooth SVG glow curves and 22-bar Heikin-Ashi candlesticks with SMA/VWAP overlays.
-  - Clicking the `SB Score Guide` button opens the interactive `SBScoreGuideModal` or toggles the inline tier breakdown.
-  - Selecting a Sector Category tab or Sort pill dynamically filters and orders `filteredStocks` with smooth layout animations (`AnimatePresence`) and one-click CSV export.
-- **Stock Card Micro-Interactions**:
-  - Hovering or touch-scrubbing across the center chart displays live OHLC/price tooltips at the cursor beacon.
-  - Swiping left reveals quick-action drawers (Save to Portfolio, Share Card, Pin/Unpin, Remove); clicking the card body opens the comprehensive `StockDetailModal`.
+- **Interactive Component & State Mapping**:
+  - **Feed Sequencer & Filter Bar**: Clicking any feed source tab (`ALL FEEDS`, `STOCK BLOC YT`, `DISPATCHES`, `SAVED`) or sort button (`Official First`, `Strict Newest`, `Oldest First`, `Catalysts`, `Most Viewed`) immediately re-computes `filteredAndSortedFeed` deterministically.
+  - **YouTubeHub Top Releases**: Re-sequences `INITIAL_YOUTUBE_VIDEOS` and `syncYouTubeFeeds` so Stock Bloc official videos are always positioned first in the default array, ensuring the "Primary Intel Focus: Top Releases #1 & #2" spotlight showcases official Stock Bloc content first.
+  - **Dyson Live Launch Countdown**: Runs a `setInterval(..., 1000)` timer updating days, hours, minutes, and seconds until the next orbital launch window, with one-click Google Calendar and `.ics` export handlers.
+  - **3D Globe Telemetry HUD**: Toggling shells, laser links, Dyson collector ring, or propagation speed updates `useRef` state read directly by the Three.js `requestAnimationFrame` loop for zero-lag 60fps rendering.
+  - **Orbital Economics & Arbitrage Presets**: Clicking vehicle/cluster presets updates all coupled sliders (`annualCadence`, `payloadCapacityTons`, `boosterReuses`, `dataCenterPowerMW`, `orbitalCoolingSavingsPct`) and immediately recalculates Recharts curves and tabular KPI cards.

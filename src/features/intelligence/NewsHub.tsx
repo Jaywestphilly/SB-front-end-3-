@@ -392,7 +392,7 @@ interface NewsHubProps {
 
 export const NewsHub: React.FC<NewsHubProps> = ({ onNavigateTab }) => {
   const [activeTab, setActiveTab] = useState<"ALL" | "YOUTUBE" | "NEWS_VIDEOS" | "BOOKMARKS">("ALL");
-  const [sortOption, setSortOption] = useState<FeedSortOption>("NEWEST");
+  const [sortOption, setSortOption] = useState<FeedSortOption>("OFFICIAL");
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [activeCatalystFilter, setActiveCatalystFilter] = useState<CatalystType | null>(null);
   const [viewMode, setViewMode] = useState<"FULL" | "COMPACT">("FULL");
@@ -856,10 +856,10 @@ export const NewsHub: React.FC<NewsHubProps> = ({ onNavigateTab }) => {
           </span>
 
           {[
-            { id: "NEWEST" as FeedSortOption, label: "Newest First", icon: Clock },
+            { id: "OFFICIAL" as FeedSortOption, label: "Official + Newest", icon: Star },
+            { id: "NEWEST" as FeedSortOption, label: "Strict Newest", icon: Clock },
             { id: "OLDEST" as FeedSortOption, label: "Oldest First", icon: Clock },
             { id: "CATALYSTS" as FeedSortOption, label: "Catalysts & Breaking", icon: Flame },
-            { id: "OFFICIAL" as FeedSortOption, label: "Stock Bloc Official", icon: Star },
             { id: "POPULAR" as FeedSortOption, label: "Most Viewed", icon: Eye },
           ].map((s) => {
             const isActive = sortOption === s.id;
@@ -946,14 +946,14 @@ export const NewsHub: React.FC<NewsHubProps> = ({ onNavigateTab }) => {
             );
           })}
 
-          {(activeTags.length > 0 || activeCatalystFilter || searchQuery || sortOption !== "NEWEST") && (
+          {(activeTags.length > 0 || activeCatalystFilter || searchQuery || sortOption !== "OFFICIAL") && (
             <button
               onClick={() => {
                 triggerHaptic("medium");
                 setActiveTags([]);
                 setActiveCatalystFilter(null);
                 setSearchQuery("");
-                setSortOption("NEWEST");
+                setSortOption("OFFICIAL");
               }}
               className="text-[9px] font-black tracking-wider uppercase text-cyan-400 hover:text-cyan-300 ml-auto px-2 py-0.5 hover:bg-neutral-900 rounded transition-colors flex items-center gap-1 cursor-pointer"
             >
@@ -1081,7 +1081,7 @@ export const NewsHub: React.FC<NewsHubProps> = ({ onNavigateTab }) => {
                 setSearchQuery("");
                 setActiveTags([]);
                 setActiveCatalystFilter(null);
-                setSortOption("NEWEST");
+                setSortOption("OFFICIAL");
                 setActiveTab("ALL");
               }}
               className="px-4 py-1.5 bg-neutral-900 border border-neutral-700 text-cyan-300 rounded text-xs hover:bg-cyan-950 cursor-pointer"

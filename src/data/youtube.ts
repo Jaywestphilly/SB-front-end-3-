@@ -14,6 +14,101 @@ export const FEATURED_YOUTUBE_CHANNEL: YouTubeChannel = {
 
 export const INITIAL_YOUTUBE_VIDEOS: YouTubeVideo[] = [
   {
+    "id": "yt_UCwNl7IKcxlC3fuA38VFReOw_r9mDbMcMemg",
+    "youtubeId": "r9mDbMcMemg",
+    "videoUrl": "https://www.youtube.com/watch?v=r9mDbMcMemg",
+    "title": "Will AI make me rich or unemployed?",
+    "channelName": "Stock Bloc",
+    "category": "Stock Market",
+    "duration": "15:00",
+    "views": "Verified Feed",
+    "publishedDate": "@stockbloc • May 27, 2026",
+    "thumbnailUrl": "https://img.youtube.com/vi/r9mDbMcMemg/hqdefault.jpg",
+    "description": "The AI revolution isn’t coming to take your job. It’s coming to restructure wealth entirely. If you’re looking at AI as just a chatbot, you’re missing the asymmetric leverage play unfolding right now.\nThe wealth gap is f",
+    "keyTakeaways": [
+      "Official update from Stock Bloc",
+      "5:00 AM EST Scheduled Sync"
+    ],
+    "isShort": false,
+    "timestamp": 1779915467000
+  },
+  {
+    "id": "yt_UCwNl7IKcxlC3fuA38VFReOw_mjEcnbMwIxY",
+    "youtubeId": "mjEcnbMwIxY",
+    "videoUrl": "https://www.youtube.com/watch?v=mjEcnbMwIxY",
+    "title": "Why SpaceX Matters More Than You Think",
+    "channelName": "Stock Bloc",
+    "category": "Stock Market",
+    "duration": "15:00",
+    "views": "Verified Feed",
+    "publishedDate": "@stockbloc • May 22, 2026",
+    "thumbnailUrl": "https://img.youtube.com/vi/mjEcnbMwIxY/hqdefault.jpg",
+    "description": "Join The Stock Bloc for institutional-grade insights:\n\n🔗 Get the Alpha: \nhttps://linktr.ee/StockBloc\n\nFollow the Movement:\nX (Twitter): @Jaywestphilly &amp; @TheStcokBloc\n\nInstagram: @thestockbloc &amp; @jaywestphillyy\n",
+    "keyTakeaways": [
+      "Official update from Stock Bloc",
+      "5:00 AM EST Scheduled Sync"
+    ],
+    "isShort": false,
+    "timestamp": 1779426480000
+  },
+  {
+    "id": "yt_UCwNl7IKcxlC3fuA38VFReOw_eNLH_fM5olc",
+    "youtubeId": "eNLH_fM5olc",
+    "videoUrl": "https://www.youtube.com/watch?v=eNLH_fM5olc",
+    "title": "Why Uber is Dead by 2026 💀 #Tesla",
+    "channelName": "Stock Bloc",
+    "category": "Stock Market",
+    "duration": "15:00",
+    "views": "Verified Feed",
+    "publishedDate": "@stockbloc • Dec 28, 2025",
+    "thumbnailUrl": "https://img.youtube.com/vi/eNLH_fM5olc/hqdefault.jpg",
+    "description": "The era of paying for a driver is over. Tesla isn’t just building a car; they are building the platform that makes Uber and Lyft obsolete. If you are still betting on ride-share apps in 2026 without looking at the Cyberc",
+    "keyTakeaways": [
+      "Official update from Stock Bloc",
+      "5:00 AM EST Scheduled Sync"
+    ],
+    "isShort": false,
+    "timestamp": 1766943902000
+  },
+  {
+    "id": "yt_UCwNl7IKcxlC3fuA38VFReOw_cim3kmqD5-8",
+    "youtubeId": "cim3kmqD5-8",
+    "videoUrl": "https://www.youtube.com/watch?v=cim3kmqD5-8",
+    "title": "Tesla’s 2026 Master Plan: Why You Can’t Ignore Robotaxi &amp; Optimus",
+    "channelName": "Stock Bloc",
+    "category": "Stock Market",
+    "duration": "15:00",
+    "views": "Verified Feed",
+    "publishedDate": "@stockbloc • Dec 25, 2025",
+    "thumbnailUrl": "https://img.youtube.com/vi/cim3kmqD5-8/hqdefault.jpg",
+    "description": "Is Tesla still a car company, or have they officially become the world's biggest AI &amp; Robotics play? \n\nIn this video, we are breaking down Tesla's aggressive growth plans for 2026. We’re looking past the headlines an",
+    "keyTakeaways": [
+      "Official update from Stock Bloc",
+      "5:00 AM EST Scheduled Sync"
+    ],
+    "isShort": false,
+    "timestamp": 1766667606000
+  },
+  {
+    "id": "yt_UCwNl7IKcxlC3fuA38VFReOw_KJ23ABaiup0",
+    "youtubeId": "KJ23ABaiup0",
+    "videoUrl": "https://www.youtube.com/watch?v=KJ23ABaiup0",
+    "title": "The IRS Hates This Crypto Trick (Deadline Tuesday) 🤫",
+    "channelName": "Stock Bloc",
+    "category": "Stock Market",
+    "duration": "15:00",
+    "views": "Verified Feed",
+    "publishedDate": "@stockbloc • Dec 24, 2025",
+    "thumbnailUrl": "https://img.youtube.com/vi/KJ23ABaiup0/hqdefault.jpg",
+    "description": "If you are holding bags, you need to hear this.\nThe &quot;Wash Sale Rule&quot; doesn't apply to crypto (yet). You have until December 31st to sell your losers, harvest the tax loss, and buy them back immediately. This is",
+    "keyTakeaways": [
+      "Official update from Stock Bloc",
+      "5:00 AM EST Scheduled Sync"
+    ],
+    "isShort": false,
+    "timestamp": 1766540409000
+  },
+  {
     "id": "yt_UCESLZhusAkFfsNsApnjF_Cg_4FcohSMfNeM",
     "youtubeId": "4FcohSMfNeM",
     "videoUrl": "https://www.youtube.com/watch?v=4FcohSMfNeM",
@@ -1152,101 +1247,6 @@ export const INITIAL_YOUTUBE_VIDEOS: YouTubeVideo[] = [
     ],
     "isShort": false,
     "timestamp": 1784039191000
-  },
-  {
-    "id": "yt_UCwNl7IKcxlC3fuA38VFReOw_r9mDbMcMemg",
-    "youtubeId": "r9mDbMcMemg",
-    "videoUrl": "https://www.youtube.com/watch?v=r9mDbMcMemg",
-    "title": "Will AI make me rich or unemployed?",
-    "channelName": "Stock Bloc",
-    "category": "Stock Market",
-    "duration": "15:00",
-    "views": "Verified Feed",
-    "publishedDate": "@stockbloc • May 27, 2026",
-    "thumbnailUrl": "https://img.youtube.com/vi/r9mDbMcMemg/hqdefault.jpg",
-    "description": "The AI revolution isn’t coming to take your job. It’s coming to restructure wealth entirely. If you’re looking at AI as just a chatbot, you’re missing the asymmetric leverage play unfolding right now.\nThe wealth gap is f",
-    "keyTakeaways": [
-      "Official update from Stock Bloc",
-      "5:00 AM EST Scheduled Sync"
-    ],
-    "isShort": false,
-    "timestamp": 1779915467000
-  },
-  {
-    "id": "yt_UCwNl7IKcxlC3fuA38VFReOw_mjEcnbMwIxY",
-    "youtubeId": "mjEcnbMwIxY",
-    "videoUrl": "https://www.youtube.com/watch?v=mjEcnbMwIxY",
-    "title": "Why SpaceX Matters More Than You Think",
-    "channelName": "Stock Bloc",
-    "category": "Stock Market",
-    "duration": "15:00",
-    "views": "Verified Feed",
-    "publishedDate": "@stockbloc • May 22, 2026",
-    "thumbnailUrl": "https://img.youtube.com/vi/mjEcnbMwIxY/hqdefault.jpg",
-    "description": "Join The Stock Bloc for institutional-grade insights:\n\n🔗 Get the Alpha: \nhttps://linktr.ee/StockBloc\n\nFollow the Movement:\nX (Twitter): @Jaywestphilly &amp; @TheStcokBloc\n\nInstagram: @thestockbloc &amp; @jaywestphillyy\n",
-    "keyTakeaways": [
-      "Official update from Stock Bloc",
-      "5:00 AM EST Scheduled Sync"
-    ],
-    "isShort": false,
-    "timestamp": 1779426480000
-  },
-  {
-    "id": "yt_UCwNl7IKcxlC3fuA38VFReOw_eNLH_fM5olc",
-    "youtubeId": "eNLH_fM5olc",
-    "videoUrl": "https://www.youtube.com/watch?v=eNLH_fM5olc",
-    "title": "Why Uber is Dead by 2026 💀 #Tesla",
-    "channelName": "Stock Bloc",
-    "category": "Stock Market",
-    "duration": "15:00",
-    "views": "Verified Feed",
-    "publishedDate": "@stockbloc • Dec 28, 2025",
-    "thumbnailUrl": "https://img.youtube.com/vi/eNLH_fM5olc/hqdefault.jpg",
-    "description": "The era of paying for a driver is over. Tesla isn’t just building a car; they are building the platform that makes Uber and Lyft obsolete. If you are still betting on ride-share apps in 2026 without looking at the Cyberc",
-    "keyTakeaways": [
-      "Official update from Stock Bloc",
-      "5:00 AM EST Scheduled Sync"
-    ],
-    "isShort": false,
-    "timestamp": 1766943902000
-  },
-  {
-    "id": "yt_UCwNl7IKcxlC3fuA38VFReOw_cim3kmqD5-8",
-    "youtubeId": "cim3kmqD5-8",
-    "videoUrl": "https://www.youtube.com/watch?v=cim3kmqD5-8",
-    "title": "Tesla’s 2026 Master Plan: Why You Can’t Ignore Robotaxi &amp; Optimus",
-    "channelName": "Stock Bloc",
-    "category": "Stock Market",
-    "duration": "15:00",
-    "views": "Verified Feed",
-    "publishedDate": "@stockbloc • Dec 25, 2025",
-    "thumbnailUrl": "https://img.youtube.com/vi/cim3kmqD5-8/hqdefault.jpg",
-    "description": "Is Tesla still a car company, or have they officially become the world's biggest AI &amp; Robotics play? \n\nIn this video, we are breaking down Tesla's aggressive growth plans for 2026. We’re looking past the headlines an",
-    "keyTakeaways": [
-      "Official update from Stock Bloc",
-      "5:00 AM EST Scheduled Sync"
-    ],
-    "isShort": false,
-    "timestamp": 1766667606000
-  },
-  {
-    "id": "yt_UCwNl7IKcxlC3fuA38VFReOw_KJ23ABaiup0",
-    "youtubeId": "KJ23ABaiup0",
-    "videoUrl": "https://www.youtube.com/watch?v=KJ23ABaiup0",
-    "title": "The IRS Hates This Crypto Trick (Deadline Tuesday) 🤫",
-    "channelName": "Stock Bloc",
-    "category": "Stock Market",
-    "duration": "15:00",
-    "views": "Verified Feed",
-    "publishedDate": "@stockbloc • Dec 24, 2025",
-    "thumbnailUrl": "https://img.youtube.com/vi/KJ23ABaiup0/hqdefault.jpg",
-    "description": "If you are holding bags, you need to hear this.\nThe &quot;Wash Sale Rule&quot; doesn't apply to crypto (yet). You have until December 31st to sell your losers, harvest the tax loss, and buy them back immediately. This is",
-    "keyTakeaways": [
-      "Official update from Stock Bloc",
-      "5:00 AM EST Scheduled Sync"
-    ],
-    "isShort": false,
-    "timestamp": 1766540409000
   }
 ];
 

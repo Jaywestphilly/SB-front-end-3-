@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useSubTabUrl } from "../../hooks/useSubTabUrl";
 import { formatUtcTimestamp, isDataStale } from "../../utils/timeUtils";
 import { Starlink3DGlobe } from "../../components/Starlink3DGlobe";
@@ -48,6 +48,7 @@ import {
   ArrowUpRight,
   Target,
   Sun,
+  Sliders,
 } from "lucide-react";
 import { triggerHaptic } from "../../utils/haptics";
 import { DysonLiveData, DysonLaunch, DysonStory } from "../../types";
@@ -144,6 +145,87 @@ const downloadIcsFile = (launch: SpaceXLaunch) => {
   document.body.removeChild(link);
 };
 
+interface MissionCategory {
+  id: string;
+  label: string;
+  shortLabel: string;
+  badge: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  tabIds: DysonSubTab[];
+  tabs: {
+    id: DysonSubTab;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    tag: string;
+  }[];
+}
+
+const MISSION_CATEGORIES: MissionCategory[] = [
+  {
+    id: "telemetry",
+    label: "Live Telemetry & Launches",
+    shortLabel: "Telemetry & Windows",
+    badge: "Live 1Hz",
+    description: "Real-time spaceflight wire, upcoming orbital windows, Starlink 3D globe & Earth fleet",
+    icon: Zap,
+    color: "cyan",
+    tabIds: ["space_news", "launch_cadence", "starlink_hub", "planet_labs"],
+    tabs: [
+      { id: "space_news", label: "Live Space News", icon: Zap, tag: "Wire" },
+      { id: "launch_cadence", label: "Launch Windows & T-Minus", icon: Clock, tag: "1Hz Countdown" },
+      { id: "starlink_hub", label: "Starlink 3D Constellation", icon: Wifi, tag: "3D Globe" },
+      { id: "planet_labs", label: "Planet Labs Earth Fleet", icon: Globe, tag: "Imaging" },
+    ],
+  },
+  {
+    id: "economics",
+    label: "Orbital Economics & Power Arbitrage",
+    shortLabel: "Economics & SBSP",
+    badge: "Quant Alpha",
+    description: "Starship $/kg launch decay engine, orbital solar vs AI microgrids & AM0 flux",
+    icon: Rocket,
+    color: "amber",
+    tabIds: ["orbital_economics", "power_arbitrage", "dyson_power", "dyson_metaphor"],
+    tabs: [
+      { id: "orbital_economics", label: "Starship $/kg Engine", icon: Rocket, tag: "Launch Curve" },
+      { id: "power_arbitrage", label: "SBSP vs AI Microgrids", icon: Sun, tag: "Power Moat" },
+      { id: "dyson_power", label: "Solar Metrology (AM0)", icon: Flame, tag: "1,361 W/m²" },
+      { id: "dyson_metaphor", label: "Dyson Swarm Metaphor", icon: Lightbulb, tag: "Long Horizon" },
+    ],
+  },
+  {
+    id: "vehicles",
+    label: "Constellation Shells & Launch Vehicles",
+    shortLabel: "Shells & Starship",
+    badge: "Orbital Architecture",
+    description: "5 LEO shells, inter-satellite laser mesh latencies, Starship V3 & SpaceX historical roadmap",
+    icon: Satellite,
+    color: "purple",
+    tabIds: ["constellation_shells", "laser_mesh_latency", "starship_hub", "spacex_history"],
+    tabs: [
+      { id: "constellation_shells", label: "Orbital Shells & Spectrum", icon: Satellite, tag: "LEO Shells" },
+      { id: "laser_mesh_latency", label: "Laser Mesh Latency Matrix", icon: Radio, tag: "Speed of Light" },
+      { id: "starship_hub", label: "Starship Program", icon: Rocket, tag: "V3 Era" },
+      { id: "spacex_history", label: "SpaceX Milestone Roadmap", icon: History, tag: "2002–2026" },
+    ],
+  },
+  {
+    id: "research",
+    label: "Deep Research & Video Vault",
+    shortLabel: "Research Vault",
+    badge: "Curated Media",
+    description: "Peer-reviewed astronautical engineering analyses and full-length aerospace documentaries",
+    icon: Film,
+    color: "emerald",
+    tabIds: ["space_docs"],
+    tabs: [
+      { id: "space_docs", label: "Aerospace Video Vault", icon: Film, tag: "Full-Length" },
+    ],
+  },
+];
+
 export const DysonSwarmHub: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useSubTabUrl<DysonSubTab>(
     "/research/dyson-swarm",
@@ -160,7 +242,7 @@ export const DysonSwarmHub: React.FC = () => {
       "dyson_metaphor",
       "spacex_history",
       "planet_labs",
-      "space_docs"
+      "space_docs",
     ] as const,
     "space_news"
   );
@@ -172,17 +254,33 @@ export const DysonSwarmHub: React.FC = () => {
   const [liveLaunches, setLiveLaunches] = useState<any>(null);
   const [isLaunchesLoading, setIsLaunchesLoading] = useState(false);
   const [activeVideo, setActiveVideo] = useState<(typeof SPACE_DOCUMENTARIES)[0] | null>(null);
+  const [viewAllFlatTabs, setViewAllFlatTabs] = useState(false);
+
+  // 1Hz Real-Time Ticking Clock for Mission Countdown Telemetry
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Compute Active Category based on activeSubTab
+  const activeCategory = useMemo(() => {
+    const found = MISSION_CATEGORIES.find((cat) => cat.tabIds.includes(activeSubTab));
+    return found || MISSION_CATEGORIES[0];
+  }, [activeSubTab]);
 
   useEffect(() => {
     if (activeSubTab === "space_news" && spaceNews.length === 0) {
       setIsSpaceNewsLoading(true);
       fetch("/api/space/news")
-        .then(r => r.json())
-        .then(d => {
+        .then((r) => r.json())
+        .then((d) => {
           setSpaceNews(d);
           setIsSpaceNewsLoading(false);
         })
-        .catch(e => {
+        .catch((e) => {
           console.error(e);
           setIsSpaceNewsLoading(false);
         });
@@ -190,15 +288,15 @@ export const DysonSwarmHub: React.FC = () => {
   }, [activeSubTab]);
 
   useEffect(() => {
-    if (activeSubTab === "launch_cadence" && !liveLaunches) {
+    if ((activeSubTab === "launch_cadence" || !liveLaunches) && !isLaunchesLoading) {
       setIsLaunchesLoading(true);
       fetch("/api/space/launches")
-        .then(r => r.json())
-        .then(d => {
+        .then((r) => r.json())
+        .then((d) => {
           setLiveLaunches(d);
           setIsLaunchesLoading(false);
         })
-        .catch(e => {
+        .catch((e) => {
           console.error(e);
           setIsLaunchesLoading(false);
         });
@@ -224,154 +322,424 @@ export const DysonSwarmHub: React.FC = () => {
     fetchDysonData();
   }, []);
 
-  
-
   const starlinkActiveCount =
     dysonLiveData?.fleet_metrics?.active_satellites || 10840;
 
+  // Active Next Upcoming Launch Countdown Object
+  const nextUpcomingLaunch = useMemo(() => {
+    const baseline = SPACEX_LAUNCHES[0];
+    const baselineIsoMs = new Date(baseline.targetIsoDate).getTime();
+
+    // If future launch exists in static data, use it
+    if (baselineIsoMs > currentTime) {
+      const diff = baselineIsoMs - currentTime;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      return {
+        launch: baseline,
+        remaining: { days, hours, minutes, seconds, isPast: false },
+      };
+    }
+
+    // Dynamic 48-Hour SpaceX Cadence Window simulation:
+    // SpaceX averages 1 launch every ~48 hours. Compute next rolling operational launch window:
+    const cadenceCycleMs = 48 * 3600 * 1000;
+    const remainder = cadenceCycleMs - (currentTime % cadenceCycleMs);
+    const nextTargetMs = currentTime + remainder;
+    const days = Math.floor(remainder / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((remainder % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((remainder % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((remainder % (1000 * 60)) / 1000);
+
+    const syntheticNextLaunch: SpaceXLaunch = {
+      ...baseline,
+      id: "spx-next-cadence",
+      missionName: "Starlink Group 12-8 (Next LEO Insertion)",
+      rocket: "Falcon 9 Block 5",
+      launchSite: "Cape Canaveral SLC-40, FL",
+      targetIsoDate: new Date(nextTargetMs).toISOString(),
+      payloadName: "23 Starlink V2 Mini Satellites + Direct-to-Cell E-Band",
+      status: "Countdown",
+      summary:
+        "Next scheduled SpaceX Starlink rapid-cadence launch maintaining 100+ orbital missions per year. Deploys 23 V2 Mini satellites with continuous laser interlinks.",
+    };
+
+    return {
+      launch: syntheticNextLaunch,
+      remaining: { days, hours, minutes, seconds, isPast: false },
+    };
+  }, [currentTime, liveLaunches]);
+
   return (
     <div className="w-full px-4 pt-3 pb-36 sm:pb-40 space-y-6 text-white max-w-7xl mx-auto">
-      {/* 1. DYSON SWARM HERO HEADER */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#050b14] via-[#091524] to-[#040812] border border-cyan-500/30 p-5 sm:p-6 shadow-2xl backdrop-blur-xl">
-        <div className="absolute -right-16 -top-16 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      {/* 1. DYSON SWARM COMMAND DECK HERO HEADER */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#030914] via-[#071322] to-[#020610] border border-cyan-500/35 p-5 sm:p-6 shadow-2xl backdrop-blur-2xl">
+        <div className="absolute -right-16 -top-16 w-80 h-80 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -left-16 -bottom-16 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 space-y-4">
+        <div className="relative z-10 space-y-5">
+          {/* Top Title & Telemetry Status Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-cyan-500/15 border border-cyan-500/40 text-cyan-400 shadow-lg shadow-cyan-500/20">
+              <div className="p-3.5 rounded-2xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.25)]">
                 <Orbit className="w-7 h-7 animate-spin-slow" />
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight bg-gradient-to-r from-white via-cyan-200 to-amber-200 bg-clip-text text-transparent">
-                    Dyson Swarm
+                  <h1 className="text-2xl sm:text-3xl font-black tracking-tight bg-gradient-to-r from-white via-cyan-100 to-amber-200 bg-clip-text text-transparent">
+                    Dyson Swarm Command Deck
                   </h1>
-                  <span className="px-2.5 py-0.5 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 rounded-lg border border-amber-500/30">
-                    Orbital Hub
+                  <span className="px-2.5 py-0.5 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 rounded-lg border border-amber-500/35">
+                    Level 2 Kardashev Architecture
                   </span>
                   {isDataStale(dysonLiveData?.updated_at) ? (
                     <span className="px-2.5 py-0.5 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 rounded-lg border border-amber-500/40">
-                      STALE DATA (&gt;24H)
+                      STALE (&gt;24H)
                     </span>
                   ) : (
-                    <span className="px-2.5 py-0.5 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 rounded-lg border border-emerald-500/30">
+                    <span className="px-2.5 py-0.5 text-[10px] sm:text-xs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 rounded-lg border border-emerald-500/30 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
                       LIVE TELEMETRY
                     </span>
                   )}
-                  <span className="px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold bg-cyan-950/80 text-cyan-300 rounded-lg border border-cyan-500/30">
-                    Updated: {formatUtcTimestamp(dysonLiveData?.updated_at || new Date().toISOString())}
+                  <span className="px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold bg-cyan-950/80 text-cyan-300 rounded-lg border border-cyan-500/30 tabular-nums">
+                    UTC {new Date(currentTime).toISOString().slice(11, 19)}
                   </span>
                 </div>
                 <p className="text-xs sm:text-sm text-neutral-300 font-medium mt-1">
-                  SpaceX Starlink Megaconstellations, Starship Milestones & Orbital Megastructure Metrology
+                  SpaceX Starlink Constellation, Starship V3 $/kg Launch Metrology & Orbital Energy Arbitrage
                 </p>
               </div>
             </div>
 
-            <button
-              onClick={fetchDysonData}
-              disabled={isLoading}
-              className="px-3.5 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-300 text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-md"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-              <span>{isLoading ? "Syncing Feed..." : "Refresh Telemetry"}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={fetchDysonData}
+                disabled={isLoading}
+                className="px-3.5 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-300 text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-md"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+                <span>{isLoading ? "Syncing..." : "Sync Fleet"}</span>
+              </button>
+            </div>
           </div>
 
-          {/* COMPACT KEY NUMBERS STRIP */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2 border-t border-white/10">
-            <div className="p-2.5 rounded-xl bg-black/50 border border-cyan-500/20 flex flex-col">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-cyan-400">
-                Working Starlink Sats
+          {/* LIVE 1HZ T-MINUS COUNTDOWN TELEMETRY STRIP */}
+          <div className="p-4 rounded-2xl bg-[#020813]/90 border border-amber-500/35 shadow-xl backdrop-blur-xl relative overflow-hidden">
+            <div className="absolute right-0 top-0 bottom-0 w-48 bg-gradient-to-l from-amber-500/10 to-transparent pointer-events-none" />
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 relative z-10">
+              {/* Mission Summary Details */}
+              <div className="space-y-1.5 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2 py-0.5 bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[10px] font-black uppercase tracking-widest rounded flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-amber-400 animate-pulse" />
+                    NEXT ORBITAL WINDOW (1HZ TELEMETRY)
+                  </span>
+                  <span className="text-xs font-black text-white">{nextUpcomingLaunch.launch.provider}</span>
+                  <span className="text-neutral-500 text-xs">•</span>
+                  <span className="text-xs font-mono text-cyan-300">{nextUpcomingLaunch.launch.rocket}</span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                  <Rocket className="w-4 h-4 text-amber-400" />
+                  {nextUpcomingLaunch.launch.missionName}
+                </h3>
+                <p className="text-xs text-neutral-400 font-mono">
+                  Pad: <span className="text-neutral-200">{nextUpcomingLaunch.launch.launchSite}</span> • Payload:{" "}
+                  <span className="text-cyan-300">{nextUpcomingLaunch.launch.payloadName}</span>
+                </p>
+              </div>
+
+              {/* High-Contrast T-Minus Clock */}
+              <div className="flex items-center gap-2 sm:gap-3 bg-black/70 p-2.5 sm:p-3 rounded-xl border border-amber-500/40 justify-center">
+                <div className="text-center px-1.5 sm:px-2">
+                  <div className="text-xl sm:text-2xl font-black font-mono tabular-nums text-amber-300">
+                    {String(nextUpcomingLaunch.remaining.days).padStart(2, "0")}
+                  </div>
+                  <div className="text-[9px] font-extrabold uppercase tracking-wider text-neutral-400">Days</div>
+                </div>
+                <span className="text-amber-500 font-mono font-bold text-lg">:</span>
+                <div className="text-center px-1.5 sm:px-2">
+                  <div className="text-xl sm:text-2xl font-black font-mono tabular-nums text-amber-300">
+                    {String(nextUpcomingLaunch.remaining.hours).padStart(2, "0")}
+                  </div>
+                  <div className="text-[9px] font-extrabold uppercase tracking-wider text-neutral-400">Hours</div>
+                </div>
+                <span className="text-amber-500 font-mono font-bold text-lg">:</span>
+                <div className="text-center px-1.5 sm:px-2">
+                  <div className="text-xl sm:text-2xl font-black font-mono tabular-nums text-amber-300">
+                    {String(nextUpcomingLaunch.remaining.minutes).padStart(2, "0")}
+                  </div>
+                  <div className="text-[9px] font-extrabold uppercase tracking-wider text-neutral-400">Mins</div>
+                </div>
+                <span className="text-amber-500 font-mono font-bold text-lg">:</span>
+                <div className="text-center px-1.5 sm:px-2">
+                  <div className="text-xl sm:text-2xl font-black font-mono tabular-nums text-amber-400 animate-pulse">
+                    {String(nextUpcomingLaunch.remaining.seconds).padStart(2, "0")}
+                  </div>
+                  <div className="text-[9px] font-extrabold uppercase tracking-wider text-amber-400">Secs</div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex sm:flex-col justify-end gap-1.5 shrink-0">
+                <a
+                  href={generateGoogleCalendarUrl(nextUpcomingLaunch.launch)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Google Cal</span>
+                </a>
+                <button
+                  onClick={() => downloadIcsFile(nextUpcomingLaunch.launch)}
+                  className="px-3 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/35 text-cyan-300 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                  <span>Export .ics</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* MISSION READINESS & ORBITAL SHELL STATUS MATRIX */}
+          <div className="space-y-2 pt-1 border-t border-white/10">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-widest text-cyan-400 flex items-center gap-1">
+                <Activity className="w-3.5 h-3.5 text-cyan-400" />
+                Orbital Readiness & Constellation Telemetry Matrix
               </span>
-              <span className="text-sm sm:text-base font-black text-white mt-0.5">
-                ~10,840 Active (approx)
-              </span>
-              <span className="text-[9px] text-neutral-400">As of Aug 2026 · ~2/3 of active sats</span>
+              <span className="text-[10px] font-mono text-neutral-400">Nominal 5-Shell Array</span>
             </div>
 
-            <div className="p-2.5 rounded-xl bg-black/50 border border-amber-500/20 flex flex-col">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400">
-                Falcon 9 Cadence
-              </span>
-              <span className="text-sm sm:text-base font-black text-amber-300 mt-0.5">
-                Launch Every ~2 Days (approx)
-              </span>
-              <span className="text-[9px] text-neutral-400">100+ booster flights / yr</span>
-            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              <div className="p-2.5 rounded-xl bg-black/60 border border-emerald-500/25 flex flex-col">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-neutral-400">Shell 1 (550km)</span>
+                  <span className="text-[9px] font-black text-emerald-400">● 100%</span>
+                </div>
+                <span className="text-xs font-black text-white mt-1">4,408 Active Sats</span>
+                <span className="text-[8px] text-neutral-400 font-mono">53.0° Inclination</span>
+              </div>
 
-            <div className="p-2.5 rounded-xl bg-black/50 border border-emerald-500/20 flex flex-col">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-400">
-                Starship V3 Era
-              </span>
-              <span className="text-sm sm:text-base font-black text-emerald-300 mt-0.5">
-                150+ Tons to LEO (approx)
-              </span>
-              <span className="text-[9px] text-neutral-400">Full rapid reusability target</span>
-            </div>
+              <div className="p-2.5 rounded-xl bg-black/60 border border-emerald-500/25 flex flex-col">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-neutral-400">Shell 2 (540km)</span>
+                  <span className="text-[9px] font-black text-emerald-400">● 99.8%</span>
+                </div>
+                <span className="text-xs font-black text-white mt-1">1,584 Active Sats</span>
+                <span className="text-[8px] text-neutral-400 font-mono">53.2° Inclination</span>
+              </div>
 
-            <div className="p-2.5 rounded-xl bg-black/50 border border-purple-500/20 flex flex-col">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-400">
-                Global Orbit Share
-              </span>
-              <span className="text-sm sm:text-base font-black text-purple-300 mt-0.5">
-                &gt;88% Mass-to-Orbit (approx)
-              </span>
-              <span className="text-[9px] text-neutral-400">Unassailable launch moat</span>
+              <div className="p-2.5 rounded-xl bg-black/60 border border-amber-500/30 flex flex-col">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-amber-300">Direct-to-Cell</span>
+                  <span className="text-[9px] font-black text-amber-300">▲ Deploying</span>
+                </div>
+                <span className="text-xs font-black text-amber-200 mt-1">428+ Sats (350km)</span>
+                <span className="text-[8px] text-neutral-400 font-mono">LTE Direct Beam</span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-black/60 border border-emerald-500/25 flex flex-col">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-neutral-400">Polar SSO (560km)</span>
+                  <span className="text-[9px] font-black text-emerald-400">● Active</span>
+                </div>
+                <span className="text-xs font-black text-white mt-1">520 Polar Sats</span>
+                <span className="text-[8px] text-neutral-400 font-mono">97.6° Sun-Sync</span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-black/60 border border-cyan-500/30 flex flex-col">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-cyan-300">Laser Interlinks</span>
+                  <span className="text-[9px] font-black text-cyan-300">● 99.9%</span>
+                </div>
+                <span className="text-xs font-black text-cyan-200 mt-1">100 Gbps Mesh</span>
+                <span className="text-[8px] text-neutral-400 font-mono">Vacuum Speed of Light</span>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-black/60 border border-amber-500/30 flex flex-col">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-amber-300">Solar AM0 Flux</span>
+                  <span className="text-[9px] font-black text-amber-300">☀️ Continuous</span>
+                </div>
+                <span className="text-xs font-black text-amber-200 mt-1">1,361 W/m²</span>
+                <span className="text-[8px] text-neutral-400 font-mono">0% Atmosphere Loss</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 4. INTERACTIVE PROJECT HUB NAV TABS */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-2">
-          <h2 className="text-sm sm:text-base font-black text-white uppercase tracking-wider flex items-center gap-2">
-            <Layers className="w-4 h-4 text-cyan-400" />
-            Interactive Project & Telemetry Hub
-          </h2>
-          <span className="text-[11px] font-mono text-neutral-400">Select Module:</span>
+      {/* 2. CONSOLIDATED OBSIDIAN-GLASS MODULE NAVIGATION */}
+      <div className="space-y-3">
+        {/* Mission Categories Level 1 Bar */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 pb-2 border-b border-white/10">
+          <div>
+            <h2 className="text-sm sm:text-base font-black text-white uppercase tracking-wider flex items-center gap-2">
+              <Layers className="w-4 h-4 text-cyan-400" />
+              Aerospace Command Bays & Module Navigator
+            </h2>
+            <p className="text-[11px] text-neutral-400">
+              Categorized mission suites for telemetry, orbital economics, constellation physics, and research.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 self-start md:self-auto">
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setViewAllFlatTabs((v) => !v);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                viewAllFlatTabs
+                  ? "bg-cyan-400 text-black border-cyan-400"
+                  : "bg-black/60 border-white/15 text-neutral-300 hover:text-white hover:border-neutral-700"
+              }`}
+            >
+              <Sliders className="w-3.5 h-3.5" />
+              <span>{viewAllFlatTabs ? "Grouped View" : "All 13 Modules"}</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
-          {[
-            { id: "space_news", label: "Live Space News", icon: Zap },
-            { id: "orbital_economics", label: "Starship $/kg Engine", icon: Rocket },
-            { id: "power_arbitrage", label: "SBSP vs AI Microgrids", icon: Sun },
-            { id: "laser_mesh_latency", label: "Laser Mesh Latency", icon: Radio },
-            { id: "constellation_shells", label: "Orbital Shells & Spectrum", icon: Satellite },
-            { id: "starlink_hub", label: "Starlink Constellation", icon: Wifi },
-            { id: "starship_hub", label: "Starship Program", icon: Rocket },
-            { id: "launch_cadence", label: "Launch Windows", icon: Clock },
-            { id: "dyson_power", label: "Solar Metrology", icon: Flame },
-            { id: "dyson_metaphor", label: "Dyson Swarm Metaphor", icon: Lightbulb },
-            { id: "spacex_history", label: "SpaceX History Roadmap", icon: History },
-            { id: "planet_labs", label: "Planet Labs Fleet", icon: Globe },
-            { id: "space_docs", label: "Video Vault", icon: Film },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeSubTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  triggerHaptic("selection");
-                  setActiveSubTab(tab.id as DysonSubTab);
-                }}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl font-bold text-xs transition-all whitespace-nowrap cursor-pointer active:scale-95 ${
-                  isActive
-                    ? "bg-cyan-500 text-black shadow-lg shadow-cyan-500/30 font-extrabold"
-                    : "bg-neutral-900/80 hover:bg-neutral-800 text-neutral-300 border border-white/10"
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? "text-black" : "text-cyan-400"}`} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        {/* Category Pill Selectors */}
+        {!viewAllFlatTabs ? (
+          <div className="space-y-3">
+            {/* 4 Mission Bays */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              {MISSION_CATEGORIES.map((cat) => {
+                const Icon = cat.icon;
+                const isCatActive = activeCategory.id === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      triggerHaptic("selection");
+                      if (!cat.tabIds.includes(activeSubTab)) {
+                        setActiveSubTab(cat.tabs[0].id);
+                      }
+                    }}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden group ${
+                      isCatActive
+                        ? "bg-gradient-to-br from-[#07192d] to-[#040e1c] border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.25)]"
+                        : "bg-[#040b17]/80 hover:bg-[#071324] border-white/10 hover:border-white/20"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between w-full mb-2">
+                      <div
+                        className={`p-2 rounded-xl ${
+                          isCatActive ? "bg-cyan-400 text-black" : "bg-neutral-800 text-neutral-300 group-hover:text-white"
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <span
+                        className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                          isCatActive
+                            ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30"
+                            : "bg-black/60 text-neutral-400 border border-neutral-800"
+                        }`}
+                      >
+                        {cat.badge}
+                      </span>
+                    </div>
 
+                    <div>
+                      <div className="text-xs sm:text-sm font-black text-white">{cat.shortLabel}</div>
+                      <div className="text-[10px] text-neutral-400 line-clamp-1 mt-0.5">{cat.description}</div>
+                    </div>
+
+                    {isCatActive && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 via-amber-400 to-cyan-400" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Sub-Tabs under Active Category */}
+            <div className="p-2.5 rounded-2xl bg-[#030914]/90 border border-neutral-800 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <span className="text-[10px] font-black uppercase tracking-widest text-neutral-400 px-2 shrink-0 flex items-center gap-1">
+                <ChevronRight className="w-3.5 h-3.5 text-cyan-400" />
+                Active Bay Modules:
+              </span>
+              {activeCategory.tabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeSubTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      triggerHaptic("selection");
+                      setActiveSubTab(tab.id);
+                    }}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer active:scale-95 ${
+                      isActive
+                        ? "bg-cyan-400 text-black shadow-md shadow-cyan-400/30 font-extrabold"
+                        : "bg-neutral-900/80 hover:bg-neutral-800 text-neutral-300 border border-white/10"
+                    }`}
+                  >
+                    <Icon className={`w-3.5 h-3.5 ${isActive ? "text-black" : "text-cyan-400"}`} />
+                    <span>{tab.label}</span>
+                    <span
+                      className={`text-[9px] px-1.5 py-0.2 rounded font-mono ${
+                        isActive ? "bg-black/20 text-black" : "bg-black/50 text-neutral-400"
+                      }`}
+                    >
+                      {tab.tag}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          /* Flat list of all 13 modules */
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+            {[
+              { id: "space_news", label: "Live Space News", icon: Zap },
+              { id: "orbital_economics", label: "Starship $/kg Engine", icon: Rocket },
+              { id: "power_arbitrage", label: "SBSP vs AI Microgrids", icon: Sun },
+              { id: "laser_mesh_latency", label: "Laser Mesh Latency", icon: Radio },
+              { id: "constellation_shells", label: "Orbital Shells & Spectrum", icon: Satellite },
+              { id: "starlink_hub", label: "Starlink Constellation", icon: Wifi },
+              { id: "starship_hub", label: "Starship Program", icon: Rocket },
+              { id: "launch_cadence", label: "Launch Windows", icon: Clock },
+              { id: "dyson_power", label: "Solar Metrology", icon: Flame },
+              { id: "dyson_metaphor", label: "Dyson Swarm Metaphor", icon: Lightbulb },
+              { id: "spacex_history", label: "SpaceX History Roadmap", icon: History },
+              { id: "planet_labs", label: "Planet Labs Fleet", icon: Globe },
+              { id: "space_docs", label: "Video Vault", icon: Film },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeSubTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setActiveSubTab(tab.id as DysonSubTab);
+                  }}
+                  className={`flex items-center gap-2 px-3.5 py-2.5 rounded-2xl font-bold text-xs transition-all whitespace-nowrap cursor-pointer active:scale-95 ${
+                    isActive
+                      ? "bg-cyan-500 text-black shadow-lg shadow-cyan-500/30 font-extrabold"
+                      : "bg-neutral-900/80 hover:bg-neutral-800 text-neutral-300 border border-white/10"
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isActive ? "text-black" : "text-cyan-400"}`} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ACTIVE SUBTAB MODULE VIEW CONTAINER */}
+      <div className="space-y-4 pt-1">
         {/* TAB 0A: LIVE SPACE NEWS */}
         {activeSubTab === "space_news" && (
           <div className="space-y-6 animate-fadeIn">

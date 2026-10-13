@@ -47,8 +47,30 @@ export const MONITORED_CHANNELS: ChannelConfig[] = [
   },
 ];
 
-const STORAGE_KEY_VIDEOS = "yt_synced_videos_v5";
-const STORAGE_KEY_TIMESTAMP = "yt_last_sync_timestamp_v5";
+const STORAGE_KEY_VIDEOS = "yt_synced_videos_v6";
+const STORAGE_KEY_TIMESTAMP = "yt_last_sync_timestamp_v6";
+
+export function sortYouTubeVideosOfficialFirst(videos: YouTubeVideo[]): YouTubeVideo[] {
+  const seen = new Set<string>();
+  const deduped: YouTubeVideo[] = [];
+
+  for (const v of videos) {
+    const key = (v.youtubeId || v.id || v.title || "").trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(v);
+  }
+
+  return deduped.sort((a, b) => {
+    const aIsSb = (a.channelName || "").toLowerCase().includes("stock bloc");
+    const bIsSb = (b.channelName || "").toLowerCase().includes("stock bloc");
+    if (aIsSb && !bIsSb) return -1;
+    if (!aIsSb && bIsSb) return 1;
+    const aTime = a.timestamp || 0;
+    const bTime = b.timestamp || 0;
+    return bTime - aTime;
+  });
+}
 
 export function getStoredYouTubeVideos(): YouTubeVideo[] {
   try {
@@ -56,13 +78,13 @@ export function getStoredYouTubeVideos(): YouTubeVideo[] {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        return sortYouTubeVideosOfficialFirst(parsed);
       }
     }
   } catch (e) {
     console.error("Error reading stored youtube videos:", e);
   }
-  return INITIAL_YOUTUBE_VIDEOS;
+  return sortYouTubeVideosOfficialFirst(INITIAL_YOUTUBE_VIDEOS);
 }
 
 export function getLastSyncTimestamp(): number {
@@ -142,7 +164,7 @@ export async function syncYouTubeFeeds(force: boolean = false): Promise<{
     if (serverRes.ok) {
       const serverData = await serverRes.json();
       if (Array.isArray(serverData.videos) && serverData.videos.length > 0) {
-        const serverVideos: YouTubeVideo[] = serverData.videos;
+        const serverVideos: YouTubeVideo[] = sortYouTubeVideosOfficialFirst(serverData.videos);
         const syncedAt = serverData.lastSyncedAt || now;
 
         try {
@@ -277,18 +299,8 @@ export async function syncYouTubeFeeds(force: boolean = false): Promise<{
     combinedVideos = INITIAL_YOUTUBE_VIDEOS;
   }
 
-  // Ensure Stock Bloc videos are strictly sorted to the top
-  combinedVideos.sort((a, b) => {
-    
-    
-    
-    
-    const aTime = a.timestamp || 0;
-    const bTime = b.timestamp || 0;
-    return bTime - aTime;
-    
-    return 0;
-  });
+  // Ensure Stock Bloc videos are strictly sorted to the top, followed by newest chronological
+  combinedVideos = sortYouTubeVideosOfficialFirst(combinedVideos);
 
   // Save to localStorage
   try {
