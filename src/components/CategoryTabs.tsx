@@ -77,9 +77,9 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
   };
 
   return (
-    <div className="w-full px-4 pt-3 pb-2 space-y-3 font-mono">
+    <div className="w-full px-2 sm:px-4 pt-1.5 pb-1 space-y-2 font-mono">
       {/* Category Scroll Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
+      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
         {categories.map((cat) => {
           const Icon = cat.icon;
           const isActive = selectedCategory === cat.id;
@@ -90,14 +90,16 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
                 triggerHaptic("selection");
                 onSelectCategory(cat.id);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 alien-block-cut-sm font-black transition-all whitespace-nowrap active:scale-95 cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer ${
                 isActive
-                  ? "bg-cyan-400 text-black shadow-lg shadow-cyan-400/30 border border-cyan-200"
-                  : "bg-neutral-900 hover:bg-neutral-800 text-cyan-400/80 hover:text-white border border-cyan-500/30"
+                  ? "obsidian-pill-btn obsidian-pill-btn-active font-black"
+                  : "obsidian-pill-btn text-cyan-200/85 hover:text-white"
               }`}
             >
               <Icon
-                className={`w-3.5 h-3.5 ${isActive ? "text-black" : "text-cyan-400"}`}
+                className={`w-3.5 h-3.5 shrink-0 ${
+                  isActive ? "text-slate-950" : "text-cyan-400"
+                }`}
               />
               <span className="uppercase text-[11px] font-tech tracking-wider">
                 {cat.label}
@@ -107,18 +109,19 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
         })}
       </div>
 
-      {/* List Title Context Banner */}
-      <div className="flex items-end justify-between pt-1 pb-1 border-b border-cyan-500/20">
-        <div>
-          <h2 className="text-xl font-black font-mono tracking-wider text-cyan-100 uppercase leading-tight flex items-center gap-2">
-            <span className="w-2 h-2 bg-cyan-400 inline-block animate-ping" />
+      {/* Compact List Title Context Bar */}
+      <div className="flex items-center justify-between pt-0.5 pb-1 border-b border-cyan-500/20">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <h2 className="text-base sm:text-lg font-black font-mono tracking-wider text-cyan-50 uppercase leading-tight flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
             {getCategoryTitle()}
           </h2>
-          <p className="text-[10px] text-cyan-400/70 font-mono">
-            // {itemCount} ASSETS MONITORED IN BASKET
-          </p>
+          <span className="text-[10px] px-2 py-0.5 rounded-md bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 font-mono font-bold tabular-telemetry">
+            {itemCount} ASSETS
+          </span>
         </div>
       </div>
     </div>
   );
 };
+

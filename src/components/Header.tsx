@@ -97,85 +97,134 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 w-full backdrop-blur-2xl bg-black/95 border-b border-cyan-500/30 text-white transition-colors relative overflow-hidden">
-      {/* Top Cyber Telemetry Bar - Hidden in compact mode for <=2 sticky chrome on agent routes */}
-      {!compact && (
-        <div className="flex items-center justify-between px-3 sm:px-5 pt-1.5 pb-1 text-[10px] font-martian tracking-widest text-cyan-400/90 bg-black/60 border-b border-cyan-500/20 select-none">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-emerald-400 animate-ping inline-block" />
-              <span className="font-zen text-[9px] text-cyan-300">SYS.QUANT-88</span>
-              <span className="text-cyan-600">//</span>
-              <span className="text-cyan-200">{timeStr || "19:42:01"}</span>
-            </span>
-          </div>
+    <header className="sticky top-0 z-30 w-full obsidian-glass-header text-white transition-all relative overflow-hidden">
+      {/* Subtle Top Specular Cyan-Bronze Luminescence Line */}
+      <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent pointer-events-none" />
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Compact Market Data Status Indicator */}
-            <button
-              type="button"
-              onClick={() => {
-                triggerHaptic("selection");
-                if (onOpenDataStatus) onOpenDataStatus();
-              }}
-              className={`px-2 py-0.5 rounded border text-[9px] font-martian font-bold uppercase tracking-wider flex items-center gap-1 transition-all cursor-pointer ${
-                dataStale
-                  ? "bg-amber-500/20 text-amber-300 border-amber-500/50 hover:bg-amber-500/30"
-                  : "bg-emerald-500/20 text-emerald-300 border-emerald-400/40 hover:bg-emerald-500/30"
-              }`}
-              title="Click to view live data feeds and system sync health"
-            >
-              <span className={`w-1.5 h-1.5 rounded-full inline-block ${dataStale ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
-              <span>{compactStatusText}</span>
-            </button>
-
-            <span className="hidden md:inline text-[9px] text-emerald-300 font-martian font-bold bg-emerald-500/20 px-2 py-0.5 border border-emerald-400/40 rounded">
-              [QUANT-NODE: ONLINE]
-            </span>
-
-            {/* 24h Autonomous Agent Telemetry Counter (Zero-Knowledge) */}
-            <AgentActivityCounter variant="compact" />
-          </div>
-        </div>
-      )}
-
-      {/* Main Brand & Actions Header */}
-      <div className="px-3 sm:px-4 py-2 flex items-center justify-between gap-2 relative">
-        {/* Brand Logo */}
-        <div
-          className="flex items-center gap-2.5 shrink-0 group cursor-pointer"
-          onClick={() => {
-            triggerHaptic("selection");
-            if (onSelectTab) onSelectTab("brand");
-            else onOpenLinktree();
-          }}
-        >
-          <StockBlocLogo
-            size="md"
-            showText={false}
-            className="group-hover:scale-105 transition-transform"
-          />
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h1 className="font-zen text-sm sm:text-base tracking-widest text-cyan-100 uppercase group-hover:text-cyan-300 transition-colors flex items-center gap-1">
-                STOCK BLOC<span className="text-cyan-400 animate-pulse">.</span>
-              </h1>
+      {/* Unified Command Header Row */}
+      <div className="max-w-[1800px] mx-auto px-3 sm:px-5 py-2.5 flex items-center justify-between gap-3 relative">
+        {/* Left: Brand Identity + Live Feed Health Pill */}
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <div
+            className="flex items-center gap-2.5 shrink-0 group cursor-pointer"
+            onClick={() => {
+              triggerHaptic("selection");
+              if (onSelectTab) onSelectTab("watchlist");
+              else onOpenLinktree();
+            }}
+            title="Stock Bloc Quantitative Workstation"
+          >
+            <div className="relative">
+              <StockBlocLogo
+                size="md"
+                showText={false}
+                className="group-hover:scale-105 transition-transform duration-200"
+              />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-[#030712]" />
             </div>
-            <p className="text-[9px] text-cyan-400/80 font-martian tracking-wider uppercase leading-none mt-0.5">
-              QUANT WEALTH MATRIX
-            </p>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h1 className="font-zen text-sm sm:text-base tracking-widest text-cyan-50 uppercase group-hover:text-cyan-300 transition-colors flex items-center gap-1">
+                  STOCK BLOC<span className="text-cyan-400 animate-pulse">.</span>
+                </h1>
+              </div>
+              <p className="text-[9px] text-cyan-400/80 font-martian tracking-wider uppercase leading-none mt-0.5 flex items-center gap-1.5">
+                <span>QUANT TERMINAL</span>
+                {!compact && (
+                  <>
+                    <span className="text-cyan-600">•</span>
+                    <span className="text-amber-300/90 tabular-telemetry">{timeStr || "LIVE"}</span>
+                  </>
+                )}
+              </p>
+            </div>
           </div>
+
+          {/* Live Data Status Pill & Agent Activity (Desktop/Tablet) */}
+          {!compact && (
+            <div className="hidden lg:flex items-center gap-2 pl-3 border-l border-cyan-500/20">
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("selection");
+                  if (onOpenDataStatus) onOpenDataStatus();
+                }}
+                className={`px-2.5 py-1 rounded-lg border text-[10px] font-martian font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
+                  dataStale
+                    ? "bg-amber-950/60 text-amber-300 border-amber-500/40 hover:border-amber-400/70"
+                    : "bg-emerald-950/50 text-emerald-300 border-emerald-500/35 hover:border-emerald-400/70 shadow-[0_0_12px_rgba(16,185,129,0.12)]"
+                }`}
+                title="View live data feeds and system sync health"
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full inline-block ${
+                    dataStale ? "bg-amber-400 animate-pulse" : "bg-emerald-400 animate-pulse"
+                  }`}
+                />
+                <span className="tabular-telemetry">{compactStatusText}</span>
+              </button>
+
+              <div className="hidden xl:block">
+                <AgentActivityCounter variant="compact" />
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Mobile Hamburger Button (< 640px) */}
-        <div className="flex sm:hidden items-center gap-2">
+        {/* Center: Interactive Command Search Trigger (⌘K) */}
+        <div className="hidden md:flex flex-1 max-w-md mx-2">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("light");
+              onOpenSearch();
+            }}
+            className="w-full px-3.5 py-1.5 rounded-xl obsidian-pill-btn text-left flex items-center justify-between gap-2 text-xs text-cyan-200/80 hover:text-white group cursor-pointer"
+            title="Search tickers, sectors, 13F filings, or commands (⌘K)"
+          >
+            <span className="flex items-center gap-2 truncate">
+              <Search className="w-3.5 h-3.5 text-cyan-400 group-hover:scale-110 transition-transform shrink-0" />
+              <span className="font-mono text-[11px] text-slate-300 group-hover:text-cyan-100 truncate">
+                Search tickers, SB Scores, or command matrix...
+              </span>
+            </span>
+            <kbd className="px-1.5 py-0.5 text-[9px] font-martian font-bold text-cyan-300 bg-cyan-950/80 border border-cyan-500/30 rounded shrink-0">
+              ⌘K
+            </kbd>
+          </button>
+        </div>
+
+        {/* Mobile Quick Actions & Hamburger (< 640px) */}
+        <div className="flex sm:hidden items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("light");
+              onOpenSearch();
+            }}
+            className="p-2 rounded-lg obsidian-pill-btn text-cyan-300 flex items-center justify-center cursor-pointer"
+            aria-label="Search Watchlist"
+          >
+            <Search className="w-4 h-4 text-cyan-400" />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              triggerHaptic("selection");
+              if (onOpenAiAssistant) onOpenAiAssistant();
+            }}
+            className="p-2 rounded-lg obsidian-pill-btn text-cyan-300 flex items-center justify-center cursor-pointer"
+            aria-label="Open AI Copilot"
+          >
+            <Sparkles className="w-4 h-4 text-cyan-400" />
+          </button>
           <button
             type="button"
             onClick={() => {
               triggerHaptic("selection");
               setIsMobileMenuOpen((prev) => !prev);
             }}
-            className="p-2 bg-neutral-900 border border-cyan-400/60 alien-block-cut-sm text-cyan-300 hover:bg-cyan-950/40 transition-all active:scale-95 flex items-center justify-center cursor-pointer shadow-sm glow-cyan"
+            className="p-2 rounded-lg obsidian-pill-btn text-cyan-300 flex items-center justify-center cursor-pointer"
             aria-label={isMobileMenuOpen ? "Close menu" : "Open navigation menu"}
           >
             {isMobileMenuOpen ? (
@@ -186,154 +235,99 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* Desktop Action Toolbar (>= 640px) */}
-        <div className="hidden sm:flex items-center gap-1.5 shrink-0 overflow-x-auto no-scrollbar">
-          <button
-            onClick={() => {
-              triggerHaptic("selection");
-              if (onOpenAiAssistant) onOpenAiAssistant();
-            }}
-            className="px-2.5 py-1.5 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-200 border border-cyan-400/60 hover:bg-cyan-950/40 alien-block-cut-sm text-[11px] font-mono font-black transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0 glow-cyan shadow-sm"
-            title="Launch Gemini AI Market Copilot Chat"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-            <span className="hidden sm:inline">COPILOT CHAT</span>
-          </button>
-
-          <button
-            onClick={() => {
-              triggerHaptic("selection");
-              if (onSelectTab) onSelectTab("web3_dot_btc");
-            }}
-            className="px-2.5 py-1.5 bg-gradient-to-r from-orange-500/20 to-purple-500/20 text-cyan-200 border border-cyan-400/50 hover:bg-cyan-950/40 alien-block-cut-sm text-[11px] font-mono font-black transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0 glow-cyan"
-            title="Web3 Vaults, Proof-of-Alpha Merkle Roots & x402 Micropayments (DOT & BTC)"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-orange-400" />
-            <span className="hidden sm:inline">WEB3 (DOT/BTC)</span>
-          </button>
-
-          <button
-            onClick={() => {
-              triggerHaptic("selection");
-              if (onSelectTab) onSelectTab("compare");
-            }}
-            className="px-2.5 py-1.5 bg-neutral-900 border border-cyan-400/60 alien-block-cut-sm text-cyan-300 hover:bg-cyan-950/40 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer glow-cyan shadow-sm"
-            title="Stock Bloc vs Tavily vs Twelve Data Comparison Matrix"
-          >
-            <BarChart3 className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden sm:inline text-[11px] font-black uppercase font-alien-hud">COMPARE</span>
-          </button>
-
-          <button
-            onClick={() => {
-              triggerHaptic("selection");
-              if (onSelectTab) onSelectTab("community");
-            }}
-            className="px-2.5 py-1.5 bg-neutral-900 border border-cyan-400/60 alien-block-cut-sm text-cyan-300 hover:bg-cyan-950/40 transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer glow-cyan shadow-sm"
-            title="Community Hub, Clickable Trader Profiles & Live Market Chat"
-          >
-            <Users className="w-3.5 h-3.5 text-cyan-400" />
-            <span className="hidden sm:inline text-[11px] font-black uppercase font-alien-hud">Community</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          </button>
-
-          <button
-            onClick={() => {
-              triggerHaptic("selection");
-              if (onSelectTab) onSelectTab("my_bloc");
-            }}
-            className="px-2.5 py-1.5 bg-neutral-900 border border-amber-500/40 alien-block-cut-sm text-amber-300 hover:bg-amber-950/30 transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
-            title="My Bloc Dashboard"
-          >
-            <UserCheck className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden sm:inline text-[11px] font-black uppercase">My Bloc</span>
-          </button>
-
-          <button
-            onClick={() => {
-              triggerHaptic("selection");
-              if (onSelectTab) onSelectTab("apple_watch");
-            }}
-            className="p-1.5 bg-neutral-900 border border-emerald-500/40 alien-block-cut-sm text-emerald-300 hover:bg-emerald-950/30 transition-all active:scale-90 cursor-pointer shrink-0"
-            title="Apple Watch Companion Mode & Glance View"
-          >
-            <Watch className="w-4 h-4 text-emerald-400" />
-          </button>
-
+        {/* Right: Streamlined Global Workstation Utilities (>= 640px) */}
+        <div className="hidden sm:flex items-center gap-2 shrink-0">
+          {/* Search button on small tablets where center bar is hidden */}
           <button
             onClick={() => {
               triggerHaptic("light");
               onOpenSearch();
             }}
-            className="p-1.5 bg-neutral-900 border border-cyan-500/40 alien-block-cut-sm text-cyan-300 hover:bg-cyan-950/30 transition-all active:scale-90 cursor-pointer"
-            title="Search Watchlist"
+            className="md:hidden p-2 rounded-lg obsidian-pill-btn text-cyan-300 hover:text-white cursor-pointer"
+            title="Search Watchlist (⌘K)"
           >
-            <Search className="w-4 h-4" />
+            <Search className="w-4 h-4 text-cyan-400" />
           </button>
 
+          {/* AI Market Copilot */}
           <button
             onClick={() => {
               triggerHaptic("selection");
-              if (onSelectTab) onSelectTab("youtube");
+              if (onOpenAiAssistant) onOpenAiAssistant();
             }}
-            className="px-2.5 py-1.5 bg-red-600/20 text-red-300 border border-red-500/50 hover:bg-red-950/40 alien-block-cut-sm text-[11px] font-mono font-black transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shrink-0"
-            title="Stock Bloc YouTube Channel Videos (@stockbloc)"
+            className="px-3 py-1.5 rounded-lg obsidian-pill-btn text-cyan-100 hover:text-white text-[11px] font-mono font-bold flex items-center gap-1.5 cursor-pointer shrink-0 border-cyan-400/50 shadow-[0_0_15px_rgba(0,242,255,0.15)]"
+            title="Launch AI Market Copilot Chat"
           >
-            <Youtube className="w-3.5 h-3.5 text-red-400 fill-red-500/20" />
-            <span className="hidden sm:inline">YOUTUBE VIDEOS</span>
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+            <span>COPILOT</span>
           </button>
 
+          {/* My Bloc Portfolio Shortcut */}
           <button
             onClick={() => {
               triggerHaptic("selection");
-              if (onSelectTab) onSelectTab("pricing");
+              if (onSelectTab) onSelectTab("my_bloc");
             }}
-            className="px-2.5 py-1.5 bg-purple-500/20 text-purple-300 border border-purple-400/50 hover:bg-purple-950/40 alien-block-cut-sm text-[11px] font-mono font-black transition-all active:scale-95 flex items-center gap-1 cursor-pointer shrink-0"
-            title="Books, Playbooks Trilogy & Store"
+            className="px-3 py-1.5 rounded-lg obsidian-pill-btn text-amber-200 hover:text-amber-100 border-amber-500/40 hover:border-amber-400/70 text-[11px] font-mono font-bold flex items-center gap-1.5 cursor-pointer shrink-0"
+            title="My Bloc Saved Portfolio & Conviction Tracker"
           >
-            <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-            <span className="hidden xs:inline">BOOKS & STORE</span>
+            <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+            <span>MY BLOC</span>
           </button>
 
+          {/* SB Terminal Workstation */}
           {onOpenBloombergTerminal && (
             <button
               onClick={() => {
                 triggerHaptic("selection");
                 onOpenBloombergTerminal();
               }}
-              className="px-2.5 py-1.5 bg-amber-400 text-black border border-amber-300 hover:bg-amber-300 alien-block-cut-sm text-[11px] font-mono font-black transition-all active:scale-95 flex items-center gap-1 cursor-pointer shadow-lg shadow-amber-400/20 shrink-0"
+              className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 border border-amber-200 text-[11px] font-mono font-black transition-all hover:-translate-y-0.5 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.3)] shrink-0"
               title="Open SB Terminal Workstation (100% Free & Unlocked)"
             >
-              <Terminal className="w-3.5 h-3.5 text-black animate-pulse" />
-              <span>FREE TERMINAL</span>
+              <Terminal className="w-3.5 h-3.5 text-slate-950" />
+              <span>TERMINAL</span>
             </button>
           )}
 
+          {/* Apple Watch Companion Glance View */}
+          <button
+            onClick={() => {
+              triggerHaptic("selection");
+              if (onSelectTab) onSelectTab("apple_watch");
+            }}
+            className="p-1.5 rounded-lg obsidian-pill-btn text-emerald-300 hover:text-emerald-200 border-emerald-500/35 cursor-pointer shrink-0"
+            title="Apple Watch Companion Mode & Glance View"
+          >
+            <Watch className="w-4 h-4 text-emerald-400" />
+          </button>
+
+          {/* Day / Dark Theme Mode Toggle */}
           {onToggleDayMode && (
             <button
               onClick={() => {
                 triggerHaptic("medium");
                 onToggleDayMode();
               }}
-              className={`px-2 py-1.5 border alien-block-cut-sm text-[10px] font-mono font-black transition-all active:scale-95 flex items-center gap-1 cursor-pointer shrink-0 ${
+              className={`p-1.5 rounded-lg border text-[10px] font-mono font-bold transition-all active:scale-95 flex items-center gap-1 cursor-pointer shrink-0 ${
                 isDayMode
-                  ? "bg-slate-200 text-slate-800 border-slate-400 shadow-lg"
-                  : "bg-neutral-900 text-slate-300 border-slate-500/40 hover:bg-slate-800"
+                  ? "bg-slate-200 text-slate-900 border-slate-400 shadow-md"
+                  : "obsidian-pill-btn text-slate-300 hover:text-white"
               }`}
               title="Toggle Day Mode / System Theme"
             >
-              <Contrast className="w-3.5 h-3.5" />
-              <span className="hidden md:inline font-bold">DAY MODE</span>
+              <Contrast className="w-4 h-4" />
             </button>
           )}
 
+          {/* Share Workstation */}
           <button
             onClick={() => {
               triggerHaptic("light");
               onOpenShare();
             }}
-            className="p-1.5 bg-neutral-900 border border-cyan-500/40 alien-block-cut-sm text-cyan-300 hover:bg-cyan-950/30 transition-all active:scale-90 cursor-pointer shrink-0"
-            title="Share App"
+            className="p-1.5 rounded-lg obsidian-pill-btn text-cyan-300 hover:text-white cursor-pointer shrink-0"
+            title="Share Stock Bloc Workstation"
           >
             <Share2 className="w-4 h-4" />
           </button>

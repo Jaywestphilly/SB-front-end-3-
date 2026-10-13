@@ -1681,3 +1681,149 @@ a:hover .font-alien,
   }
 }
 
+/* ==========================================================================
+   OBSIDIAN GLASSMORPHIC WORKSTATION UPGRADE (v2)
+   Multi-layered translucent obsidian, 1px specular top-edge illumination,
+   and spring-driven micro-interactions.
+   ========================================================================== */
+.tabular-telemetry {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+.obsidian-glass-header {
+  background: linear-gradient(
+    180deg,
+    rgba(4, 10, 20, 0.92) 0%,
+    rgba(2, 6, 14, 0.88) 100%
+  );
+  backdrop-filter: blur(28px) saturate(180%) contrast(115%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%) contrast(115%);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.24);
+  box-shadow:
+    0 12px 32px -8px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+    inset 0 -1px 0 0 rgba(0, 242, 255, 0.14);
+}
+
+.obsidian-glass-nav {
+  background: linear-gradient(
+    180deg,
+    rgba(5, 13, 25, 0.86) 0%,
+    rgba(2, 7, 15, 0.92) 100%
+  );
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.2);
+  box-shadow:
+    0 10px 28px -6px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.07);
+}
+
+.obsidian-command-deck {
+  background:
+    radial-gradient(120% 120% at 15% 0%, rgba(0, 242, 255, 0.09) 0%, transparent 55%),
+    radial-gradient(100% 100% at 85% 100%, rgba(212, 154, 106, 0.08) 0%, transparent 55%),
+    linear-gradient(165deg, rgba(6, 16, 29, 0.84) 0%, rgba(3, 8, 16, 0.92) 100%);
+  backdrop-filter: blur(24px) saturate(165%);
+  -webkit-backdrop-filter: blur(24px) saturate(165%);
+  border: 1px solid rgba(34, 211, 238, 0.28);
+  box-shadow:
+    0 18px 42px -10px rgba(0, 0, 0, 0.85),
+    0 0 24px -4px rgba(0, 242, 255, 0.12),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 1px 0 rgba(0, 0, 0, 0.9);
+}
+
+.obsidian-dropdown-glass {
+  background: linear-gradient(
+    165deg,
+    rgba(6, 15, 28, 0.96) 0%,
+    rgba(2, 6, 13, 0.98) 100%
+  );
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  border: 1px solid rgba(34, 211, 238, 0.42);
+  box-shadow:
+    0 24px 56px -8px rgba(0, 0, 0, 0.95),
+    0 0 28px rgba(0, 242, 255, 0.2),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.obsidian-pill-btn {
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(12, 25, 44, 0.68) 0%,
+    rgba(5, 12, 24, 0.82) 100%
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(34, 211, 238, 0.26);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.14);
+  transition:
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    color 0.18s ease;
+}
+
+.obsidian-pill-btn:hover {
+  transform: translateY(-1.5px);
+  background: linear-gradient(
+    180deg,
+    rgba(16, 36, 62, 0.82) 0%,
+    rgba(8, 20, 38, 0.92) 100%
+  );
+  border-color: rgba(34, 211, 238, 0.65);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.65),
+    0 0 14px rgba(0, 242, 255, 0.25),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.obsidian-pill-btn:active {
+  transform: translateY(0.5px) scale(0.975);
+}
+
+.obsidian-pill-btn-active {
+  background: linear-gradient(
+    135deg,
+    rgba(34, 211, 238, 0.96) 0%,
+    rgba(6, 182, 212, 0.92) 100%
+  ) !important;
+  color: #02060d !important;
+  border-color: #a5f3fc !important;
+  box-shadow:
+    0 0 20px rgba(34, 211, 238, 0.45),
+    0 6px 16px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+.obsidian-specular-rim {
+  position: relative;
+}
+
+.obsidian-specular-rim::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 6%;
+  right: 6%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.32) 30%,
+    rgba(34, 211, 238, 0.55) 50%,
+    rgba(255, 255, 255, 0.32) 70%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 15;
+}
+
+

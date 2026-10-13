@@ -31,37 +31,42 @@ interface TopNavbarProps {
   onOpenMissionHub?: () => void;
 }
 
-export const TopNavbar: React.FC<TopNavbarProps> = ({ activeTab, onSelectTab, onOpenTerminal, onOpenMissionHub }) => {
+export const TopNavbar: React.FC<TopNavbarProps> = ({
+  activeTab,
+  onSelectTab,
+  onOpenMissionHub,
+}) => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   const marketsMenu = [
     { id: "watchlist", label: "Live Watchlist Workstation", icon: TrendingUp },
-    { id: "intelligence", label: "13F Hedge Fund Intel", icon: Layers },
+    { id: "intelligence", label: "13F Hedge Fund & SEC Intel", icon: Layers },
     { id: "macro", label: "Macro Economic Briefings", icon: FileText },
+    { id: "news", label: "Live Market News & Video Feed", icon: Radio },
   ];
 
   const aiMenu = [
-    { id: "ai_revolution", label: "AI Infrastructure & Morgan Stanley Heatmap", icon: BarChart3 },
-    { id: "dyson_swarm", label: "Dyson Swarm Compute", icon: Orbit },
-    { id: "war_gov_ufo", label: "Defense Tech & Aerospace", icon: ShieldAlert },
+    { id: "ai_revolution", label: "AI Infrastructure & MS Heatmap", icon: BarChart3 },
+    { id: "dyson_swarm", label: "Dyson Swarm Compute Hub", icon: Orbit },
+    { id: "war_gov_ufo", label: "Defense Tech, Gov & Aerospace", icon: ShieldAlert },
     { id: "ai_insights", label: "Autonomous Agent Insights", icon: Cpu },
   ];
 
   const educationMenu = [
+    { id: "youtube", label: "Stock Bloc YouTube Channel (@stockbloc)", icon: Youtube },
     { id: "terminal_guide", label: "Terminal Guide & Manual", icon: Terminal },
-    { id: "mit_courses", label: "MIT & University Courses", icon: GraduationCap },
-    { id: "investopedia", label: "Investopedia Free Trading Game", icon: Sparkles },
+    { id: "mit_courses", label: "MIT & University Quant Courses", icon: GraduationCap },
+    { id: "investopedia", label: "Investopedia Free Trading Sim", icon: Sparkles },
     { id: "small_business", label: "Small Business & QSBS Tax Hub", icon: Briefcase },
-    { id: "youtube", label: "Free Game Educational Videos", icon: Radio },
   ];
 
   const agentPlatformMenu = [
-    { id: "web3_dot_btc", label: "Web3 Alpha & Vaults (DOT/BTC)", icon: ShieldCheck },
-    { id: "agents", label: "Agent Directory", icon: Globe },
-    { id: "agent_feed", label: "Agent Activity Stream", icon: Radio },
-    { id: "agent_join", label: "Join the Network", icon: Sparkles },
-    { id: "developers", label: "Developer Portal", icon: Terminal },
-    { id: "developer_docs", label: "API & SDK Docs", icon: BookOpen },
+    { id: "web3_dot_btc", label: "Web3 Alpha & Vaults (DOT / BTC)", icon: ShieldCheck },
+    { id: "agents", label: "Autonomous Agent Directory", icon: Globe },
+    { id: "agent_feed", label: "Live Agent Activity Stream", icon: Radio },
+    { id: "agent_join", label: "Register an Agent Node", icon: Sparkles },
+    { id: "developers", label: "x402 Developer Portal", icon: Terminal },
+    { id: "developer_docs", label: "API & SDK Documentation", icon: BookOpen },
     { id: "compare", label: "Compare vs Tavily & Twelve Data", icon: BarChart3 },
   ];
 
@@ -70,101 +75,136 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ activeTab, onSelectTab, on
     menuKey: string,
     IconHeader: React.ElementType,
     items: { id: string; label: string; icon: React.ElementType }[],
-    isActive: boolean
+    isActive: boolean,
   ) => {
+    const isOpen = activeDropdown === menuKey;
     return (
-      <div 
+      <div
         className="relative group"
         onMouseEnter={() => setActiveDropdown(menuKey)}
         onMouseLeave={() => setActiveDropdown(null)}
       >
         <button
-          className={`px-3 py-1.5 alien-block-cut-sm font-alien-hud text-[11px] flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none ${
-            isActive || activeDropdown === menuKey
-              ? "bg-cyan-400 text-black shadow-lg shadow-cyan-400/40 border border-cyan-200 glow-cyan"
-              : "text-cyan-300 hover:text-white hover:bg-cyan-950/40 border border-cyan-500/30"
+          onClick={() => {
+            triggerHaptic("selection");
+            if (items.length > 0) {
+              onSelectTab(items[0].id as ViewTab);
+            }
+          }}
+          className={`px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none ${
+            isActive
+              ? "obsidian-pill-btn obsidian-pill-btn-active font-bold"
+              : isOpen
+                ? "obsidian-pill-btn text-white border-cyan-400/70"
+                : "obsidian-pill-btn text-cyan-200/90 hover:text-white"
           }`}
         >
-          <IconHeader className="w-3.5 h-3.5 shrink-0" />
+          <IconHeader
+            className={`w-3.5 h-3.5 shrink-0 ${
+              isActive ? "text-slate-950" : "text-cyan-400"
+            }`}
+          />
           <span>{label}</span>
-          <ChevronDown className="w-3 h-3 opacity-70" />
+          <ChevronDown
+            className={`w-3 h-3 transition-transform duration-200 ${
+              isOpen ? "rotate-180" : "opacity-70"
+            }`}
+          />
         </button>
 
-        {activeDropdown === menuKey && (
-          <div className="absolute top-full left-0 mt-1 w-60 bg-neutral-950/95 border border-cyan-500/50 alien-block-cut-sm shadow-2xl p-1 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 backdrop-blur-xl">
-            {items.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    triggerHaptic("selection");
-                    setActiveDropdown(null);
-                    onSelectTab(item.id as ViewTab);
-                  }}
-                  className="w-full px-3 py-2 text-left font-alien-hud text-[10px] text-cyan-100 hover:bg-cyan-500/20 hover:text-white flex items-center gap-2 transition-colors cursor-pointer"
-                >
-                  <Icon className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
+        {isOpen && (
+          <div className="absolute top-full left-0 pt-1.5 w-64 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+            <div className="obsidian-dropdown-glass rounded-xl p-1.5 overflow-hidden">
+              {items.map((item) => {
+                const Icon = item.icon;
+                const itemActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      triggerHaptic("selection");
+                      setActiveDropdown(null);
+                      onSelectTab(item.id as ViewTab);
+                    }}
+                    className={`w-full px-3 py-2 rounded-lg text-left font-alien-hud text-[10px] flex items-center justify-between gap-2 transition-all cursor-pointer ${
+                      itemActive
+                        ? "bg-cyan-400/20 text-cyan-200 border border-cyan-400/40 font-bold"
+                        : "text-slate-200 hover:bg-cyan-500/15 hover:text-white border border-transparent"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2 truncate">
+                      <Icon
+                        className={`w-3.5 h-3.5 shrink-0 ${
+                          itemActive ? "text-cyan-300" : "text-cyan-400/80"
+                        }`}
+                      />
+                      <span className="truncate">{item.label}</span>
+                    </span>
+                    {itemActive && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
     );
   };
 
-  const isMarketsActive = ["watchlist", "intelligence", "macro", "brand"].includes(activeTab);
-  const isAiActive = ["dyson_swarm", "war_gov_ufo", "ai_insights", "ai_revolution", "satellite_map"].includes(activeTab);
-  const isEducationActive = ["investopedia", "small_business", "youtube", "terminal_guide", "mit_courses"].includes(activeTab);
+  const isMarketsActive = ["watchlist", "intelligence", "macro", "news"].includes(activeTab);
+  const isAiActive = [
+    "dyson_swarm",
+    "war_gov_ufo",
+    "ai_insights",
+    "ai_revolution",
+    "satellite_map",
+  ].includes(activeTab);
+  const isEducationActive = [
+    "investopedia",
+    "small_business",
+    "youtube",
+    "terminal_guide",
+    "mit_courses",
+  ].includes(activeTab);
+  const isAgentsActive = [
+    "agents",
+    "developers",
+    "agent_profile",
+    "agent_feed",
+    "agent_join",
+    "developer_docs",
+    "web3_dot_btc",
+    "compare",
+  ].includes(activeTab);
 
   return (
     <nav
-      className="hidden md:flex items-center justify-center gap-2 px-3 py-2 bg-black/95 border-b border-cyan-500/30 overflow-visible font-martian text-xs select-none relative z-40"
+      className="hidden md:flex items-center justify-center px-4 py-2 obsidian-glass-nav overflow-visible font-martian text-xs select-none relative z-20"
       aria-label="Desktop Top Navigation"
     >
-      <div className="flex items-center gap-2">
-        {/* 1. YOUTUBE & INTEL FEED (FIRST TAB) */}
-        <button
-          onClick={() => {
-            triggerHaptic("selection");
-            onSelectTab("news");
-          }}
-          className={`px-3 py-1.5 alien-block-cut-sm font-alien-hud text-[11px] flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none ${
-            activeTab === "news"
-              ? "bg-cyan-400 text-black shadow-lg shadow-cyan-400/40 border border-cyan-200 glow-cyan"
-              : "text-cyan-300 hover:text-white hover:bg-cyan-950/40 border border-cyan-500/30"
-          }`}
-          title="Combined YouTube & Intel Feed"
-        >
-          <Youtube className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-          <span>YOUTUBE & INTEL FEED</span>
-        </button>
+      <div className="max-w-[1800px] w-full flex items-center justify-center gap-2 flex-wrap">
+        {/* 1. WATCHLIST & MARKETS */}
+        {renderDropdown(
+          "MARKETS & WATCHLIST",
+          "markets",
+          TrendingUp,
+          marketsMenu,
+          isMarketsActive,
+        )}
 
-        {/* 2. COMMUNITY HUB & LIVE TERMINAL CHAT */}
-        <button
-          onClick={() => {
-            triggerHaptic("selection");
-            onSelectTab("community");
-          }}
-          className={`px-3 py-1.5 alien-block-cut-sm font-alien-hud text-[11px] flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none ${
-            activeTab === "community"
-              ? "bg-cyan-400 text-black shadow-lg shadow-cyan-400/40 border border-cyan-200 glow-cyan font-bold"
-              : "text-cyan-300 hover:text-white hover:bg-cyan-950/40 border border-cyan-500/40"
-          }`}
-          title="Community Alpha Theses, Profiles & Live Terminal Chat"
-        >
-          <Users className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-          <span>COMMUNITY</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-        </button>
-
-        {/* 3. MARKETS */}
-        {renderDropdown("MARKETS", "markets", TrendingUp, marketsMenu, isMarketsActive)}
-
-        {/* 3. AI */}
+        {/* 2. AI & DEEP TECH */}
         {renderDropdown("AI & TECH", "ai", Cpu, aiMenu, isAiActive)}
+
+        {/* 3. AGENTS & WEB3 */}
+        {renderDropdown(
+          "AGENTS & WEB3",
+          "agents",
+          Globe,
+          agentPlatformMenu,
+          isAgentsActive,
+        )}
 
         {/* 4. REAL ESTATE */}
         <button
@@ -172,13 +212,17 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ activeTab, onSelectTab, on
             triggerHaptic("selection");
             onSelectTab("real_estate");
           }}
-          className={`px-2.5 py-1 alien-block-cut-sm font-alien-hud text-[10px] sm:text-[11px] flex items-center gap-1.5 transition-all cursor-pointer focus-visible:outline-none ${
+          className={`px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none ${
             activeTab === "real_estate"
-              ? "bg-amber-400 text-black shadow-lg shadow-amber-400/30 border border-amber-200 glow-amber"
-              : "text-amber-300 hover:text-white hover:bg-amber-950/40 border border-amber-500/30"
+              ? "bg-amber-400 text-slate-950 font-bold shadow-[0_0_18px_rgba(245,158,11,0.4)] border border-amber-200"
+              : "obsidian-pill-btn text-amber-200/90 hover:text-amber-100 border-amber-500/30"
           }`}
         >
-          <Building2 className="w-3.5 h-3.5 shrink-0" />
+          <Building2
+            className={`w-3.5 h-3.5 shrink-0 ${
+              activeTab === "real_estate" ? "text-slate-950" : "text-amber-400"
+            }`}
+          />
           <span>REAL ESTATE</span>
         </button>
 
@@ -188,73 +232,78 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ activeTab, onSelectTab, on
             triggerHaptic("selection");
             onSelectTab("credit");
           }}
-          className={`px-3 py-1.5 alien-block-cut-sm font-alien-hud text-[11px] flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none ${
+          className={`px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none ${
             activeTab === "credit"
-              ? "bg-emerald-400 text-black shadow-lg shadow-emerald-400/30 border border-emerald-200 glow-emerald"
-              : "text-emerald-300 hover:text-white hover:bg-emerald-950/40 border border-emerald-500/30"
+              ? "bg-emerald-400 text-slate-950 font-bold shadow-[0_0_18px_rgba(16,185,129,0.4)] border border-emerald-200"
+              : "obsidian-pill-btn text-emerald-200/90 hover:text-emerald-100 border-emerald-500/30"
           }`}
         >
-          <ShieldCheck className="w-3.5 h-3.5" />
+          <ShieldCheck
+            className={`w-3.5 h-3.5 shrink-0 ${
+              activeTab === "credit" ? "text-slate-950" : "text-emerald-400"
+            }`}
+          />
           <span>CREDIT</span>
         </button>
 
-        {/* 6. EDUCATION */}
-        {renderDropdown("EDUCATION", "education", GraduationCap, educationMenu, isEducationActive)}
+        {/* 6. EDUCATION & YOUTUBE */}
+        {renderDropdown(
+          "EDUCATION & VIDEO",
+          "education",
+          GraduationCap,
+          educationMenu,
+          isEducationActive,
+        )}
 
-        {/* AGENT PLATFORM */}
-        {renderDropdown("AGENTS & WEB3", "agents", Globe, agentPlatformMenu, ["agents", "developers", "agent_profile", "agent_feed", "agent_join", "developer_docs", "web3_dot_btc", "compare"].includes(activeTab))}
-
-        {/* COMPARE (Direct Nav Link) */}
+        {/* 7. COMMUNITY HUB */}
         <button
           onClick={() => {
             triggerHaptic("selection");
-            onSelectTab("compare");
+            onSelectTab("community");
           }}
-          className={`px-3 py-1.5 alien-block-cut-sm font-alien-hud text-[11px] flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none ${
-            activeTab === "compare"
-              ? "bg-cyan-400 text-black shadow-lg shadow-cyan-400/40 border border-cyan-200 glow-cyan font-bold"
-              : "text-cyan-300 hover:text-white hover:bg-cyan-950/40 border border-cyan-500/30"
+          className={`px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none ${
+            activeTab === "community"
+              ? "obsidian-pill-btn obsidian-pill-btn-active font-bold"
+              : "obsidian-pill-btn text-cyan-200/90 hover:text-white"
           }`}
-          title="Stock Bloc vs Tavily vs Twelve Data Comparison Table"
+          title="Community Alpha Theses, Profiles & Live Terminal Chat"
         >
-          <BarChart3 className="w-3.5 h-3.5 text-cyan-400" />
-          <span>COMPARE</span>
+          <Users
+            className={`w-3.5 h-3.5 shrink-0 ${
+              activeTab === "community" ? "text-slate-950" : "text-cyan-400"
+            }`}
+          />
+          <span>COMMUNITY</span>
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${
+              activeTab === "community"
+                ? "bg-slate-950"
+                : "bg-emerald-400 animate-pulse"
+            }`}
+          />
         </button>
 
-        {/* 7. YOUTUBE CHANNEL VIDEOS */}
-        <button
-          onClick={() => {
-            triggerHaptic("selection");
-            onSelectTab("youtube");
-          }}
-          className={`px-3 py-1.5 alien-block-cut-sm font-alien-hud text-[11px] flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none ${
-            activeTab === "youtube"
-              ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30 border border-rose-300 glow-rose"
-              : "text-rose-300 hover:text-white hover:bg-rose-950/40 border border-rose-500/30"
-          }`}
-          title="Stock Bloc YouTube Channel Videos (@stockbloc)"
-        >
-          <Youtube className="w-3.5 h-3.5 text-rose-400" />
-          <span>YOUTUBE</span>
-        </button>
-
-        {/* 8. BOOKS & STORE (Top Button) */}
+        {/* 8. BOOKS & STORE */}
         <button
           onClick={() => {
             triggerHaptic("selection");
             onSelectTab("pricing");
           }}
-          className={`px-3 py-1.5 alien-block-cut-sm font-alien-hud text-[11px] flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none ${
+          className={`px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none ${
             activeTab === "pricing"
-              ? "bg-purple-400 text-black shadow-lg shadow-purple-400/30 border border-purple-200 glow-violet"
-              : "text-purple-300 hover:text-white hover:bg-purple-950/40 border border-purple-500/30"
+              ? "bg-purple-400 text-slate-950 font-bold shadow-[0_0_18px_rgba(168,85,247,0.4)] border border-purple-200"
+              : "obsidian-pill-btn text-purple-200/90 hover:text-purple-100 border-purple-500/30"
           }`}
         >
-          <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-          <span>BOOKS & STORE</span>
+          <BookOpen
+            className={`w-3.5 h-3.5 shrink-0 ${
+              activeTab === "pricing" ? "text-slate-950" : "text-purple-400"
+            }`}
+          />
+          <span>STORE & BOOKS</span>
         </button>
 
-        {/* 9. ABOUT US & MISSION HUB */}
+        {/* 9. ABOUT & MISSION HUB */}
         <button
           onClick={() => {
             triggerHaptic("selection");
@@ -264,33 +313,22 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({ activeTab, onSelectTab, on
               onSelectTab("brand");
             }
           }}
-          className={`px-3 py-1.5 alien-block-cut-sm font-alien-hud text-[11px] flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none ${
+          className={`px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none ${
             activeTab === "brand"
-              ? "bg-cyan-400 text-black shadow-lg shadow-cyan-400/30 border border-cyan-200 glow-cyan font-black"
-              : "text-cyan-300 hover:text-white hover:bg-cyan-950/40 border border-cyan-500/40"
+              ? "obsidian-pill-btn obsidian-pill-btn-active font-bold"
+              : "obsidian-pill-btn text-cyan-200/90 hover:text-white"
           }`}
-          title="About Stock Bloc, Mission Statement & Business Model"
+          title="About Stock Bloc, Mission Statement & Architecture"
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-          <span>ABOUT US</span>
+          <Sparkles
+            className={`w-3.5 h-3.5 shrink-0 ${
+              activeTab === "brand" ? "text-slate-950" : "text-amber-400"
+            }`}
+          />
+          <span>ABOUT</span>
         </button>
-
-        {/* 10. FREE TERMINAL (Top Button) */}
-        {onOpenTerminal && (
-          <button
-            onClick={() => {
-              triggerHaptic("selection");
-              onOpenTerminal();
-            }}
-            className="px-3.5 py-1.5 alien-block-cut-sm font-alien-hud text-[11px] flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap focus-visible:outline-none bg-amber-400 text-black shadow-lg shadow-amber-400/30 border border-amber-200 hover:bg-amber-300 glow-amber"
-            title="Open Stock Bloc Workstation Terminal"
-          >
-            <Terminal className="w-3.5 h-3.5 text-black animate-pulse" />
-            <span>FREE TERMINAL</span>
-          </button>
-        )}
-
       </div>
     </nav>
   );
 };
+

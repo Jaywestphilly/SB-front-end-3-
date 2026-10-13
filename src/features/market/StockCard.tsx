@@ -1376,20 +1376,20 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
         )}
       </div>
 
-      {/* Main Draggable iOS Glass Stock Card Row */}
+      {/* Main Draggable Glassmorphic Stock Card Row */}
       <motion.div
         drag="x"
         dragConstraints={{ left: onRemove ? -220 : -130, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
         whileHover={{
-          scale: 1.008,
-          y: -1,
-          transition: { type: "spring", stiffness: 500, damping: 18 },
+          scale: 1.006,
+          y: -2,
+          transition: { type: "spring", stiffness: 460, damping: 22 },
         }}
         whileTap={{
-          scale: 0.985,
-          transition: { type: "spring", stiffness: 600, damping: 14 },
+          scale: 0.988,
+          transition: { type: "spring", stiffness: 550, damping: 18 },
         }}
         animate={{ x: dragOffset }}
         transition={{ type: "spring", stiffness: 400, damping: 28 }}
@@ -1405,7 +1405,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
             onSelect(stock);
           }
         }}
-        className={`relative z-10 w-full px-4 py-3 rounded-xl alien-card dark-matter-pad StockCard-pad my-2 sm:my-2.5 transition-all duration-200 cursor-pointer overflow-hidden ${holoGlowClass} ${
+        className={`relative z-10 w-full px-4 py-3.5 rounded-2xl alien-card dark-matter-pad StockCard-pad obsidian-specular-rim my-2 transition-all duration-200 cursor-pointer overflow-hidden ${holoGlowClass} ${
           stock.isPinned ? "alien-card-active dark-matter-pad-active" : ""
         } ${
           isShaking ? "ring-2 ring-amber-400 bg-amber-950/20 animate-shake-card" : ""
@@ -1420,20 +1420,20 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
           background: cardTheme.background,
           borderColor: cardTheme.borderColor,
           boxShadow: cardTheme.boxShadow,
-          backdropFilter: "blur(24px) brightness(0.58) contrast(130%) saturate(145%)",
-          WebkitBackdropFilter: "blur(24px) brightness(0.58) contrast(130%) saturate(145%)",
+          backdropFilter: "blur(28px) brightness(0.62) contrast(132%) saturate(155%)",
+          WebkitBackdropFilter: "blur(28px) brightness(0.62) contrast(132%) saturate(155%)",
         }}
       >
-        {/* Flowing Internal Blue Plasma Conduit (Magma incorporated inside card, matching bottom buttons) */}
+        {/* Flowing Internal Blue Plasma Conduit */}
         <div className="magma-conduit-glow" />
 
-        {/* Gravitational Singularity Lens Flare (Matching bottom buttons) */}
-        <div 
+        {/* Gravitational Singularity Lens Flare */}
+        <div
           className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
           style={{
             background: stock.isPinned
               ? `radial-gradient(100% 100% at 50% 0%, rgba(${cardTheme.glowRgb}, 0.35) 0%, transparent 80%)`
-              : `radial-gradient(100% 100% at 50% 100%, rgba(${cardTheme.glowRgb}, 0.18) 0%, transparent 65%)`
+              : `radial-gradient(100% 100% at 50% 100%, rgba(${cardTheme.glowRgb}, 0.18) 0%, transparent 65%)`,
           }}
         />
 
@@ -1442,7 +1442,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
           className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden"
           aria-hidden="true"
           style={{
-            background: `radial-gradient(130% 120% at 50% 0%, rgba(${cardTheme.glowRgb}, 0.05) 0%, transparent 60%)`,
+            background: `radial-gradient(130% 120% at 50% 0%, rgba(${cardTheme.glowRgb}, 0.07) 0%, transparent 60%)`,
           }}
         />
 
@@ -1490,11 +1490,9 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
           </div>
         )}
 
-        <div
-          className="relative z-10 flex items-center justify-between w-full"
-        >
-          {/* Left Ticker & Subtitle/Shares & News Sentiment */}
-          <div className="flex flex-col min-w-[120px] max-w-[160px] pr-2">
+        <div className="relative z-10 flex items-center justify-between w-full gap-2">
+          {/* Left Ticker, SB Score Badge & Company Subtitle */}
+          <div className="flex flex-col min-w-[125px] max-w-[175px] sm:max-w-[210px] pr-2">
             <div className="flex items-center gap-1.5 flex-wrap">
               <button
                 onClick={(e) => {
@@ -1502,7 +1500,11 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                   triggerHaptic("selection");
                   toggleStarredTicker(stock.symbol);
                 }}
-                className={`flex items-center justify-center transition-all ${isStarred ? "text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]" : "text-neutral-600 hover:text-cyan-400"}`}
+                className={`flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${
+                  isStarred
+                    ? "text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.85)]"
+                    : "text-neutral-500 hover:text-cyan-300"
+                }`}
                 title={isStarred ? "Remove from My Bloc" : "Add to My Bloc"}
               >
                 <Star className={`w-4 h-4 ${isStarred ? "fill-amber-400" : ""}`} />
@@ -1521,7 +1523,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                             ? "text-orange-100"
                             : isPurple
                               ? "text-fuchsia-100"
-                              : "text-cyan-100"
+                              : "text-cyan-50"
                 }`}
               >
                 ${stock.symbol}
@@ -1531,7 +1533,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                 const sbStyle = getSBScoreColor(signal.score);
                 return (
                   <div
-                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 border alien-block-cut-sm transition-all ${sbStyle.badgeClass}`}
+                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border transition-all tabular-telemetry ${sbStyle.badgeClass}`}
                     title={`SB Score: ${signal.score}/100 (${sbStyle.tier} - ${sbStyle.tierDescription}) • 1D: ${signal.momentum.detail} • 52W: ${signal.relativeStrength.detail}`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sbStyle.dotClass}`} />
@@ -1542,49 +1544,53 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                 );
               })()}
               {stock.symbol.toUpperCase() === "SPCX" && (
-                <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-alien-hud alien-block-cut-sm flex items-center gap-1 shadow-md shadow-amber-500/10">
-                  <Star className="w-3 h-3 fill-amber-300" />
+                <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/45 text-[9px] font-alien-hud flex items-center gap-1 shadow-md shadow-amber-500/10">
+                  <Star className="w-2.5 h-2.5 fill-amber-300" />
                   TOP CONVICTION
                 </span>
               )}
               {stock.isPinned && stock.symbol.toUpperCase() !== "SPCX" && (
-                <span className="w-1.5 h-1.5 bg-cyan-400 animate-ping" />
+                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
               )}
               {isHighVolatility && (
                 <span
                   title="High Volatility (>3% movement)"
-                  className="text-[9px] text-amber-200 font-black bg-amber-950/80 px-2 py-1 border border-amber-400 alien-block-cut-sm glow-amber flex items-center justify-center min-w-[20px]"
+                  className="text-[9px] text-amber-200 font-black bg-amber-950/80 px-1.5 py-0.5 rounded-md border border-amber-400/70 flex items-center justify-center"
                 >
                   <Zap className="w-3 h-3 text-amber-300 fill-current" />
                 </span>
               )}
             </div>
-            <span className={`text-[11px] font-medium font-sans truncate ${
-              isOrange
-                ? "text-orange-300/90"
-                : isGold
-                  ? "text-amber-300/90"
-                  : isSilver
-                    ? "text-slate-300/90"
-                    : isCopper
-                      ? "text-orange-300/90"
-                      : isPurple
-                        ? "text-purple-300/90"
-                        : "text-cyan-400/80"
-            }`}>
+            <span
+              className={`text-[11px] font-medium font-sans truncate mt-0.5 ${
+                isOrange
+                  ? "text-orange-200/85"
+                  : isGold
+                    ? "text-amber-200/85"
+                    : isSilver
+                      ? "text-slate-300/90"
+                      : isCopper
+                        ? "text-orange-200/85"
+                        : isPurple
+                          ? "text-purple-200/85"
+                          : "text-cyan-300/80"
+              }`}
+            >
               {stock.name}
             </span>
           </div>
 
-          {/* Center Expanded Sparkline Chart */}
+          {/* Center Expanded Sparkline / Heikin-Ashi Chart */}
           <div className="flex-1 flex items-center justify-center px-1 sm:px-3 min-w-[110px]">
             {renderSparkline()}
           </div>
 
-          {/* Right Price, % Pill & Tap-to-Expand Indicator */}
-          <div className="flex flex-col items-end justify-center pl-2 min-w-[95px]">
+          {/* Right Price & 1D % Change Pill */}
+          <div className="flex flex-col items-end justify-center pl-2 min-w-[98px] tabular-telemetry">
             <span
-              className={`font-martian font-black text-sm tracking-tight ${isSyncing ? "glitch-text-refresh text-cyan-200" : "text-white"}`}
+              className={`font-martian font-black text-sm sm:text-[15px] tracking-tight ${
+                isSyncing ? "glitch-text-refresh text-cyan-200" : "text-white"
+              }`}
             >
               $
               {stock.price >= 1000
@@ -1595,23 +1601,23 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                 : stock.price.toFixed(2)}
             </span>
             <div
-              className={`min-w-[76px] text-center px-2 py-0.5 mt-1 alien-block-cut-sm font-martian font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-1 ${
+              className={`min-w-[78px] text-center px-2.5 py-0.5 mt-1 rounded-lg font-martian font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-1 ${
                 isOrange
-                  ? "bg-orange-950/90 text-orange-200 border-2 border-orange-400 glow-orange shadow-[0_0_14px_rgba(247,147,26,0.5)]"
+                  ? "bg-orange-950/90 text-orange-200 border border-orange-400/80 shadow-[0_0_14px_rgba(247,147,26,0.4)]"
                   : isGold
-                    ? "bg-amber-950/90 text-amber-200 border-2 border-amber-400 glow-gold shadow-[0_0_12px_rgba(245,158,11,0.45)]"
+                    ? "bg-amber-950/90 text-amber-200 border border-amber-400/80 shadow-[0_0_12px_rgba(245,158,11,0.35)]"
                     : isSilver
-                      ? "bg-slate-900/90 text-slate-100 border-2 border-slate-300 glow-silver shadow-[0_0_12px_rgba(226,232,240,0.45)]"
+                      ? "bg-slate-900/90 text-slate-100 border border-slate-300/80 shadow-[0_0_12px_rgba(226,232,240,0.35)]"
                       : isCopper
-                        ? "bg-orange-950/90 text-orange-200 border-2 border-orange-400 glow-copper shadow-[0_0_12px_rgba(234,88,12,0.45)]"
+                        ? "bg-orange-950/90 text-orange-200 border border-orange-400/80 shadow-[0_0_12px_rgba(234,88,12,0.35)]"
                         : isPurple
-                          ? "bg-purple-950/90 text-purple-200 border-2 border-purple-400 glow-purple shadow-[0_0_12px_rgba(192,38,211,0.45)]"
+                          ? "bg-purple-950/90 text-purple-200 border border-purple-400/80 shadow-[0_0_12px_rgba(192,38,211,0.35)]"
                           : isPositive
-                            ? "bg-emerald-950/90 text-emerald-300 border-2 border-emerald-400 glow-emerald"
-                            : "bg-red-950/90 text-red-300 border-2 border-red-500 glow-red"
+                            ? "bg-emerald-950/85 text-emerald-300 border border-emerald-400/75 shadow-[0_0_12px_rgba(16,185,129,0.28)]"
+                            : "bg-rose-950/85 text-rose-300 border border-rose-500/75 shadow-[0_0_12px_rgba(244,63,94,0.28)]"
               } ${isSyncing ? "glitch-text-refresh" : ""}`}
             >
-              <span className="text-[9px] font-bold text-current/80 mr-0.5">1D</span>
+              <span className="text-[9px] font-bold text-current/75 mr-0.5">1D</span>
               <span>
                 {isPositive ? "+" : ""}
                 {stock.changePercent.toFixed(2)}%
@@ -1620,55 +1626,95 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
           </div>
         </div>
 
-        {/* Glanceable Metrics Data Strip */}
+        {/* Glanceable Bottom Telemetry Strip */}
         {watchlistDataDensity === "detailed" && (
-          <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between gap-2 text-[10px] font-mono text-neutral-400 overflow-x-auto no-scrollbar select-none">
-            {/* 24H Range with Mini Track */}
-            <div className="flex items-center gap-1.5 shrink-0" title={`Today's Range: Low $${cardDayLow.toFixed(2)} - High $${cardDayHigh.toFixed(2)}`}>
-              <span className="text-[8.5px] text-neutral-500 font-sans uppercase font-bold">24H</span>
-              <span className="text-white/90 font-bold">${cardDayLow.toFixed(1)}</span>
-              <div className="w-10 h-1.5 bg-neutral-800 rounded-full overflow-hidden relative mx-0.5 border border-white/5">
+          <div className="relative z-10 mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between gap-3 text-[10px] font-mono text-slate-400 overflow-x-auto no-scrollbar select-none tabular-telemetry">
+            {/* 24H Range with Mini Progress Track */}
+            <div
+              className="flex items-center gap-1.5 shrink-0"
+              title={`Today's Range: Low $${cardDayLow.toFixed(2)} - High $${cardDayHigh.toFixed(2)}`}
+            >
+              <span className="text-[8.5px] text-slate-500 font-sans uppercase font-bold tracking-wider">
+                24H
+              </span>
+              <span className="text-slate-200 font-bold">${cardDayLow.toFixed(1)}</span>
+              <div className="w-12 h-1.5 bg-slate-900/90 rounded-full overflow-hidden relative mx-0.5 border border-white/10">
                 <div
                   className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-full"
                   style={{ width: `${cardDayPosPct}%` }}
                 />
               </div>
-              <span className="text-white/90 font-bold">${cardDayHigh.toFixed(1)}</span>
+              <span className="text-slate-200 font-bold">${cardDayHigh.toFixed(1)}</span>
             </div>
 
             {/* Volume & Relative Volume Multiplier */}
-            <div className="flex items-center gap-1 shrink-0" title={`Volume: ${stock.volume || "38M"} (RelVol: ${volatilityOverlay.relVolText})`}>
-              <span className="text-[8.5px] text-neutral-500 font-sans uppercase font-bold">VOL</span>
+            <div
+              className="flex items-center gap-1 shrink-0"
+              title={`Volume: ${stock.volume || "38M"} (RelVol: ${volatilityOverlay.relVolText})`}
+            >
+              <span className="text-[8.5px] text-slate-500 font-sans uppercase font-bold tracking-wider">
+                VOL
+              </span>
               <span className="text-cyan-300 font-bold">{stock.volume || "38M"}</span>
-              <span className="text-cyan-400/80 text-[9px] font-bold">({volatilityOverlay.relVolText})</span>
+              <span className="text-cyan-400/80 text-[9px] font-bold">
+                ({volatilityOverlay.relVolText})
+              </span>
             </div>
 
             {/* Market Cap */}
-            <div className="flex items-center gap-1 shrink-0" title={`Market Cap: ${stock.marketCap || "$2.4T"}`}>
-              <span className="text-[8.5px] text-neutral-500 font-sans uppercase font-bold">CAP</span>
-              <span className="text-neutral-200 font-bold">{stock.marketCap || "$2.4T"}</span>
+            <div
+              className="flex items-center gap-1 shrink-0"
+              title={`Market Cap: ${stock.marketCap || "$2.4T"}`}
+            >
+              <span className="text-[8.5px] text-slate-500 font-sans uppercase font-bold tracking-wider">
+                CAP
+              </span>
+              <span className="text-slate-200 font-bold">{stock.marketCap || "$2.4T"}</span>
             </div>
 
             {/* P/E Ratio */}
-            {stock.peRatio && (
-              <div className="hidden sm:flex items-center gap-1 shrink-0" title={`P/E Ratio: ${stock.peRatio}`}>
-                <span className="text-[8.5px] text-neutral-500 font-sans uppercase font-bold">P/E</span>
+            {stock.peRatio && stock.peRatio !== "N/A" && (
+              <div
+                className="hidden sm:flex items-center gap-1 shrink-0"
+                title={`P/E Ratio: ${stock.peRatio}`}
+              >
+                <span className="text-[8.5px] text-slate-500 font-sans uppercase font-bold tracking-wider">
+                  P/E
+                </span>
                 <span className="text-amber-300 font-bold">{stock.peRatio}</span>
               </div>
             )}
 
             {/* 52W Range */}
-            <div className="hidden md:flex items-center gap-1 shrink-0" title={`52-Week Range: $${cardLow52.toFixed(1)} - $${cardHigh52.toFixed(1)}`}>
-              <span className="text-[8.5px] text-neutral-500 font-sans uppercase font-bold">52W</span>
-              <span className="text-neutral-300">
-                ${cardLow52.toFixed(0)} - ${cardHigh52.toFixed(0)}
+            <div
+              className="hidden md:flex items-center gap-1 shrink-0"
+              title={`52-Week Range: $${cardLow52.toFixed(1)} - $${cardHigh52.toFixed(1)}`}
+            >
+              <span className="text-[8.5px] text-slate-500 font-sans uppercase font-bold tracking-wider">
+                52W
+              </span>
+              <span className="text-slate-300">
+                ${cardLow52.toFixed(0)} – ${cardHigh52.toFixed(0)}
               </span>
             </div>
 
             {/* Technical RSI */}
-            <div className="flex items-center gap-1 shrink-0" title={`RSI (14): ${cardRsi}`}>
-              <span className="text-[8.5px] text-neutral-500 font-sans uppercase font-bold">RSI</span>
-              <span className={`font-black ${cardRsi >= 70 ? "text-rose-400" : cardRsi <= 30 ? "text-emerald-400" : "text-amber-400"}`}>
+            <div
+              className="flex items-center gap-1 shrink-0"
+              title={`RSI (14): ${cardRsi}`}
+            >
+              <span className="text-[8.5px] text-slate-500 font-sans uppercase font-bold tracking-wider">
+                RSI
+              </span>
+              <span
+                className={`font-black ${
+                  cardRsi >= 70
+                    ? "text-rose-400"
+                    : cardRsi <= 30
+                      ? "text-emerald-400"
+                      : "text-amber-400"
+                }`}
+              >
                 {cardRsi}
               </span>
             </div>

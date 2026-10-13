@@ -1173,66 +1173,68 @@ export function App() {
       {/* Ticker Tape Marquee Pill Banner - Hidden on agents and agent_feed */}
       {!isAgentRoute && (
         <div
-          className={`w-full bg-[#020912]/90 border-b py-2 px-3 flex items-center gap-3 text-xs font-mono transition-all relative z-10 ${
+          className={`w-full bg-[#020813]/90 backdrop-blur-xl border-b py-1.5 px-3 flex items-center gap-2.5 text-xs font-mono transition-all relative z-10 ${
             isSyncingLiveQuotes
               ? "border-cyan-400 glitch-border-refresh"
-              : "border-cyan-500/30"
+              : "border-cyan-500/25"
           }`}
         >
-            <span
-              className={`text-[10px] uppercase font-black bg-cyan-950/95 px-2.5 py-1 border border-cyan-500/50 alien-block-cut-sm shrink-0 flex items-center gap-1.5 tracking-wider z-20 shadow-lg shadow-black/80 ${
-                isSyncingLiveQuotes
-                  ? "text-amber-300 glitch-text-refresh border-amber-400"
-                  : "text-cyan-300"
-              }`}
-            >
-              <Clock className="w-2.5 h-2.5 text-cyan-400 shrink-0" />
-              <span>UPDATED {formattedDataUpdateTime}</span>
-            </span>
+          <span
+            className={`text-[9px] uppercase font-black bg-cyan-950/90 px-2 py-0.5 rounded-md border border-cyan-500/40 shrink-0 flex items-center gap-1.5 tracking-wider z-20 shadow-md tabular-telemetry ${
+              isSyncingLiveQuotes
+                ? "text-amber-300 glitch-text-refresh border-amber-400"
+                : "text-cyan-300"
+            }`}
+          >
+            <Clock className="w-2.5 h-2.5 text-cyan-400 shrink-0" />
+            <span>LIVE · {formattedDataUpdateTime}</span>
+          </span>
 
-            <div className="overflow-hidden w-full relative flex items-center py-1 -my-1">
-              <div className="animate-marquee-scroll flex items-center gap-2">
-                {[...marqueeItems, ...marqueeItems].map((s, idx) => (
-                  <button
-                    key={`${s.symbol}-${idx}`}
-                    onClick={() => {
-                      triggerHaptic("selection");
-                      setSelectedStock(s);
-                    }}
-                    style={{ animationDelay: `${idx * 0.3}s` }}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 alien-block-cut-sm bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/30 text-cyan-200 shrink-0 font-bold active:scale-95 transition-all cursor-pointer text-xs ${
+          <div className="overflow-hidden w-full relative flex items-center py-0.5">
+            <div className="animate-marquee-scroll flex items-center gap-2">
+              {[...marqueeItems, ...marqueeItems].map((s, idx) => (
+                <button
+                  key={`${s.symbol}-${idx}`}
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setSelectedStock(s);
+                  }}
+                  style={{ animationDelay: `${idx * 0.3}s` }}
+                  className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#051224]/80 hover:bg-cyan-950/70 border border-cyan-500/25 hover:border-cyan-400/60 text-cyan-100 shrink-0 font-bold active:scale-95 transition-all cursor-pointer text-[11px] tabular-telemetry ${
+                    isSyncingLiveQuotes ? "glitch-border-refresh" : ""
+                  }`}
+                >
+                  <span
+                    className={`font-black ${
                       isSyncingLiveQuotes
-                        ? "glitch-border-refresh"
-                        : "animate-periodic-border-glitch"
+                        ? "glitch-text-refresh text-cyan-300"
+                        : "text-cyan-100"
                     }`}
                   >
-                    <span
-                      style={{ animationDelay: `${idx * 0.3}s` }}
-                      className={`font-black ${isSyncingLiveQuotes ? "glitch-text-refresh text-cyan-300" : "animate-periodic-text-glitch text-cyan-100"}`}
-                    >
-                      ${s.symbol}
-                    </span>
-                    <span className="font-mono text-cyan-300/80">
-                      $
-                      {s.price >= 1000
-                        ? s.price.toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })
-                        : s.price.toFixed(2)}
-                    </span>
-                    <span
-                      className={`font-black font-mono text-[10px] ${s.changePercent >= 0 ? "text-emerald-400" : "text-blue-400"}`}
-                    >
-                      {s.changePercent >= 0 ? "+" : ""}
-                      {s.changePercent.toFixed(1)}%
-                    </span>
-                    <NotFinancialAdviceTag className="scale-[0.6] origin-left -ml-1" />
-                  </button>
-                ))}
-              </div>
+                    ${s.symbol}
+                  </span>
+                  <span className="font-mono text-slate-300">
+                    $
+                    {s.price >= 1000
+                      ? s.price.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })
+                      : s.price.toFixed(2)}
+                  </span>
+                  <span
+                    className={`font-black font-mono text-[10px] ${
+                      s.changePercent >= 0 ? "text-emerald-400" : "text-rose-400"
+                    }`}
+                  >
+                    {s.changePercent >= 0 ? "+" : ""}
+                    {s.changePercent.toFixed(1)}%
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
+        </div>
       )}
 
       {/* Main Tab Views */}
@@ -1240,7 +1242,7 @@ export function App() {
         <Suspense fallback={<HubLoadingFallback />}>
           {(activeTab === "watchlist" || activeTab === "podcasts") && (
           <div className="w-full">
-            {/* Centralized Market Intelligence Control & Freshness Header */}
+            {/* Unified Watchlist Intelligence & Quick-Action Command Deck */}
             <WatchlistIntelligenceHeader
               isSyncing={isSyncingLiveQuotes}
               onRefresh={handleSyncLiveQuotes}
@@ -1248,6 +1250,8 @@ export function App() {
               marketDataSource={useMarketStore.getState().marketDataSource}
               marketDataIsStale={useMarketStore.getState().marketDataIsStale}
               totalStocks={stocks.length}
+              onSelectTab={handleSelectTab}
+              onOpenAuth={() => setIsAuthOpen(true)}
             />
 
             {isMarketConfigError && (
@@ -1267,74 +1271,8 @@ export function App() {
               itemCount={filteredStocks.length}
             />
 
-            {/* Brokerage Affiliate Action Bar */}
-            <div className="px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
-              <AffiliateLink
-                href="https://robinhood.com"
-                ctaText="OPEN BROKERAGE ACCOUNT"
-                partnerName="Robinhood"
-                category="watchlist"
-                variant="cyan"
-              />
-            </div>
-
-            {/* Quick Intelligence Action Bar */}
-            <div className="px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
-              <button
-                onClick={handleSyncLiveQuotes}
-                disabled={isSyncingLiveQuotes}
-                className="px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/40 text-xs font-black shrink-0 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                <RefreshCw
-                  className={`w-3.5 h-3.5 text-cyan-400 ${isSyncingLiveQuotes ? "animate-spin" : ""}`}
-                />
-                <span>
-                  {isSyncingLiveQuotes
-                    ? "Syncing Real Prices..."
-                    : "Sync Real Market Prices"}
-                </span>
-                {lastSyncTime && (
-                  <span className="text-[10px] text-neutral-400 font-mono">
-                    ({lastSyncTime})
-                  </span>
-                )}
-              </button>
-
-              <button
-                onClick={() => setIsAuthOpen(true)}
-                className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-extrabold shrink-0 flex items-center gap-1.5 cursor-pointer"
-              >
-                <Database className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Cloud Sync / Join</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab("dyson_swarm")}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 text-amber-300 border border-amber-500/40 text-xs font-extrabold shrink-0 flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/10"
-              >
-                <Orbit className="w-3.5 h-3.5 text-amber-400 animate-spin-slow" />
-                <span>Dyson Swarm Hub</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab("war_gov_ufo")}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-blue-500/20 to-purple-500/20 hover:from-amber-500/30 hover:to-purple-500/30 text-amber-300 border border-amber-500/40 text-xs font-black shrink-0 flex items-center gap-1.5 cursor-pointer shadow-lg shadow-amber-500/10"
-              >
-                <ShieldAlert className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                <span>WAR.GOV / UFO Matrix</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab("intelligence")}
-                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500/20 to-blue-500/20 hover:from-cyan-500/30 hover:to-blue-500/30 text-cyan-300 border border-cyan-500/40 text-xs font-extrabold shrink-0 flex items-center gap-1.5 cursor-pointer shadow-lg shadow-cyan-500/10"
-              >
-                <Database className="w-3.5 h-3.5 text-cyan-400" />
-                <span>13F & Intel Matrix</span>
-              </button>
-            </div>
-
             {/* Single Unified Watchlist Sorting Bar */}
-            <div className="px-4 py-2.5 bg-[#030a12]/90 border-y border-cyan-500/30 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar my-2 backdrop-blur-md">
+            <div className="mx-2 sm:mx-4 px-3 py-2 rounded-xl bg-[#030b16]/85 border border-cyan-500/25 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar my-1.5 backdrop-blur-xl shadow-lg">
               <div className="flex items-center gap-1.5 shrink-0 text-xs font-mono font-black text-cyan-300">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="font-tech uppercase tracking-wider text-[11px] text-cyan-200">
@@ -1349,7 +1287,7 @@ export function App() {
                     triggerHaptic("selection");
                     setSortDirection(sortDirection === "desc" ? "asc" : "desc");
                   }}
-                  className="px-2.5 py-1.5 alien-block-cut-sm bg-neutral-900 hover:bg-neutral-800 border border-cyan-500/40 text-cyan-300 text-[10px] font-black font-mono flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+                  className="px-2.5 py-1 rounded-lg obsidian-pill-btn text-cyan-200 text-[10px] font-black font-mono flex items-center gap-1 cursor-pointer"
                   title="Toggle Sort Direction (High-to-Low or Low-to-High)"
                 >
                   <ArrowUpDown className="w-3 h-3 text-cyan-400" />
@@ -1367,15 +1305,15 @@ export function App() {
                       setSortDirection("desc");
                     }
                   }}
-                  className={`px-2.5 py-1.5 alien-block-cut-sm font-black text-[11px] font-mono flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1.5 transition-all cursor-pointer ${
                     sortField === "signal"
-                      ? "bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-300 text-black shadow-md shadow-emerald-400/40 border border-emerald-300 font-bold"
-                      : "bg-neutral-900/90 text-emerald-300 hover:bg-neutral-800 border border-emerald-500/40 shadow-sm"
+                      ? "bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-300 text-slate-950 shadow-[0_0_16px_rgba(16,185,129,0.4)] border border-emerald-200 font-bold"
+                      : "obsidian-pill-btn text-emerald-300 border-emerald-500/35"
                   }`}
                   title="Sort by Stock Bloc Quant Score (0-100 Rating)"
                 >
                   <Sparkles
-                    className={`w-3.5 h-3.5 ${sortField === "signal" ? "text-black fill-current" : "text-emerald-400 fill-emerald-400/30"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "signal" ? "text-slate-950 fill-current" : "text-emerald-400 fill-emerald-400/30"}`}
                   />
                   <span>SB Score</span>
                 </button>
@@ -1390,15 +1328,15 @@ export function App() {
                       setSortField("marketCap");
                     }
                   }}
-                  className={`px-2.5 py-1.5 alien-block-cut-sm font-black text-[11px] font-mono flex items-center gap-1 transition-all active:scale-95 cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "marketCap"
-                      ? "bg-cyan-400 text-black shadow-md shadow-cyan-400/30 border border-cyan-300 font-bold"
-                      : "bg-neutral-900/90 text-cyan-300 hover:bg-neutral-800 border border-cyan-500/30"
+                      ? "obsidian-pill-btn obsidian-pill-btn-active font-bold"
+                      : "obsidian-pill-btn text-cyan-200"
                   }`}
                   title="Sort by Market Capitalization (High/Low)"
                 >
                   <DollarSign
-                    className={`w-3.5 h-3.5 ${sortField === "marketCap" ? "text-black" : "text-cyan-400"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "marketCap" ? "text-slate-950" : "text-cyan-400"}`}
                   />
                   <span>Market Cap</span>
                 </button>
@@ -1410,15 +1348,15 @@ export function App() {
                     setSortField("changePercent");
                     setSortDirection("desc");
                   }}
-                  className={`px-2.5 py-1.5 alien-block-cut-sm font-black text-[11px] font-mono flex items-center gap-1 transition-all active:scale-95 cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "changePercent" && sortDirection === "desc"
-                      ? "bg-emerald-400 text-black shadow-md shadow-emerald-400/30 border border-emerald-300 font-bold"
-                      : "bg-neutral-900/90 text-emerald-300 hover:bg-neutral-800 border border-emerald-500/30"
+                      ? "bg-emerald-400 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.35)] border border-emerald-200 font-bold"
+                      : "obsidian-pill-btn text-emerald-300 border-emerald-500/30"
                   }`}
                   title="Sort by Top Gainers (% Change High to Low)"
                 >
                   <TrendingUp
-                    className={`w-3.5 h-3.5 ${sortField === "changePercent" && sortDirection === "desc" ? "text-black" : "text-emerald-400"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "changePercent" && sortDirection === "desc" ? "text-slate-950" : "text-emerald-400"}`}
                   />
                   <span>Gainers</span>
                 </button>
@@ -1430,15 +1368,15 @@ export function App() {
                     setSortField("changePercent");
                     setSortDirection("asc");
                   }}
-                  className={`px-2.5 py-1.5 alien-block-cut-sm font-black text-[11px] font-mono flex items-center gap-1 transition-all active:scale-95 cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "changePercent" && sortDirection === "asc"
-                      ? "bg-blue-400 text-black shadow-md shadow-blue-400/30 border border-blue-300 font-bold"
-                      : "bg-neutral-900/90 text-blue-300 hover:bg-neutral-800 border border-blue-500/30"
+                      ? "bg-rose-400 text-slate-950 shadow-[0_0_14px_rgba(244,63,94,0.35)] border border-rose-200 font-bold"
+                      : "obsidian-pill-btn text-rose-300 border-rose-500/30"
                   }`}
                   title="Sort by Top Losers (% Change Low to High)"
                 >
                   <TrendingUp
-                    className={`w-3.5 h-3.5 rotate-180 ${sortField === "changePercent" && sortDirection === "asc" ? "text-black" : "text-blue-400"}`}
+                    className={`w-3.5 h-3.5 rotate-180 ${sortField === "changePercent" && sortDirection === "asc" ? "text-slate-950" : "text-rose-400"}`}
                   />
                   <span>Losers</span>
                 </button>
@@ -1453,15 +1391,15 @@ export function App() {
                       setSortField("volume");
                     }
                   }}
-                  className={`px-2.5 py-1.5 alien-block-cut-sm font-black text-[11px] font-mono flex items-center gap-1 transition-all active:scale-95 cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "volume"
-                      ? "bg-cyan-400 text-black shadow-md shadow-cyan-400/30 border border-cyan-300 font-bold"
-                      : "bg-neutral-900/90 text-cyan-300 hover:bg-neutral-800 border border-cyan-500/30"
+                      ? "obsidian-pill-btn obsidian-pill-btn-active font-bold"
+                      : "obsidian-pill-btn text-cyan-200"
                   }`}
                   title="Sort by Trading Volume"
                 >
                   <BarChart3
-                    className={`w-3.5 h-3.5 ${sortField === "volume" ? "text-black" : "text-cyan-400"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "volume" ? "text-slate-950" : "text-cyan-400"}`}
                   />
                   <span>Volume</span>
                 </button>
@@ -1476,15 +1414,15 @@ export function App() {
                       setSortField("rsi");
                     }
                   }}
-                  className={`px-2.5 py-1.5 alien-block-cut-sm font-black text-[11px] font-mono flex items-center gap-1 transition-all active:scale-95 cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "rsi"
-                      ? "bg-purple-400 text-black shadow-md shadow-purple-400/30 border border-purple-300 font-bold"
-                      : "bg-neutral-900/90 text-purple-300 hover:bg-neutral-800 border border-purple-500/30"
+                      ? "bg-purple-400 text-slate-950 shadow-[0_0_14px_rgba(168,85,247,0.35)] border border-purple-200 font-bold"
+                      : "obsidian-pill-btn text-purple-300 border-purple-500/30"
                   }`}
                   title="Sort by RSI Momentum"
                 >
                   <Activity
-                    className={`w-3.5 h-3.5 ${sortField === "rsi" ? "text-black" : "text-purple-400"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "rsi" ? "text-slate-950" : "text-purple-400"}`}
                   />
                   <span>RSI</span>
                 </button>
@@ -1499,15 +1437,15 @@ export function App() {
                       setSortField("volatility");
                     }
                   }}
-                  className={`px-2.5 py-1.5 alien-block-cut-sm font-black text-[11px] font-mono flex items-center gap-1 transition-all active:scale-95 cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "volatility"
-                      ? "bg-amber-400 text-black shadow-md shadow-amber-400/30 border border-amber-300 font-bold"
-                      : "bg-neutral-900/90 text-amber-300 hover:bg-neutral-800 border border-amber-500/30"
+                      ? "bg-amber-400 text-slate-950 shadow-[0_0_14px_rgba(245,158,11,0.35)] border border-amber-200 font-bold"
+                      : "obsidian-pill-btn text-amber-300 border-amber-500/30"
                   }`}
                   title="Sort by Volatility"
                 >
                   <Zap
-                    className={`w-3.5 h-3.5 ${sortField === "volatility" ? "text-black" : "text-amber-400"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "volatility" ? "text-slate-950" : "text-amber-400"}`}
                   />
                   <span>Volatility</span>
                 </button>
@@ -1522,15 +1460,15 @@ export function App() {
                       setSortField("price");
                     }
                   }}
-                  className={`px-2.5 py-1.5 alien-block-cut-sm font-black text-[11px] font-mono flex items-center gap-1 transition-all active:scale-95 cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "price"
-                      ? "bg-blue-400 text-black shadow-md shadow-blue-400/30 border border-blue-300 font-bold"
-                      : "bg-neutral-900/90 text-blue-300 hover:bg-neutral-800 border border-blue-500/30"
+                      ? "obsidian-pill-btn obsidian-pill-btn-active font-bold"
+                      : "obsidian-pill-btn text-cyan-200"
                   }`}
                   title="Sort by Share Price"
                 >
                   <DollarSign
-                    className={`w-3.5 h-3.5 ${sortField === "price" ? "text-black" : "text-blue-400"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "price" ? "text-slate-950" : "text-cyan-400"}`}
                   />
                   <span>Price</span>
                 </button>
@@ -1539,17 +1477,17 @@ export function App() {
                 <button
                   onClick={handleExportWatchlistCsv}
                   data-testid="export-watchlist-csv"
-                  className="px-2.5 py-1.5 alien-block-cut-sm bg-emerald-400 hover:bg-emerald-300 text-black font-black text-[11px] font-mono flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-md shadow-emerald-400/20"
+                  className="px-2.5 py-1 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-[11px] font-mono flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
                   title="Export Watchlist to CSV File"
                 >
-                  <Download className="w-3.5 h-3.5 text-black" />
-                  <span>EXPORT CSV</span>
+                  <Download className="w-3.5 h-3.5 text-slate-950" />
+                  <span>CSV</span>
                 </button>
               </div>
             </div>
 
             {/* Ticker List Container */}
-            <div className="w-full mt-2 relative rounded-2xl overflow-hidden min-h-[140px] border border-cyan-950/40 alien-grid-subtle p-1 sm:p-1.5 transition-all duration-300">
+            <div className="w-full mt-1.5 relative rounded-2xl overflow-hidden min-h-[140px] border border-cyan-500/20 alien-grid-subtle p-1.5 sm:p-2 transition-all duration-300">
               <div className="relative z-10 w-full">
 
               <AnimatePresence mode="popLayout">
