@@ -27,6 +27,7 @@ import { validateSecLimit } from './server/x402InputValidation.js';
 import { issueUiCookie } from './server/uiSession.js';
 import { fetchRealStockQuote, fetchYahooQuote } from './server/marketQuoteService.js';
 import { handleToolPageRequest } from './server/toolPagesSsr.js';
+import { registerReportRoutes } from './server/reportService.js';
 
 const app = express();
 const portArgIndex = process.argv.indexOf('--port');
@@ -4997,6 +4998,9 @@ app.get('/sitemap.xml', (_req, res) => {
 app.get('/tools', handleToolPageRequest);
 app.get('/tools/:slug', handleToolPageRequest);
 app.all('/tools/*', handleToolPageRequest);
+
+// Human Card-Paid Report Flow Routes (GET /report, GET /report/success, GET /report/view/:session_id)
+registerReportRoutes(app);
 
 // Explicit Public Static Serving for Raw JSON Backend Feeds
 const publicFolder = path.join(process.cwd(), 'public');
