@@ -1957,10 +1957,22 @@ secAnalystRouter.post(
         });
       }
 
+      const secJobExample = {
+        method: 'POST',
+        url: req.originalUrl?.includes('/analyst')
+          ? 'https://stockbloc.ai.studio/api/v1/sec/analyst'
+          : 'https://stockbloc.ai.studio/api/v1/sec/job',
+        body: {
+          ticker: 'AAPL',
+          filingType: '10-K'
+        }
+      };
+
       if (!ticker || !filingType) {
         return res.status(400).json({
           error: 'Validation error: "ticker" and "filingType" are required.',
-          code: 'INVALID_INPUT'
+          code: 'INVALID_INPUT',
+          example: secJobExample
         });
       }
 
@@ -1978,7 +1990,8 @@ secAnalystRouter.post(
       if (mode !== 'standard' && mode !== 'diff') {
         return res.status(400).json({
           error: 'Validation error: "mode" must be one of: standard, diff.',
-          code: 'INVALID_INPUT'
+          code: 'INVALID_INPUT',
+          example: secJobExample
         });
       }
 

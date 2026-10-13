@@ -107,8 +107,10 @@
         "description": "Real-time stock quote for a specific ticker symbol. Settled via x402 USDC micropayment ($0.01 USDC).",
         "operationId": "getMarketQuote",
         "parameters": [
-          { "name": "symbol", "in": "query", "required": true, "schema": { "type": "string" }, "example": "NVDA" }
+          { "name": "symbol", "in": "query", "required": true, "description": "Stock ticker symbol (e.g. AAPL). 'ticker' is also accepted as an alias.", "schema": { "type": "string" }, "example": "AAPL" },
+          { "name": "ticker", "in": "query", "required": false, "description": "Documented alias for symbol.", "schema": { "type": "string" }, "example": "AAPL" }
         ],
+        "x-example-request": "https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL",
         "x-payment-info": {
           "price": { "mode": "fixed", "currency": "USD", "amount": "0.010000" },
           "protocols": [{
@@ -384,12 +386,23 @@
                 "type": "object",
                 "required": ["ticker", "filingType"],
                 "properties": {
-                  "ticker": { "type": "string", "example": "NVDA" },
+                  "ticker": { "type": "string", "example": "AAPL" },
                   "filingType": { "type": "string", "enum": ["10-K", "10-Q", "8-K"], "example": "10-K" },
                   "question": { "type": "string", "example": "What are the primary supply chain risks?" }
-                }
-              }
+                },
+                "example": { "ticker": "AAPL", "filingType": "10-K" }
+              },
+              "example": { "ticker": "AAPL", "filingType": "10-K" }
             }
+          },
+          "example": { "ticker": "AAPL", "filingType": "10-K" }
+        },
+        "x-example-request": {
+          "method": "POST",
+          "url": "https://stockbloc.ai.studio/api/v1/sec/job",
+          "body": {
+            "ticker": "AAPL",
+            "filingType": "10-K"
           }
         },
         "x-payment-info": {
@@ -454,12 +467,23 @@
                 "type": "object",
                 "required": ["ticker", "filingType"],
                 "properties": {
-                  "ticker": { "type": "string", "example": "NVDA" },
+                  "ticker": { "type": "string", "example": "AAPL" },
                   "filingType": { "type": "string", "enum": ["10-K", "10-Q", "8-K"], "example": "10-K" },
                   "question": { "type": "string", "example": "What are the primary supply chain risks?" }
-                }
-              }
+                },
+                "example": { "ticker": "AAPL", "filingType": "10-K" }
+              },
+              "example": { "ticker": "AAPL", "filingType": "10-K" }
             }
+          },
+          "example": { "ticker": "AAPL", "filingType": "10-K" }
+        },
+        "x-example-request": {
+          "method": "POST",
+          "url": "https://stockbloc.ai.studio/api/v1/sec/analyst",
+          "body": {
+            "ticker": "AAPL",
+            "filingType": "10-K"
           }
         },
         "x-payment-info": {
@@ -1023,8 +1047,9 @@
         "description": "Comprehensive earnings preparation pack combining SEC 13F whale accumulation, 10-K/10-Q filing audit, and investment thesis memo in one call. Settled via x402 USDC micropayment ($0.35 USDC).",
         "operationId": "getEarningsPack",
         "parameters": [
-          { "name": "ticker", "in": "query", "required": true, "schema": { "type": "string" }, "example": "NVDA" }
+          { "name": "ticker", "in": "query", "required": true, "schema": { "type": "string" }, "example": "AAPL" }
         ],
+        "x-example-request": "https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack?ticker=AAPL",
         "x-payment-info": {
           "price": { "mode": "fixed", "currency": "USD", "amount": "0.350000" },
           "protocols": [{

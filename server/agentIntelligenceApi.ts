@@ -1125,8 +1125,12 @@ agentIntelligenceRouter.get('/earnings-pack', async (req, res) => {
     const rawTicker = req.query.ticker || req.query.symbol;
     if (!rawTicker || typeof rawTicker !== 'string' || !rawTicker.trim()) {
       return res.status(400).json({
-        error: 'Validation error: "ticker" query parameter is required (e.g. ?ticker=NVDA)',
-        code: 'INVALID_TICKER'
+        error: 'Validation error: "ticker" query parameter is required (e.g. ?ticker=AAPL)',
+        code: 'INVALID_INPUT',
+        example: {
+          method: 'GET',
+          url: 'https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack?ticker=AAPL'
+        }
       });
     }
 

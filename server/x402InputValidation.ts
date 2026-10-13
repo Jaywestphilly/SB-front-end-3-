@@ -11,8 +11,10 @@ export interface ValidationFailure {
   error: string;
   message: string;
   field?: string;
+  example?: any;
   charged: false;
   allowHeader?: string;
+  customJson?: any;
 }
 
 export type PricedValidationResult = ValidationSuccess | ValidationFailure;
@@ -111,6 +113,10 @@ export async function validatePricedRequestInput(
           error: 'Validation error: "symbol" or "ticker" query parameter is required.',
           message: 'Validation error: "symbol" or "ticker" query parameter is required.',
           field: 'symbol',
+          example: {
+            method: 'GET',
+            url: 'https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL'
+          },
           charged: false
         };
       }
@@ -122,6 +128,10 @@ export async function validatePricedRequestInput(
           error: `Invalid symbol format: "${sym}".`,
           message: `Invalid symbol format: "${sym}".`,
           field: 'symbol',
+          example: {
+            method: 'GET',
+            url: 'https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL'
+          },
           charged: false
         };
       }
@@ -157,6 +167,10 @@ export async function validatePricedRequestInput(
           error: `Invalid symbol format in path: "${decoded}".`,
           message: `Invalid symbol format in path: "${decoded}".`,
           field: 'symbol',
+          example: {
+            method: 'GET',
+            url: 'https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL'
+          },
           charged: false
         };
       }
@@ -279,6 +293,10 @@ export async function validatePricedRequestInput(
         error: 'Validation error: "ticker" query parameter is required for earnings pack.',
         message: 'Validation error: "ticker" query parameter is required for earnings pack.',
         field: 'ticker',
+        example: {
+          method: 'GET',
+          url: 'https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack?ticker=AAPL'
+        },
         charged: false
       };
     }
@@ -290,6 +308,10 @@ export async function validatePricedRequestInput(
         error: `Invalid ticker format: "${ticker}".`,
         message: `Invalid ticker format: "${ticker}".`,
         field: 'ticker',
+        example: {
+          method: 'GET',
+          url: 'https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack?ticker=AAPL'
+        },
         charged: false
       };
     }
@@ -310,6 +332,17 @@ export async function validatePricedRequestInput(
       };
     }
     const { ticker, filingType, mode } = body || {};
+    const secJobExample = {
+      method: 'POST',
+      url: normalizedPath.includes('/analyst')
+        ? 'https://stockbloc.ai.studio/api/v1/sec/analyst'
+        : 'https://stockbloc.ai.studio/api/v1/sec/job',
+      body: {
+        ticker: 'AAPL',
+        filingType: '10-K'
+      }
+    };
+
     if (!ticker || typeof ticker !== 'string' || !ticker.trim()) {
       return {
         valid: false,
@@ -318,6 +351,7 @@ export async function validatePricedRequestInput(
         error: 'Validation error: "ticker" is required and cannot be empty.',
         message: 'Validation error: "ticker" is required and cannot be empty.',
         field: 'ticker',
+        example: secJobExample,
         charged: false
       };
     }
@@ -329,6 +363,7 @@ export async function validatePricedRequestInput(
         error: `Invalid ticker format: "${ticker}".`,
         message: `Invalid ticker format: "${ticker}".`,
         field: 'ticker',
+        example: secJobExample,
         charged: false
       };
     }
@@ -342,6 +377,7 @@ export async function validatePricedRequestInput(
         error: `Validation error: "filingType" must be one of: ${allowedTypes.join(', ')}.`,
         message: `Validation error: "filingType" must be one of: ${allowedTypes.join(', ')}.`,
         field: 'filingType',
+        example: secJobExample,
         charged: false
       };
     }
@@ -355,6 +391,7 @@ export async function validatePricedRequestInput(
           error: 'Validation error: "mode" must be one of: standard, diff.',
           message: 'Validation error: "mode" must be one of: standard, diff.',
           field: 'mode',
+          example: secJobExample,
           charged: false
         };
       }
@@ -366,6 +403,7 @@ export async function validatePricedRequestInput(
           error: 'Validation error: mode "diff" supports 10-K and 10-Q only. Received: 8-K.',
           message: 'Validation error: mode "diff" supports 10-K and 10-Q only. Received: 8-K.',
           field: 'filingType',
+          example: secJobExample,
           charged: false
         };
       }

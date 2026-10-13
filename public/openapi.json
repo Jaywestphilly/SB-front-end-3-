@@ -187,12 +187,24 @@
             "name": "symbol",
             "in": "query",
             "required": true,
+            "description": "Stock ticker symbol (e.g. AAPL). 'ticker' is also accepted as an alias.",
             "schema": {
               "type": "string"
             },
-            "example": "NVDA"
+            "example": "AAPL"
+          },
+          {
+            "name": "ticker",
+            "in": "query",
+            "required": false,
+            "description": "Documented alias for symbol.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "AAPL"
           }
         ],
+        "x-example-request": "https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL",
         "x-payment-info": {
           "price": {
             "mode": "fixed",
@@ -572,7 +584,7 @@
                 "properties": {
                   "ticker": {
                     "type": "string",
-                    "example": "NVDA"
+                    "example": "AAPL"
                   },
                   "filingType": {
                     "type": "string",
@@ -595,9 +607,29 @@
                     ],
                     "default": "standard"
                   }
+                },
+                "example": {
+                  "ticker": "AAPL",
+                  "filingType": "10-K"
                 }
+              },
+              "example": {
+                "ticker": "AAPL",
+                "filingType": "10-K"
               }
             }
+          },
+          "example": {
+            "ticker": "AAPL",
+            "filingType": "10-K"
+          }
+        },
+        "x-example-request": {
+          "method": "POST",
+          "url": "https://stockbloc.ai.studio/api/v1/sec/job",
+          "body": {
+            "ticker": "AAPL",
+            "filingType": "10-K"
           }
         },
         "x-payment-info": {
@@ -676,7 +708,7 @@
                 "properties": {
                   "ticker": {
                     "type": "string",
-                    "example": "NVDA"
+                    "example": "AAPL"
                   },
                   "filingType": {
                     "type": "string",
@@ -691,9 +723,29 @@
                     "type": "string",
                     "example": "What are the primary supply chain risks?"
                   }
+                },
+                "example": {
+                  "ticker": "AAPL",
+                  "filingType": "10-K"
                 }
+              },
+              "example": {
+                "ticker": "AAPL",
+                "filingType": "10-K"
               }
             }
+          },
+          "example": {
+            "ticker": "AAPL",
+            "filingType": "10-K"
+          }
+        },
+        "x-example-request": {
+          "method": "POST",
+          "url": "https://stockbloc.ai.studio/api/v1/sec/analyst",
+          "body": {
+            "ticker": "AAPL",
+            "filingType": "10-K"
           }
         },
         "x-payment-info": {
@@ -1425,9 +1477,10 @@
             "schema": {
               "type": "string"
             },
-            "example": "NVDA"
+            "example": "AAPL"
           }
         ],
+        "x-example-request": "https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack?ticker=AAPL",
         "x-payment-info": {
           "price": {
             "mode": "fixed",

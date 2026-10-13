@@ -229,7 +229,8 @@ app.get('/.well-known/x402', (_req, res) => {
     priceUsd: ep.priceUsd,
     priceDisplay: ep.priceDisplay,
     atomicAmount: ep.atomicAmount,
-    description: ep.description
+    description: ep.description,
+    ...(ep.exampleRequest ? { exampleRequest: ep.exampleRequest } : {})
   }));
 
   return res.status(200).json({
@@ -238,7 +239,8 @@ app.get('/.well-known/x402', (_req, res) => {
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     payTo: recipient,
     facilitator: 'https://api.cdp.coinbase.com/platform/v2/x402',
-    endpoints
+    endpoints,
+    resources: endpoints
   });
 });
 
@@ -1299,7 +1301,12 @@ app.get(['/api/live-quote/:symbol', '/api/v1/market/quote/:symbol', '/api/v1/mar
   if (!rawSymbol || typeof rawSymbol !== 'string' || !rawSymbol.trim()) {
     return res.status(400).json({
       error: 'invalid_symbol',
-      message: 'Query parameter "symbol" or "ticker" (or URL path /:symbol) is required (e.g. ?symbol=NVDA)'
+      code: 'INVALID_INPUT',
+      message: 'Query parameter "symbol" or "ticker" (or URL path /:symbol) is required (e.g. ?symbol=AAPL)',
+      example: {
+        method: 'GET',
+        url: 'https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL'
+      }
     });
   }
 

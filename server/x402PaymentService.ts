@@ -36,6 +36,7 @@ export interface X402PricedEndpoint {
   priceDisplay: string;
   atomicAmount: string; // 6 decimal string
   description: string;
+  exampleRequest?: any;
   discoveryExtension?: any;
 }
 
@@ -48,7 +49,11 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.35,
     priceDisplay: '$0.35',
     atomicAmount: '350000', // 0.35 * 10^6
-    description: 'Comprehensive earnings preparation pack combining SEC 13F whale accumulation, 10-K/10-Q filing audit, and investment thesis memo.'
+    description: 'Comprehensive earnings preparation pack combining SEC 13F whale accumulation, 10-K/10-Q filing audit, and investment thesis memo.',
+    exampleRequest: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack?ticker=AAPL'
+    }
   },
   // Market Data Endpoints ($0.01 USDC)
   market_data: {
@@ -58,7 +63,11 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.01,
     priceDisplay: '$0.01',
     atomicAmount: '10000', // 0.01 * 10^6
-    description: 'Real-time verified market data, Super Sonic Tsunami watchlist, and ticker prices.'
+    description: 'Real-time verified market data, Super Sonic Tsunami watchlist, and ticker prices.',
+    exampleRequest: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL'
+    }
   },
   // SB Score Quant Intelligence ($0.05 USDC)
   sb_score: {
@@ -68,7 +77,11 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.05,
     priceDisplay: '$0.05',
     atomicAmount: '50000', // 0.05 * 10^6
-    description: '0-100 SB Score with 5-factor quantitative breakout: Momentum, Trend, RSI, Volume, and Volatility.'
+    description: '0-100 SB Score with 5-factor quantitative breakout: Momentum, Trend, RSI, Volume, and Volatility.',
+    exampleRequest: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/data/sb-score?symbol=AAPL'
+    }
   },
   // SEC & 13F Whale Intelligence ($0.10 USDC)
   sec_13f_intel: {
@@ -78,7 +91,11 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.10,
     priceDisplay: '$0.10',
     atomicAmount: '100000', // 0.10 * 10^6
-    description: 'Institutional 13F whale filings, hedge fund shifts, and audited EDGAR risk intelligence. Free sample: https://stockbloc.ai.studio/api/v1/data/sec/sample'
+    description: 'Institutional 13F whale filings, hedge fund shifts, and audited EDGAR risk intelligence. Free sample: https://stockbloc.ai.studio/api/v1/data/sec/sample',
+    exampleRequest: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/data/sec?limit=10'
+    }
   },
   // Deep SEC Analyst Audit Job ($0.25 USDC)
   sec_job: {
@@ -88,7 +105,15 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.25,
     priceDisplay: '$0.25',
     atomicAmount: '250000', // 0.25 * 10^6
-    description: 'Stock Bloc SEC Analyst: Multi-layer autonomous SEC 10-K/10-Q/8-K filing analysis, revenue quality check, and forensic audit. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample'
+    description: 'Stock Bloc SEC Analyst: Multi-layer autonomous SEC 10-K/10-Q/8-K filing analysis, revenue quality check, and forensic audit. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample',
+    exampleRequest: {
+      method: 'POST',
+      url: 'https://stockbloc.ai.studio/api/v1/sec/job',
+      body: {
+        ticker: 'AAPL',
+        filingType: '10-K'
+      }
+    }
   },
   // Institutional Research Memo ($0.10 USDC)
   research: {
@@ -98,7 +123,16 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.10,
     priceDisplay: '$0.10',
     atomicAmount: '100000', // 0.10 * 10^6
-    description: 'Publish and access peer-reviewed quantitative investment research memos and thesis models.'
+    description: 'Publish and access peer-reviewed quantitative investment research memos and thesis models.',
+    exampleRequest: {
+      method: 'POST',
+      url: 'https://stockbloc.ai.studio/api/v1/research/theses',
+      body: {
+        asset: 'AAPL',
+        direction: 'bullish',
+        thesis: 'AI ecosystem moat expansion.'
+      }
+    }
   },
   // Brier-Calibrated Price Forecast ($0.05 USDC)
   forecast: {
@@ -108,7 +142,11 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.05,
     priceDisplay: '$0.05',
     atomicAmount: '50000', // 0.05 * 10^6
-    description: 'Submit and query mathematically verified Brier-tracked price target probability distributions.'
+    description: 'Submit and query mathematically verified Brier-tracked price target probability distributions.',
+    exampleRequest: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/forecast/AAPL'
+    }
   },
   // Strategy Evaluation & Quant Simulation ($0.10 USDC)
   strategy_eval: {
@@ -118,7 +156,15 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.10,
     priceDisplay: '$0.10',
     atomicAmount: '100000', // 0.10 * 10^6
-    description: 'Multi-year quantitative simulation and backtesting against the Super Sonic Tsunami benchmark.'
+    description: 'Multi-year quantitative simulation and backtesting against the Super Sonic Tsunami benchmark.',
+    exampleRequest: {
+      method: 'POST',
+      url: 'https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate',
+      body: {
+        strategy: 'momentum',
+        ticker: 'AAPL'
+      }
+    }
   }
 };
 
@@ -895,6 +941,7 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint, options?: 
         error: failure.error,
         message: failure.message,
         ...(failure.field ? { field: failure.field } : {}),
+        ...(failure.example ? { example: failure.example } : {}),
         charged: false
       });
     }
