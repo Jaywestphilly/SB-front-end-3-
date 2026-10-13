@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { secAnalystRouter, executeSecAnalystJob } from './secAnalystAgent.js';
-import { buildFilingDiff, clearDiffCache, formatSummaryValue } from './secFilingDiff.js';
+import { buildFilingDiff, clearDiffCache, formatSummaryValue, formatCompactRiskItem } from './secFilingDiff.js';
 import {
   setFacilitatorVerifyHandler,
   setFacilitatorSettleHandler
@@ -799,5 +799,24 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
 
     // Derived / other unit formatting
     expect(formatSummaryValue(0.4357, 'derived')).toBe('0.4357');
+  });
+
+  it('11. formatCompactRiskItem unit test: returns title and text without snippet field, omitting text if title and text are same', () => {
+    // Case 1: snippet starts with title -> strip title and punctuation, limit text to 160 chars
+    const res1 = formatCompactRiskItem('Cybersecurity risks', 'Cybersecurity risks: The company faces risks related to unauthorized access to user data.');
+    expect(res1.title).toBe('Cybersecurity risks');
+    expect(res1.text).toBe('The company faces risks related to unauthorized access to user data.');
+    expect((res1 as any).snippet).toBeUndefined();
+
+    // Case 2: snippet equals title -> return only title
+    const res2 = formatCompactRiskItem('Supply chain constraints', 'Supply chain constraints');
+    expect(res2.title).toBe('Supply chain constraints');
+    expect(res2.text).toBeUndefined();
+    expect((res2 as any).snippet).toBeUndefined();
+
+    // Case 3: snippet starts with title and has only punctuation -> return only title
+    const res3 = formatCompactRiskItem('Regulatory compliance', 'Regulatory compliance:');
+    expect(res3.title).toBe('Regulatory compliance');
+    expect(res3.text).toBeUndefined();
   });
 });

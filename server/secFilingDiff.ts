@@ -67,6 +67,11 @@ export interface FilingDiffResult {
   dataNote: string;
 }
 
+export interface CompactRiskItem {
+  title: string;
+  text?: string;
+}
+
 export interface CompactFilingDiffResult {
   mode: 'diff';
   ticker: string;
@@ -75,9 +80,9 @@ export interface CompactFilingDiffResult {
   priorFiling: { form: string; filedDate: string; url: string } | null;
   riskDelta: RiskDelta;
   riskFactorChanges?: {
-    added: Array<{ title: string; snippet: string; text?: string }>;
-    removed: Array<{ title: string; snippet: string; text?: string }>;
-    changed: Array<{ title: string; snippet: string; text?: string; priorSnippet?: string; priorText?: string }>;
+    added: CompactRiskItem[];
+    removed: CompactRiskItem[];
+    changed: CompactRiskItem[];
     addedTotal: number;
     removedTotal: number;
     changedTotal: number;
@@ -564,30 +569,30 @@ export function computeRiskDelta(params: {
   };
 }
 
-export function formatCompactDiffResult(diff: FilingDiffResult): CompactFilingDiffResult {
-  const truncate160 = (str?: string) => (str ? str.slice(0, 160).trim() : '');
+export function formatCompactRiskItem(title: string, snippet?: string): CompactRiskItem {
+  const normTitle = title.trim();
+  let rawText = snippet ? snippet.trim() : '';
 
+  if (rawText.toLowerCase().startsWith(normTitle.toLowerCase())) {
+    rawText = rawText.slice(normTitle.length);
+    rawText = rawText.replace(/^[:.\-\u2014,\s]+/, '').trim();
+  }
+
+  const text160 = rawText.slice(0, 160).trim();
+
+  if (!text160 || text160.toLowerCase() === normTitle.toLowerCase()) {
+    return { title: normTitle };
+  }
+
+  return { title: normTitle, text: text160 };
+}
+
+export function formatCompactDiffResult(diff: FilingDiffResult): CompactFilingDiffResult {
   const compactRfc = diff.riskFactorChanges
     ? {
-        added: diff.riskFactorChanges.added.map(r => ({
-          title: r.title,
-          snippet: truncate160(r.snippet),
-          text: truncate160(r.snippet)
-        })),
-        removed: diff.riskFactorChanges.removed.map(r => ({
-          title: r.title,
-          snippet: truncate160(r.snippet),
-          text: truncate160(r.snippet)
-        })),
-        changed: diff.riskFactorChanges.changed.map(r => ({
-          title: r.title,
-          snippet: truncate160(r.snippet),
-          text: truncate160(r.snippet),
-          ...(r.priorSnippet ? {
-            priorSnippet: truncate160(r.priorSnippet),
-            priorText: truncate160(r.priorSnippet)
-          } : {})
-        })),
+        added: diff.riskFactorChanges.added.map(r => formatCompactRiskItem(r.title, r.snippet)),
+        removed: diff.riskFactorChanges.removed.map(r => formatCompactRiskItem(r.title, r.snippet)),
+        changed: diff.riskFactorChanges.changed.map(r => formatCompactRiskItem(r.title, r.snippet)),
         addedTotal: diff.riskFactorChanges.addedTotal,
         removedTotal: diff.riskFactorChanges.removedTotal,
         changedTotal: diff.riskFactorChanges.changedTotal
