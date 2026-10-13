@@ -665,7 +665,12 @@ export function matchPricedEndpoint(path: string, method: string = 'GET'): X402P
   const normalized = path.split('?')[0].toLowerCase();
 
   // Explicit exclusion for free static sample endpoints
-  if (normalized === '/api/v1/sec/job/sample' || normalized === '/api/v1/data/sec/sample') {
+  if (
+    normalized === '/api/v1/sec/job/sample' ||
+    normalized === '/api/sec/job/sample' ||
+    normalized === '/api/v1/data/sec/sample' ||
+    normalized === '/api/data/sec/sample'
+  ) {
     return null;
   }
 

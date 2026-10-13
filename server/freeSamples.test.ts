@@ -33,6 +33,14 @@ describe('Free Static Sample Endpoints Suite', () => {
     expect(res13f.body.paidRoute).toBeDefined();
     expect(res13f.body.paidRoute.url).toBe('https://stockbloc.ai.studio/api/v1/data/sec');
     expect(res13f.body.paidRoute.price).toBe('$0.10 USDC (x402, Base)');
+
+    // Verify /api/data/sec/sample alias returns identical 200 JSON sample
+    const res13fAlias = await request(app).get('/api/data/sec/sample');
+    expect(res13fAlias.status).toBe(200);
+    expect(res13fAlias.headers['x-stock-bloc-sample']).toBe('true');
+    expect(res13fAlias.headers['content-type']).toContain('application/json');
+    expect(res13fAlias.body.sample).toBe(true);
+    expect(res13fAlias.body.sampleNote).toBeDefined();
   });
 
   it('2. Mock global.fetch: must be called 0 times during both sample requests (no SEC/EDGAR calls)', async () => {
@@ -40,6 +48,7 @@ describe('Free Static Sample Endpoints Suite', () => {
 
     await request(app).get('/api/v1/sec/job/sample');
     await request(app).get('/api/v1/data/sec/sample');
+    await request(app).get('/api/data/sec/sample');
 
     expect(fetchSpy).toHaveBeenCalledTimes(0);
   });

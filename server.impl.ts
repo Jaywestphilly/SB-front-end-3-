@@ -117,13 +117,13 @@ const sec13fSamplePath = path.join(process.cwd(), 'server', 'samples', 'sec-13f-
 const secJobDiffSample = JSON.parse(fs.readFileSync(secJobDiffSamplePath, 'utf8'));
 const sec13fSample = JSON.parse(fs.readFileSync(sec13fSamplePath, 'utf8'));
 
-app.get('/api/v1/sec/job/sample', (_req, res) => {
+app.get(['/api/v1/sec/job/sample', '/api/sec/job/sample'], (_req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=3600');
   res.setHeader('X-Stock-Bloc-Sample', 'true');
   return res.status(200).json(secJobDiffSample);
 });
 
-app.get('/api/v1/data/sec/sample', (_req, res) => {
+app.get(['/api/v1/data/sec/sample', '/api/data/sec/sample'], (_req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=3600');
   res.setHeader('X-Stock-Bloc-Sample', 'true');
   return res.status(200).json(sec13fSample);
