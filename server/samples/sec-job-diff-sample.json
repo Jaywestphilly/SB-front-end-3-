@@ -13,6 +13,16 @@
     }
   },
   "output": {
+    "riskDelta": {
+      "added": 13,
+      "removed": 22,
+      "changed": 20,
+      "netNewRisks": -9,
+      "churnPct": null,
+      "sectionLengthChangePct": -1.1,
+      "headline": "AAPL 10-K: 13 risk factors added, 22 removed, 20 changed vs prior filing.",
+      "method": "Deterministic comparison of SEC Item 1A risk factors: added, removed, and changed from parsed title matching; netNewRisks = added - removed; churnPct = (added + removed + changed) / priorCount * 100; sectionLengthChangePct = (currentChars - priorChars) / priorChars * 100."
+    },
     "mode": "diff",
     "ticker": "AAPL",
     "filingType": "10-K",

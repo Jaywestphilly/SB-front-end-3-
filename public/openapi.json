@@ -606,6 +606,11 @@
                       "diff"
                     ],
                     "default": "standard"
+                  },
+                  "compact": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "When true in diff mode, returns condensed diff metrics including riskDelta, truncated risk factor snippets, financial changes array, and sources."
                   }
                 },
                 "example": {
@@ -722,6 +727,19 @@
                   "question": {
                     "type": "string",
                     "example": "What are the primary supply chain risks?"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "standard",
+                      "diff"
+                    ],
+                    "default": "standard"
+                  },
+                  "compact": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "When true in diff mode, returns condensed diff metrics including riskDelta, truncated risk factor snippets, financial changes array, and sources."
                   }
                 },
                 "example": {

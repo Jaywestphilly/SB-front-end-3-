@@ -2038,9 +2038,10 @@ secAnalystRouter.post(
 
       // When mode === "diff", build cross-filing difference analysis
       if (mode === 'diff') {
+        const isCompact = Boolean(req.body?.compact === true || req.body?.compact === 'true');
         let diffOutput: any = null;
         try {
-          diffOutput = await buildFilingDiff(normTicker, normalizedFilingType as '10-K' | '10-Q');
+          diffOutput = await buildFilingDiff(normTicker, normalizedFilingType as '10-K' | '10-Q', { compact: isCompact });
         } catch (diffErr: any) {
           return res.status(503).json({
             error: 'sec_unavailable',
@@ -2077,7 +2078,8 @@ secAnalystRouter.post(
             ticker: normTicker,
             filingType: normalizedFilingType,
             question: question ? String(question).trim() : undefined,
-            mode: 'diff'
+            mode: 'diff',
+            ...(isCompact ? { compact: true } : {})
           },
           requesterAgentId: authenticatedBuyerId,
           requesterHandle: authenticatedHandle,

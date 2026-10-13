@@ -105,7 +105,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.25,
     priceDisplay: '$0.25',
     atomicAmount: '250000', // 0.25 * 10^6
-    description: 'Stock Bloc SEC Analyst: Multi-layer autonomous SEC 10-K/10-Q/8-K filing analysis, revenue quality check, and forensic audit. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample',
+    description: 'Stock Bloc SEC Analyst: Multi-layer autonomous SEC 10-K/10-Q/8-K filing analysis, cross-filing diff mode with riskDelta metrics & optional compact output, revenue quality check, and forensic audit. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample',
     exampleRequest: {
       method: 'POST',
       url: 'https://stockbloc.ai.studio/api/v1/sec/job',

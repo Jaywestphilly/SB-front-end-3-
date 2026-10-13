@@ -40,7 +40,19 @@ export interface RiskFactorChanges {
   changedTotal: number;
 }
 
+export interface RiskDelta {
+  added: number;
+  removed: number;
+  changed: number;
+  netNewRisks: number;
+  churnPct: number | null;
+  sectionLengthChangePct: number | null;
+  headline: string;
+  method: string;
+}
+
 export interface FilingDiffResult {
+  riskDelta: RiskDelta;
   mode: 'diff';
   ticker: string;
   filingType: '10-K' | '10-Q';
@@ -53,6 +65,25 @@ export interface FilingDiffResult {
   summary: string[];
   sources: string[];
   dataNote: string;
+}
+
+export interface CompactFilingDiffResult {
+  mode: 'diff';
+  ticker: string;
+  filingType: '10-K' | '10-Q';
+  currentFiling: { form: string; filedDate: string; url: string };
+  priorFiling: { form: string; filedDate: string; url: string } | null;
+  riskDelta: RiskDelta;
+  riskFactorChanges?: {
+    added: Array<{ title: string; snippet: string; text?: string }>;
+    removed: Array<{ title: string; snippet: string; text?: string }>;
+    changed: Array<{ title: string; snippet: string; text?: string; priorSnippet?: string; priorText?: string }>;
+    addedTotal: number;
+    removedTotal: number;
+    changedTotal: number;
+  };
+  financialChanges: Array<[string, number | null, number, number | null]>;
+  sources: string[];
 }
 
 const SEC_USER_AGENT = 'StockBloc-SEC-Analyst/1.0 (contact@stockbloc.ai)';
@@ -474,10 +505,133 @@ function calcChangePct(current: number, prior: number | null): number | null {
   return roundToTenth(pct);
 }
 
+export function computeRiskDelta(params: {
+  ticker: string;
+  filingType: string;
+  riskFactorChanges?: {
+    addedTotal: number;
+    removedTotal: number;
+    changedTotal: number;
+  } | null;
+  riskSectionChars?: {
+    prior: number;
+    current: number;
+  } | null;
+  priorRiskCount?: number | null;
+}): RiskDelta {
+  const added = params.riskFactorChanges?.addedTotal ?? 0;
+  const removed = params.riskFactorChanges?.removedTotal ?? 0;
+  const changed = params.riskFactorChanges?.changedTotal ?? 0;
+  const netNewRisks = added - removed;
+
+  let churnPct: number | null = null;
+  if (
+    typeof params.priorRiskCount === 'number' &&
+    params.priorRiskCount > 0 &&
+    !isNaN(params.priorRiskCount)
+  ) {
+    const rawChurn = ((added + removed + changed) / params.priorRiskCount) * 100;
+    churnPct = Math.round(rawChurn * 10) / 10;
+  }
+
+  let sectionLengthChangePct: number | null = null;
+  if (
+    params.riskSectionChars &&
+    typeof params.riskSectionChars.prior === 'number' &&
+    typeof params.riskSectionChars.current === 'number' &&
+    params.riskSectionChars.prior > 0
+  ) {
+    const rawLenChange =
+      ((params.riskSectionChars.current - params.riskSectionChars.prior) /
+        params.riskSectionChars.prior) *
+      100;
+    sectionLengthChangePct = Math.round(rawLenChange * 10) / 10;
+  }
+
+  const headline = `${params.ticker} ${params.filingType}: ${added} risk factors added, ${removed} removed, ${changed} changed vs prior filing.`;
+  const method =
+    'Deterministic comparison of SEC Item 1A risk factors: added, removed, and changed from parsed title matching; netNewRisks = added - removed; churnPct = (added + removed + changed) / priorCount * 100; sectionLengthChangePct = (currentChars - priorChars) / priorChars * 100.';
+
+  return {
+    added,
+    removed,
+    changed,
+    netNewRisks,
+    churnPct,
+    sectionLengthChangePct,
+    headline,
+    method
+  };
+}
+
+export function formatCompactDiffResult(diff: FilingDiffResult): CompactFilingDiffResult {
+  const truncate160 = (str?: string) => (str ? str.slice(0, 160).trim() : '');
+
+  const compactRfc = diff.riskFactorChanges
+    ? {
+        added: diff.riskFactorChanges.added.map(r => ({
+          title: r.title,
+          snippet: truncate160(r.snippet),
+          text: truncate160(r.snippet)
+        })),
+        removed: diff.riskFactorChanges.removed.map(r => ({
+          title: r.title,
+          snippet: truncate160(r.snippet),
+          text: truncate160(r.snippet)
+        })),
+        changed: diff.riskFactorChanges.changed.map(r => ({
+          title: r.title,
+          snippet: truncate160(r.snippet),
+          text: truncate160(r.snippet),
+          ...(r.priorSnippet ? {
+            priorSnippet: truncate160(r.priorSnippet),
+            priorText: truncate160(r.priorSnippet)
+          } : {})
+        })),
+        addedTotal: diff.riskFactorChanges.addedTotal,
+        removedTotal: diff.riskFactorChanges.removedTotal,
+        changedTotal: diff.riskFactorChanges.changedTotal
+      }
+    : undefined;
+
+  const compactFinancials: Array<[string, number | null, number, number | null]> =
+    diff.financialChanges.map(fc => [
+      fc.metric,
+      fc.prior,
+      fc.current,
+      fc.changePct
+    ]);
+
+  const compact: CompactFilingDiffResult = {
+    mode: 'diff',
+    ticker: diff.ticker,
+    filingType: diff.filingType,
+    currentFiling: {
+      form: diff.currentFiling.form,
+      filedDate: diff.currentFiling.filedDate,
+      url: diff.currentFiling.url
+    },
+    priorFiling: diff.priorFiling
+      ? {
+          form: diff.priorFiling.form,
+          filedDate: diff.priorFiling.filedDate,
+          url: diff.priorFiling.url
+        }
+      : null,
+    riskDelta: diff.riskDelta,
+    ...(compactRfc ? { riskFactorChanges: compactRfc } : {}),
+    financialChanges: compactFinancials,
+    sources: diff.sources
+  };
+
+  return compact;
+}
+
 export async function buildFilingDiff(
   ticker: string,
-  filingType: '10-K' | '10-Q'
-): Promise<FilingDiffResult> {
+  filingType: '10-K' | '10-Q',
+  options?: { compact?: boolean }
+): Promise<FilingDiffResult | CompactFilingDiffResult> {
   const normTicker = ticker.toUpperCase().trim();
   const cik = await resolveTickerCik(normTicker);
   if (!cik) {
@@ -581,7 +735,14 @@ export async function buildFilingDiff(
   // Handle case where no prior filing exists
   if (priorIdx === null) {
     const noPriorNote = `Financials from SEC XBRL companyfacts. total debt = LongTermDebt and excludes commercial paper. shares are cover-page counts with their dates (${currentPeriodEnd}). risk lists capped at 10; risk matching is heuristic. No prior Form ${filingType} found in EDGAR submissions history for comparison.`;
-    return {
+    const noPriorResult: FilingDiffResult = {
+      riskDelta: computeRiskDelta({
+        ticker: normTicker,
+        filingType,
+        riskFactorChanges: null,
+        riskSectionChars: null,
+        priorRiskCount: null
+      }),
       mode: 'diff',
       ticker: normTicker,
       filingType,
@@ -593,6 +754,7 @@ export async function buildFilingDiff(
       sources,
       dataNote: noPriorNote
     };
+    return options?.compact ? formatCompactDiffResult(noPriorResult) : noPriorResult;
   }
 
   const priorAccession = recent.accessionNumber[priorIdx];
@@ -616,7 +778,7 @@ export async function buildFilingDiff(
   const cacheKey = getCacheKey(currentAccession, priorAccession);
   const cached = getCachedDiff(cacheKey);
   if (cached) {
-    return cached;
+    return options?.compact ? formatCompactDiffResult(cached) : cached;
   }
 
   // Fetch companyfacts
@@ -851,6 +1013,7 @@ export async function buildFilingDiff(
   let riskFactorChanges: RiskFactorChanges | undefined = undefined;
   let riskSectionChars: { prior: number; current: number } | undefined = undefined;
   let riskOmissionReason: string | null = null;
+  let priorRiskFactorCount: number | null = null;
 
   if (currentPrimaryDoc && priorPrimaryDoc) {
     const curDocUrl = `https://www.sec.gov/Archives/edgar/data/${cikNum}/${currentAccClean}/${currentPrimaryDoc}`;
@@ -901,8 +1064,10 @@ export async function buildFilingDiff(
         } else {
           const curRisks = parseRisksFromItem1A(cur1A, currentAccession);
           const priRisks = parseRisksFromItem1A(pri1A, priorAccession);
+          priorRiskFactorCount = priRisks.length;
 
           riskFactorChanges = compareRiskFactors(curRisks, priRisks, currentAccession, priorAccession);
+          (riskFactorChanges as any).priorTotal = priRisks.length;
         }
       }
     } catch (err: any) {
@@ -973,7 +1138,20 @@ export async function buildFilingDiff(
   }
   const dataNote = dataNoteParts.join(' ');
 
+  const priorCount = typeof priorRiskFactorCount === 'number'
+    ? priorRiskFactorCount
+    : (riskFactorChanges as any)?.priorTotal ?? null;
+
+  const riskDelta = computeRiskDelta({
+    ticker: normTicker,
+    filingType,
+    riskFactorChanges,
+    riskSectionChars,
+    priorRiskCount: priorCount
+  });
+
   const result: FilingDiffResult = {
+    riskDelta,
     mode: 'diff',
     ticker: normTicker,
     filingType,
@@ -991,5 +1169,5 @@ export async function buildFilingDiff(
   // Cache result for 24h
   setCachedDiff(cacheKey, result);
 
-  return result;
+  return options?.compact ? formatCompactDiffResult(result) : result;
 }

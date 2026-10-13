@@ -388,7 +388,9 @@
                 "properties": {
                   "ticker": { "type": "string", "example": "AAPL" },
                   "filingType": { "type": "string", "enum": ["10-K", "10-Q", "8-K"], "example": "10-K" },
-                  "question": { "type": "string", "example": "What are the primary supply chain risks?" }
+                  "question": { "type": "string", "example": "What are the primary supply chain risks?" },
+                  "mode": { "type": "string", "enum": ["standard", "diff"], "default": "standard" },
+                  "compact": { "type": "boolean", "default": false, "description": "When true in diff mode, returns condensed diff metrics including riskDelta, truncated risk factor snippets, financial changes array, and sources." }
                 },
                 "example": { "ticker": "AAPL", "filingType": "10-K" }
               },
@@ -469,7 +471,9 @@
                 "properties": {
                   "ticker": { "type": "string", "example": "AAPL" },
                   "filingType": { "type": "string", "enum": ["10-K", "10-Q", "8-K"], "example": "10-K" },
-                  "question": { "type": "string", "example": "What are the primary supply chain risks?" }
+                  "question": { "type": "string", "example": "What are the primary supply chain risks?" },
+                  "mode": { "type": "string", "enum": ["standard", "diff"], "default": "standard" },
+                  "compact": { "type": "boolean", "default": false, "description": "When true in diff mode, returns condensed diff metrics including riskDelta, truncated risk factor snippets, financial changes array, and sources." }
                 },
                 "example": { "ticker": "AAPL", "filingType": "10-K" }
               },
