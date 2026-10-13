@@ -111,6 +111,24 @@ app.get(['/api/v1/x402/pricing', '/api/x402/pricing', '/api/v1/x402/config'], (r
   });
 });
 
+// 1b-2. Free Static Sample Endpoints (No payment, no secReadinessMiddleware, no SEC/EDGAR or LLM calls)
+const secJobDiffSamplePath = path.join(process.cwd(), 'server', 'samples', 'sec-job-diff-sample.json');
+const sec13fSamplePath = path.join(process.cwd(), 'server', 'samples', 'sec-13f-sample.json');
+const secJobDiffSample = JSON.parse(fs.readFileSync(secJobDiffSamplePath, 'utf8'));
+const sec13fSample = JSON.parse(fs.readFileSync(sec13fSamplePath, 'utf8'));
+
+app.get('/api/v1/sec/job/sample', (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(secJobDiffSample);
+});
+
+app.get('/api/v1/data/sec/sample', (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(sec13fSample);
+});
+
 // 1c. Real Coinbase CDP x402 Payment Gatekeeper Middleware (for priced endpoints)
 app.use(requireX402Payment());
 

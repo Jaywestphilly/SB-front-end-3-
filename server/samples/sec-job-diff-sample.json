@@ -1,0 +1,164 @@
+{
+  "sample": true,
+  "capturedAt": "2026-10-12T00:20:17Z",
+  "sampleNote": "Static sample from a real paid run, captured 2026-10-12 00:20 UTC. Risk factor lists truncated to 3 items (1 added, 1 removed, 1 changed); addedTotal/removedTotal/changedTotal are the real full counts. Snippets cut to 300 chars. Live results come from the paid route.",
+  "paidRoute": {
+    "method": "POST",
+    "url": "https://stockbloc.ai.studio/api/v1/sec/job",
+    "price": "$0.25 USDC (x402, Base)",
+    "body": {
+      "ticker": "AAPL",
+      "filingType": "10-K",
+      "mode": "diff"
+    }
+  },
+  "output": {
+    "mode": "diff",
+    "ticker": "AAPL",
+    "filingType": "10-K",
+    "comparisonBasis": "annual",
+    "currentFiling": {
+      "accession": "0000320193-25-000079",
+      "periodEnd": "2025-09-27",
+      "form": "10-K",
+      "filedDate": "2025-10-31",
+      "url": "https://www.sec.gov/ix?doc=/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
+    },
+    "priorFiling": {
+      "accession": "0000320193-24-000123",
+      "periodEnd": "2024-09-28",
+      "form": "10-K",
+      "filedDate": "2024-11-01",
+      "url": "https://www.sec.gov/ix?doc=/Archives/edgar/data/320193/000032019324000123/aapl-20240928.htm"
+    },
+    "financialChanges": [
+      {
+        "metric": "Revenue",
+        "prior": 391035000000,
+        "current": 416161000000,
+        "changePct": 6.4,
+        "unit": "USD",
+        "xbrlTag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "priorAccession": "0000320193-24-000123",
+        "currentAccession": "0000320193-25-000079"
+      },
+      {
+        "metric": "Net income",
+        "prior": 93736000000,
+        "current": 112010000000,
+        "changePct": 19.5,
+        "unit": "USD",
+        "xbrlTag": "NetIncomeLoss",
+        "priorAccession": "0000320193-24-000123",
+        "currentAccession": "0000320193-25-000079"
+      },
+      {
+        "metric": "Operating income",
+        "prior": 123216000000,
+        "current": 133050000000,
+        "changePct": 8,
+        "unit": "USD",
+        "xbrlTag": "OperatingIncomeLoss",
+        "priorAccession": "0000320193-24-000123",
+        "currentAccession": "0000320193-25-000079"
+      },
+      {
+        "metric": "Gross margin",
+        "prior": 0.4621,
+        "current": 0.4691,
+        "changePct": 1.5,
+        "marginChangePp": 0.7,
+        "unit": "derived",
+        "xbrlTag": "GrossProfit/Revenue",
+        "priorAccession": "0000320193-24-000123",
+        "currentAccession": "0000320193-25-000079"
+      },
+      {
+        "metric": "Total debt",
+        "prior": 96662000000,
+        "current": 90678000000,
+        "changePct": -6.2,
+        "unit": "USD",
+        "xbrlTag": "LongTermDebt",
+        "priorAccession": "0000320193-24-000123",
+        "currentAccession": "0000320193-25-000079"
+      },
+      {
+        "metric": "Cash",
+        "prior": 29943000000,
+        "current": 35934000000,
+        "changePct": 20,
+        "unit": "USD",
+        "xbrlTag": "CashAndCashEquivalentsAtCarryingValue",
+        "priorAccession": "0000320193-24-000123",
+        "currentAccession": "0000320193-25-000079"
+      },
+      {
+        "metric": "Shares",
+        "prior": 15115823000,
+        "current": 14776353000,
+        "changePct": -2.2,
+        "unit": "shares",
+        "xbrlTag": "dei:EntityCommonStockSharesOutstanding",
+        "priorAccession": "0000320193-24-000123",
+        "currentAccession": "0000320193-25-000079"
+      },
+      {
+        "metric": "Capex",
+        "prior": 9447000000,
+        "current": 12715000000,
+        "changePct": 34.6,
+        "unit": "USD",
+        "xbrlTag": "PaymentsToAcquirePropertyPlantAndEquipment",
+        "priorAccession": "0000320193-24-000123",
+        "currentAccession": "0000320193-25-000079"
+      }
+    ],
+    "riskFactorChanges": {
+      "added": [
+        {
+          "title": "Risks and costs related to new and changing laws, regulations, executive orders, directives, and enforcement priorities",
+          "snippet": "Risks and costs related to new and changing laws, regulations, executive orders, directives, and enforcement priorities increase as the Companyâs products and services are introduced into specialized applications, including health and financial services, or as the Company expands the use of technolo",
+          "accession": "0000320193-25-000079"
+        }
+      ],
+      "removed": [
+        {
+          "title": "The Company distributes third-party applications for its products through the App Store.",
+          "snippet": "The Company distributes third-party applications for its products through the App Store. For the vast majority of applications, developers keep all of the revenue they generate on the App Store. Where applicable, the Company retains a commission from sales of applications and sales of digital servic",
+          "accession": "0000320193-24-000123"
+        }
+      ],
+      "changed": [
+        {
+          "title": "The Companyâs minority market share in the global smartphone, personal computer, tablet and wearables markets can make d",
+          "snippet": "The Companyâs minority market share in the global smartphone, personal computer, tablet and wearables markets can make developers less inclined to develop or upgrade software for the Companyâs products and more inclined to devote their resources to developing and upgrading software for competitorsâ",
+          "accession": "0000320193-25-000079",
+          "priorSnippet": "The Companyâs minority market share in the global smartphone, personal computer and tablet markets can make developers less inclined to develop or upgrade software for the Companyâs products and more inclined to devote their resources to developing and upgrading software for competitorsâ products wi",
+          "priorAccession": "0000320193-24-000123"
+        }
+      ],
+      "addedTotal": 13,
+      "removedTotal": 22,
+      "changedTotal": 20
+    },
+    "riskSectionChars": {
+      "prior": 68887,
+      "current": 68163
+    },
+    "summary": [
+      "Gross margin changed +0.7 pp (from 0.4621 to 0.4691)",
+      "Capex changed +34.6% (from $9.45B to $12.71B)",
+      "Cash changed +20% (from $29.94B to $35.93B)",
+      "Net income changed +19.5% (from $93.74B to $112.01B)",
+      "Risk factors: 13 added, 22 removed, 20 modified (showing up to 10)"
+    ],
+    "sources": [
+      "https://data.sec.gov/submissions/CIK0000320193.json",
+      "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+      "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+      "https://www.sec.gov/Archives/edgar/data/320193/000032019324000123/aapl-20240928.htm"
+    ],
+    "dataNote": "Financials from SEC XBRL companyfacts. total debt = LongTermDebt and excludes commercial paper. shares are cover-page counts with their dates (2025-10-17 / 2024-10-18). risk lists capped at 10; risk matching is heuristic."
+  }
+}

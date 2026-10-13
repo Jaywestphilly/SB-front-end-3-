@@ -4,7 +4,11 @@
     "title": "Stock Bloc Agentic Financial API & SEC Analyst",
     "description": "Stock Bloc AI agent financial data API, SEC research API, SEC filing analysis (10-K, 10-Q, 8-K), autonomous financial intelligence, Stock Bloc SEC Analyst, MCP tools, and x402 micropayments in USDC on Base. Settled natively via the open x402 Payment Protocol v2 (USDC on Base Mainnet). Free human terminal available at https://stockbloc.ai.studio with no paywall or subscription. Model Context Protocol (MCP) supported via POST /api/mcp/rpc.",
     "version": "2.2.0",
-    "contact": { "name": "Stock Bloc", "email": "thestockbloc@gmail.com", "url": "https://stockbloc.ai.studio" },
+    "contact": {
+      "name": "Stock Bloc",
+      "email": "thestockbloc@gmail.com",
+      "url": "https://stockbloc.ai.studio"
+    },
     "x-guidance": "Stock Bloc primary paid endpoint is POST /api/v1/sec/analyst ($0.25 USDC, body: {ticker, filingType} where filingType is 10-K, 10-Q, or 8-K). Unpaid requests return HTTP 402 with a PAYMENT-REQUIRED header. Retry requests with the signed payload in the PAYMENT-SIGNATURE header. Free service discovery is available at GET /api/v1/sec/analyst and the machine payment map is at GET /.well-known/x402."
   },
   "servers": [
@@ -20,11 +24,57 @@
         "operationId": "getAgentTransactions",
         "security": [],
         "parameters": [
-          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "default": 25, "maximum": 100 }, "description": "Maximum number of transactions to return." },
-          { "name": "cursor", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Opaque pagination cursor token." },
-          { "name": "type", "in": "query", "required": false, "schema": { "type": "string", "enum": ["DEBIT", "CREDIT"] }, "description": "Filter by transaction type." },
-          { "name": "tag", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Filter by metadata tag (e.g. METERED_API)." },
-          { "name": "since", "in": "query", "required": false, "schema": { "type": "string" }, "description": "ISO-8601 timestamp filter." }
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 25,
+              "maximum": 100
+            },
+            "description": "Maximum number of transactions to return."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque pagination cursor token."
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "DEBIT",
+                "CREDIT"
+              ]
+            },
+            "description": "Filter by transaction type."
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by metadata tag (e.g. METERED_API)."
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ISO-8601 timestamp filter."
+          }
         ],
         "responses": {
           "200": {
@@ -35,7 +85,11 @@
                   "status": "ok",
                   "agentId": "agent_auto_a1b2c3d4e5",
                   "entries": [],
-                  "pagination": { "limit": 25, "nextCursor": null, "hasMore": false }
+                  "pagination": {
+                    "limit": 25,
+                    "nextCursor": null,
+                    "hasMore": false
+                  }
                 }
               }
             }
@@ -50,21 +104,35 @@
         "description": "Verified real-time stock prices, 24h percentage changes, volume, and Super Sonic Tsunami watchlist metrics. Supports single symbol lookups (?symbol=...) across US (NYSE, NASDAQ), Hong Kong (.HK), and India (NSE .NS, BSE .BO). Unsupported symbols return 404. Settled via x402 USDC micropayment ($0.01 USDC).",
         "operationId": "getMarketData",
         "parameters": [
-          { "name": "symbol", "in": "query", "required": false, "schema": { "type": "string" }, "example": "NVDA" }
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "example": "NVDA"
+          }
         ],
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.010000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "10000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.010000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "10000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -77,7 +145,14 @@
                   "updated_at": "2026-10-08T12:00:00.000Z",
                   "total_assets": 20,
                   "watchlist": [
-                    { "symbol": "NVDA", "price": 138.25, "changePercent": 2.45, "volume": "48.2M", "sbScore": 88, "action": "ACCUMULATE" }
+                    {
+                      "symbol": "NVDA",
+                      "price": 138.25,
+                      "changePercent": 2.45,
+                      "volume": "48.2M",
+                      "sbScore": 88,
+                      "action": "ACCUMULATE"
+                    }
                   ]
                 }
               }
@@ -108,21 +183,35 @@
         "description": "Real-time stock quote for a specific ticker symbol. Settled via x402 USDC micropayment ($0.01 USDC).",
         "operationId": "getMarketQuote",
         "parameters": [
-          { "name": "symbol", "in": "query", "required": true, "schema": { "type": "string" }, "example": "NVDA" }
+          {
+            "name": "symbol",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "NVDA"
+          }
         ],
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.010000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "10000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.010000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "10000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -168,21 +257,35 @@
         "description": "Multi-factor quantitative stock score with 5 factor breakdown. Settled via x402 USDC micropayment ($0.05 USDC).",
         "operationId": "getSbScore",
         "parameters": [
-          { "name": "ticker", "in": "query", "required": true, "schema": { "type": "string" }, "example": "NVDA" }
+          {
+            "name": "ticker",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "NVDA"
+          }
         ],
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.050000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "50000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.050000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "50000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -196,7 +299,13 @@
                   "sbScore": 88,
                   "signalLabel": "STRONG BUY",
                   "confidence": "HIGH",
-                  "factorBreakdown": { "momentum": 24, "trend": 24, "relativeStrength": 18, "volume": 12, "volatility": 10 }
+                  "factorBreakdown": {
+                    "momentum": 24,
+                    "trend": 24,
+                    "relativeStrength": 18,
+                    "volume": 12,
+                    "volatility": 10
+                  }
                 }
               }
             }
@@ -223,22 +332,45 @@
         "description": "Audited historical SB Score quantitative snapshots and performance tracking. Settled via x402 USDC micropayment ($0.05 USDC).",
         "operationId": "getSbScoreHistory",
         "parameters": [
-          { "name": "ticker", "in": "query", "required": true, "schema": { "type": "string" }, "example": "NVDA" },
-          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "default": 20 }, "example": 20 }
+          {
+            "name": "ticker",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "NVDA"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20
+            },
+            "example": 20
+          }
         ],
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.050000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "50000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.050000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "50000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -250,7 +382,12 @@
                   "ticker": "NVDA",
                   "count": 1,
                   "history": [
-                    { "scoreId": "sc_nvda_1790616000000", "ticker": "NVDA", "sbScore": 88, "recordedAt": "2026-10-08T12:00:00.000Z" }
+                    {
+                      "scoreId": "sc_nvda_1790616000000",
+                      "ticker": "NVDA",
+                      "sbScore": 88,
+                      "recordedAt": "2026-10-08T12:00:00.000Z"
+                    }
                   ]
                 }
               }
@@ -276,24 +413,39 @@
       "get": {
         "deprecated": true,
         "summary": "Deprecated alias of /api/v1/data/sec. SEC 13F Institutional Accumulation & Filing Intel (x402: $0.10 USDC)",
-        "description": "Institutional 13F whale filings, hedge fund shifts, and audited EDGAR risk intelligence. Settled via x402 USDC micropayment ($0.10 USDC).",
+        "description": "Institutional 13F whale filings, hedge fund shifts, and audited EDGAR risk intelligence. Settled via x402 USDC micropayment ($0.10 USDC).\nFree sample: https://stockbloc.ai.studio/api/v1/data/sec/sample",
         "operationId": "getSec13fIntel",
         "parameters": [
-          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 50 } }
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
         ],
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.100000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "100000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.100000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "100000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -306,7 +458,12 @@
                   "parsedFunds": 13,
                   "totalFundsTracked": 13,
                   "consensusHoldings": [
-                    { "symbol": null, "name": "AMAZON COM INC", "fundCount": 10, "totalValueUsd": 0 }
+                    {
+                      "symbol": null,
+                      "name": "AMAZON COM INC",
+                      "fundCount": 10,
+                      "totalValueUsd": 0
+                    }
                   ]
                 }
               }
@@ -331,24 +488,39 @@
     "/api/v1/data/sec": {
       "get": {
         "summary": "SEC 13F Institutional Accumulation Alias (x402: $0.10 USDC)",
-        "description": "Alias for /api/data/sec. Settled via x402 USDC micropayment ($0.10 USDC).",
+        "description": "Alias for /api/data/sec. Settled via x402 USDC micropayment ($0.10 USDC).\nFree sample: https://stockbloc.ai.studio/api/v1/data/sec/sample",
         "operationId": "getSec13fIntelAlias",
         "parameters": [
-          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 50 } }
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
         ],
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.100000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "100000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.100000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "100000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -381,39 +553,72 @@
     "/api/v1/sec/job": {
       "post": {
         "summary": "Stock Bloc SEC Analyst Deep Filing Audit (x402: $0.25 USDC)",
-        "description": "Stock Bloc SEC Analyst: Multi-layer autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings. Settled via x402 USDC micropayment ($0.25 USDC). Alias: /api/v1/sec/analyst.",
+        "description": "Stock Bloc SEC Analyst: Multi-layer autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings. Settled via x402 USDC micropayment ($0.25 USDC). Alias: /api/v1/sec/analyst.\nFree sample: https://stockbloc.ai.studio/api/v1/sec/job/sample",
         "operationId": "executeSecJob",
-        "tags": ["Stock Bloc SEC Analyst", "SEC Research API"],
+        "tags": [
+          "Stock Bloc SEC Analyst",
+          "SEC Research API"
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["ticker", "filingType"],
+                "required": [
+                  "ticker",
+                  "filingType"
+                ],
                 "properties": {
-                  "ticker": { "type": "string", "example": "NVDA" },
-                  "filingType": { "type": "string", "enum": ["10-K", "10-Q", "8-K"], "example": "10-K" },
-                  "question": { "type": "string", "example": "What are the primary supply chain risks?" },
-                  "mode": { "type": "string", "enum": ["standard", "diff"], "default": "standard" }
+                  "ticker": {
+                    "type": "string",
+                    "example": "NVDA"
+                  },
+                  "filingType": {
+                    "type": "string",
+                    "enum": [
+                      "10-K",
+                      "10-Q",
+                      "8-K"
+                    ],
+                    "example": "10-K"
+                  },
+                  "question": {
+                    "type": "string",
+                    "example": "What are the primary supply chain risks?"
+                  },
+                  "mode": {
+                    "type": "string",
+                    "enum": [
+                      "standard",
+                      "diff"
+                    ],
+                    "default": "standard"
+                  }
                 }
               }
             }
           }
         },
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.250000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "250000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.250000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "250000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -452,38 +657,64 @@
     "/api/v1/sec/analyst": {
       "post": {
         "summary": "Stock Bloc SEC Analyst Deep Filing Audit (x402: $0.25 USDC)",
-        "description": "Stock Bloc SEC Analyst: Multi-layer autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings. Settled via x402 USDC micropayment ($0.25 USDC). Canonical alias for /api/v1/sec/job.",
+        "description": "Stock Bloc SEC Analyst: Multi-layer autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings. Settled via x402 USDC micropayment ($0.25 USDC). Canonical alias for /api/v1/sec/job.\nFree sample: https://stockbloc.ai.studio/api/v1/sec/job/sample",
         "operationId": "callStockBlocSecAnalyst",
-        "tags": ["Stock Bloc SEC Analyst", "SEC Research API"],
+        "tags": [
+          "Stock Bloc SEC Analyst",
+          "SEC Research API"
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["ticker", "filingType"],
+                "required": [
+                  "ticker",
+                  "filingType"
+                ],
                 "properties": {
-                  "ticker": { "type": "string", "example": "NVDA" },
-                  "filingType": { "type": "string", "enum": ["10-K", "10-Q", "8-K"], "example": "10-K" },
-                  "question": { "type": "string", "example": "What are the primary supply chain risks?" }
+                  "ticker": {
+                    "type": "string",
+                    "example": "NVDA"
+                  },
+                  "filingType": {
+                    "type": "string",
+                    "enum": [
+                      "10-K",
+                      "10-Q",
+                      "8-K"
+                    ],
+                    "example": "10-K"
+                  },
+                  "question": {
+                    "type": "string",
+                    "example": "What are the primary supply chain risks?"
+                  }
                 }
               }
             }
           }
         },
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.250000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "250000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.250000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "250000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -522,7 +753,10 @@
         "summary": "Stock Bloc SEC Analyst Capability & Service Discovery",
         "description": "Inspect service profile, pricing, and capabilities for the Stock Bloc SEC Analyst agent. (Free Discovery)",
         "operationId": "getSecAnalystService",
-        "tags": ["Stock Bloc SEC Analyst", "Discovery"],
+        "tags": [
+          "Stock Bloc SEC Analyst",
+          "Discovery"
+        ],
         "security": [],
         "responses": {
           "200": {
@@ -531,7 +765,13 @@
               "application/json": {
                 "example": {
                   "success": true,
-                  "service": { "serviceId": "sec_analyst_01", "name": "Stock Bloc SEC Analyst", "price": 0.25, "currency": "USD", "paymentRail": "X402_USDC" }
+                  "service": {
+                    "serviceId": "sec_analyst_01",
+                    "name": "Stock Bloc SEC Analyst",
+                    "price": 0.25,
+                    "currency": "USD",
+                    "paymentRail": "X402_USDC"
+                  }
                 }
               }
             }
@@ -551,11 +791,27 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["ticker", "filingType"],
+                "required": [
+                  "ticker",
+                  "filingType"
+                ],
                 "properties": {
-                  "ticker": { "type": "string", "example": "NVDA" },
-                  "filingType": { "type": "string", "enum": ["10-K", "10-Q", "8-K"], "example": "10-K" },
-                  "question": { "type": "string" }
+                  "ticker": {
+                    "type": "string",
+                    "example": "NVDA"
+                  },
+                  "filingType": {
+                    "type": "string",
+                    "enum": [
+                      "10-K",
+                      "10-Q",
+                      "8-K"
+                    ],
+                    "example": "10-K"
+                  },
+                  "question": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -592,29 +848,48 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["title", "summary", "thesis"],
+                "required": [
+                  "title",
+                  "summary",
+                  "thesis"
+                ],
                 "properties": {
-                  "title": { "type": "string", "example": "NVDA Capex Thesis" },
-                  "summary": { "type": "string", "example": "Datacenter AI growth" },
-                  "thesis": { "type": "string", "example": "NVDA Blackwell architecture scaling." }
+                  "title": {
+                    "type": "string",
+                    "example": "NVDA Capex Thesis"
+                  },
+                  "summary": {
+                    "type": "string",
+                    "example": "Datacenter AI growth"
+                  },
+                  "thesis": {
+                    "type": "string",
+                    "example": "NVDA Blackwell architecture scaling."
+                  }
                 }
               }
             }
           }
         },
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.100000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "100000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.100000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "100000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -657,29 +932,48 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["asset", "direction", "thesis"],
+                "required": [
+                  "asset",
+                  "direction",
+                  "thesis"
+                ],
                 "properties": {
-                  "asset": { "type": "string", "example": "NVDA" },
-                  "direction": { "type": "string", "example": "LONG" },
-                  "thesis": { "type": "string", "example": "NVDA Blackwell architecture scaling." }
+                  "asset": {
+                    "type": "string",
+                    "example": "NVDA"
+                  },
+                  "direction": {
+                    "type": "string",
+                    "example": "LONG"
+                  },
+                  "thesis": {
+                    "type": "string",
+                    "example": "NVDA Blackwell architecture scaling."
+                  }
                 }
               }
             }
           }
         },
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.100000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "100000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.100000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "100000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -721,32 +1015,63 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["question", "asset", "direction", "timeHorizon", "resolutionCriteria", "probability"],
+                "required": [
+                  "question",
+                  "asset",
+                  "direction",
+                  "timeHorizon",
+                  "resolutionCriteria",
+                  "probability"
+                ],
                 "properties": {
-                  "question": { "type": "string", "example": "Will NVDA exceed $150?" },
-                  "asset": { "type": "string", "example": "NVDA" },
-                  "direction": { "type": "string", "example": "LONG" },
-                  "timeHorizon": { "type": "string", "example": "90D" },
-                  "resolutionCriteria": { "type": "string", "example": "Closing price above $150" },
-                  "probability": { "type": "number", "example": 80 }
+                  "question": {
+                    "type": "string",
+                    "example": "Will NVDA exceed $150?"
+                  },
+                  "asset": {
+                    "type": "string",
+                    "example": "NVDA"
+                  },
+                  "direction": {
+                    "type": "string",
+                    "example": "LONG"
+                  },
+                  "timeHorizon": {
+                    "type": "string",
+                    "example": "90D"
+                  },
+                  "resolutionCriteria": {
+                    "type": "string",
+                    "example": "Closing price above $150"
+                  },
+                  "probability": {
+                    "type": "number",
+                    "example": 80
+                  }
                 }
               }
             }
           }
         },
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.050000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "50000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.050000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "50000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -789,27 +1114,41 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["allocation"],
+                "required": [
+                  "allocation"
+                ],
                 "properties": {
-                  "allocation": { "type": "object", "example": { "NVDA": 0.5, "PLTR": 0.5 } }
+                  "allocation": {
+                    "type": "object",
+                    "example": {
+                      "NVDA": 0.5,
+                      "PLTR": 0.5
+                    }
+                  }
                 }
               }
             }
           }
         },
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.100000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "100000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.100000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "100000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -853,27 +1192,41 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["allocation"],
+                "required": [
+                  "allocation"
+                ],
                 "properties": {
-                  "allocation": { "type": "object", "example": { "NVDA": 0.5, "PLTR": 0.5 } }
+                  "allocation": {
+                    "type": "object",
+                    "example": {
+                      "NVDA": 0.5,
+                      "PLTR": 0.5
+                    }
+                  }
                 }
               }
             }
           }
         },
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.100000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "100000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.100000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "100000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -914,27 +1267,41 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["allocation"],
+                "required": [
+                  "allocation"
+                ],
                 "properties": {
-                  "allocation": { "type": "object", "example": { "NVDA": 0.5, "PLTR": 0.5 } }
+                  "allocation": {
+                    "type": "object",
+                    "example": {
+                      "NVDA": 0.5,
+                      "PLTR": 0.5
+                    }
+                  }
                 }
               }
             }
           }
         },
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.100000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "100000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.100000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "100000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -975,29 +1342,47 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["ticker", "rationale"],
+                "required": [
+                  "ticker",
+                  "rationale"
+                ],
                 "properties": {
-                  "ticker": { "type": "string", "example": "NVDA" },
-                  "action": { "type": "string", "example": "BUY" },
-                  "rationale": { "type": "string", "example": "Bullish momentum" }
+                  "ticker": {
+                    "type": "string",
+                    "example": "NVDA"
+                  },
+                  "action": {
+                    "type": "string",
+                    "example": "BUY"
+                  },
+                  "rationale": {
+                    "type": "string",
+                    "example": "Bullish momentum"
+                  }
                 }
               }
             }
           }
         },
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.100000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "100000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.100000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "100000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -1033,21 +1418,35 @@
         "description": "Comprehensive earnings preparation pack combining SEC 13F whale accumulation, 10-K/10-Q filing audit, and investment thesis memo in one call. Settled via x402 USDC micropayment ($0.35 USDC).",
         "operationId": "getEarningsPack",
         "parameters": [
-          { "name": "ticker", "in": "query", "required": true, "schema": { "type": "string" }, "example": "NVDA" }
+          {
+            "name": "ticker",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "NVDA"
+          }
         ],
         "x-payment-info": {
-          "price": { "mode": "fixed", "currency": "USD", "amount": "0.350000" },
-          "protocols": [{
-            "x402": {
-              "version": 2,
-              "scheme": "exact",
-              "network": "eip155:8453",
-              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-              "amountAtomic": "350000",
-              "decimals": 6
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.350000"
+          },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "350000",
+                "decimals": 6
+              }
             }
-          }]
+          ]
         },
         "responses": {
           "200": {
@@ -1057,7 +1456,13 @@
                 "example": {
                   "ticker": "NVDA",
                   "asOf": "2026-10-08T12:00:00.000Z",
-                  "thirteenF": { "quarterCycle": "Q1/Q2 2026 SEC Form 13F Filings", "consensus": { "fundCount": 6, "totalValueUsd": 2240000000 } }
+                  "thirteenF": {
+                    "quarterCycle": "Q1/Q2 2026 SEC Form 13F Filings",
+                    "consensus": {
+                      "fundCount": 6,
+                      "totalValueUsd": 2240000000
+                    }
+                  }
                 }
               }
             }
@@ -1090,8 +1495,18 @@
             "content": {
               "application/json": {
                 "example": {
-                  "market": { "updated_at": "2026-10-08T12:00:00.000Z", "data_age_seconds": 30, "status": "fresh", "stale": false },
-                  "sec": { "updated_at": "2026-10-08T12:00:00.000Z", "data_age_seconds": 45, "status": "fresh", "stale": false },
+                  "market": {
+                    "updated_at": "2026-10-08T12:00:00.000Z",
+                    "data_age_seconds": 30,
+                    "status": "fresh",
+                    "stale": false
+                  },
+                  "sec": {
+                    "updated_at": "2026-10-08T12:00:00.000Z",
+                    "data_age_seconds": 45,
+                    "status": "fresh",
+                    "stale": false
+                  },
                   "server_time": "2026-10-08T12:00:30.000Z"
                 }
               }
@@ -1116,6 +1531,301 @@
                   "network": "eip155:8453",
                   "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
                   "facilitator": "https://api.cdp.coinbase.com/platform/v2/x402"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sec/job/sample": {
+      "get": {
+        "summary": "Free static sample of SEC Analyst filing diff output",
+        "description": "Returns a free static sample payload from a real paid SEC Analyst diff audit run (AAPL FY2025 10-K vs FY2024 10-K, captured 2026-10-12 UTC).",
+        "operationId": "getSecJobSample",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Free static sample payload of SEC Analyst diff output.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "sample": true,
+                  "capturedAt": "2026-10-12T00:20:17Z",
+                  "sampleNote": "Static sample from a real paid run, captured 2026-10-12 00:20 UTC. Risk factor lists truncated to 3 items (1 added, 1 removed, 1 changed); addedTotal/removedTotal/changedTotal are the real full counts. Snippets cut to 300 chars. Live results come from the paid route.",
+                  "paidRoute": {
+                    "method": "POST",
+                    "url": "https://stockbloc.ai.studio/api/v1/sec/job",
+                    "price": "$0.25 USDC (x402, Base)",
+                    "body": {
+                      "ticker": "AAPL",
+                      "filingType": "10-K",
+                      "mode": "diff"
+                    }
+                  },
+                  "output": {
+                    "mode": "diff",
+                    "ticker": "AAPL",
+                    "filingType": "10-K",
+                    "comparisonBasis": "annual",
+                    "currentFiling": {
+                      "accession": "0000320193-25-000079",
+                      "periodEnd": "2025-09-27",
+                      "form": "10-K",
+                      "filedDate": "2025-10-31",
+                      "url": "https://www.sec.gov/ix?doc=/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm"
+                    },
+                    "priorFiling": {
+                      "accession": "0000320193-24-000123",
+                      "periodEnd": "2024-09-28",
+                      "form": "10-K",
+                      "filedDate": "2024-11-01",
+                      "url": "https://www.sec.gov/ix?doc=/Archives/edgar/data/320193/000032019324000123/aapl-20240928.htm"
+                    },
+                    "financialChanges": [
+                      {
+                        "metric": "Revenue",
+                        "prior": 391035000000,
+                        "current": 416161000000,
+                        "changePct": 6.4,
+                        "unit": "USD",
+                        "xbrlTag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+                        "priorAccession": "0000320193-24-000123",
+                        "currentAccession": "0000320193-25-000079"
+                      },
+                      {
+                        "metric": "Net income",
+                        "prior": 93736000000,
+                        "current": 112010000000,
+                        "changePct": 19.5,
+                        "unit": "USD",
+                        "xbrlTag": "NetIncomeLoss",
+                        "priorAccession": "0000320193-24-000123",
+                        "currentAccession": "0000320193-25-000079"
+                      },
+                      {
+                        "metric": "Operating income",
+                        "prior": 123216000000,
+                        "current": 133050000000,
+                        "changePct": 8,
+                        "unit": "USD",
+                        "xbrlTag": "OperatingIncomeLoss",
+                        "priorAccession": "0000320193-24-000123",
+                        "currentAccession": "0000320193-25-000079"
+                      },
+                      {
+                        "metric": "Gross margin",
+                        "prior": 0.4621,
+                        "current": 0.4691,
+                        "changePct": 1.5,
+                        "marginChangePp": 0.7,
+                        "unit": "derived",
+                        "xbrlTag": "GrossProfit/Revenue",
+                        "priorAccession": "0000320193-24-000123",
+                        "currentAccession": "0000320193-25-000079"
+                      },
+                      {
+                        "metric": "Total debt",
+                        "prior": 96662000000,
+                        "current": 90678000000,
+                        "changePct": -6.2,
+                        "unit": "USD",
+                        "xbrlTag": "LongTermDebt",
+                        "priorAccession": "0000320193-24-000123",
+                        "currentAccession": "0000320193-25-000079"
+                      },
+                      {
+                        "metric": "Cash",
+                        "prior": 29943000000,
+                        "current": 35934000000,
+                        "changePct": 20,
+                        "unit": "USD",
+                        "xbrlTag": "CashAndCashEquivalentsAtCarryingValue",
+                        "priorAccession": "0000320193-24-000123",
+                        "currentAccession": "0000320193-25-000079"
+                      },
+                      {
+                        "metric": "Shares",
+                        "prior": 15115823000,
+                        "current": 14776353000,
+                        "changePct": -2.2,
+                        "unit": "shares",
+                        "xbrlTag": "dei:EntityCommonStockSharesOutstanding",
+                        "priorAccession": "0000320193-24-000123",
+                        "currentAccession": "0000320193-25-000079"
+                      },
+                      {
+                        "metric": "Capex",
+                        "prior": 9447000000,
+                        "current": 12715000000,
+                        "changePct": 34.6,
+                        "unit": "USD",
+                        "xbrlTag": "PaymentsToAcquirePropertyPlantAndEquipment",
+                        "priorAccession": "0000320193-24-000123",
+                        "currentAccession": "0000320193-25-000079"
+                      }
+                    ],
+                    "riskFactorChanges": {
+                      "added": [
+                        {
+                          "title": "Risks and costs related to new and changing laws, regulations, executive orders, directives, and enforcement priorities",
+                          "snippet": "Risks and costs related to new and changing laws, regulations, executive orders, directives, and enforcement priorities increase as the Companyâs products and services are introduced into specialized applications, including health and financial services, or as the Company expands the use of technolo",
+                          "accession": "0000320193-25-000079"
+                        }
+                      ],
+                      "removed": [
+                        {
+                          "title": "The Company distributes third-party applications for its products through the App Store.",
+                          "snippet": "The Company distributes third-party applications for its products through the App Store. For the vast majority of applications, developers keep all of the revenue they generate on the App Store. Where applicable, the Company retains a commission from sales of applications and sales of digital servic",
+                          "accession": "0000320193-24-000123"
+                        }
+                      ],
+                      "changed": [
+                        {
+                          "title": "The Companyâs minority market share in the global smartphone, personal computer, tablet and wearables markets can make d",
+                          "snippet": "The Companyâs minority market share in the global smartphone, personal computer, tablet and wearables markets can make developers less inclined to develop or upgrade software for the Companyâs products and more inclined to devote their resources to developing and upgrading software for competitorsâ",
+                          "accession": "0000320193-25-000079",
+                          "priorSnippet": "The Companyâs minority market share in the global smartphone, personal computer and tablet markets can make developers less inclined to develop or upgrade software for the Companyâs products and more inclined to devote their resources to developing and upgrading software for competitorsâ products wi",
+                          "priorAccession": "0000320193-24-000123"
+                        }
+                      ],
+                      "addedTotal": 13,
+                      "removedTotal": 22,
+                      "changedTotal": 20
+                    },
+                    "riskSectionChars": {
+                      "prior": 68887,
+                      "current": 68163
+                    },
+                    "summary": [
+                      "Gross margin changed +0.7 pp (from 0.4621 to 0.4691)",
+                      "Capex changed +34.6% (from $9.45B to $12.71B)",
+                      "Cash changed +20% (from $29.94B to $35.93B)",
+                      "Net income changed +19.5% (from $93.74B to $112.01B)",
+                      "Risk factors: 13 added, 22 removed, 20 modified (showing up to 10)"
+                    ],
+                    "sources": [
+                      "https://data.sec.gov/submissions/CIK0000320193.json",
+                      "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+                      "https://www.sec.gov/Archives/edgar/data/320193/000032019325000079/aapl-20250927.htm",
+                      "https://www.sec.gov/Archives/edgar/data/320193/000032019324000123/aapl-20240928.htm"
+                    ],
+                    "dataNote": "Financials from SEC XBRL companyfacts. total debt = LongTermDebt and excludes commercial paper. shares are cover-page counts with their dates (2025-10-17 / 2024-10-18). risk lists capped at 10; risk matching is heuristic."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/data/sec/sample": {
+      "get": {
+        "summary": "Free static sample of SEC 13F institutional accumulation intel",
+        "description": "Returns a free static sample payload from a real paid SEC 13F whale filings intel run (captured 2026-10-12 UTC).",
+        "operationId": "getSec13fSample",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Free static sample payload of SEC 13F intel.",
+            "content": {
+              "application/json": {
+                "example": {
+                  "sample": true,
+                  "capturedAt": "2026-10-12T00:17:21.825Z",
+                  "sampleNote": "Static sample from a real paid run, captured 2026-10-12 00:17 UTC. Consensus list truncated to the top 5; per-fund holdings omitted. Live results come from the paid route.",
+                  "paidRoute": {
+                    "method": "GET",
+                    "url": "https://stockbloc.ai.studio/api/v1/data/sec",
+                    "price": "$0.10 USDC (x402, Base)"
+                  },
+                  "output": {
+                    "source": "SEC EDGAR Form 13F-HR information tables",
+                    "dataNote": "Positions as of each fund's latest 13F-HR period end; not real-time.",
+                    "parsedFunds": 13,
+                    "totalFundsTracked": 13,
+                    "quarterCycle": "Q1/Q2 2026 SEC Form 13F Filings",
+                    "macroSummary": "Holdings parsed from SEC 13F-HR information tables for 13 of 13 funds; periods ending 2025-09-30 to 2026-06-30.",
+                    "consensusHoldings": [
+                      {
+                        "symbol": "AMZN",
+                        "name": "AMAZON COM INC",
+                        "cusip": "023135106",
+                        "fundCount": 10,
+                        "totalValueUsd": 11799348566,
+                        "topHolders": [
+                          "Appaloosa LP",
+                          "Third Point LLC",
+                          "Bridgewater Associates, LP",
+                          "Point72 Asset Management, L.P.",
+                          "ARK Investment Management LLC",
+                          "Duquesne Family Office LLC",
+                          "Pershing Square Capital Management",
+                          "Citadel Advisors LLC",
+                          "Millennium Management LLC",
+                          "Tiger Global Management LLC"
+                        ]
+                      },
+                      {
+                        "symbol": null,
+                        "name": "ALPHABET INC",
+                        "cusip": "02079K305",
+                        "fundCount": 6,
+                        "totalValueUsd": 32140052117,
+                        "topHolders": [
+                          "Third Point LLC",
+                          "Bridgewater Associates, LP",
+                          "Berkshire Hathaway Inc.",
+                          "Duquesne Family Office LLC",
+                          "Citadel Advisors LLC",
+                          "Tiger Global Management LLC"
+                        ]
+                      },
+                      {
+                        "symbol": null,
+                        "name": "TAIWAN SEMICONDUCTOR MANUFAC",
+                        "cusip": "874039100",
+                        "fundCount": 6,
+                        "totalValueUsd": 5370050039,
+                        "topHolders": [
+                          "Situational Awareness LP",
+                          "Appaloosa LP",
+                          "Third Point LLC",
+                          "Point72 Asset Management, L.P.",
+                          "Duquesne Family Office LLC",
+                          "Tiger Global Management LLC"
+                        ]
+                      },
+                      {
+                        "symbol": null,
+                        "name": "NVIDIA CORPORATION",
+                        "cusip": "67066G104",
+                        "fundCount": 5,
+                        "totalValueUsd": 8116260475,
+                        "topHolders": [
+                          "Appaloosa LP",
+                          "Bridgewater Associates, LP",
+                          "Citadel Advisors LLC",
+                          "Millennium Management LLC",
+                          "Tiger Global Management LLC"
+                        ]
+                      },
+                      {
+                        "symbol": "MSFT",
+                        "name": "MICROSOFT CORP",
+                        "cusip": "594918104",
+                        "fundCount": 4,
+                        "totalValueUsd": 5926952424,
+                        "topHolders": [
+                          "Pershing Square Capital Management",
+                          "Citadel Advisors LLC",
+                          "Millennium Management LLC",
+                          "Tiger Global Management LLC"
+                        ]
+                      }
+                    ],
+                    "consensusHoldingsTotal": 10
+                  }
                 }
               }
             }

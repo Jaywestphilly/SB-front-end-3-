@@ -78,7 +78,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.10,
     priceDisplay: '$0.10',
     atomicAmount: '100000', // 0.10 * 10^6
-    description: 'Institutional 13F whale filings, hedge fund shifts, and audited EDGAR risk intelligence.'
+    description: 'Institutional 13F whale filings, hedge fund shifts, and audited EDGAR risk intelligence. Free sample: https://stockbloc.ai.studio/api/v1/data/sec/sample'
   },
   // Deep SEC Analyst Audit Job ($0.25 USDC)
   sec_job: {
@@ -88,7 +88,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.25,
     priceDisplay: '$0.25',
     atomicAmount: '250000', // 0.25 * 10^6
-    description: 'Stock Bloc SEC Analyst: Multi-layer autonomous SEC 10-K/10-Q/8-K filing analysis, revenue quality check, and forensic audit.'
+    description: 'Stock Bloc SEC Analyst: Multi-layer autonomous SEC 10-K/10-Q/8-K filing analysis, revenue quality check, and forensic audit. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample'
   },
   // Institutional Research Memo ($0.10 USDC)
   research: {
@@ -663,6 +663,11 @@ export function isFrontendWebRequest(req: Request): boolean {
 // Helper to determine priced endpoint configuration for a path
 export function matchPricedEndpoint(path: string, method: string = 'GET'): X402PricedEndpoint | null {
   const normalized = path.split('?')[0].toLowerCase();
+
+  // Explicit exclusion for free static sample endpoints
+  if (normalized === '/api/v1/sec/job/sample' || normalized === '/api/v1/data/sec/sample') {
+    return null;
+  }
 
   // Earnings Prep Pack Bundle ($0.35 USDC)
   if (

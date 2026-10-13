@@ -1,0 +1,97 @@
+{
+  "sample": true,
+  "capturedAt": "2026-10-12T00:17:21.825Z",
+  "sampleNote": "Static sample from a real paid run, captured 2026-10-12 00:17 UTC. Consensus list truncated to the top 5; per-fund holdings omitted. Live results come from the paid route.",
+  "paidRoute": {
+    "method": "GET",
+    "url": "https://stockbloc.ai.studio/api/v1/data/sec",
+    "price": "$0.10 USDC (x402, Base)"
+  },
+  "output": {
+    "source": "SEC EDGAR Form 13F-HR information tables",
+    "dataNote": "Positions as of each fund's latest 13F-HR period end; not real-time.",
+    "parsedFunds": 13,
+    "totalFundsTracked": 13,
+    "quarterCycle": "Q1/Q2 2026 SEC Form 13F Filings",
+    "macroSummary": "Holdings parsed from SEC 13F-HR information tables for 13 of 13 funds; periods ending 2025-09-30 to 2026-06-30.",
+    "consensusHoldings": [
+      {
+        "symbol": "AMZN",
+        "name": "AMAZON COM INC",
+        "cusip": "023135106",
+        "fundCount": 10,
+        "totalValueUsd": 11799348566,
+        "topHolders": [
+          "Appaloosa LP",
+          "Third Point LLC",
+          "Bridgewater Associates, LP",
+          "Point72 Asset Management, L.P.",
+          "ARK Investment Management LLC",
+          "Duquesne Family Office LLC",
+          "Pershing Square Capital Management",
+          "Citadel Advisors LLC",
+          "Millennium Management LLC",
+          "Tiger Global Management LLC"
+        ]
+      },
+      {
+        "symbol": null,
+        "name": "ALPHABET INC",
+        "cusip": "02079K305",
+        "fundCount": 6,
+        "totalValueUsd": 32140052117,
+        "topHolders": [
+          "Third Point LLC",
+          "Bridgewater Associates, LP",
+          "Berkshire Hathaway Inc.",
+          "Duquesne Family Office LLC",
+          "Citadel Advisors LLC",
+          "Tiger Global Management LLC"
+        ]
+      },
+      {
+        "symbol": null,
+        "name": "TAIWAN SEMICONDUCTOR MANUFAC",
+        "cusip": "874039100",
+        "fundCount": 6,
+        "totalValueUsd": 5370050039,
+        "topHolders": [
+          "Situational Awareness LP",
+          "Appaloosa LP",
+          "Third Point LLC",
+          "Point72 Asset Management, L.P.",
+          "Duquesne Family Office LLC",
+          "Tiger Global Management LLC"
+        ]
+      },
+      {
+        "symbol": null,
+        "name": "NVIDIA CORPORATION",
+        "cusip": "67066G104",
+        "fundCount": 5,
+        "totalValueUsd": 8116260475,
+        "topHolders": [
+          "Appaloosa LP",
+          "Bridgewater Associates, LP",
+          "Citadel Advisors LLC",
+          "Millennium Management LLC",
+          "Tiger Global Management LLC"
+        ]
+      },
+      {
+        "symbol": "MSFT",
+        "name": "MICROSOFT CORP",
+        "cusip": "594918104",
+        "fundCount": 4,
+        "totalValueUsd": 5926952424,
+        "topHolders": [
+          "Pershing Square Capital Management",
+          "Citadel Advisors LLC",
+          "Millennium Management LLC",
+          "Tiger Global Management LLC"
+        ]
+      }
+    ],
+    "consensusHoldingsTotal": 10
+  }
+}
