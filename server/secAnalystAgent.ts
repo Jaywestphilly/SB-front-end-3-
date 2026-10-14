@@ -1979,6 +1979,12 @@ secAnalystRouter.post(
       // Enforce 10-K | 10-Q | 8-K contract
       const allowedFilingTypes: SecFilingType[] = ['10-K', '10-Q', '8-K'];
       const normalizedFilingType = String(filingType).trim().toUpperCase() as SecFilingType;
+      if (normalizedFilingType === '10-Q') {
+        return res.status(400).json({
+          error: '10-Q diff temporarily unavailable. Use filingType 10-K.',
+          supportedFilingTypes: ['10-K']
+        });
+      }
       if (!allowedFilingTypes.includes(normalizedFilingType)) {
         return res.status(400).json({
           error: `Contract validation error: "filingType" must be one of: ${allowedFilingTypes.join(', ')}. Received: "${filingType}".`,

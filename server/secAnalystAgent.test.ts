@@ -325,7 +325,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       .post('/api/v1/sec/job')
       .send({
         ticker: 'AAPL',
-        filingType: '10-Q'
+        filingType: '10-K'
       });
 
     expect(res.status).toBe(402);
@@ -339,7 +339,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       .set('Authorization', 'Bearer sb_live_fakekey_invalidsignature123456')
       .send({
         ticker: 'AAPL',
-        filingType: '10-Q'
+        filingType: '10-K'
       });
 
     expect(resInvalid.status).toBe(402);
@@ -354,7 +354,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       .set('Authorization', `Bearer ${buyerApiKey}`)
       .send({
         ticker: 'AAPL',
-        filingType: '10-Q'
+        filingType: '10-K'
       });
 
     expect(resRevoked.status).toBe(402);
@@ -367,7 +367,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       .set('Authorization', `Bearer ${buyerNoTransactScopeKey}`)
       .send({
         ticker: 'AAPL',
-        filingType: '10-Q'
+        filingType: '10-K'
       });
 
     expect(res.status).toBe(402);
@@ -380,7 +380,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       .set('Authorization', `Bearer ${buyerApiKey}`)
       .send({
         ticker: 'AAPL',
-        filingType: '10-Q',
+        filingType: '10-K',
         buyerAgentId: 'victim_other_agent_99' // Mismatched body trying to spoof another buyer
       });
 
@@ -394,7 +394,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       .set('Authorization', `Bearer ${buyerApiKey}`)
       .send({
         ticker: 'AAPL',
-        filingType: '10-Q',
+        filingType: '10-K',
         price: 1 // Malicious attempt to get 25-credit service for 1 credit
       });
 
@@ -417,7 +417,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       .set('Authorization', `Bearer ${buyerApiKey}`)
       .send({
         ticker: 'AAPL',
-        filingType: '10-Q'
+        filingType: '10-K'
       });
 
     expect(res.status).toBe(402);
@@ -472,7 +472,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       .set('idempotency-key', idempotencyKey)
       .send({
         ticker: 'AAPL',
-        filingType: '10-Q'
+        filingType: '10-K'
       });
 
     expect(res1.status).toBe(200);
@@ -484,7 +484,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       .set('idempotency-key', idempotencyKey)
       .send({
         ticker: 'AAPL',
-        filingType: '10-Q'
+        filingType: '10-K'
       });
 
     expect(res2.status).toBe(200);

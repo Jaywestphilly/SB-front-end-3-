@@ -149,4 +149,17 @@ describe('x402 Input Validation Before Payment Suite', () => {
     expect(res.body.code).toBe('TICKER_NOT_FOUND');
     expect(res.body.success).not.toBe(true);
   });
+
+  it('8. POST /api/v1/sec/job with filingType 10-Q returns HTTP 400 before payment check', async () => {
+    const res = await request(app)
+      .post('/api/v1/sec/job')
+      .send({ ticker: 'AAPL', filingType: '10-Q' });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({
+      error: '10-Q diff temporarily unavailable. Use filingType 10-K.',
+      supportedFilingTypes: ['10-K']
+    });
+    expect(res.headers['payment-required']).toBeUndefined();
+  });
 });

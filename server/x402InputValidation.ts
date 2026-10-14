@@ -332,6 +332,23 @@ export async function validatePricedRequestInput(
       };
     }
     const { ticker, filingType, mode } = body || {};
+    const normFilingType = String(filingType || '').trim().toUpperCase();
+
+    if (normFilingType === '10-Q' || normFilingType === '10Q') {
+      return {
+        valid: false,
+        status: 400,
+        code: '10Q_UNAVAILABLE',
+        error: '10-Q diff temporarily unavailable. Use filingType 10-K.',
+        message: '10-Q diff temporarily unavailable. Use filingType 10-K.',
+        charged: false,
+        customJson: {
+          error: '10-Q diff temporarily unavailable. Use filingType 10-K.',
+          supportedFilingTypes: ['10-K']
+        }
+      };
+    }
+
     const secJobExample = {
       method: 'POST',
       url: normalizedPath.includes('/analyst')
@@ -368,7 +385,6 @@ export async function validatePricedRequestInput(
       };
     }
     const allowedTypes = ['10-K', '10-Q', '8-K'];
-    const normFilingType = String(filingType || '').trim().toUpperCase();
     if (!normFilingType || !allowedTypes.includes(normFilingType)) {
       return {
         valid: false,

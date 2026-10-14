@@ -106,7 +106,7 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
       .set('Authorization', `Bearer ${rawApiKey}`)
       .send({
         ticker: 'NVDA',
-        filingType: '10-Q',
+        filingType: '10-K',
         question: 'Analyze data center growth'
       });
 
@@ -169,7 +169,7 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
           name: 'analyze_sec_filing',
           arguments: {
             ticker: 'NVDA',
-            filingType: '10-Q',
+            filingType: '10-K',
             question: 'What is the gross margin trend?'
           }
         }
@@ -206,7 +206,7 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
       .set('idempotency-key', idempotencyKey)
       .send({
         ticker: 'MSFT',
-        filingType: '10-Q'
+        filingType: '10-K'
       });
 
     expect(res.status).toBe(200);
