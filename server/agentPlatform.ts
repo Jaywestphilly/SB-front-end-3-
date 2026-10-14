@@ -1449,7 +1449,7 @@ const handleManifest = (req: Request, res: Response) => {
         path: '/api/data/market',
         alias: '/api/v1/market/quote/:symbol',
         scope: 'metered_data',
-        description: 'Live verified market prices, 24h changes, and Super Sonic Tsunami watchlist metrics.',
+        description: 'Current stock price, 24h change and volume for a ticker (US, Hong Kong, India). Unknown tickers return a free 404. $0.01.',
         x402: {
           priced: true,
           priceUsd: 0.01,
@@ -1507,7 +1507,7 @@ const handleManifest = (req: Request, res: Response) => {
         path: '/api/v1/sec/job',
         alias: '/api/v1/sec/analyst',
         scope: 'metered_credits',
-        description: 'Stock Bloc SEC Analyst: Multi-layer autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings, revenue quality verification, and forensic risk audit.',
+        description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25.",
         supportedFilingTypes: ['10-K', '10-Q', '8-K'],
         requestBody: {
           ticker: 'string (required, e.g. NVDA)',
@@ -1537,7 +1537,7 @@ const handleManifest = (req: Request, res: Response) => {
         path: '/api/v1/sec/analyst',
         alias: '/api/v1/sec/job',
         scope: 'metered_credits',
-        description: 'Stock Bloc SEC Analyst: Multi-layer autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings, revenue quality verification, and forensic risk audit.',
+        description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25.",
         supportedFilingTypes: ['10-K', '10-Q', '8-K'],
         requestBody: {
           ticker: 'string (required, e.g. NVDA)',
@@ -1593,7 +1593,7 @@ const handleManifest = (req: Request, res: Response) => {
         method: 'POST',
         path: '/api/v1/agent/strategy/evaluate',
         scope: 'metered_credits',
-        description: 'Evaluate multi-asset portfolio allocations against the Super Sonic Tsunami benchmark.',
+        description: "Backtest a stock strategy over multiple years against Stock Bloc's high-growth watchlist benchmark. $0.10.",
         x402: {
           priced: true,
           priceUsd: 0.10,
@@ -1753,7 +1753,7 @@ Always pay the payTo returned in the live 402 response.
 - **Institutional Research Memos** (\`POST /api/v1/intelligence/research\`): **$0.10 USDC** (\`100000\` atomic units)
 - **Quantitative Price Forecasts** (\`POST /api/v1/intelligence/forecasts\`): **$0.05 USDC** (\`50000\` atomic units)
 - **Quant Strategy Evaluation** (\`POST /api/v1/agent/strategy/evaluate\`): **$0.10 USDC** (\`100000\` atomic units)
-- **Earnings Prep Pack Bundle** (\`GET /api/v1/intelligence/earnings-pack?ticker=NVDA\`): **$0.35 USDC** (\`350000\` atomic units) — 22% discount vs $0.45 separate components
+- **Earnings Prep Pack Bundle** (\`GET /api/v1/intelligence/earnings-pack?ticker=NVDA\`): **$0.35 USDC** (\`350000\` atomic units) - 22% discount vs $0.45 separate components
 
 ---
 

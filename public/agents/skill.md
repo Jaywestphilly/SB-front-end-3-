@@ -28,11 +28,11 @@ Always pay the payTo returned in the live 402 response.
 - **Market Data Feed** (`GET /api/data/market`): **$0.01 USDC** (`10000` atomic units)
 - **0–100 SB Score & Quant Signal** (`GET /api/v1/intelligence/sb-score`): **$0.05 USDC** (`50000` atomic units)
 - **SEC 13F Whale Filings** (`GET /api/data/sec`): **$0.10 USDC** (`100000` atomic units)
-- **Stock Bloc SEC Analyst Deep Filing Audit** (`POST /api/v1/sec/analyst` or `POST /api/v1/sec/job`): **$0.25 USDC** (`250000` atomic units) — Full 10-K, 10-Q, 8-K audit with revenue quality & forensic risks
+- **Stock Bloc SEC Analyst Deep Filing Audit** (`POST /api/v1/sec/analyst` or `POST /api/v1/sec/job`): **$0.25 USDC** (`250000` atomic units) - Full 10-K, 10-Q, 8-K audit with revenue quality & forensic risks
 - **Institutional Research Memos** (`POST /api/v1/intelligence/research`): **$0.10 USDC** (`100000` atomic units)
 - **Quantitative Price Forecasts** (`POST /api/v1/intelligence/forecasts`): **$0.05 USDC** (`50000` atomic units)
 - **Quant Strategy Evaluation** (`POST /api/v1/agent/strategy/evaluate`): **$0.10 USDC** (`100000` atomic units)
-- **Earnings Prep Pack Bundle** (`GET /api/v1/intelligence/earnings-pack?ticker=NVDA`): **$0.35 USDC** (`350000` atomic units) — 22% discount vs $0.45 separate components
+- **Earnings Prep Pack Bundle** (`GET /api/v1/intelligence/earnings-pack?ticker=NVDA`): **$0.35 USDC** (`350000` atomic units) - 22% discount vs $0.45 separate components
 
 ---
 
@@ -237,7 +237,7 @@ The **Stock Bloc SEC Analyst** is the primary autonomous financial intelligence 
 
 ## Priced Endpoints Reference (Example Requests & Responses)
 
-### 1. Market Data Feed (`GET /api/data/market`) — $0.01 USDC
+### 1. Market Data Feed (`GET /api/data/market`): $0.01 USDC
 **Example request:**
 ```bash
 curl -s "https://stockbloc.ai.studio/api/data/market" -H "PAYMENT-SIGNATURE: <sig>"
@@ -255,7 +255,7 @@ curl -s "https://stockbloc.ai.studio/api/data/market" -H "PAYMENT-SIGNATURE: <si
 }
 ```
 
-### 2. SB Score & Quant Signal (`GET /api/v1/intelligence/sb-score`) — $0.05 USDC
+### 2. SB Score & Quant Signal (`GET /api/v1/intelligence/sb-score`): $0.05 USDC
 **Example request:**
 ```bash
 curl -s "https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=NVDA" -H "PAYMENT-SIGNATURE: <sig>"
@@ -274,7 +274,7 @@ curl -s "https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=NVDA" -
 }
 ```
 
-### 3. SEC 13F Whale Filings (`GET /api/data/sec`) — $0.10 USDC
+### 3. SEC 13F Whale Filings (`GET /api/data/sec`): $0.10 USDC
 **Example request:**
 ```bash
 curl -s "https://stockbloc.ai.studio/api/data/sec" -H "PAYMENT-SIGNATURE: <sig>"
@@ -294,7 +294,7 @@ curl -s "https://stockbloc.ai.studio/api/data/sec" -H "PAYMENT-SIGNATURE: <sig>"
 }
 ```
 
-### 4. Deep SEC Filing Audit (`POST /api/v1/sec/job`) — $0.25 USDC
+### 4. Deep SEC Filing Audit (`POST /api/v1/sec/job`): $0.25 USDC
 **Example request:**
 ```bash
 curl -s -X POST "https://stockbloc.ai.studio/api/v1/sec/job" -H "Content-Type: application/json" -H "PAYMENT-SIGNATURE: <sig>" -d '{"ticker":"NVDA","filingType":"10-Q"}'
@@ -315,7 +315,7 @@ curl -s -X POST "https://stockbloc.ai.studio/api/v1/sec/job" -H "Content-Type: a
 }
 ```
 
-### 5. Institutional Research Memo (`POST /api/v1/intelligence/research`) — $0.10 USDC
+### 5. Institutional Research Memo (`POST /api/v1/intelligence/research`): $0.10 USDC
 **Example request:**
 ```bash
 curl -s -X POST "https://stockbloc.ai.studio/api/v1/intelligence/research" -H "Content-Type: application/json" -H "PAYMENT-SIGNATURE: <sig>" -d '{"title":"NVDA Thesis","summary":"AI Compute","thesis":"Hyperscale demand"}'
@@ -332,7 +332,7 @@ curl -s -X POST "https://stockbloc.ai.studio/api/v1/intelligence/research" -H "C
 }
 ```
 
-### 6. Quantitative Price Forecast (`POST /api/v1/intelligence/forecasts`) — $0.05 USDC
+### 6. Quantitative Price Forecast (`POST /api/v1/intelligence/forecasts`): $0.05 USDC
 **Example request:**
 ```bash
 curl -s -X POST "https://stockbloc.ai.studio/api/v1/intelligence/forecasts" -H "Content-Type: application/json" -H "PAYMENT-SIGNATURE: <sig>" -d '{"symbol":"NVDA","targetPrice":160,"probability":75}'
@@ -350,7 +350,7 @@ curl -s -X POST "https://stockbloc.ai.studio/api/v1/intelligence/forecasts" -H "
 }
 ```
 
-### 7. Quant Strategy Evaluation (`POST /api/v1/agent/strategy/evaluate`) — $0.10 USDC
+### 7. Quant Strategy Evaluation (`POST /api/v1/agent/strategy/evaluate`): $0.10 USDC
 **Example request:**
 ```bash
 curl -s -X POST "https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate" -H "Content-Type: application/json" -H "PAYMENT-SIGNATURE: <sig>" -d '{"allocations":{"NVDA":0.5,"VST":0.5},"lookbackDays":90}'

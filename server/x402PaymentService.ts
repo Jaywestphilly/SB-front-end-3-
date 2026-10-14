@@ -49,7 +49,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.35,
     priceDisplay: '$0.35',
     atomicAmount: '350000', // 0.35 * 10^6
-    description: 'Comprehensive earnings preparation pack combining SEC 13F whale accumulation, 10-K/10-Q filing audit, and investment thesis memo.',
+    description: "One-call earnings prep for a ticker: 13F institutional accumulation, latest 10-K/10-Q filing audit, and a thesis memo. $0.35.",
     exampleRequest: {
       method: 'GET',
       url: 'https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack?ticker=AAPL'
@@ -63,7 +63,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.01,
     priceDisplay: '$0.01',
     atomicAmount: '10000', // 0.01 * 10^6
-    description: 'Real-time verified market data, Super Sonic Tsunami watchlist, and ticker prices.',
+    description: "Current stock price, 24h change and volume for a ticker (US, Hong Kong, India). Unknown tickers return a free 404. $0.01.",
     exampleRequest: {
       method: 'GET',
       url: 'https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL'
@@ -72,12 +72,12 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
   // SB Score Quant Intelligence ($0.05 USDC)
   sb_score: {
     id: 'sb_score',
-    name: 'Stock Bloc SB Score Quant Intelligence',
+    name: '5-Factor Stock Quality and Risk Score (SB Score)',
     category: 'sb_score',
     priceUsd: 0.05,
     priceDisplay: '$0.05',
     atomicAmount: '50000', // 0.05 * 10^6
-    description: '0-100 SB Score with 5-factor quantitative breakout: Momentum, Trend, RSI, Volume, and Volatility.',
+    description: "5-factor stock quality and risk score (0-100) for a ticker, with each factor shown. $0.05.",
     exampleRequest: {
       method: 'GET',
       url: 'https://stockbloc.ai.studio/api/v1/data/sb-score?symbol=AAPL'
@@ -91,7 +91,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.10,
     priceDisplay: '$0.10',
     atomicAmount: '100000', // 0.10 * 10^6
-    description: 'Institutional 13F whale filings, hedge fund shifts, and audited EDGAR risk intelligence. Free sample: https://stockbloc.ai.studio/api/v1/data/sec/sample',
+    description: "Which stocks hedge funds and large institutions are accumulating, from SEC 13F filings, with consensus picks. Optional limit. $0.10. Free sample: https://stockbloc.ai.studio/api/v1/data/sec/sample",
     exampleRequest: {
       method: 'GET',
       url: 'https://stockbloc.ai.studio/api/v1/data/sec?limit=10'
@@ -105,7 +105,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.25,
     priceDisplay: '$0.25',
     atomicAmount: '250000', // 0.25 * 10^6
-    description: 'Stock Bloc SEC Analyst: Multi-layer autonomous SEC 10-K/10-Q/8-K filing analysis, cross-filing diff mode with riskDelta metrics & optional compact output, revenue quality check, and forensic audit. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample',
+    description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample",
     exampleRequest: {
       method: 'POST',
       url: 'https://stockbloc.ai.studio/api/v1/sec/job',
@@ -156,7 +156,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.10,
     priceDisplay: '$0.10',
     atomicAmount: '100000', // 0.10 * 10^6
-    description: 'Multi-year quantitative simulation and backtesting against the Super Sonic Tsunami benchmark.',
+    description: "Backtest a stock strategy over multiple years against Stock Bloc's high-growth watchlist benchmark. $0.10.",
     exampleRequest: {
       method: 'POST',
       url: 'https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate',

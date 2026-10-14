@@ -64,7 +64,7 @@
       "path": "/api/data/market",
       "alias": "/api/v1/market/quote/:symbol",
       "scope": "metered_data",
-      "description": "Live verified market prices, 24h changes, and Super Sonic Tsunami watchlist metrics.",
+      "description": "Current stock price, 24h change and volume for a ticker (US, Hong Kong, India). Unknown tickers return a free 404. $0.01.",
       "x402": {
         "priced": true,
         "priceUsd": 0.01,
@@ -122,7 +122,7 @@
       "path": "/api/v1/sec/job",
       "alias": "/api/v1/sec/analyst",
       "scope": "metered_credits",
-      "description": "Stock Bloc SEC Analyst: Multi-layer autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings, revenue quality verification, and forensic risk audit.",
+      "description": "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25.",
       "supportedFilingTypes": ["10-K", "10-Q", "8-K"],
       "requestBody": {
         "ticker": "string (required, e.g. NVDA)",
@@ -152,7 +152,7 @@
       "path": "/api/v1/sec/analyst",
       "alias": "/api/v1/sec/job",
       "scope": "metered_credits",
-      "description": "Stock Bloc SEC Analyst: Multi-layer autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings, revenue quality verification, and forensic risk audit.",
+      "description": "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25.",
       "supportedFilingTypes": ["10-K", "10-Q", "8-K"],
       "requestBody": {
         "ticker": "string (required, e.g. NVDA)",
@@ -207,7 +207,7 @@
       "method": "POST",
       "path": "/api/v1/agent/strategy/evaluate",
       "scope": "metered_credits",
-      "description": "Evaluate multi-asset portfolio allocations against the Super Sonic Tsunami benchmark.",
+      "description": "Backtest a stock strategy over multiple years against Stock Bloc's high-growth watchlist benchmark. $0.10.",
       "x402": {
         "priced": true,
         "priceUsd": 0.10,

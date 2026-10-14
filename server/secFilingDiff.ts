@@ -52,7 +52,7 @@ export interface RiskDelta {
 }
 
 export interface FilingDiffResult {
-  riskDelta: RiskDelta;
+  riskDelta?: RiskDelta;
   mode: 'diff';
   ticker: string;
   filingType: '10-K' | '10-Q';
@@ -632,6 +632,21 @@ export function formatCompactDiffResult(diff: FilingDiffResult): CompactFilingDi
   return compact;
 }
 
+export async function buildFilingDiff(
+  ticker: string,
+  filingType: '10-K' | '10-Q',
+  options: { compact: true }
+): Promise<CompactFilingDiffResult>;
+export async function buildFilingDiff(
+  ticker: string,
+  filingType: '10-K' | '10-Q',
+  options?: { compact?: false }
+): Promise<FilingDiffResult>;
+export async function buildFilingDiff(
+  ticker: string,
+  filingType: '10-K' | '10-Q',
+  options?: { compact?: boolean }
+): Promise<FilingDiffResult | CompactFilingDiffResult>;
 export async function buildFilingDiff(
   ticker: string,
   filingType: '10-K' | '10-Q',

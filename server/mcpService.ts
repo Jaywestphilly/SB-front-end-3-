@@ -21,7 +21,7 @@ import { validatePricedRequestInput } from './x402InputValidation.js';
 export const MCP_TOOLS = [
   {
     name: "get_stock_quote",
-    description: "Get real-time verified stock price, 52-week range, PE ratio, volume, and market cap for any ticker symbol (Price: $0.01 USDC via x402 pay-per-call on Base).",
+    description: "Current stock price, 24h change and volume for a ticker (US, Hong Kong, India). Unknown tickers return a free 404. $0.01.",
     inputSchema: {
       type: "object",
       properties: {
@@ -32,7 +32,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "search_13f_whale_filings",
-    description: "Search SEC 13F institutional whale holdings for major funds (Berkshire, ARK, Duquesne, Tiger) from live SEC filings (Price: $0.10 USDC via x402 pay-per-call on Base).",
+    description: "Which stocks hedge funds and large institutions are accumulating, from SEC 13F filings, with consensus picks. Optional limit. $0.10.",
     inputSchema: {
       type: "object",
       properties: {
@@ -42,7 +42,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "analyze_sec_filing",
-    description: "Analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence from Stock Bloc SEC Analyst native agent (Price: $0.25 USDC via x402 pay-per-call on Base).",
+    description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25.",
     inputSchema: {
       type: "object",
       properties: {
@@ -55,7 +55,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "sec_analyst",
-    description: "Call the Stock Bloc SEC Analyst to analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence, revenue quality audits, and forensic risks (Price: $0.25 USDC via x402 pay-per-call on Base). Alias: analyze_sec_filing.",
+    description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25.",
     inputSchema: {
       type: "object",
       properties: {
@@ -68,7 +68,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "evaluate_tsunami_strategy",
-    description: "Evaluate a quantitative portfolio strategy against the Super Sonic Tsunami infrastructure watchlist (SPCX, NVDA, BE, PLTR, TSLA, AEHR, QUBT, SMCI). Returns Alpha, Sharpe, Win Rate, and Drawdown (Price: $0.10 USDC via x402 pay-per-call on Base).",
+    description: "Backtest a stock strategy over multiple years against Stock Bloc's high-growth watchlist benchmark. $0.10.",
     inputSchema: {
       type: "object",
       properties: {
@@ -79,7 +79,7 @@ export const MCP_TOOLS = [
         benchmark: {
           type: "string",
           enum: ["super_sonic_tsunami", "sp500", "nasdaq100"],
-          description: "Benchmark for alpha & beta comparison (default: super_sonic_tsunami)"
+          description: "Benchmark for alpha and beta comparison (default: super_sonic_tsunami)"
         },
         riskTolerance: {
           type: "string",
@@ -96,7 +96,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "run_quant_simulation",
-    description: "Evaluate quantitative portfolio allocations and return simulated Sharpe ratio, win rate, and max drawdown (Price: $0.10 USDC via x402 pay-per-call on Base).",
+    description: "Backtest a stock strategy over multiple years against Stock Bloc's high-growth watchlist benchmark. $0.10.",
     inputSchema: {
       type: "object",
       properties: {
@@ -167,7 +167,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "get_ebook_playbook",
-    description: "Get information and direct PDF download links for Stock Bloc Wealth Operating System e-books and financial playbooks (Free).",
+    description: "Get information and direct PDF download links for Stock Bloc financial playbooks (Free).",
     inputSchema: {
       type: "object",
       properties: {
@@ -177,7 +177,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "get_sb_score_history",
-    description: "Get audited historical SB Score quantitative snapshots and performance tracking (30d/60d/90d returns) for any stock ticker (Price: $0.05 USDC via x402 pay-per-call on Base).",
+    description: "Past values of the 5-factor stock score for a ticker. $0.05.",
     inputSchema: {
       type: "object",
       properties: {

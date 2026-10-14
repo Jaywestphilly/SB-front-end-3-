@@ -45,8 +45,8 @@
     },
     "/api/data/market": {
       "get": {
-        "summary": "Real-Time Market Data Feed (x402: $0.01 USDC)",
-        "description": "Verified real-time stock prices, 24h percentage changes, volume, and Super Sonic Tsunami watchlist metrics. Supports single symbol lookups (?symbol=...) across US (NYSE, NASDAQ), Hong Kong (.HK), and India (NSE .NS, BSE .BO). Unsupported symbols return 404. Settled via x402 USDC micropayment ($0.01 USDC).",
+        "summary": "Market Data Feed (x402: $0.01 USDC)",
+        "description": "Verified stock prices, 24h percentage changes, volume, and high-growth watchlist metrics. Supports single symbol lookups (?symbol=...) across US (NYSE, NASDAQ), Hong Kong (.HK), and India (NSE .NS, BSE .BO). Unsupported symbols return 404. Settled via x402 USDC micropayment ($0.01 USDC).",
         "operationId": "getMarketData",
         "parameters": [
           { "name": "symbol", "in": "query", "required": false, "schema": { "type": "string" }, "example": "NVDA" }
@@ -103,8 +103,8 @@
     },
     "/api/v1/market/quote": {
       "get": {
-        "summary": "Real-Time Stock Quote by Symbol (x402: $0.01 USDC)",
-        "description": "Real-time stock quote for a specific ticker symbol. Settled via x402 USDC micropayment ($0.01 USDC).",
+        "summary": "Current Stock Price, 24h Change and Volume ($0.01)",
+        "description": "Current stock price, 24h change and volume for a ticker (US, Hong Kong, India). Unknown tickers return a free 404. $0.01.",
         "operationId": "getMarketQuote",
         "parameters": [
           { "name": "symbol", "in": "query", "required": true, "description": "Stock ticker symbol (e.g. AAPL). 'ticker' is also accepted as an alias.", "schema": { "type": "string" }, "example": "AAPL" },
@@ -165,8 +165,8 @@
     },
     "/api/v1/intelligence/sb-score": {
       "get": {
-        "summary": "0-100 SB Score Quant Intelligence (x402: $0.05 USDC)",
-        "description": "Multi-factor quantitative stock score with 5 factor breakdown. Settled via x402 USDC micropayment ($0.05 USDC).",
+        "summary": "5-Factor Stock Quality and Risk Score (SB Score, $0.05)",
+        "description": "5-factor stock quality and risk score (0-100) for a ticker, with each factor shown. $0.05.",
         "operationId": "getSbScore",
         "parameters": [
           { "name": "ticker", "in": "query", "required": true, "schema": { "type": "string" }, "example": "NVDA" }
@@ -220,8 +220,8 @@
     },
     "/api/v1/intelligence/sb-score/history": {
       "get": {
-        "summary": "Historical SB Score Snapshots (x402: $0.05 USDC)",
-        "description": "Audited historical SB Score quantitative snapshots and performance tracking. Settled via x402 USDC micropayment ($0.05 USDC).",
+        "summary": "Past Values of 5-Factor Stock Score ($0.05)",
+        "description": "Past values of the 5-factor stock score for a ticker. $0.05.",
         "operationId": "getSbScoreHistory",
         "parameters": [
           { "name": "ticker", "in": "query", "required": true, "schema": { "type": "string" }, "example": "NVDA" },
@@ -275,8 +275,9 @@
     },
     "/api/data/sec": {
       "get": {
-        "summary": "SEC 13F Institutional Accumulation & Filing Intel (x402: $0.10 USDC)",
-        "description": "Institutional 13F whale filings, hedge fund shifts, and audited EDGAR risk intelligence. Settled via x402 USDC micropayment ($0.10 USDC).",
+        "deprecated": true,
+        "summary": "Deprecated alias of /api/v1/data/sec. Which stocks hedge funds and large institutions are accumulating ($0.10)",
+        "description": "Which stocks hedge funds and large institutions are accumulating, from SEC 13F filings, with consensus picks. Optional limit. $0.10. Free sample: https://stockbloc.ai.studio/api/v1/data/sec/sample",
         "operationId": "getSec13fIntel",
         "x-payment-info": {
           "price": { "mode": "fixed", "currency": "USD", "amount": "0.100000" },
@@ -327,8 +328,8 @@
     },
     "/api/v1/data/sec": {
       "get": {
-        "summary": "SEC 13F Institutional Accumulation Alias (x402: $0.10 USDC)",
-        "description": "Alias for /api/data/sec. Settled via x402 USDC micropayment ($0.10 USDC).",
+        "summary": "Hedge Fund and Institutional 13F Accumulation ($0.10)",
+        "description": "Which stocks hedge funds and large institutions are accumulating, from SEC 13F filings, with consensus picks. Optional limit. $0.10. Free sample: https://stockbloc.ai.studio/api/v1/data/sec/sample",
         "operationId": "getSec13fIntelAlias",
         "x-payment-info": {
           "price": { "mode": "fixed", "currency": "USD", "amount": "0.100000" },
@@ -374,8 +375,8 @@
     },
     "/api/v1/sec/job": {
       "post": {
-        "summary": "Stock Bloc SEC Analyst Deep Filing Audit (x402: $0.25 USDC)",
-        "description": "Stock Bloc SEC Analyst: Multi-layer autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings. Settled via x402 USDC micropayment ($0.25 USDC). Alias: /api/v1/sec/analyst.",
+        "summary": "What Changed in Latest 10-K/10-Q vs Prior Filing ($0.25)",
+        "description": "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample",
         "operationId": "executeSecJob",
         "tags": ["Stock Bloc SEC Analyst", "SEC Research API"],
         "requestBody": {
@@ -457,8 +458,8 @@
     },
     "/api/v1/sec/analyst": {
       "post": {
-        "summary": "Stock Bloc SEC Analyst Deep Filing Audit (x402: $0.25 USDC)",
-        "description": "Stock Bloc SEC Analyst: Multi-layer autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings. Settled via x402 USDC micropayment ($0.25 USDC). Canonical alias for /api/v1/sec/job.",
+        "summary": "Stock Bloc SEC Analyst: What Changed in Latest 10-K/10-Q vs Prior Filing ($0.25)",
+        "description": "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample",
         "operationId": "callStockBlocSecAnalyst",
         "tags": ["Stock Bloc SEC Analyst", "SEC Research API"],
         "requestBody": {
@@ -799,8 +800,8 @@
     },
     "/api/v1/agent/strategy/evaluate": {
       "post": {
-        "summary": "Quantitative Strategy Backtest & Simulation (x402: $0.10 USDC)",
-        "description": "Multi-year quantitative simulation and backtesting against the Super Sonic Tsunami benchmark. Settled via x402 USDC micropayment ($0.10 USDC).",
+        "summary": "Backtest Stock Strategy ($0.10)",
+        "description": "Backtest a stock strategy over multiple years against Stock Bloc's high-growth watchlist benchmark. $0.10.",
         "operationId": "evaluateStrategy",
         "requestBody": {
           "required": true,
@@ -1047,8 +1048,8 @@
     },
     "/api/v1/intelligence/earnings-pack": {
       "get": {
-        "summary": "Stock Bloc Earnings Prep Pack Bundle (x402: $0.35 USDC)",
-        "description": "Comprehensive earnings preparation pack combining SEC 13F whale accumulation, 10-K/10-Q filing audit, and investment thesis memo in one call. Settled via x402 USDC micropayment ($0.35 USDC).",
+        "summary": "One-Call Earnings Prep Pack ($0.35)",
+        "description": "One-call earnings prep for a ticker: 13F institutional accumulation, latest 10-K/10-Q filing audit, and a thesis memo. $0.35.",
         "operationId": "getEarningsPack",
         "parameters": [
           { "name": "ticker", "in": "query", "required": true, "schema": { "type": "string" }, "example": "AAPL" }
