@@ -1307,10 +1307,10 @@ app.get(['/api/live-quote/:symbol', '/api/v1/market/quote/:symbol', '/api/v1/mar
     return res.status(400).json({
       error: 'invalid_symbol',
       code: 'INVALID_INPUT',
-      message: 'Query parameter "symbol" or "ticker" (or URL path /:symbol) is required (e.g. ?symbol=AAPL)',
+      message: 'Query parameter "ticker" or "symbol" (or URL path /:symbol) is required (e.g. ?ticker=AAPL)',
       example: {
         method: 'GET',
-        url: 'https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL'
+        url: 'https://stockbloc.ai.studio/api/v1/market/quote?ticker=AAPL'
       }
     });
   }
@@ -1327,10 +1327,32 @@ app.get(['/api/live-quote/:symbol', '/api/v1/market/quote/:symbol', '/api/v1/mar
         message: `Market data for symbol "${symUpper}" is currently unavailable or unsupported.`
       });
     }
+
+    const servedAt = new Date().toISOString();
+    const data_as_of = quote.data_as_of || quote.lastUpdated || servedAt;
+
     return res.json({
-      ...quote,
-      data_as_of: quote.lastUpdated || new Date().toISOString(),
-      source: quote.isRealTime ? "live" : "verified_cache"
+      symbol: quote.symbol,
+      name: quote.name,
+      price: quote.price,
+      change: quote.change,
+      changePercent: quote.changePercent,
+      previousClose: quote.previousClose ?? null,
+      previousCloseDate: quote.previousCloseDate ?? null,
+      ...(quote.high52 !== undefined ? { high52: quote.high52 } : {}),
+      ...(quote.low52 !== undefined ? { low52: quote.low52 } : {}),
+      volume: quote.volume,
+      dollarVolume: quote.dollarVolume,
+      data_as_of: data_as_of,
+      servedAt: servedAt,
+      lastUpdated: data_as_of,
+      isRealTime: quote.isRealTime,
+      ...(quote.priceLabel ? { priceLabel: quote.priceLabel } : {}),
+      ...(quote.isStale ? { isStale: quote.isStale } : {}),
+      ...(quote.staleReason ? { staleReason: quote.staleReason } : {}),
+      ...(quote.note ? { note: quote.note } : {}),
+      refreshSchedule: quote.refreshSchedule,
+      ...(quote.marketState ? { marketState: quote.marketState } : {})
     });
   } catch (err: any) {
     if (err.name === 'AbortError' || err.message?.includes('timeout')) {

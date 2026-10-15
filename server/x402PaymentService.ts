@@ -267,34 +267,28 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
     inputSchema: {
       type: 'object',
       properties: {
-        ticker: { type: 'string', description: 'US ticker symbol (e.g. AAPL).' },
-        symbol: { type: 'string', description: 'Optional alias for ticker.' },
-        format: { type: 'string', enum: ['json', 'csv'], description: 'Optional. Defaults to json.' }
+        ticker: { type: 'string', description: 'US stock ticker symbol, e.g. AAPL' },
+        symbol: { type: 'string', description: 'Alias for ticker' }
       },
       additionalProperties: false
     },
     output: {
       example: {
         symbol: 'AAPL',
-        ticker: 'AAPL',
         name: 'Apple Inc.',
         price: 342.96,
+        change: 1.69,
+        changePercent: 0.50,
         previousClose: 341.27,
         previousCloseDate: '2026-10-13',
-        change: 1.69,
-        changePercent: 0.5,
-        high52: 345.34,
-        low52: 243.42,
-        volume: 38412900,
-        dollarVolume: '$13.2B',
-        lastUpdated: '2026-10-14T20:00:00.000Z',
+        volume: 48291000,
+        dollarVolume: '$16.6B',
         data_as_of: '2026-10-14T20:00:00.000Z',
-        servedAt: '2026-10-14T21:15:00.000Z',
+        servedAt: '2026-10-15T10:25:14.000Z',
+        lastUpdated: '2026-10-14T20:00:00.000Z',
         isRealTime: false,
         priceLabel: 'Last Close',
-        marketState: 'POST',
-        refreshSchedule: 'Market Closed - Last Close',
-        source: 'live'
+        refreshSchedule: 'Market Closed - Last Close'
       }
     }
   }),

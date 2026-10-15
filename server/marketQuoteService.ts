@@ -2,13 +2,12 @@ import { MarketDataService } from '../src/services/marketDataService.js';
 
 export interface RealQuoteResult {
   symbol: string;
-  ticker?: string;
   name: string;
   price: number;
-  previousClose: number | null;
-  previousCloseDate: string | null;
   change: number | null;
   changePercent: number | null;
+  previousClose: number | null;
+  previousCloseDate: string | null;
   high52?: number;
   low52?: number;
   volume: number | string;
@@ -34,114 +33,25 @@ interface CachedQuoteEntry {
 const quoteCache = new Map<string, CachedQuoteEntry>();
 const QUOTE_CACHE_DURATION_MS = 30 * 1000; // 30 seconds
 
-export function clearQuoteCache(): void {
-  quoteCache.clear();
-}
-
-const FIXED_HOLIDAYS = new Set([
-  '01-01', // New Year's Day
-  '06-19', // Juneteenth
-  '07-04', // Independence Day
-  '12-25'  // Christmas
-]);
-
-const FLOATING_HOLIDAYS = new Set([
-  // 2025
-  '2025-01-20', '2025-02-17', '2025-04-18', '2025-05-26', '2025-09-01', '2025-11-27',
-  // 2026
-  '2026-01-19', '2026-02-16', '2026-04-03', '2026-05-25', '2026-09-07', '2026-11-26',
-  // 2027
-  '2027-01-18', '2027-02-15', '2027-03-26', '2027-05-31', '2027-09-06', '2027-11-25'
-]);
-
 /**
- * Formats a Date into YYYY-MM-DD in America/New_York (Eastern Time).
+ * Converts a Unix timestamp in seconds to a YYYY-MM-DD date string in US Eastern time (America/New_York).
  */
-export function formatETDate(date: Date): string {
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  });
-  const parts = formatter.formatToParts(date);
-  const year = parts.find(p => p.type === 'year')?.value || '1970';
-  const month = parts.find(p => p.type === 'month')?.value || '01';
-  const day = parts.find(p => p.type === 'day')?.value || '01';
-  return `${year}-${month}-${day}`;
-}
-
-/**
- * Returns the ISO-8601 UTC timestamp corresponding to 4:00 PM ET (16:00:00 America/New_York) on the given YYYY-MM-DD date.
- */
-export function getFourPmEtIso(dateET: string): string {
-  // Check whether dateET in America/New_York is EDT (UTC-4 -> 20:00Z) or EST (UTC-5 -> 21:00Z)
-  const candidateEdt = new Date(`${dateET}T20:00:00.000Z`);
-  if (!isNaN(candidateEdt.getTime())) {
+function getNYDateStr(tsSec: number): string {
+  try {
     const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: 'America/New_York',
-      hour: '2-digit',
-      hour12: false
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
     });
-    const hourStr = formatter.formatToParts(candidateEdt).find(p => p.type === 'hour')?.value;
-    if (hourStr === '16') {
-      return candidateEdt.toISOString();
-    }
+    const parts = formatter.formatToParts(new Date(tsSec * 1000));
+    const y = parts.find(p => p.type === 'year')?.value;
+    const m = parts.find(p => p.type === 'month')?.value;
+    const d = parts.find(p => p.type === 'day')?.value;
+    return `${y}-${m}-${d}`;
+  } catch {
+    return new Date(tsSec * 1000).toISOString().split('T')[0];
   }
-  const candidateEst = new Date(`${dateET}T21:00:00.000Z`);
-  if (!isNaN(candidateEst.getTime())) {
-    return candidateEst.toISOString();
-  }
-  return new Date().toISOString();
-}
-
-function isUSTradingDay(dateET: string): boolean {
-  const d = new Date(`${dateET}T16:00:00.000Z`);
-  if (isNaN(d.getTime())) return false;
-  const weekday = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    weekday: 'short'
-  }).format(d);
-  if (weekday === 'Sat' || weekday === 'Sun') return false;
-  const mmdd = dateET.slice(5);
-  if (FIXED_HOLIDAYS.has(mmdd) || FLOATING_HOLIDAYS.has(dateET)) return false;
-  return true;
-}
-
-export function getPreviousTradingDayET(dateET: string): string {
-  const base = new Date(`${dateET}T16:00:00.000Z`);
-  if (isNaN(base.getTime())) return dateET;
-  for (let i = 1; i <= 10; i++) {
-    const prev = new Date(base.getTime() - i * 24 * 60 * 60 * 1000);
-    const prevET = formatETDate(prev);
-    if (isUSTradingDay(prevET)) {
-      return prevET;
-    }
-  }
-  return dateET;
-}
-
-function getMostRecentCompletedTradingDayET(now: Date = new Date()): string {
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-  const parts = formatter.formatToParts(now);
-  const getPart = (type: string) => parts.find(p => p.type === type)?.value || '';
-  const todayET = `${getPart('year')}-${getPart('month')}-${getPart('day')}`;
-  const hour = parseInt(getPart('hour'), 10);
-  const minute = parseInt(getPart('minute'), 10);
-  const totalMinutes = hour * 60 + minute;
-
-  if (isUSTradingDay(todayET) && totalMinutes >= 960) {
-    return todayET;
-  }
-  return getPreviousTradingDayET(todayET);
 }
 
 /**
@@ -177,11 +87,27 @@ export function isUSMarketOpen(date: Date = new Date()): boolean {
     const mmdd = `${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const yyyymmdd = `${year}-${mmdd}`;
 
-    if (FIXED_HOLIDAYS.has(mmdd)) {
+    // Standard fixed US market holidays
+    const fixedHolidays = new Set([
+      '01-01', // New Year's Day
+      '06-19', // Juneteenth
+      '07-04', // Independence Day
+      '12-25'  // Christmas
+    ]);
+    if (fixedHolidays.has(mmdd)) {
       return false;
     }
 
-    if (FLOATING_HOLIDAYS.has(yyyymmdd)) {
+    // Common floating market holidays
+    const floatingHolidays = new Set([
+      // 2025
+      '2025-01-20', '2025-02-17', '2025-04-18', '2025-05-26', '2025-09-01', '2025-11-27',
+      // 2026
+      '2026-01-19', '2026-02-16', '2026-04-03', '2026-05-25', '2026-09-07', '2026-11-26',
+      // 2027
+      '2027-01-18', '2027-02-15', '2027-03-26', '2027-05-31', '2027-09-06', '2027-11-25'
+    ]);
+    if (floatingHolidays.has(yyyymmdd)) {
       return false;
     }
 
@@ -230,8 +156,8 @@ export async function fetchYahooQuote(symbol: string, timeoutMs = 3500): Promise
   const yahooSym = normalizeYahooSymbol(symUpper);
   
   const urls = [
-    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSym)}?interval=1d&range=5d`,
-    `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSym)}?interval=1d&range=5d`
+    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSym)}?interval=1d&range=10d`,
+    `https://query2.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSym)}?interval=1d&range=10d`
   ];
 
   for (const url of urls) {
@@ -249,67 +175,59 @@ export async function fetchYahooQuote(symbol: string, timeoutMs = 3500): Promise
 
       if (res.ok) {
         const data = await res.json();
-        const chartResult = data.chart?.result?.[0];
-        const meta = chartResult?.meta;
+        const result = data.chart?.result?.[0];
+        const meta = result?.meta;
+
         if (meta && typeof meta.regularMarketPrice === 'number' && !isNaN(meta.regularMarketPrice) && meta.regularMarketPrice > 0) {
           const price = Number(meta.regularMarketPrice.toFixed(2));
-          const timestamps: any[] = Array.isArray(chartResult?.timestamp) ? chartResult.timestamp : [];
-          const closes: any[] = Array.isArray(chartResult?.indicators?.quote?.[0]?.close)
-            ? chartResult.indicators.quote[0].close
-            : [];
+          const timestamps: number[] = result.timestamp || [];
+          const quoteCloses: (number | null)[] = result.indicators?.quote?.[0]?.close || [];
 
-          const dailyBars: Array<{ ts: number; dateET: string; close: number }> = [];
-          for (let i = 0; i < Math.min(timestamps.length, closes.length); i++) {
+          // Group valid daily trading sessions
+          const sessionMap = new Map<string, { dateStr: string; close: number; timeSec: number }>();
+          for (let i = 0; i < timestamps.length; i++) {
             const ts = timestamps[i];
-            const cl = closes[i];
-            if (typeof ts === 'number' && ts > 0 && typeof cl === 'number' && !isNaN(cl) && cl > 0) {
-              const dateET = formatETDate(new Date(ts * 1000));
-              const existingIdx = dailyBars.findIndex(b => b.dateET === dateET);
-              if (existingIdx >= 0) {
-                dailyBars[existingIdx] = { ts, dateET, close: cl };
-              } else {
-                dailyBars.push({ ts, dateET, close: cl });
-              }
+            const cl = quoteCloses[i];
+            if (typeof ts === 'number' && typeof cl === 'number' && !isNaN(cl) && cl > 0) {
+              const dateStr = getNYDateStr(ts);
+              sessionMap.set(dateStr, { dateStr, close: cl, timeSec: ts });
+            }
+          }
+          const sessions = Array.from(sessionMap.values()).sort((a, b) => a.timeSec - b.timeSec);
+
+          const priceTsSec = typeof meta.regularMarketTime === 'number' && meta.regularMarketTime > 0
+            ? meta.regularMarketTime
+            : (sessions.length > 0 ? sessions[sessions.length - 1].timeSec : Math.floor(Date.now() / 1000));
+
+          const priceTimeIso = new Date(priceTsSec * 1000).toISOString();
+
+          let prevSession: { dateStr: string; close: number; timeSec: number } | null = null;
+          if (sessions.length > 0) {
+            const currentDateStr = getNYDateStr(priceTsSec);
+            const currentIdx = sessions.findIndex(s => s.dateStr === currentDateStr);
+
+            if (currentIdx > 0) {
+              prevSession = sessions[currentIdx - 1];
+            } else if (currentIdx === -1 && sessions.length >= 1) {
+              prevSession = sessions[sessions.length - 1];
+            } else if (currentIdx === 0 && sessions.length >= 2) {
+              prevSession = sessions[0];
             }
           }
 
-          const hasMarketTime = typeof meta.regularMarketTime === 'number' && meta.regularMarketTime > 0;
-          const currentPriceDateET = hasMarketTime
-            ? formatETDate(new Date(meta.regularMarketTime * 1000))
-            : (dailyBars.length > 0 ? dailyBars[dailyBars.length - 1].dateET : getMostRecentCompletedTradingDayET());
-
-          // Determine the previous trading day's official close from daily bars strictly prior to currentPriceDateET
           let previousClose: number | null = null;
           let previousCloseDate: string | null = null;
-
-          const priorBars = dailyBars.filter(b => b.dateET < currentPriceDateET);
-          if (priorBars.length > 0) {
-            const prevBar = priorBars[priorBars.length - 1];
-            previousClose = Number(prevBar.close.toFixed(2));
-            previousCloseDate = prevBar.dateET;
-          } else if (dailyBars.length >= 2) {
-            const prevBar = dailyBars[dailyBars.length - 2];
-            previousClose = Number(prevBar.close.toFixed(2));
-            previousCloseDate = prevBar.dateET;
-          } else if (typeof meta.previousClose === 'number' && !isNaN(meta.previousClose) && meta.previousClose > 0) {
-            // Only use explicit meta.previousClose (never meta.chartPreviousClose from a 5d range, which is 5 trading days old)
-            previousClose = Number(meta.previousClose.toFixed(2));
-            previousCloseDate = getPreviousTradingDayET(currentPriceDateET);
-          }
-
           let change: number | null = null;
           let changePercent: number | null = null;
           let note: string | undefined = undefined;
 
-          if (previousClose !== null && previousClose > 0) {
+          if (prevSession && typeof prevSession.close === 'number' && prevSession.close > 0) {
+            previousClose = Number(prevSession.close.toFixed(2));
+            previousCloseDate = prevSession.dateStr;
             change = Number((price - previousClose).toFixed(2));
             changePercent = Number((((price - previousClose) / previousClose) * 100).toFixed(2));
           } else {
-            previousClose = null;
-            previousCloseDate = null;
-            change = null;
-            changePercent = null;
-            note = 'Previous trading day official close is unavailable; change and changePercent are null.';
+            note = 'Valid previous close data unavailable';
           }
 
           const shareVol = typeof meta.regularMarketVolume === 'number' ? meta.regularMarketVolume : 0;
@@ -336,34 +254,28 @@ export async function fetchYahooQuote(symbol: string, timeoutMs = 3500): Promise
             refreshSchedule = 'Market Closed - Last Close';
           }
 
-          // Price timestamp: live trade time when market is open, 4:00 PM ET close of the price's trading day when market is closed
-          const priceTimestampIso = open
-            ? (hasMarketTime ? new Date(meta.regularMarketTime * 1000).toISOString() : new Date().toISOString())
-            : getFourPmEtIso(currentPriceDateET);
-
           const servedAt = new Date().toISOString();
 
           return {
             symbol: symUpper,
-            ticker: symUpper,
             name: meta.longName || meta.shortName || symUpper,
             price,
-            previousClose,
-            previousCloseDate,
             change,
             changePercent,
-            ...(note ? { note } : {}),
+            previousClose,
+            previousCloseDate,
             high52: meta.fiftyTwoWeekHigh ? Number(meta.fiftyTwoWeekHigh.toFixed(2)) : undefined,
             low52: meta.fiftyTwoWeekLow ? Number(meta.fiftyTwoWeekLow.toFixed(2)) : undefined,
             volume: shareVol,
             dollarVolume: dollarVolumeFormatted,
-            lastUpdated: priceTimestampIso,
-            data_as_of: priceTimestampIso,
+            lastUpdated: priceTimeIso,
+            data_as_of: priceTimeIso,
             servedAt,
             isRealTime: open,
             priceLabel,
             marketState: meta.marketState,
-            refreshSchedule
+            refreshSchedule,
+            ...(note ? { note } : {})
           };
         }
       }
@@ -381,12 +293,12 @@ export async function fetchYahooQuote(symbol: string, timeoutMs = 3500): Promise
 export async function fetchRealStockQuote(symbol: string, forceRefresh = false, timeoutMs = 3500): Promise<RealQuoteResult | null> {
   const symUpper = symbol.toUpperCase().trim();
   const now = Date.now();
-  const servedAt = new Date(now).toISOString();
 
   // 1. Check 30-second in-memory cache
   const cached = quoteCache.get(symUpper);
   if (!forceRefresh && cached && (now - cached.cachedAt < QUOTE_CACHE_DURATION_MS)) {
     const open = isUSMarketOpen();
+    const servedAt = new Date().toISOString();
     return {
       ...cached.quote,
       servedAt,
@@ -417,39 +329,44 @@ export async function fetchRealStockQuote(symbol: string, forceRefresh = false, 
           ? (dollarVol >= 1e9 ? `$${(dollarVol/1e9).toFixed(1)}B` : dollarVol >= 1e6 ? `$${(dollarVol/1e6).toFixed(1)}M` : `$${Math.round(dollarVol).toLocaleString()}`)
           : 'N/A';
 
-        const hasValidPrevClose = typeof found.previousClose === 'number' && !isNaN(found.previousClose) && found.previousClose > 0;
-        const prevClose = hasValidPrevClose ? Number(found.previousClose.toFixed(2)) : null;
-        const prevCloseDate = hasValidPrevClose && typeof found.previousCloseDate === 'string' ? found.previousCloseDate : null;
-        const priceNum = Number(found.price.toFixed(2));
-        const change = prevClose !== null ? Number((priceNum - prevClose).toFixed(2)) : null;
-        const changePercent = prevClose !== null ? Number((((priceNum - prevClose) / prevClose) * 100).toFixed(2)) : null;
-        const rawSnapshotTime = found.last_updated || persisted?.updated_at;
-        const priceAsOf = rawSnapshotTime
-          ? new Date(rawSnapshotTime).toISOString()
-          : getFourPmEtIso(getMostRecentCompletedTradingDayET());
+        const prevClose = typeof found.previousClose === 'number' ? found.previousClose : (typeof found.previous_close === 'number' ? found.previous_close : null);
+        const prevCloseDate = found.previousCloseDate || found.previous_close_date || null;
+
+        let change: number | null = null;
+        let changePercent: number | null = null;
+        let note: string | undefined = undefined;
+
+        if (prevClose && prevClose > 0) {
+          change = Number((found.price - prevClose).toFixed(2));
+          changePercent = Number((((found.price - prevClose) / prevClose) * 100).toFixed(2));
+        } else {
+          note = "Valid previous close data unavailable in verified dataset snapshot";
+        }
+
+        const servedAt = new Date().toISOString();
+        const priceTimeIso = found.last_updated || persisted?.updated_at || servedAt;
 
         resultQuote = {
           symbol: symUpper,
-          ticker: symUpper,
           name: found.name || symUpper,
-          price: priceNum,
-          previousClose: prevClose,
-          previousCloseDate: prevCloseDate,
+          price: found.price,
           change,
           changePercent,
-          ...(prevClose === null ? { note: 'Previous trading day official close is unavailable in cached snapshot; change and changePercent are null.' } : {}),
+          previousClose: prevClose,
+          previousCloseDate: prevCloseDate,
           high52: found.high52,
           low52: found.low52,
           volume: shareVol,
           dollarVolume: dollarVolumeFormatted,
-          lastUpdated: priceAsOf,
-          data_as_of: priceAsOf,
+          lastUpdated: priceTimeIso,
+          data_as_of: priceTimeIso,
           servedAt,
           isRealTime: false,
           isStale: true,
           staleReason: "Live feed unavailable. Displaying last verified dataset snapshot.",
           priceLabel: "Last Close",
-          refreshSchedule: "Verified Snapshot Cache"
+          refreshSchedule: "Verified Snapshot Cache",
+          ...(note ? { note } : {})
         };
       }
     } catch {
@@ -463,3 +380,4 @@ export async function fetchRealStockQuote(symbol: string, forceRefresh = false, 
 
   return resultQuote;
 }
+

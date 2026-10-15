@@ -102,17 +102,17 @@ export async function validatePricedRequestInput(
       };
     }
 
-    // Exact /api/v1/market/quote and /api/live-quote (requires ticker or symbol)
+    // Exact /api/v1/market/quote and /api/live-quote (requires symbol or ticker)
     if (normalizedPath === '/api/v1/market/quote' || normalizedPath === '/api/live-quote') {
-      const sym = query.ticker || query.symbol;
+      const sym = query.symbol || query.ticker;
       if (!sym || typeof sym !== 'string' || !sym.trim()) {
         return {
           valid: false,
           status: 400,
           code: 'INVALID_INPUT',
-          error: 'Validation error: "ticker" or "symbol" query parameter is required.',
-          message: 'Validation error: "ticker" or "symbol" query parameter is required.',
-          field: 'ticker',
+          error: 'Validation error: "symbol" or "ticker" query parameter is required.',
+          message: 'Validation error: "symbol" or "ticker" query parameter is required.',
+          field: 'symbol',
           example: {
             method: 'GET',
             url: 'https://stockbloc.ai.studio/api/v1/market/quote?ticker=AAPL'
@@ -127,7 +127,7 @@ export async function validatePricedRequestInput(
           code: 'INVALID_INPUT',
           error: `Invalid symbol format: "${sym}".`,
           message: `Invalid symbol format: "${sym}".`,
-          field: 'ticker',
+          field: 'symbol',
           example: {
             method: 'GET',
             url: 'https://stockbloc.ai.studio/api/v1/market/quote?ticker=AAPL'
@@ -166,10 +166,10 @@ export async function validatePricedRequestInput(
           code: 'INVALID_INPUT',
           error: `Invalid symbol format in path: "${decoded}".`,
           message: `Invalid symbol format in path: "${decoded}".`,
-          field: 'ticker',
+          field: 'symbol',
           example: {
             method: 'GET',
-            url: 'https://stockbloc.ai.studio/api/v1/market/quote?ticker=AAPL'
+            url: 'https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL'
           },
           charged: false
         };
@@ -332,8 +332,22 @@ export async function validatePricedRequestInput(
       };
     }
     const { ticker, filingType, mode } = body || {};
-    const rawFilingType = String(filingType || '').trim().toUpperCase();
-    const normFilingType = rawFilingType === '10Q' ? '10-Q' : (rawFilingType === '10K' ? '10-K' : rawFilingType);
+    const normFilingType = String(filingType || '').trim().toUpperCase();
+
+    if (normFilingType === '10-Q' || normFilingType === '10Q') {
+      return {
+        valid: false,
+        status: 400,
+        code: '10Q_UNAVAILABLE',
+        error: '10-Q diff temporarily unavailable. Use filingType 10-K.',
+        message: '10-Q diff temporarily unavailable. Use filingType 10-K.',
+        charged: false,
+        customJson: {
+          error: '10-Q diff temporarily unavailable. Use filingType 10-K.',
+          supportedFilingTypes: ['10-K']
+        }
+      };
+    }
 
     const secJobExample = {
       method: 'POST',
