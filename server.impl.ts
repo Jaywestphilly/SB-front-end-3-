@@ -130,6 +130,11 @@ app.get(['/api/v1/data/sec/sample', '/api/data/sec/sample'], (_req, res) => {
   return res.status(200).json(sec13fSample);
 });
 
+app.get('/.well-known/x402list.txt', (_req, res) => {
+  res.setHeader('Content-Type', 'text/plain');
+  return res.status(200).send('x402list-verify-ZYKyA4-o5e_y370ZiumJz1gXUMqMmnkK66p-z9S09Os');
+});
+
 // 1c. Real Coinbase CDP x402 Payment Gatekeeper Middleware (for priced endpoints)
 app.use(requireX402Payment());
 

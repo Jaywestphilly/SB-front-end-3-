@@ -1944,7 +1944,7 @@ secAnalystRouter.post(
         question,
         buyerAgentId,
         forceFixture,
-        mode = 'standard'
+        mode: rawMode
       } = req.body || {};
 
       // Reject spoofed buyerAgentId in request body if mismatched with verified API credential
@@ -1978,13 +1978,8 @@ secAnalystRouter.post(
 
       // Enforce 10-K | 10-Q | 8-K contract
       const allowedFilingTypes: SecFilingType[] = ['10-K', '10-Q', '8-K'];
-      const normalizedFilingType = String(filingType).trim().toUpperCase() as SecFilingType;
-      if (normalizedFilingType === '10-Q') {
-        return res.status(400).json({
-          error: '10-Q diff temporarily unavailable. Use filingType 10-K.',
-          supportedFilingTypes: ['10-K']
-        });
-      }
+      const rawFilingStr = String(filingType).trim().toUpperCase();
+      const normalizedFilingType = (rawFilingStr === '10Q' ? '10-Q' : (rawFilingStr === '10K' ? '10-K' : rawFilingStr)) as SecFilingType;
       if (!allowedFilingTypes.includes(normalizedFilingType)) {
         return res.status(400).json({
           error: `Contract validation error: "filingType" must be one of: ${allowedFilingTypes.join(', ')}. Received: "${filingType}".`,
@@ -1992,6 +1987,10 @@ secAnalystRouter.post(
           allowedFilingTypes
         });
       }
+
+      const mode = rawMode !== undefined && rawMode !== null
+        ? rawMode
+        : (normalizedFilingType === '10-Q' ? 'diff' : 'standard');
 
       if (mode !== 'standard' && mode !== 'diff') {
         return res.status(400).json({

@@ -66,7 +66,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     description: "Current stock price, 24h change and volume for a ticker (US, Hong Kong, India). Unknown tickers return a free 404. $0.01.",
     exampleRequest: {
       method: 'GET',
-      url: 'https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL'
+      url: 'https://stockbloc.ai.studio/api/v1/market/quote?ticker=AAPL'
     }
   },
   // SB Score Quant Intelligence ($0.05 USDC)
@@ -263,24 +263,38 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
 
   market_data: declareDiscovery({
     method: 'GET',
-    input: { symbol: 'AAPL' },
+    input: { ticker: 'AAPL' },
     inputSchema: {
       type: 'object',
       properties: {
-        symbol: { type: 'string', description: 'US ticker. Optional; omit for the full market watchlist.' },
+        ticker: { type: 'string', description: 'US ticker symbol (e.g. AAPL).' },
+        symbol: { type: 'string', description: 'Optional alias for ticker.' },
         format: { type: 'string', enum: ['json', 'csv'], description: 'Optional. Defaults to json.' }
       },
       additionalProperties: false
     },
     output: {
       example: {
-        status: 'success',
-        feed: 'market',
-        updated_at: '2026-10-10T21:29:30.983Z',
-        total_assets: 1,
-        watchlist: [
-          { symbol: 'AAPL', name: 'Apple Inc.', price: 336.64, change: 2.95, percent_change: 0.88, high52: 345.34, low52: 243.42, bloc: 'market' }
-        ]
+        symbol: 'AAPL',
+        ticker: 'AAPL',
+        name: 'Apple Inc.',
+        price: 342.96,
+        previousClose: 341.27,
+        previousCloseDate: '2026-10-13',
+        change: 1.69,
+        changePercent: 0.5,
+        high52: 345.34,
+        low52: 243.42,
+        volume: 38412900,
+        dollarVolume: '$13.2B',
+        lastUpdated: '2026-10-14T20:00:00.000Z',
+        data_as_of: '2026-10-14T20:00:00.000Z',
+        servedAt: '2026-10-14T21:15:00.000Z',
+        isRealTime: false,
+        priceLabel: 'Last Close',
+        marketState: 'POST',
+        refreshSchedule: 'Market Closed - Last Close',
+        source: 'live'
       }
     }
   }),

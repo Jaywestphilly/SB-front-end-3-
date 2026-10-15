@@ -35,10 +35,13 @@ export interface RiskFactorChanges {
   added: RiskFactorItem[];
   removed: RiskFactorItem[];
   changed: RiskFactorItem[];
+  items?: RiskFactorItem[];
   addedTotal: number;
   removedTotal: number;
   changedTotal: number;
 }
+
+export type RiskFactorsStatus = 'compared' | 'no_material_changes_referenced_10K' | 'omitted';
 
 export interface RiskDelta {
   added: number;
@@ -49,10 +52,13 @@ export interface RiskDelta {
   sectionLengthChangePct: number | null;
   headline: string;
   method: string;
+  items?: RiskFactorItem[] | CompactRiskItem[];
+  riskFactorsStatus?: RiskFactorsStatus;
 }
 
 export interface FilingDiffResult {
   riskDelta?: RiskDelta;
+  riskFactorsStatus?: RiskFactorsStatus;
   mode: 'diff';
   ticker: string;
   filingType: '10-K' | '10-Q';
@@ -76,18 +82,21 @@ export interface CompactFilingDiffResult {
   mode: 'diff';
   ticker: string;
   filingType: '10-K' | '10-Q';
-  currentFiling: { form: string; filedDate: string; url: string };
-  priorFiling: { form: string; filedDate: string; url: string } | null;
+  riskFactorsStatus?: RiskFactorsStatus;
+  currentFiling: { accession: string; periodEnd: string; form: string; filedDate: string; url: string };
+  priorFiling: { accession: string; periodEnd: string; form: string; filedDate: string; url: string } | null;
   riskDelta: RiskDelta;
   riskFactorChanges?: {
     added: CompactRiskItem[];
     removed: CompactRiskItem[];
     changed: CompactRiskItem[];
+    items?: CompactRiskItem[];
     addedTotal: number;
     removedTotal: number;
     changedTotal: number;
   };
   financialChanges: Array<[string, number | null, number, number | null]>;
+  summary?: string[];
   sources: string[];
 }
 
@@ -235,6 +244,197 @@ function sliceItem1A(text: string): string | null {
     if (sliced.length >= MIN_CHARS) return sliced;
   }
   return null;
+}
+
+function preprocessHtmlFor10Q(html: string): string {
+  return html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<\/(?:td|th|span|a|font)>/gi, ' ')
+    .replace(/<(?:h[1-6]|b|strong|i|em)\b[^>]*>([\s\S]*?)<\/(?:h[1-6]|b|strong|i|em)>/gi, (_, inner) => {
+      const clean = inner.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      if (clean.length >= 8 && !/^(?:P\s*A\s*R\s*T|I\s*t\s*e\s*m)\b/i.test(clean)) {
+        return `\n\n<RISK_HEADING>${clean}</RISK_HEADING>\n\n`;
+      }
+      return ` ${clean} `;
+    })
+    .replace(/<(?:p|div|br|tr|li|table|hr|h[1-6])\b[^>]*>/gi, '\n\n')
+    .replace(/<(?!\/?RISK_HEADING\b)[^>]+>/gi, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/\r/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n\s*\n/g, '\n\n')
+    .trim();
+}
+
+export function sliceItem1AFor10Q(text: string): string | null {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const clean = (l: string) => l.replace(/<\/?RISK_HEADING>/gi, '').replace(/\s+/g, ' ').trim();
+
+  const RF = /R\s*I\s*S\s*K\s+F\s*A\s*C\s*T\s*O\s*R\s*S/i;
+  // Matches "Item 1A" or "Part II, Item 1A" (never "Part I, Item 1A")
+  const START_10Q = /^(?:P\s*A\s*R\s*T\s+(?:I\s*I|2)\b\s*[,.\-\u2013\u2014:|]?\s*(?:O\s*T\s*H\s*E\s*R\s+I\s*N\s*F\s*O\s*R\s*M\s*A\s*T\s*I\s*O\s*N\s*[,.\-\u2013\u2014:|]?\s*)?)?I\s*t\s*e\s*m\s*1\s*A(?:\b|(?=[.:\-\u2013\u2014\s]|Risk))\s*[.:\-\u2013\u2014]?\s*/i;
+  const PART_I_HEADER = /^P\s*A\s*R\s*T\s+(?:I|1)\b(?!\s*I)(?:\s*[,.\-\u2013\u2014:|]?\s*F\s*I\s*N\s*A\s*N\s*C\s*I\s*A\s*L\s+I\s*N\s*F\s*O\s*R\s*M\s*A\s*T\s*I\s*O\s*N)?$/i;
+  const PART_II_HEADER = /^P\s*A\s*R\s*T\s+(?:I\s*I|2)\b(?:\s*[,.\-\u2013\u2014:|]?\s*O\s*T\s*H\s*E\s*R\s+I\s*N\s*F\s*O\s*R\s*M\s*A\s*T\s*I\s*O\s*N)?/i;
+  // Stops at any next Item heading in Part II (Item 1B, 1C, 2, 3, 4, 5, 6) or Part I Item 1/2/3/4 or SIGNATURES
+  const NEXT_ITEM = /^(?:P\s*A\s*R\s*T\s+(?:I\s*I|I|2|1)\b\s*[,.\-\u2013\u2014:|]?\s*)?I\s*t\s*e\s*m\s*(?:1(?!\s*A\b)(?:\s*[BC])?|2|3|4|5|6)(?:\b|(?=[.:\-\u2013\u2014\s]))/i;
+  const SIGNATURES = /^S\s*I\s*G\s*N\s*A\s*T\s*U\s*R\s*E\s*S\b/i;
+
+  const isStart = (i: number): boolean => {
+    const c = clean(lines[i]);
+    if (/^P\s*A\s*R\s*T\s+(?:I|1)\b(?!\s*I)/i.test(c)) return false;
+    const m = c.match(START_10Q);
+    if (!m) return false;
+    const rest = [c.slice(m[0].length), clean(lines[i + 1] || ''), clean(lines[i + 2] || '')].join(' ');
+    const rf = rest.match(RF);
+    return !!rf && (rf.index ?? 99) <= 45;
+  };
+
+  const isEnd = (j: number): boolean => {
+    const c = clean(lines[j]);
+    if (SIGNATURES.test(c)) return true;
+    if (PART_I_HEADER.test(c)) return true;
+    if (PART_II_HEADER.test(c) && !/I\s*t\s*e\s*m\s*1\s*A/i.test(c)) return true;
+    const m = c.match(NEXT_ITEM);
+    if (!m) return false;
+    const after = c.slice(m[0].length).trim();
+    // Ignore mid-sentence references like "Item 2 of Part I of this Form 10-Q"
+    if (/^of\s+(?:Part|Form|our|this|the)\b/i.test(after)) return false;
+    return true;
+  };
+
+  // Track where Part II starts in the document
+  const partIIIndices: number[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const c = clean(lines[i]);
+    if (PART_II_HEADER.test(c) && c.length <= 100) {
+      partIIIndices.push(i);
+    }
+  }
+
+  interface Candidate10Q {
+    startIdx: number;
+    endIdx: number;
+    sliced: string;
+    bodyText: string;
+    inPartII: boolean;
+  }
+
+  const candidates: Candidate10Q[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!isStart(i)) continue;
+    let end = lines.length;
+    for (let j = i + 1; j < lines.length; j++) {
+      // If another "Item 1A. Risk Factors" heading immediately follows a running page header, stop at the next end
+      if (isEnd(j)) {
+        end = j;
+        break;
+      }
+    }
+
+    const sliceLines = lines.slice(i, end);
+    const cleanedSliceLines = sliceLines.map(clean);
+
+    // Strip the heading line(s) and any TOC page numbers/leader dots to measure actual body prose
+    const bodyLines: string[] = [];
+    for (let k = 0; k < cleanedSliceLines.length; k++) {
+      let line = cleanedSliceLines[k];
+      if (k === 0) {
+        // Remove " (Part II,) Item 1A. Risk Factors " prefix from the first line
+        line = line
+          .replace(START_10Q, '')
+          .replace(/^(?:R\s*I\s*S\s*K\s+F\s*A\s*C\s*T\s*O\s*R\s*S)\s*[.:\-\u2013\u2014]?\s*/i, '')
+          .trim();
+      } else if (k <= 2 && /^(?:R\s*I\s*S\s*K\s+F\s*A\s*C\s*T\s*O\s*R\s*S)\s*[.:\-\u2013\u2014]?$/i.test(line)) {
+        continue;
+      }
+      // Skip TOC leader dots / bare page numbers like ". . . . 24" or "24" or "(see page 15)"
+      if (/^(?:[.\s\u2026·\-]*\d{1,3}|\(see\s+page\s+\d+\)|page\s+\d+)$/i.test(line)) {
+        continue;
+      }
+      if (line.length > 0) {
+        bodyLines.push(line);
+      }
+    }
+
+    const bodyText = bodyLines.join(' ').trim();
+    // A TOC row has 0 body chars (or just a page number). Real Item 1A prose is at least 25 chars.
+    if (bodyText.length < 25) continue;
+
+    // Never allow fallback or bleed into Notes to Financial Statements or MD&A
+    if (
+      /Notes\s+to\s+(?:Condensed\s+)?Consolidated\s+Financial\s+Statements/i.test(bodyText) ||
+      /Management['\u2019]?s\s+Discussion\s+and\s+Analysis\s+of\s+Financial\s+Condition/i.test(bodyText)
+    ) {
+      continue;
+    }
+
+    const hasPartIIPrefix = /^P\s*A\s*R\s*T\s+(?:I\s*I|2)\b/i.test(clean(lines[i]));
+    const afterPartII = partIIIndices.some(pIdx => pIdx <= i && i - pIdx <= 250);
+
+    candidates.push({
+      startIdx: i,
+      endIdx: end,
+      sliced: sliceLines.join('\n\n').trim(),
+      bodyText,
+      inPartII: hasPartIIPrefix || afterPartII
+    });
+  }
+
+  if (candidates.length === 0) return null;
+
+  const partIICandidates = candidates.filter(c => c.inPartII);
+  if (partIICandidates.length > 0) {
+    // Return the Part II candidate with the longest body (skips short running page headers if any)
+    partIICandidates.sort((a, b) => b.bodyText.length - a.bodyText.length);
+    return partIICandidates[0].sliced;
+  }
+
+  // If no explicit PART II header was found, take the last candidate (Part II is after Part I)
+  return candidates[candidates.length - 1].sliced;
+}
+
+export function isNoMaterialChanges10Q(item1AText: string): boolean {
+  const cleanText = item1AText
+    .replace(/<\/?RISK_HEADING>/gi, ' ')
+    .replace(/^(?:P\s*A\s*R\s*T\s+(?:I\s*I|2)\b[^a-zA-Z0-9]*)?I\s*t\s*e\s*m\s*1\s*A\b[^a-zA-Z0-9]*(?:R\s*i\s*s\s*k\s+F\s*a\s*c\s*t\s*o\s*r\s*s)?[.:\-\u2013\u2014]?\s*/i, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const hasExceptBelow = /\b(?:except|other\s+than)\s+as\s+(?:set\s+forth|discussed|described|updated|noted)\s+(?:below|herein|in\s+this)\b/i.test(cleanText);
+  if (hasExceptBelow && cleanText.length >= 1200) {
+    return false;
+  }
+
+  const statesNoMaterialChanges =
+    /\bno\s+material\s+changes?\b/i.test(cleanText) ||
+    /\bnot\s+materially\s+changed\b/i.test(cleanText) ||
+    /\bhave\s+not\s+been\s+any\s+material\s+changes?\b/i.test(cleanText) ||
+    /\bwithout\s+material\s+change\b/i.test(cleanText) ||
+    /\bno\s+significant\s+changes?\b/i.test(cleanText);
+
+  if (statesNoMaterialChanges && cleanText.length < 3000) {
+    return true;
+  }
+
+  const references10K =
+    /\b(?:Form\s+10-K|Annual\s+Report)\b/i.test(cleanText) &&
+    cleanText.length < 1500 &&
+    !/<RISK_HEADING>/i.test(item1AText);
+
+  if (references10K) {
+    return true;
+  }
+
+  return false;
 }
 
 function isIntroParagraph(text: string): boolean {
@@ -588,11 +788,24 @@ export function formatCompactRiskItem(title: string, snippet?: string): CompactR
 }
 
 export function formatCompactDiffResult(diff: FilingDiffResult): CompactFilingDiffResult {
+  const compactAdded = diff.riskFactorChanges
+    ? diff.riskFactorChanges.added.map(r => formatCompactRiskItem(r.title, r.snippet))
+    : [];
+  const compactRemoved = diff.riskFactorChanges
+    ? diff.riskFactorChanges.removed.map(r => formatCompactRiskItem(r.title, r.snippet))
+    : [];
+  const compactChanged = diff.riskFactorChanges
+    ? diff.riskFactorChanges.changed.map(r => formatCompactRiskItem(r.title, r.snippet))
+    : [];
+
   const compactRfc = diff.riskFactorChanges
     ? {
-        added: diff.riskFactorChanges.added.map(r => formatCompactRiskItem(r.title, r.snippet)),
-        removed: diff.riskFactorChanges.removed.map(r => formatCompactRiskItem(r.title, r.snippet)),
-        changed: diff.riskFactorChanges.changed.map(r => formatCompactRiskItem(r.title, r.snippet)),
+        added: compactAdded,
+        removed: compactRemoved,
+        changed: compactChanged,
+        ...(diff.filingType === '10-Q'
+          ? { items: [...compactAdded, ...compactChanged, ...compactRemoved] }
+          : {}),
         addedTotal: diff.riskFactorChanges.addedTotal,
         removedTotal: diff.riskFactorChanges.removedTotal,
         changedTotal: diff.riskFactorChanges.changedTotal
@@ -611,21 +824,27 @@ export function formatCompactDiffResult(diff: FilingDiffResult): CompactFilingDi
     mode: 'diff',
     ticker: diff.ticker,
     filingType: diff.filingType,
+    ...(diff.riskFactorsStatus ? { riskFactorsStatus: diff.riskFactorsStatus } : {}),
     currentFiling: {
+      accession: diff.currentFiling.accession,
+      periodEnd: diff.currentFiling.periodEnd,
       form: diff.currentFiling.form,
       filedDate: diff.currentFiling.filedDate,
       url: diff.currentFiling.url
     },
     priorFiling: diff.priorFiling
       ? {
+          accession: diff.priorFiling.accession,
+          periodEnd: diff.priorFiling.periodEnd,
           form: diff.priorFiling.form,
           filedDate: diff.priorFiling.filedDate,
           url: diff.priorFiling.url
         }
       : null,
-    riskDelta: diff.riskDelta,
+    riskDelta: diff.riskDelta!,
     ...(compactRfc ? { riskFactorChanges: compactRfc } : {}),
     financialChanges: compactFinancials,
+    ...(diff.filingType === '10-Q' ? { summary: diff.summary } : {}),
     sources: diff.sources
   };
 
@@ -725,35 +944,53 @@ export async function buildFilingDiff(
       priorIdx = matchingIndices[1];
     }
   } else {
-    // 10-Q: find the 10-Q whose reportDate is 365 ±20 days before current
-    const currentReportTime = new Date(currentPeriodEnd).getTime();
-    let sameQuarterIdx: number | null = null;
-
-    for (let k = 1; k < matchingIndices.length; k++) {
-      const idx = matchingIndices[k];
-      const repDate = recent.reportDate[idx] || recent.filingDate[idx];
-      const repTime = new Date(repDate).getTime();
-      const diffDays = (currentReportTime - repTime) / (1000 * 60 * 60 * 24);
-      if (diffDays >= 345 && diffDays <= 385) {
-        sameQuarterIdx = idx;
+    // 10-Q: compare against the immediately preceding periodic filing (the prior 10-Q, or the 10-K if that came last)
+    comparisonBasis = 'sequential';
+    for (let k = currentIdx + 1; k < recent.form.length; k++) {
+      const formAtK = recent.form[k];
+      if (
+        (formAtK === '10-Q' || formAtK === '10-K') &&
+        recent.accessionNumber[k] !== currentAccession
+      ) {
+        priorIdx = k;
         break;
       }
-    }
-
-    if (sameQuarterIdx !== null) {
-      priorIdx = sameQuarterIdx;
-      comparisonBasis = 'same_quarter_prior_year';
-    } else if (matchingIndices.length > 1) {
-      priorIdx = matchingIndices[1];
-      comparisonBasis = 'sequential';
-    } else {
-      priorIdx = null;
-      comparisonBasis = 'sequential';
     }
   }
 
   // Handle case where no prior filing exists
   if (priorIdx === null) {
+    if (filingType === '10-Q') {
+      if (!currentPrimaryDoc) {
+        const err: any = new Error(`Primary document missing for ${normTicker} 10-Q`);
+        err.status = 503;
+        err.code = 'SEC_UNAVAILABLE';
+        throw err;
+      }
+      const curDocUrl = `https://www.sec.gov/Archives/edgar/data/${cikNum}/${currentAccClean}/${currentPrimaryDoc}`;
+      const curDocRes = await fetch(curDocUrl, {
+        headers: { 'User-Agent': SEC_USER_AGENT },
+        signal: AbortSignal.timeout(SEC_TIMEOUT_MS)
+      });
+      if (!curDocRes.ok) {
+        const err: any = new Error(`Primary document unavailable for ${normTicker} 10-Q (${curDocRes.status})`);
+        err.status = 503;
+        err.code = 'SEC_UNAVAILABLE';
+        throw err;
+      }
+      const curHtml = await curDocRes.text();
+      let cur1A = sliceItem1AFor10Q(preprocessHtmlFor10Q(curHtml));
+      if (!cur1A) {
+        cur1A = sliceItem1AFor10Q(stripHtmlTagsOnly(curHtml));
+      }
+      if (!cur1A) {
+        const err: any = new Error(`Part II, Item 1A Risk Factors could not be found in ${normTicker} 10-Q`);
+        err.status = 503;
+        err.code = 'SEC_UNAVAILABLE';
+        throw err;
+      }
+    }
+
     const noPriorNote = `Financials from SEC XBRL companyfacts. total debt = LongTermDebt and excludes commercial paper. shares are cover-page counts with their dates (${currentPeriodEnd}). risk lists capped at 10; risk matching is heuristic. No prior Form ${filingType} found in EDGAR submissions history for comparison.`;
     const noPriorResult: FilingDiffResult = {
       riskDelta: computeRiskDelta({
@@ -777,6 +1014,7 @@ export async function buildFilingDiff(
     return options?.compact ? formatCompactDiffResult(noPriorResult) : noPriorResult;
   }
 
+  const priorForm = (recent.form[priorIdx] === '10-K' ? '10-K' : filingType) as '10-K' | '10-Q';
   const priorAccession = recent.accessionNumber[priorIdx];
   const priorAccClean = priorAccession.replace(/-/g, '');
   const priorFiledDate = recent.filingDate[priorIdx];
@@ -789,7 +1027,7 @@ export async function buildFilingDiff(
   const priorFiling: FilingRef = {
     accession: priorAccession,
     periodEnd: priorPeriodEnd,
-    form: filingType,
+    form: priorForm,
     filedDate: priorFiledDate,
     url: priorUrl
   };
@@ -831,9 +1069,9 @@ export async function buildFilingDiff(
   };
 
   // Helper to get instant fact value
-  const getInstantFact = (concept: string, acc: string, repDate: string): any | null => {
+  const getInstantFact = (concept: string, acc: string, repDate: string, formOverride: '10-K' | '10-Q' = filingType): any | null => {
     const units = gaap[concept]?.units?.USD;
-    return findMatchingFact(units, acc, repDate, filingType, false);
+    return findMatchingFact(units, acc, repDate, formOverride, false);
   };
 
   // 1. Revenue
@@ -936,13 +1174,13 @@ export async function buildFilingDiff(
   }
 
   // 5. Total debt = LongTermDebt, else LongTermDebtNoncurrent + LongTermDebtCurrent
-  const getTotalDebt = (acc: string, repDate: string): { val: number; tag: string } | null => {
-    const ltd = getInstantFact('LongTermDebt', acc, repDate);
+  const getTotalDebt = (acc: string, repDate: string, formOverride: '10-K' | '10-Q' = filingType): { val: number; tag: string } | null => {
+    const ltd = getInstantFact('LongTermDebt', acc, repDate, formOverride);
     if (ltd && typeof ltd.val === 'number') {
       return { val: ltd.val, tag: 'LongTermDebt' };
     }
-    const noncurrent = getInstantFact('LongTermDebtNoncurrent', acc, repDate);
-    const curr = getInstantFact('LongTermDebtCurrent', acc, repDate);
+    const noncurrent = getInstantFact('LongTermDebtNoncurrent', acc, repDate, formOverride);
+    const curr = getInstantFact('LongTermDebtCurrent', acc, repDate, formOverride);
     if (noncurrent && typeof noncurrent.val === 'number' && curr && typeof curr.val === 'number') {
       return { val: noncurrent.val + curr.val, tag: 'LongTermDebtNoncurrent+LongTermDebtCurrent' };
     }
@@ -952,8 +1190,8 @@ export async function buildFilingDiff(
     return null;
   };
 
-  const curDebt = getTotalDebt(currentAccession, currentPeriodEnd);
-  const priDebt = getTotalDebt(priorAccession, priorPeriodEnd);
+  const curDebt = getTotalDebt(currentAccession, currentPeriodEnd, filingType);
+  const priDebt = getTotalDebt(priorAccession, priorPeriodEnd, priorForm);
   if (curDebt && priDebt) {
     financialChanges.push({
       metric: 'Total debt',
@@ -970,8 +1208,8 @@ export async function buildFilingDiff(
   }
 
   // 6. Cash = CashAndCashEquivalentsAtCarryingValue (instant)
-  const curCash = getInstantFact('CashAndCashEquivalentsAtCarryingValue', currentAccession, currentPeriodEnd);
-  const priCash = getInstantFact('CashAndCashEquivalentsAtCarryingValue', priorAccession, priorPeriodEnd);
+  const curCash = getInstantFact('CashAndCashEquivalentsAtCarryingValue', currentAccession, currentPeriodEnd, filingType);
+  const priCash = getInstantFact('CashAndCashEquivalentsAtCarryingValue', priorAccession, priorPeriodEnd, priorForm);
   if (curCash && typeof curCash.val === 'number' && priCash && typeof priCash.val === 'number') {
     financialChanges.push({
       metric: 'Cash',
@@ -1034,8 +1272,133 @@ export async function buildFilingDiff(
   let riskSectionChars: { prior: number; current: number } | undefined = undefined;
   let riskOmissionReason: string | null = null;
   let priorRiskFactorCount: number | null = null;
+  let riskFactorsStatus: RiskFactorsStatus | undefined = undefined;
 
-  if (currentPrimaryDoc && priorPrimaryDoc) {
+  if (filingType === '10-Q') {
+    if (!currentPrimaryDoc) {
+      const err: any = new Error(`Primary document filename not available for ${normTicker} 10-Q`);
+      err.status = 503;
+      err.code = 'SEC_UNAVAILABLE';
+      throw err;
+    }
+
+    const curDocUrl = `https://www.sec.gov/Archives/edgar/data/${cikNum}/${currentAccClean}/${currentPrimaryDoc}`;
+    sources.push(curDocUrl);
+    const priDocUrl = priorPrimaryDoc
+      ? `https://www.sec.gov/Archives/edgar/data/${cikNum}/${priorAccClean}/${priorPrimaryDoc}`
+      : null;
+    if (priDocUrl) {
+      sources.push(priDocUrl);
+    }
+
+    let curHtml = '';
+    let priHtml = '';
+    try {
+      const [curDocRes, priDocRes] = await Promise.all([
+        fetch(curDocUrl, {
+          headers: { 'User-Agent': SEC_USER_AGENT },
+          signal: AbortSignal.timeout(SEC_TIMEOUT_MS)
+        }),
+        priDocUrl
+          ? fetch(priDocUrl, {
+              headers: { 'User-Agent': SEC_USER_AGENT },
+              signal: AbortSignal.timeout(SEC_TIMEOUT_MS)
+            }).catch(() => null)
+          : Promise.resolve(null)
+      ]);
+
+      if (!curDocRes || !curDocRes.ok) {
+        const err: any = new Error(`Primary document HTTP retrieval failed for ${normTicker} 10-Q`);
+        err.status = 503;
+        err.code = 'SEC_UNAVAILABLE';
+        throw err;
+      }
+
+      curHtml = await curDocRes.text();
+      if (priDocRes && priDocRes.ok) {
+        priHtml = await priDocRes.text();
+      }
+    } catch (err: any) {
+      const secErr: any = new Error(err?.message || `Failed to retrieve ${normTicker} 10-Q primary document`);
+      secErr.status = 503;
+      secErr.code = 'SEC_UNAVAILABLE';
+      throw secErr;
+    }
+
+    let cur1A = sliceItem1AFor10Q(preprocessHtmlFor10Q(curHtml));
+    if (!cur1A) {
+      cur1A = sliceItem1AFor10Q(stripHtmlTagsOnly(curHtml));
+    }
+
+    if (!cur1A) {
+      const err: any = new Error(`Part II, Item 1A Risk Factors could not be found in ${normTicker} 10-Q`);
+      err.status = 503;
+      err.code = 'SEC_UNAVAILABLE';
+      throw err;
+    }
+
+    let pri1A: string | null = null;
+    if (priHtml) {
+      if (priorForm === '10-Q') {
+        pri1A = sliceItem1AFor10Q(preprocessHtmlFor10Q(priHtml));
+        if (!pri1A) {
+          pri1A = sliceItem1AFor10Q(stripHtmlTagsOnly(priHtml));
+        }
+      } else {
+        pri1A = sliceItem1A(preprocessItem1AHtml(priHtml));
+        if (!pri1A || pri1A.length < 500) {
+          pri1A = sliceItem1A(stripHtmlTagsOnly(priHtml));
+        }
+      }
+    }
+
+    const curLen = cur1A.length;
+    const priLen = pri1A ? pri1A.length : 0;
+    riskSectionChars = { prior: priLen, current: curLen };
+
+    if (isNoMaterialChanges10Q(cur1A)) {
+      riskFactorsStatus = 'no_material_changes_referenced_10K';
+      priorRiskFactorCount = 0;
+      riskFactorChanges = {
+        added: [],
+        removed: [],
+        changed: [],
+        items: [],
+        addedTotal: 0,
+        removedTotal: 0,
+        changedTotal: 0
+      };
+    } else {
+      const curRisks = parseRisksFromItem1A(cur1A, currentAccession);
+      if (curRisks.length === 0 && /\b(?:Form\s+10-K|Annual\s+Report)\b/i.test(cur1A)) {
+        riskFactorsStatus = 'no_material_changes_referenced_10K';
+        priorRiskFactorCount = 0;
+        riskFactorChanges = {
+          added: [],
+          removed: [],
+          changed: [],
+          items: [],
+          addedTotal: 0,
+          removedTotal: 0,
+          changedTotal: 0
+        };
+      } else {
+        riskFactorsStatus = 'compared';
+        const priRisks =
+          pri1A && !(priorForm === '10-Q' && isNoMaterialChanges10Q(pri1A))
+            ? parseRisksFromItem1A(pri1A, priorAccession)
+            : [];
+        priorRiskFactorCount = priRisks.length;
+        riskFactorChanges = compareRiskFactors(curRisks, priRisks, currentAccession, priorAccession);
+        riskFactorChanges.items = [
+          ...riskFactorChanges.added,
+          ...riskFactorChanges.changed,
+          ...riskFactorChanges.removed
+        ];
+        (riskFactorChanges as any).priorTotal = priRisks.length;
+      }
+    }
+  } else if (currentPrimaryDoc && priorPrimaryDoc) {
     const curDocUrl = `https://www.sec.gov/Archives/edgar/data/${cikNum}/${currentAccClean}/${currentPrimaryDoc}`;
     const priDocUrl = `https://www.sec.gov/Archives/edgar/data/${cikNum}/${priorAccClean}/${priorPrimaryDoc}`;
     sources.push(curDocUrl);
@@ -1099,7 +1462,7 @@ export async function buildFilingDiff(
 
   // Summary generation: at most 5 strings, built by template only
   const summary: string[] = [];
-  const maxFinancialSummarySlots = riskFactorChanges ? 4 : 5;
+  const maxFinancialSummarySlots = riskFactorChanges || riskFactorsStatus ? 4 : 5;
 
   // If Gross margin is present, prioritize it in the summary as requested
   const grossMarginItem = financialChanges.find(
@@ -1132,7 +1495,11 @@ export async function buildFilingDiff(
     }
   }
 
-  if (riskFactorChanges) {
+  if (riskFactorsStatus === 'no_material_changes_referenced_10K') {
+    summary.push(
+      'Part II, Item 1A (Risk Factors) states there are no material changes and refers to the Form 10-K (riskFactorsStatus: no_material_changes_referenced_10K).'
+    );
+  } else if (riskFactorChanges) {
     summary.push(
       `Risk factors: ${riskFactorChanges.addedTotal} added, ${riskFactorChanges.removedTotal} removed, ${riskFactorChanges.changedTotal} modified (showing up to 10)`
     );
@@ -1153,7 +1520,9 @@ export async function buildFilingDiff(
   if (omittedMetrics.length > 0) {
     dataNoteParts.push(`Omitted metrics missing in prior or current filing: ${omittedMetrics.join(', ')}.`);
   }
-  if (riskOmissionReason) {
+  if (riskFactorsStatus === 'no_material_changes_referenced_10K') {
+    dataNoteParts.push('Part II, Item 1A states no material changes to risk factors and refers to the Form 10-K.');
+  } else if (riskOmissionReason) {
     dataNoteParts.push(`Risk factor changes omitted: ${riskOmissionReason}.`);
   }
   const dataNote = dataNoteParts.join(' ');
@@ -1162,7 +1531,7 @@ export async function buildFilingDiff(
     ? priorRiskFactorCount
     : (riskFactorChanges as any)?.priorTotal ?? null;
 
-  const riskDelta = computeRiskDelta({
+  let riskDelta = computeRiskDelta({
     ticker: normTicker,
     filingType,
     riskFactorChanges,
@@ -1170,8 +1539,30 @@ export async function buildFilingDiff(
     priorRiskCount: priorCount
   });
 
+  if (filingType === '10-Q' && riskFactorsStatus === 'no_material_changes_referenced_10K') {
+    riskDelta = {
+      added: 0,
+      removed: 0,
+      changed: 0,
+      netNewRisks: 0,
+      churnPct: 0,
+      sectionLengthChangePct: riskDelta.sectionLengthChangePct,
+      items: [],
+      riskFactorsStatus: 'no_material_changes_referenced_10K',
+      headline: `${normTicker} 10-Q: No material changes to risk factors in Part II, Item 1A (refers to Form 10-K).`,
+      method: riskDelta.method
+    };
+  } else if (filingType === '10-Q' && riskFactorsStatus === 'compared' && riskFactorChanges) {
+    riskDelta = {
+      ...riskDelta,
+      items: riskFactorChanges.items || [],
+      riskFactorsStatus: 'compared'
+    };
+  }
+
   const result: FilingDiffResult = {
     riskDelta,
+    ...(riskFactorsStatus ? { riskFactorsStatus } : {}),
     mode: 'diff',
     ticker: normTicker,
     filingType,

@@ -819,4 +819,224 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     expect(res3.title).toBe('Regulatory compliance');
     expect(res3.text).toBeUndefined();
   });
+
+  it('12. DPZ-style 10-Q: selects immediately preceding periodic filing (Q2 2026 10-Q, not Q3 2025 10-Q), extracts only Part II Item 1A, never falls back to Notes/MD&A, and returns riskFactorsStatus "no_material_changes_referenced_10K" with zero counts and empty items', async () => {
+    const dpzSubmissions = {
+      cik: '0001286681',
+      name: "Domino's Pizza, Inc.",
+      filings: {
+        recent: {
+          form: ['10-Q', '8-K', '10-Q', '10-Q', '10-K', '10-Q'],
+          accessionNumber: [
+            '0001286681-26-000045', // Q3 2026 10-Q
+            '0001286681-26-000040', // 8-K
+            '0001286681-26-000031', // Q2 2026 10-Q (immediately preceding periodic filing)
+            '0001286681-26-000018', // Q1 2026 10-Q
+            '0001286681-26-000005', // FY 2025 10-K
+            '0001286681-25-000042'  // Q3 2025 10-Q (last year's Q3)
+          ],
+          filingDate: [
+            '2026-10-13',
+            '2026-09-01',
+            '2026-07-16',
+            '2026-04-23',
+            '2026-02-24',
+            '2025-10-14'
+          ],
+          reportDate: [
+            '2026-09-06',
+            '2026-09-01',
+            '2026-06-14',
+            '2026-03-22',
+            '2025-12-28',
+            '2025-09-07'
+          ],
+          primaryDocument: [
+            'dpz-20260906.htm',
+            'dpz-8k.htm',
+            'dpz-20260614.htm',
+            'dpz-20260322.htm',
+            'dpz-20251228.htm',
+            'dpz-20250907.htm'
+          ]
+        }
+      }
+    };
+
+    const dpz10QHtml = `
+      <html>
+        <body>
+          <div>Table of Contents</div>
+          <table>
+            <tr><td>PART I.</td><td>FINANCIAL INFORMATION</td><td>3</td></tr>
+            <tr><td>Item 1.</td><td>Financial Statements</td><td>3</td></tr>
+            <tr><td>Item 2.</td><td>Management's Discussion and Analysis of Financial Condition and Results of Operations</td><td>14</td></tr>
+            <tr><td>PART II.</td><td>OTHER INFORMATION</td><td>24</td></tr>
+            <tr><td>Item 1.</td><td>Legal Proceedings</td><td>24</td></tr>
+            <tr><td>Item 1A.</td><td>Risk Factors</td><td>24</td></tr>
+            <tr><td>Item 2.</td><td>Unregistered Sales of Equity Securities and Use of Proceeds</td><td>25</td></tr>
+          </table>
+          <h2>PART I. FINANCIAL INFORMATION</h2>
+          <h3>Item 1. Financial Statements</h3>
+          <p><b>Note 1. Summary of Significant Accounting Policies.</b> The accompanying unaudited condensed consolidated financial statements have been prepared in accordance with accounting principles generally accepted in the United States.</p>
+          <p><b>Note 4. Debt and Financing Arrangements.</b> The Company maintains securitized financing facilities with fixed interest rates.</p>
+          ${longFillerP.repeat(20)}
+          <h3>Item 2. Management's Discussion and Analysis of Financial Condition and Results of Operations</h3>
+          <p><b>Overview and Third Quarter Highlights.</b> Global retail sales increased 5.1% during the third quarter driven by U.S. same store sales growth and international store openings.</p>
+          ${longFillerP.repeat(20)}
+          <h2>PART II. OTHER INFORMATION</h2>
+          <h3>Item 1. Legal Proceedings</h3>
+          <p>We are involved in routine litigation incidental to our business.</p>
+          <h3>Item 1A. Risk Factors</h3>
+          <p>There have been no material changes to our risk factors from those disclosed in Part I, Item 1A of our Annual Report on Form 10-K for the fiscal year ended December 28, 2025.</p>
+          <h3>Item 2. Unregistered Sales of Equity Securities and Use of Proceeds</h3>
+          <p><b>Share Repurchases.</b> During the third quarter of 2026, the Company repurchased 150,000 shares of common stock.</p>
+        </body>
+      </html>
+    `;
+
+    global.fetch = (url: any) => {
+      const urlStr = String(url);
+      if (urlStr.includes('company_tickers.json')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ '0': { cik_str: 1286681, ticker: 'DPZ', title: "DOMINO'S PIZZA INC" } })
+        } as any);
+      }
+      if (urlStr.includes('submissions')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(dpzSubmissions) } as any);
+      }
+      if (urlStr.includes('companyfacts')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ cik: 1286681, facts: { 'us-gaap': {}, dei: {} } }) } as any);
+      }
+      if (urlStr.includes('dpz-20260906.htm') || urlStr.includes('dpz-20260614.htm')) {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(dpz10QHtml) } as any);
+      }
+      return Promise.resolve({ ok: false, status: 404 } as any);
+    };
+
+    let settleCalled = false;
+    setFacilitatorVerifyHandler(async () => ({ isValid: true, payer: '0xDpzPayer' }));
+    setFacilitatorSettleHandler(async () => {
+      settleCalled = true;
+      return { success: true, payer: '0xDpzPayer', txHash: '0x_dpz_settle_01' };
+    });
+
+    const paymentHeader = Buffer.from(
+      JSON.stringify({
+        x402Version: 2,
+        authorization: { from: '0xDpzPayer', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '250000' }
+      })
+    ).toString('base64');
+
+    const res = await request(app)
+      .post('/api/v1/sec/job')
+      .set('PAYMENT-SIGNATURE', paymentHeader)
+      .send({
+        ticker: 'DPZ',
+        filingType: '10-Q'
+      });
+
+    expect(res.status).toBe(200);
+    expect(settleCalled).toBe(true);
+    const out = res.body.output;
+    expect(out.mode).toBe('diff');
+    expect(out.filingType).toBe('10-Q');
+    expect(out.comparisonBasis).toBe('sequential');
+    expect(out.currentFiling.accession).toBe('0001286681-26-000045');
+    expect(out.currentFiling.filedDate).toBe('2026-10-13');
+    expect(out.priorFiling.accession).toBe('0001286681-26-000031');
+    expect(out.priorFiling.filedDate).toBe('2026-07-16');
+    expect(out.priorFiling.form).toBe('10-Q');
+
+    expect(out.riskFactorsStatus).toBe('no_material_changes_referenced_10K');
+    expect(out.riskDelta.added).toBe(0);
+    expect(out.riskDelta.removed).toBe(0);
+    expect(out.riskDelta.changed).toBe(0);
+    expect(out.riskDelta.netNewRisks).toBe(0);
+    expect(out.riskDelta.items).toEqual([]);
+    expect(out.riskFactorChanges.added).toEqual([]);
+    expect(out.riskFactorChanges.removed).toEqual([]);
+    expect(out.riskFactorChanges.changed).toEqual([]);
+    expect(out.riskFactorChanges.items).toEqual([]);
+    expect(out.summary.join(' ')).toContain('no_material_changes_referenced_10K');
+  });
+
+  it('13. 10-Q when Item 1A cannot be found returns HTTP 503 with no charge (facilitator settle not called)', async () => {
+    const dpzSubmissions = {
+      cik: '0001286681',
+      name: "Domino's Pizza, Inc.",
+      filings: {
+        recent: {
+          form: ['10-Q', '10-K'],
+          accessionNumber: ['0001286681-26-000018', '0001286681-26-000005'],
+          filingDate: ['2026-04-23', '2026-02-24'],
+          reportDate: ['2026-03-22', '2025-12-28'],
+          primaryDocument: ['dpz-q1.htm', 'dpz-10k.htm']
+        }
+      }
+    };
+
+    const htmlMissing1A = `
+      <html>
+        <body>
+          <h2>PART I. FINANCIAL INFORMATION</h2>
+          <h3>Item 1. Financial Statements</h3>
+          <p>Note 1. Basis of presentation.</p>
+          <h2>PART II. OTHER INFORMATION</h2>
+          <h3>Item 1. Legal Proceedings</h3>
+          <p>None.</p>
+          <h3>Item 2. Unregistered Sales of Equity Securities and Use of Proceeds</h3>
+          <p>None.</p>
+        </body>
+      </html>
+    `;
+
+    global.fetch = (url: any) => {
+      const urlStr = String(url);
+      if (urlStr.includes('company_tickers.json')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ '0': { cik_str: 1286681, ticker: 'DPZ', title: "DOMINO'S PIZZA INC" } })
+        } as any);
+      }
+      if (urlStr.includes('submissions')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(dpzSubmissions) } as any);
+      }
+      if (urlStr.includes('companyfacts')) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve({ cik: 1286681, facts: { 'us-gaap': {}, dei: {} } }) } as any);
+      }
+      if (urlStr.includes('.htm')) {
+        return Promise.resolve({ ok: true, text: () => Promise.resolve(htmlMissing1A) } as any);
+      }
+      return Promise.resolve({ ok: false, status: 404 } as any);
+    };
+
+    let settleCalled = false;
+    setFacilitatorVerifyHandler(async () => ({ isValid: true, payer: '0xDpzPayer2' }));
+    setFacilitatorSettleHandler(async () => {
+      settleCalled = true;
+      return { success: true, payer: '0xDpzPayer2', txHash: '0x_dpz_settle_02' };
+    });
+
+    const paymentHeader = Buffer.from(
+      JSON.stringify({
+        x402Version: 2,
+        authorization: { from: '0xDpzPayer2', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '250000' }
+      })
+    ).toString('base64');
+
+    const res = await request(app)
+      .post('/api/v1/sec/job')
+      .set('PAYMENT-SIGNATURE', paymentHeader)
+      .send({
+        ticker: 'DPZ',
+        filingType: '10-Q',
+        mode: 'diff'
+      });
+
+    expect(res.status).toBe(503);
+    expect(settleCalled).toBe(false);
+    expect(res.body.error).toBe('sec_unavailable');
+  });
 });

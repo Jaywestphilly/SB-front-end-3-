@@ -150,16 +150,19 @@ describe('x402 Input Validation Before Payment Suite', () => {
     expect(res.body.success).not.toBe(true);
   });
 
-  it('8. POST /api/v1/sec/job with filingType 10-Q returns HTTP 400 before payment check', async () => {
-    const res = await request(app)
+  it('8. POST /api/v1/sec/job with invalid filingType returns HTTP 400 before payment check, while valid 10-Q returns 402 when unpaid', async () => {
+    const resInvalid = await request(app)
+      .post('/api/v1/sec/job')
+      .send({ ticker: 'AAPL', filingType: '20-F' });
+
+    expect(resInvalid.status).toBe(400);
+    expect(resInvalid.headers['payment-required']).toBeUndefined();
+
+    const res10Q = await request(app)
       .post('/api/v1/sec/job')
       .send({ ticker: 'AAPL', filingType: '10-Q' });
 
-    expect(res.status).toBe(400);
-    expect(res.body).toEqual({
-      error: '10-Q diff temporarily unavailable. Use filingType 10-K.',
-      supportedFilingTypes: ['10-K']
-    });
-    expect(res.headers['payment-required']).toBeUndefined();
+    expect(res10Q.status).toBe(402);
+    expect(res10Q.headers['payment-required']).toBeDefined();
   });
 });
