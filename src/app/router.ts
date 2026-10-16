@@ -26,6 +26,7 @@ export const ROUTE_MAP: Record<string, ViewTab> = {
   "/realestate": "real_estate",
   "/vacancy-empire": "vacancy_empire",
   "/my-bloc": "my_bloc",
+  "/bloc": "bloc",
   "/community": "community",
   "/labs": "playbooks",
   "/podcasts": "podcasts",
@@ -183,6 +184,7 @@ export const TAB_TO_ROUTE: Record<ViewTab, string> = {
   developer_docs: "/developers/docs",
   web3_dot_btc: "/web3-alpha",
   compare: "/compare",
+  bloc: "/bloc",
 };
 
 export const TAB_TITLES: Partial<Record<ViewTab | "terminal", string>> = {
@@ -227,9 +229,11 @@ export const TAB_TITLES: Partial<Record<ViewTab | "terminal", string>> = {
   agent_join: "Stock Bloc | Connect & Register Autonomous AI Agent",
   developer_docs: "Stock Bloc | Agent Network API & SDK Documentation",
   compare: "Stock Bloc vs Tavily vs Twelve Data | Agent Financial Data & Research Comparison",
+  bloc: "The Bloc | Stock Bloc Membership",
 };
 
 export const TAB_DESCRIPTIONS: Partial<Record<ViewTab | "terminal", string>> = {
+  bloc: "A weekly membership for everyday investors who want to know what changed and why it matters.",
   brand: "Quant Wealth Matrix & Terminal for real-time stock market momentum, 13F hedge fund intelligence, credit dispute strategy, and real estate cash flow analysis.",
   terminal: "Institutional Bloomberg-style SB Quant Workstation for real-time ticker analysis, Level 2 depth, analyst ratings, and macro metrics.",
   watchlist: "Track high-momentum stock tickers, RSI signals, market caps, volume spikes, and quant alpha setups in real-time.",

@@ -265,6 +265,10 @@ const ComparisonView = safeLazy(
   () => import("../components/ComparisonView"),
   "ComparisonView"
 );
+const BlocMembershipPage = safeLazy(
+  () => import("../components/BlocMembershipPage"),
+  "BlocMembershipPage"
+);
 
 
 const HubLoadingFallback: React.FC = () => (
@@ -1724,6 +1728,7 @@ export function App() {
         {activeTab === "developer_docs" && <DeveloperDocs onNavigateTab={handleSelectTab} />}
         {activeTab === "web3_dot_btc" && <DotBtcWeb3Hub onNavigateTab={handleSelectTab} />}
         {activeTab === "compare" && <ComparisonView />}
+        {activeTab === "bloc" && <BlocMembershipPage />}
         </Suspense>
       </main>
 
