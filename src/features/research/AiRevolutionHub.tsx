@@ -142,11 +142,7 @@ export const AiRevolutionHub: React.FC<AiRevolutionHubProps> = ({ initialTab }) 
     const latency = Math.round(endTime - startTime);
     const executionResult = matched.execute();
     
-    // Generate random proof hash
-    const randomHex = Array.from({ length: 12 }, () => 
-      Math.floor(Math.random() * 256).toString(16).padStart(2, "0")
-    ).join("");
-    const proof = `0x${randomHex}`;
+    const proof = "Example";
 
     setMatchedTool(matched);
     setLatencyVal(latency);

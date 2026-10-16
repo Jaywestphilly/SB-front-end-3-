@@ -214,7 +214,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
     }
   }, []);
 
-  // Periodic real-time live quotes + subtle micro-fluctuations around true prices
+  // Periodic real-time live quotes
   useEffect(() => {
     // 1. Initial live quotes fetch
     fetchLiveCryptoQuotes();
@@ -224,70 +224,8 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
       fetchLiveCryptoQuotes();
     }, 15000);
 
-    // 3. Real-time realistic micro-fluctuations around true market prices
-    const tickInterval = setInterval(() => {
-      const roll = Math.random();
-
-      if (roll < 0.65) {
-        // BTC Tick: subtle variation of ±$5 to ±$25
-        const delta = (Math.random() - 0.49) * (Math.random() * 20 + 4);
-        setBtcTicker((prev) => {
-          const nextPrice = Number((prev.price + delta).toFixed(2));
-          const dir = delta >= 0 ? "up" : "down";
-          const newHistory = [...prev.history.slice(1), nextPrice];
-          const basePrice = prev.price - prev.changeAmount;
-          const newChangeAmt = nextPrice - basePrice;
-          const newChangePct = basePrice > 0 ? (newChangeAmt / basePrice) * 100 : prev.changePercent;
-
-          return {
-            ...prev,
-            prevPrice: prev.price,
-            price: nextPrice,
-            changeAmount: Number(newChangeAmt.toFixed(2)),
-            changePercent: Number(newChangePct.toFixed(2)),
-            pulse: dir,
-            pulseKey: prev.pulseKey + 1,
-            history: newHistory,
-          };
-        });
-
-        setTimeout(() => {
-          setBtcTicker((p) => ({ ...p, pulse: null }));
-        }, 1400);
-      }
-
-      if (roll > 0.35) {
-        // DOT Tick: subtle variation of ±$0.001 to ±$0.003
-        const deltaDot = (Math.random() - 0.49) * (Math.random() * 0.003 + 0.0006);
-        setDotTicker((prev) => {
-          const nextPrice = Number((prev.price + deltaDot).toFixed(3));
-          const dir = deltaDot >= 0 ? "up" : "down";
-          const newHistory = [...prev.history.slice(1), nextPrice];
-          const basePrice = prev.price - prev.changeAmount;
-          const newChangeAmt = nextPrice - basePrice;
-          const newChangePct = basePrice > 0 ? (newChangeAmt / basePrice) * 100 : prev.changePercent;
-
-          return {
-            ...prev,
-            prevPrice: prev.price,
-            price: nextPrice,
-            changeAmount: Number(newChangeAmt.toFixed(3)),
-            changePercent: Number(newChangePct.toFixed(2)),
-            pulse: dir,
-            pulseKey: prev.pulseKey + 1,
-            history: newHistory,
-          };
-        });
-
-        setTimeout(() => {
-          setDotTicker((p) => ({ ...p, pulse: null }));
-        }, 1400);
-      }
-    }, 3200);
-
     return () => {
       clearInterval(quoteInterval);
-      clearInterval(tickInterval);
     };
   }, [fetchLiveCryptoQuotes]);
 
@@ -632,7 +570,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                       : "text-white"
                   }`}
                 >
-                  ${btcTicker.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  Live prices coming soon
                 </span>
                 <span className="text-[10px] text-neutral-400 font-mono">
                   {btcTicker.changeAmount >= 0 ? "+" : ""}${btcTicker.changeAmount.toFixed(2)} 24h
@@ -726,7 +664,7 @@ export const DotBtcWeb3Hub: React.FC<DotBtcWeb3HubProps> = ({
                       : "text-white"
                   }`}
                 >
-                  ${dotTicker.price.toFixed(3)}
+                  Live prices coming soon
                 </span>
                 <span className="text-[10px] text-neutral-400 font-mono">
                   {dotTicker.changeAmount >= 0 ? "+" : ""}${dotTicker.changeAmount.toFixed(3)} 24h
@@ -1340,7 +1278,7 @@ curl -X GET "https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=NVD
                                 : "text-orange-300 bg-orange-500/10"
                             }`}
                           >
-                            ${btcTicker.price.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            Live prices coming soon
                           </span>
                         )}
                         {leaf.symbol === "DOT-USD" && (
@@ -1353,7 +1291,7 @@ curl -X GET "https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=NVD
                                 : "text-purple-300 bg-purple-500/10"
                             }`}
                           >
-                            ${dotTicker.price.toFixed(2)}
+                            Live prices coming soon
                           </span>
                         )}
                       </div>
@@ -1436,7 +1374,7 @@ curl -X GET "https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=NVD
                               : "bg-orange-500/10 text-orange-300 border-orange-500/30"
                           }`}
                         >
-                          Spot: ${btcTicker.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          Spot: Live prices coming soon
                         </span>
                       )}
                       {vault.asset === "DOT" && (
@@ -1449,7 +1387,7 @@ curl -X GET "https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=NVD
                               : "bg-purple-500/10 text-purple-300 border-purple-500/30"
                           }`}
                         >
-                          Spot: ${dotTicker.price.toFixed(3)}
+                          Spot: Live prices coming soon
                         </span>
                       )}
                     </div>
