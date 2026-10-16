@@ -372,13 +372,16 @@ export function sliceItem1AFor10Q(text: string): string | null {
     // Never allow fallback or bleed into Notes to Financial Statements or MD&A
     if (
       /Notes\s+to\s+(?:Condensed\s+)?Consolidated\s+Financial\s+Statements/i.test(bodyText) ||
-      /Management['\u2019]?s\s+Discussion\s+and\s+Analysis\s+of\s+Financial\s+Condition/i.test(bodyText)
+      /Management['\u2019]?s\s+Discussion\s+and\s+Analysis\s+of\s+Financial\s+Condition/i.test(bodyText) ||
+      /\bCondensed\s+Consolidated\s+Balance\s+Sheets\b/i.test(bodyText) ||
+      /\bCondensed\s+Consolidated\s+Statements\s+of\s+Income\b/i.test(bodyText) ||
+      /\bCondensed\s+Consolidated\s+Statements\s+of\s+Cash\s+Flows\b/i.test(bodyText)
     ) {
       continue;
     }
 
     const hasPartIIPrefix = /^P\s*A\s*R\s*T\s+(?:I\s*I|2)\b/i.test(clean(lines[i]));
-    const afterPartII = partIIIndices.some(pIdx => pIdx <= i && i - pIdx <= 250);
+    const afterPartII = partIIIndices.some(pIdx => pIdx <= i);
 
     candidates.push({
       startIdx: i,
@@ -415,19 +418,21 @@ export function isNoMaterialChanges10Q(item1AText: string): boolean {
   }
 
   const statesNoMaterialChanges =
-    /\bno\s+material\s+changes?\b/i.test(cleanText) ||
-    /\bnot\s+materially\s+changed\b/i.test(cleanText) ||
-    /\bhave\s+not\s+been\s+any\s+material\s+changes?\b/i.test(cleanText) ||
+    /\bno\s+material\s+(?:changes?|updates?)\b/i.test(cleanText) ||
+    /\bnot\s+materially\s+(?:changed|updated)\b/i.test(cleanText) ||
+    /\bhave\s+not\s+(?:been\s+any\s+material\s+changes?|materially\s+changed)\b/i.test(cleanText) ||
+    /\b(?:were|are|is)\s+no\s+material\s+(?:changes?|updates?)\b/i.test(cleanText) ||
     /\bwithout\s+material\s+change\b/i.test(cleanText) ||
-    /\bno\s+significant\s+changes?\b/i.test(cleanText);
+    /\bno\s+significant\s+changes?\b/i.test(cleanText) ||
+    /^(?:none|not\s+applicable)[.]?$/i.test(cleanText);
 
-  if (statesNoMaterialChanges && cleanText.length < 3000) {
+  if (statesNoMaterialChanges && cleanText.length < 3500) {
     return true;
   }
 
   const references10K =
     /\b(?:Form\s+10-K|Annual\s+Report)\b/i.test(cleanText) &&
-    cleanText.length < 1500 &&
+    cleanText.length < 2500 &&
     !/<RISK_HEADING>/i.test(item1AText);
 
   if (references10K) {
@@ -902,22 +907,80 @@ export async function buildFilingDiff(
     throw err;
   }
 
-  const matchingIndices: number[] = [];
-  for (let i = 0; i < recent.form.length; i++) {
-    if (recent.form[i] === filingType) {
-      matchingIndices.push(i);
+  let currentIdx: number;
+  let priorIdx: number | null = null;
+  let comparisonBasis: 'annual' | 'same_quarter_prior_year' | 'sequential' = 'annual';
+
+  if (filingType === '10-K') {
+    comparisonBasis = 'annual';
+    const matchingIndices: number[] = [];
+    for (let i = 0; i < recent.form.length; i++) {
+      if (recent.form[i] === '10-K') {
+        matchingIndices.push(i);
+      }
+    }
+
+    if (matchingIndices.length === 0) {
+      const err: any = new Error(`No Form 10-K filings found for ${normTicker}`);
+      err.status = 503;
+      err.code = 'SEC_UNAVAILABLE';
+      throw err;
+    }
+
+    currentIdx = matchingIndices[0];
+    if (matchingIndices.length > 1) {
+      priorIdx = matchingIndices[1];
+    }
+  } else {
+    // 10-Q: compare against the immediately preceding periodic filing (the prior 10-Q, or the 10-K if that came last)
+    comparisonBasis = 'sequential';
+
+    interface CandidatePeriodic {
+      idx: number;
+      form: '10-K' | '10-Q';
+      accession: string;
+      filingDate: string;
+      reportDate: string;
+    }
+
+    const periodic: CandidatePeriodic[] = [];
+    for (let i = 0; i < recent.form.length; i++) {
+      const f = recent.form[i];
+      if (f === '10-Q' || f === '10-K') {
+        periodic.push({
+          idx: i,
+          form: f,
+          accession: recent.accessionNumber[i],
+          filingDate: recent.filingDate[i] || '',
+          reportDate: recent.reportDate?.[i] || recent.filingDate[i] || ''
+        });
+      }
+    }
+
+    // Sort descending by filingDate, then reportDate
+    periodic.sort((a, b) => {
+      const fCmp = b.filingDate.localeCompare(a.filingDate);
+      if (fCmp !== 0) return fCmp;
+      return b.reportDate.localeCompare(a.reportDate);
+    });
+
+    const currentCand = periodic.find(p => p.form === '10-Q');
+    if (!currentCand) {
+      const err: any = new Error(`No Form 10-Q filings found for ${normTicker}`);
+      err.status = 503;
+      err.code = 'SEC_UNAVAILABLE';
+      throw err;
+    }
+
+    currentIdx = currentCand.idx;
+    const currentPos = periodic.indexOf(currentCand);
+    const priorCand = periodic.slice(currentPos + 1).find(p => p.accession !== currentCand.accession);
+    if (priorCand) {
+      priorIdx = priorCand.idx;
     }
   }
 
-  if (matchingIndices.length === 0) {
-    const err: any = new Error(`No Form ${filingType} filings found for ${normTicker}`);
-    err.status = 503;
-    err.code = 'SEC_UNAVAILABLE';
-    throw err;
-  }
-
   const cikNum = parseInt(cik, 10);
-  const currentIdx = matchingIndices[0];
   const currentAccession = recent.accessionNumber[currentIdx];
   const currentAccClean = currentAccession.replace(/-/g, '');
   const currentFiledDate = recent.filingDate[currentIdx];
@@ -934,29 +997,6 @@ export async function buildFilingDiff(
     filedDate: currentFiledDate,
     url: currentUrl
   };
-
-  let priorIdx: number | null = null;
-  let comparisonBasis: 'annual' | 'same_quarter_prior_year' | 'sequential' = 'annual';
-
-  if (filingType === '10-K') {
-    comparisonBasis = 'annual';
-    if (matchingIndices.length > 1) {
-      priorIdx = matchingIndices[1];
-    }
-  } else {
-    // 10-Q: compare against the immediately preceding periodic filing (the prior 10-Q, or the 10-K if that came last)
-    comparisonBasis = 'sequential';
-    for (let k = currentIdx + 1; k < recent.form.length; k++) {
-      const formAtK = recent.form[k];
-      if (
-        (formAtK === '10-Q' || formAtK === '10-K') &&
-        recent.accessionNumber[k] !== currentAccession
-      ) {
-        priorIdx = k;
-        break;
-      }
-    }
-  }
 
   // Handle case where no prior filing exists
   if (priorIdx === null) {
