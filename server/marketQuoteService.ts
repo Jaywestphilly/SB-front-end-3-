@@ -329,8 +329,9 @@ export async function fetchRealStockQuote(symbol: string, forceRefresh = false, 
           ? (dollarVol >= 1e9 ? `$${(dollarVol/1e9).toFixed(1)}B` : dollarVol >= 1e6 ? `$${(dollarVol/1e6).toFixed(1)}M` : `$${Math.round(dollarVol).toLocaleString()}`)
           : 'N/A';
 
-        const prevClose = typeof found.previousClose === 'number' ? found.previousClose : (typeof found.previous_close === 'number' ? found.previous_close : null);
-        const prevCloseDate = found.previousCloseDate || found.previous_close_date || null;
+        const foundAny = found as any;
+        const prevClose = typeof foundAny.previousClose === 'number' ? foundAny.previousClose : (typeof foundAny.previous_close === 'number' ? foundAny.previous_close : null);
+        const prevCloseDate = foundAny.previousCloseDate || foundAny.previous_close_date || null;
 
         let change: number | null = null;
         let changePercent: number | null = null;

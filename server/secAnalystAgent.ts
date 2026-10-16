@@ -59,7 +59,7 @@ export const SEC_ANALYST_SPECIALTIES = [
 
 export const SEC_ANALYST_SERVICE_ID = 'serv_sec_filing_analysis_01';
 export const SEC_ANALYST_SERVICE_NAME = 'SEC Filing Analysis';
-export const SEC_ANALYST_SERVICE_PRICE_CREDITS = 25; // 25 credits = $0.25
+export const SEC_ANALYST_SERVICE_PRICE_CREDITS = 5; // 5 credits = $0.05
 
 // ==========================================
 // 2. INPUT & OUTPUT TYPE DEFINITIONS
@@ -1214,9 +1214,9 @@ export const SEC_ANALYST_SERVICE_RECORD: any = {
   providerDisplayName: SEC_ANALYST_DISPLAY_NAME,
   providerAvatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=StockBlocSECAnalyst',
   name: SEC_ANALYST_SERVICE_NAME,
-  description: 'Analyze SEC filings and return structured financial intelligence including key financial changes, material risks, guidance, management commentary, capital allocation and notable disclosures. $0.25 USDC per call via x402 on Base.',
+  description: 'Analyze SEC filings and return structured financial intelligence including key financial changes, material risks, guidance, management commentary, capital allocation and notable disclosures. $0.05 USDC per call via x402 on Base.',
   category: 'Research',
-  price: 0.25,
+  price: 0.05,
   currency: 'USD',
   paymentRail: 'X402_USDC',
   deliveryMethod: 'JSON_REST',
@@ -1322,7 +1322,7 @@ export async function executeSecAnalystJob(params: {
   const { jobId, input, requesterAgentId, requesterHandle } = params;
 
   // 1. Enforce Canonical Service Price (Do NOT trust body price)
-  const canonicalPrice = SEC_ANALYST_SERVICE_PRICE_CREDITS; // 25 credits ($0.25)
+  const canonicalPrice = SEC_ANALYST_SERVICE_PRICE_CREDITS; // 5 credits ($0.05)
   const canonicalIdempotencyKey = params.idempotencyKey || `settle_sec_${jobId}_${canonicalPrice}`;
 
   // 2. Idempotency Check: Prevent duplicate settlement / charging / reputation increment
@@ -1904,12 +1904,12 @@ secAnalystRouter.get(['/service', '/info', '/analyst', '/analyst/info'], (_req: 
       category: SEC_ANALYST_CATEGORY,
       capabilities: SEC_ANALYST_CAPABILITIES,
       pricing: {
-        price: 0.25,
-        priceUsd: 0.25,
-        usdEquivalent: '$0.25',
+        price: 0.05,
+        priceUsd: 0.05,
+        usdEquivalent: '$0.05',
         currency: 'USD',
         paymentRail: 'X402_USDC',
-        description: '$0.25 USDC per call via x402 on Base'
+        description: '$0.05 USDC per call via x402 on Base'
       }
     }
   });

@@ -203,8 +203,8 @@ describe('Discovery Metadata & Self-Correcting 400 Examples Suite', () => {
       });
       expect(res.status).toBe(402);
       expect(res.headers['payment-required']).toBeDefined();
-      expect(PRICED_ENDPOINTS.sec_job.priceUsd).toBe(0.25);
-      expect(PRICED_ENDPOINTS.sec_job.priceDisplay).toBe('$0.25');
+      expect(PRICED_ENDPOINTS.sec_job.priceUsd).toBe(0.05);
+      expect(PRICED_ENDPOINTS.sec_job.priceDisplay).toBe('$0.05');
     });
   });
 });

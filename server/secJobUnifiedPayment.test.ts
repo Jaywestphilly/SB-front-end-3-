@@ -120,11 +120,11 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
   });
 
   // --------------------------------------------------------------------------
-  // B. Agent with <25 credits: HTTP 402 with valid x402 challenge ($0.25 Base USDC), zero dead SKU or pricing URLs in the response.
+  // B. Agent with <5 credits: HTTP 402 with valid x402 challenge ($0.05 Base USDC), zero dead SKU or pricing URLs in the response.
   // --------------------------------------------------------------------------
-  it('B. Agent with <25 credits: HTTP 402 with valid x402 challenge ($0.25 Base USDC), zero dead SKU or pricing URLs', async () => {
-    // 10 credits remaining (less than the required 25 credits / $0.25)
-    const { rawApiKey } = registerTestAgent(10, 0);
+  it('B. Agent with <5 credits: HTTP 402 with valid x402 challenge ($0.05 Base USDC), zero dead SKU or pricing URLs', async () => {
+    // 2 credits remaining (less than the required 5 credits / $0.05)
+    const { rawApiKey } = registerTestAgent(2, 0);
 
     const res = await request(server)
       .post('/api/v1/sec/job')
@@ -138,7 +138,7 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
     // Valid x402 v2 challenge
     expect(res.body.x402Version).toBe(2);
     expect(Array.isArray(res.body.accepts)).toBe(true);
-    expect(res.body.accepts[0].amount).toBe('250000'); // $0.25 USDC
+    expect(res.body.accepts[0].amount).toBe('50000'); // $0.05 USDC
     expect(res.body.accepts[0].network).toBe('eip155:8453'); // Base
     expect(res.headers['payment-required']).toBeDefined();
 
@@ -226,7 +226,7 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
 
     expect(res.status).toBe(402);
     expect(res.body.x402Version).toBe(2);
-    expect(res.body.accepts[0].amount).toBe('250000'); // $0.25 USDC
+    expect(res.body.accepts[0].amount).toBe('50000'); // $0.05 USDC
     expect(res.body.accepts[0].network).toBe('eip155:8453'); // Base
     expect(res.headers['payment-required']).toBeDefined();
 

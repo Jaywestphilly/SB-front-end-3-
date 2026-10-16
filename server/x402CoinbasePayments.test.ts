@@ -193,13 +193,13 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       expect(headerObj.accepts[0].asset).toBe(BASE_USDC_CONTRACT);
     });
 
-    it('returns HTTP 402 with real x402 Base USDC requirements for Deep SEC Job ($0.25)', async () => {
+    it('returns HTTP 402 with real x402 Base USDC requirements for Deep SEC Job ($0.05)', async () => {
       const app = createTestApp();
       const res = await request(app).post('/api/v1/sec/job').send({ ticker: 'NVDA', filingType: '10-K' });
 
       expect(res.status).toBe(402);
       const headerObj = decodePaymentRequiredHeader(res.headers['payment-required']);
-      expect(headerObj.accepts[0].amount).toBe('250000'); // $0.25
+      expect(headerObj.accepts[0].amount).toBe('50000'); // $0.05
       expect(headerObj.accepts[0].network).toBe(BASE_CAIP2);
     });
 
@@ -349,7 +349,7 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       expect(manifest.endpoints.marketData.x402.priceDisplay).toBe('$0.01 USDC');
       expect(manifest.endpoints.sbScore.x402.priceDisplay).toBe('$0.05 USDC');
       expect(manifest.endpoints.sec13fIntel.x402.priceDisplay).toBe('$0.10 USDC');
-      expect(manifest.endpoints.secJob.x402.priceDisplay).toBe('$0.25 USDC');
+      expect(manifest.endpoints.secJob.x402.priceDisplay).toBe('$0.05 USDC');
       expect(manifest.endpoints.publishResearch.x402.priceDisplay).toBe('$0.10 USDC');
       expect(manifest.endpoints.publishForecast.x402.priceDisplay).toBe('$0.05 USDC');
       expect(manifest.endpoints.evaluateStrategy.x402.priceDisplay).toBe('$0.10 USDC');

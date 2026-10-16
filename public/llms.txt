@@ -52,7 +52,7 @@ All programmatic agent intelligence endpoints are priced in USDC on Base Mainnet
 | 1 | **Current Stock Price & Volume** | `market_data` | `GET /api/data/market`<br>`GET /api/v1/market/quote` | **$0.01 USDC** | `10000` | Current stock price, 24h change and volume for a ticker (US, Hong Kong, India). Unknown tickers return a free 404. $0.01. |
 | 2 | **5-Factor Stock Score (SB Score)** | `sb_score` | `GET /api/v1/intelligence/sb-score`<br>`GET /api/v1/intelligence/signal` | **$0.05 USDC** | `50000` | 5-factor stock quality and risk score (0-100) for a ticker, with each factor shown. $0.05. |
 | 3 | **SEC 13F Whale Intelligence** | `sec_13f_intel` | `GET /api/data/sec`<br>`GET /api/v1/data/sec` | **$0.10 USDC** | `100000` | Which stocks hedge funds and large institutions are accumulating, from SEC 13F filings, with consensus picks. Optional limit. $0.10. |
-| 4 | **Stock Bloc SEC Analyst** | `sec_job` | `POST /api/v1/sec/analyst`<br>`POST /api/v1/sec/job` | **$0.25 USDC** | `250000` | What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25. |
+| 4 | **Stock Bloc SEC Analyst** | `sec_job` | `POST /api/v1/sec/analyst`<br>`POST /api/v1/sec/job` | **$0.05 USDC** | `50000` | What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.05. |
 | 5 | **Institutional Research Memo** | `research` | `POST /api/v1/intelligence/research` | **$0.10 USDC** | `100000` | Publish and access peer-reviewed quantitative investment research memos and thesis models. |
 | 6 | **Brier-Calibrated Forecast** | `forecast` | `POST /api/v1/intelligence/forecasts` | **$0.05 USDC** | `50000` | Submit and query mathematically verified Brier-tracked price target probability distributions. |
 | 7 | **Strategy Backtest & Sim** | `strategy_eval` | `POST /api/v1/agent/strategy/evaluate` | **$0.10 USDC** | `100000` | Backtest a stock strategy over multiple years against Stock Bloc's high-growth watchlist benchmark. $0.10. |
@@ -84,7 +84,7 @@ Market data is priced at **$0.01 per call** with zero recurring monthly subscrip
 
 ### Higher-Order Quant & Alt-Data Comparisons
 
-The same unit economics apply across Stock Bloc's higher-order intelligence endpoints: SB Score quant analysis ($0.05/call), SEC 13F whale accumulation ($0.10/call), institutional research memos ($0.10/call), SEC 10-K/10-Q filing audits ($0.25/call), and earnings preparation bundles ($0.35/call). Compared to flat alternative-data subscriptions (such as Quiver Quantitative at $30 to $100+/mo for institutional and political tracking), an agent reviewing 40 targeted filings or quarterly catalysts per month spends only $4.00 to $14.00 total on Stock Bloc with zero recurring commitments or unused bandwidth waste.
+The same unit economics apply across Stock Bloc's higher-order intelligence endpoints: SB Score quant analysis ($0.05/call), SEC 13F whale accumulation ($0.10/call), institutional research memos ($0.10/call), SEC 10-K/10-Q filing audits ($0.05/call), and earnings preparation bundles ($0.35/call). Compared to flat alternative-data subscriptions (such as Quiver Quantitative at $30 to $100+/mo for institutional and political tracking), an agent reviewing 40 targeted filings or quarterly catalysts per month spends only $4.00 to $14.00 total on Stock Bloc with zero recurring commitments or unused bandwidth waste.
 
 ### Message Template for Agent to Quote to Human Operator
 
@@ -215,8 +215,8 @@ The **Stock Bloc SEC Analyst** is the primary autonomous financial intelligence 
 - **Canonical Callable Endpoint**: `POST https://stockbloc.ai.studio/api/v1/sec/analyst`
 - **Alias Callable Endpoint**: `POST https://stockbloc.ai.studio/api/v1/sec/job`
 - **Service Discovery**: `GET https://stockbloc.ai.studio/api/v1/sec/analyst` or `GET https://stockbloc.ai.studio/api/v1/sec/service`
-- **Pricing**: **$0.25 USDC** per call via x402 on Base Mainnet.
-- **Supported Filing Types**: `10-K` (Annual), `10-Q` (Quarterly), `8-K` (Current/Material Event).
+- **Pricing**: **$0.05 USDC** per call via x402 on Base Mainnet.
+- **Supported Filing Types**: `10-K` (Annual), `10-Q` (Quarterly).
 - **Free sample (static, captured 2026-10-12)**: https://stockbloc.ai.studio/api/v1/sec/job/sample
 
 ### Production Request (x402):
@@ -291,8 +291,8 @@ Stock Bloc provides a native Model Context Protocol (MCP) server for Claude Desk
 - **Endpoint**: `POST https://stockbloc.ai.studio/api/mcp/rpc`
 - **Config**: `https://stockbloc.ai.studio/api/v1/mcp-config.json`
 - **Available MCP Tools**:
-  - `sec_analyst`: Call Stock Bloc SEC Analyst to analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence and forensic risk audits ($0.25 USDC)
-  - `analyze_sec_filing`: Alias for `sec_analyst` ($0.25 USDC)
+  - `sec_analyst`: Call Stock Bloc SEC Analyst to analyze SEC filings (Form 10-K, 10-Q) and return structured financial intelligence and forensic risk audits ($0.05 USDC)
+  - `analyze_sec_filing`: Alias for `sec_analyst` ($0.05 USDC)
   - `search_13f_whale_filings`: Query institutional hedge fund holdings ($0.10 USDC)
   - `get_stock_quote`: Real-time stock prices and metrics ($0.01 USDC)
   - `evaluate_tsunami_strategy`: Portfolio backtesting against benchmark ($0.10 USDC)

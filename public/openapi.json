@@ -9,7 +9,7 @@
       "email": "thestockbloc@gmail.com",
       "url": "https://stockbloc.ai.studio"
     },
-    "x-guidance": "Stock Bloc primary paid endpoint is POST /api/v1/sec/analyst ($0.25 USDC, body: {ticker, filingType} where filingType is 10-K, 10-Q, or 8-K). Unpaid requests return HTTP 402 with a PAYMENT-REQUIRED header. Retry requests with the signed payload in the PAYMENT-SIGNATURE header. Free service discovery is available at GET /api/v1/sec/analyst and the machine payment map is at GET /.well-known/x402."
+    "x-guidance": "Stock Bloc primary paid endpoint is POST /api/v1/sec/analyst ($0.05 USDC, body: {ticker, filingType} where filingType is 10-K or 10-Q). Unpaid requests return HTTP 402 with a PAYMENT-REQUIRED header. Retry requests with the signed payload in the PAYMENT-SIGNATURE header. Free service discovery is available at GET /api/v1/sec/analyst and the machine payment map is at GET /.well-known/x402."
   },
   "servers": [
     {
@@ -667,8 +667,8 @@
     },
     "/api/v1/sec/job": {
       "post": {
-        "summary": "What Changed in Latest 10-K/10-Q vs Prior Filing ($0.25)",
-        "description": "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample",
+        "summary": "What Changed in Latest 10-K/10-Q vs Prior Filing ($0.05)",
+        "description": "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.05. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample",
         "operationId": "executeSecJob",
         "tags": [
           "Stock Bloc SEC Analyst",
@@ -743,7 +743,7 @@
           "price": {
             "mode": "fixed",
             "currency": "USD",
-            "amount": "0.250000"
+            "amount": "0.050000"
           },
           "protocols": [
             {
@@ -753,7 +753,7 @@
                 "network": "eip155:8453",
                 "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
                 "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-                "amountAtomic": "250000",
+                "amountAtomic": "50000",
                 "decimals": 6
               }
             }
@@ -795,8 +795,8 @@
     },
     "/api/v1/sec/analyst": {
       "post": {
-        "summary": "Stock Bloc SEC Analyst: What Changed in Latest 10-K/10-Q vs Prior Filing ($0.25)",
-        "description": "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample",
+        "summary": "Stock Bloc SEC Analyst: What Changed in Latest 10-K/10-Q vs Prior Filing ($0.05)",
+        "description": "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.05. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample",
         "operationId": "callStockBlocSecAnalyst",
         "tags": [
           "Stock Bloc SEC Analyst",
@@ -871,7 +871,7 @@
           "price": {
             "mode": "fixed",
             "currency": "USD",
-            "amount": "0.250000"
+            "amount": "0.050000"
           },
           "protocols": [
             {
@@ -881,7 +881,7 @@
                 "network": "eip155:8453",
                 "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
                 "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
-                "amountAtomic": "250000",
+                "amountAtomic": "50000",
                 "decimals": 6
               }
             }
@@ -939,7 +939,7 @@
                   "service": {
                     "serviceId": "sec_analyst_01",
                     "name": "Stock Bloc SEC Analyst",
-                    "price": 0.25,
+                    "price": 0.05,
                     "currency": "USD",
                     "paymentRail": "X402_USDC"
                   }
@@ -1727,7 +1727,7 @@
                   "paidRoute": {
                     "method": "POST",
                     "url": "https://stockbloc.ai.studio/api/v1/sec/job",
-                    "price": "$0.25 USDC (x402, Base)",
+                    "price": "$0.05 USDC (x402, Base)",
                     "body": {
                       "ticker": "AAPL",
                       "filingType": "10-K",

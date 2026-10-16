@@ -373,6 +373,9 @@ export async function validatePricedRequestInput(
       return {
         valid: false,
         status: 400,
+        code: 'INVALID_INPUT',
+        error: '8-K analysis is not available yet. Use filingType 10-K or 10-Q.',
+        message: '8-K analysis is not available yet. Use filingType 10-K or 10-Q.',
         customJson: {
           error: '8-K analysis is not available yet. Use filingType 10-K or 10-Q.',
           supportedFilingTypes: ['10-K', '10-Q']

@@ -42,7 +42,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "analyze_sec_filing",
-    description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25.",
+    description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.05.",
     inputSchema: {
       type: "object",
       properties: {
@@ -55,7 +55,7 @@ export const MCP_TOOLS = [
   },
   {
     name: "sec_analyst",
-    description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25.",
+    description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.05.",
     inputSchema: {
       type: "object",
       properties: {
@@ -253,15 +253,15 @@ export const MCP_TOOL_PRICING: Record<string, McpToolPricingConfig> = {
   },
   analyze_sec_filing: {
     endpointId: 'sec_job',
-    priceUsd: 0.25,
-    priceDisplay: '$0.25',
-    atomicAmount: '250000'
+    priceUsd: 0.05,
+    priceDisplay: '$0.05',
+    atomicAmount: '50000'
   },
   sec_analyst: {
     endpointId: 'sec_job',
-    priceUsd: 0.25,
-    priceDisplay: '$0.25',
-    atomicAmount: '250000'
+    priceUsd: 0.05,
+    priceDisplay: '$0.05',
+    atomicAmount: '50000'
   },
   get_sb_score_history: {
     endpointId: 'sb_score',

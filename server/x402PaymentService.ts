@@ -97,15 +97,15 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
       url: 'https://stockbloc.ai.studio/api/v1/data/sec?limit=10'
     }
   },
-  // Deep SEC Analyst Audit Job ($0.25 USDC)
+  // Deep SEC Analyst Audit Job ($0.05 USDC)
   sec_job: {
     id: 'sec_job',
     name: 'Stock Bloc SEC Analyst Deep Filing Audit',
     category: 'sec_13f_intel',
-    priceUsd: 0.25,
-    priceDisplay: '$0.25',
-    atomicAmount: '250000', // 0.25 * 10^6
-    description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample",
+    priceUsd: 0.05,
+    priceDisplay: '$0.05',
+    atomicAmount: '50000', // 0.05 * 10^6
+    description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.05. Free sample: https://stockbloc.ai.studio/api/v1/sec/job/sample",
     exampleRequest: {
       method: 'POST',
       url: 'https://stockbloc.ai.studio/api/v1/sec/job',

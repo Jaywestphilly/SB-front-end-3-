@@ -22,7 +22,7 @@ describe('Free Static Sample Endpoints Suite', () => {
     expect(resJob.body.capturedAt).toBeDefined();
     expect(resJob.body.paidRoute).toBeDefined();
     expect(resJob.body.paidRoute.url).toBe('https://stockbloc.ai.studio/api/v1/sec/job');
-    expect(resJob.body.paidRoute.price).toBe('$0.25 USDC (x402, Base)');
+    expect(resJob.body.paidRoute.price).toBe('$0.05 USDC (x402, Base)');
 
     const res13f = await request(app).get('/api/v1/data/sec/sample');
     expect(res13f.status).toBe(200);

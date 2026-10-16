@@ -26,14 +26,14 @@ describe('Tool Pages SSR & 404 Routing', () => {
     expect(res5.status).toBe(404);
   });
 
-  it('SEC page: returns 200 with POST /api/v1/sec/job ($0.25) and GET /api/v1/sec/analyst free info page', async () => {
+  it('SEC page: returns 200 with POST /api/v1/sec/job ($0.05) and GET /api/v1/sec/analyst free info page', async () => {
     const res = await request(app).get('/tools/sec');
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toContain('text/html');
 
     // Title & Meta
     expect(res.text).toContain('<title>Stock Bloc SEC Analyst | Form 10-K, 10-Q &amp; 8-K Filing Analysis</title>');
-    expect(res.text).toMatch(/<meta\s+name="description"\s+content="[^"]*POST \/api\/v1\/sec\/job[^"]*\$0\.25[^"]*GET \/api\/v1\/sec\/analyst[^"]*"/i);
+    expect(res.text).toMatch(/<meta\s+name="description"\s+content="[^"]*POST \/api\/v1\/sec\/job[^"]*\$0\.05[^"]*GET \/api\/v1\/sec\/analyst[^"]*"/i);
 
     // OpenGraph
     expect(res.text).toContain('<meta property="og:title" content="Stock Bloc SEC Analyst | Form 10-K, 10-Q &amp; 8-K Filing Analysis" />');
@@ -44,7 +44,7 @@ describe('Tool Pages SSR & 404 Routing', () => {
     expect(res.text).toContain('<section id="tool-details" class="tool-spec" data-tool="sec"');
     expect(res.text).toContain('POST /api/v1/sec/job');
     expect(res.text).toContain('{"ticker":"AAPL","filingType":"10-K"}');
-    expect(res.text).toContain('$0.25');
+    expect(res.text).toContain('$0.05');
     expect(res.text).toContain('GET /api/v1/sec/analyst');
 
     // Discovery links

@@ -1507,11 +1507,11 @@ const handleManifest = (req: Request, res: Response) => {
         path: '/api/v1/sec/job',
         alias: '/api/v1/sec/analyst',
         scope: 'metered_credits',
-        description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25.",
-        supportedFilingTypes: ['10-K', '10-Q', '8-K'],
+        description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.05.",
+        supportedFilingTypes: ['10-K', '10-Q'],
         requestBody: {
           ticker: 'string (required, e.g. NVDA)',
-          filingType: 'string (required: 10-K | 10-Q | 8-K)',
+          filingType: 'string (required: 10-K | 10-Q)',
           question: 'string (optional specific research question)'
         },
         response: {
@@ -1520,15 +1520,15 @@ const handleManifest = (req: Request, res: Response) => {
         },
         x402: {
           priced: true,
-          priceUsd: 0.25,
-          priceDisplay: '$0.25 USDC',
-          atomicAmount: '250000',
+          priceUsd: 0.05,
+          priceDisplay: '$0.05 USDC',
+          atomicAmount: '50000',
           asset: 'USDC',
           assetContract: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
           network: 'Base',
           networkCaip2: 'eip155:8453',
           chainId: 8453,
-          howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.25 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
+          howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.05 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
         }
       },
       secAnalyst: {
@@ -1537,11 +1537,11 @@ const handleManifest = (req: Request, res: Response) => {
         path: '/api/v1/sec/analyst',
         alias: '/api/v1/sec/job',
         scope: 'metered_credits',
-        description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25.",
-        supportedFilingTypes: ['10-K', '10-Q', '8-K'],
+        description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.05.",
+        supportedFilingTypes: ['10-K', '10-Q'],
         requestBody: {
           ticker: 'string (required, e.g. NVDA)',
-          filingType: 'string (required: 10-K | 10-Q | 8-K)',
+          filingType: 'string (required: 10-K | 10-Q)',
           question: 'string (optional specific research question)'
         },
         response: {
@@ -1550,15 +1550,15 @@ const handleManifest = (req: Request, res: Response) => {
         },
         x402: {
           priced: true,
-          priceUsd: 0.25,
-          priceDisplay: '$0.25 USDC',
-          atomicAmount: '250000',
+          priceUsd: 0.05,
+          priceDisplay: '$0.05 USDC',
+          atomicAmount: '50000',
           asset: 'USDC',
           assetContract: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
           network: 'Base',
           networkCaip2: 'eip155:8453',
           chainId: 8453,
-          howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.25 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
+          howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.05 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
         }
       },
       earningsPack: {
@@ -1749,7 +1749,7 @@ Always pay the payTo returned in the live 402 response.
 - **Market Data Feed** (\`GET /api/data/market\`): **$0.01 USDC** (\`10000\` atomic units)
 - **0–100 SB Score & Quant Signal** (\`GET /api/v1/intelligence/sb-score\`): **$0.05 USDC** (\`50000\` atomic units)
 - **SEC 13F Whale Filings** (\`GET /api/data/sec\`): **$0.10 USDC** (\`100000\` atomic units)
-- **Deep SEC Filing Production Audit** (\`POST /api/v1/sec/job\`): **$0.25 USDC** (\`250000\` atomic units)
+- **Deep SEC Filing Production Audit** (\`POST /api/v1/sec/job\`): **$0.05 USDC** (\`50000\` atomic units)
 - **Institutional Research Memos** (\`POST /api/v1/intelligence/research\`): **$0.10 USDC** (\`100000\` atomic units)
 - **Quantitative Price Forecasts** (\`POST /api/v1/intelligence/forecasts\`): **$0.05 USDC** (\`50000\` atomic units)
 - **Quant Strategy Evaluation** (\`POST /api/v1/agent/strategy/evaluate\`): **$0.10 USDC** (\`100000\` atomic units)

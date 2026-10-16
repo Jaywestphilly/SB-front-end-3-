@@ -5,7 +5,7 @@
   "paidRoute": {
     "method": "POST",
     "url": "https://stockbloc.ai.studio/api/v1/sec/job",
-    "price": "$0.25 USDC (x402, Base)",
+    "price": "$0.05 USDC (x402, Base)",
     "body": {
       "ticker": "AAPL",
       "filingType": "10-K",

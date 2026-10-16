@@ -28,7 +28,7 @@ Always pay the payTo returned in the live 402 response.
 - **Market Data Feed** (`GET /api/data/market`): **$0.01 USDC** (`10000` atomic units)
 - **0–100 SB Score & Quant Signal** (`GET /api/v1/intelligence/sb-score`): **$0.05 USDC** (`50000` atomic units)
 - **SEC 13F Whale Filings** (`GET /api/data/sec`): **$0.10 USDC** (`100000` atomic units)
-- **Stock Bloc SEC Analyst Deep Filing Audit** (`POST /api/v1/sec/analyst` or `POST /api/v1/sec/job`): **$0.25 USDC** (`250000` atomic units) - Full 10-K, 10-Q, 8-K audit with revenue quality & forensic risks
+- **Stock Bloc SEC Analyst Deep Filing Audit** (`POST /api/v1/sec/analyst` or `POST /api/v1/sec/job`): **$0.05 USDC** (`50000` atomic units) - Full 10-K, 10-Q audit with revenue quality & forensic risks
 - **Institutional Research Memos** (`POST /api/v1/intelligence/research`): **$0.10 USDC** (`100000` atomic units)
 - **Quantitative Price Forecasts** (`POST /api/v1/intelligence/forecasts`): **$0.05 USDC** (`50000` atomic units)
 - **Quant Strategy Evaluation** (`POST /api/v1/agent/strategy/evaluate`): **$0.10 USDC** (`100000` atomic units)
@@ -222,7 +222,7 @@ The **Stock Bloc SEC Analyst** is the primary autonomous financial intelligence 
 - **Service Discovery**: `GET https://stockbloc.ai.studio/api/v1/sec/analyst` or `GET https://stockbloc.ai.studio/api/v1/sec/service`
 - **Free Demo**: `POST https://stockbloc.ai.studio/api/v1/sec/analyze` (free)
 - **Supported Forms**: `10-K` (Annual Report), `10-Q` (Quarterly Report), `8-K` (Current Report / Material Catalyst)
-- **Pricing**: $0.25 USDC (250,000 atomic units) via x402 on Base.
+- **Pricing**: $0.05 USDC (50,000 atomic units) via x402 on Base.
 - **Payload Schema**:
 ```json
 {
@@ -294,7 +294,7 @@ curl -s "https://stockbloc.ai.studio/api/data/sec" -H "PAYMENT-SIGNATURE: <sig>"
 }
 ```
 
-### 4. Deep SEC Filing Audit (`POST /api/v1/sec/job`): $0.25 USDC
+### 4. Deep SEC Filing Audit (`POST /api/v1/sec/job`): $0.05 USDC
 **Example request:**
 ```bash
 curl -s -X POST "https://stockbloc.ai.studio/api/v1/sec/job" -H "Content-Type: application/json" -H "PAYMENT-SIGNATURE: <sig>" -d '{"ticker":"NVDA","filingType":"10-Q"}'
@@ -384,7 +384,7 @@ Stock Bloc is a financial intelligence, quant backtesting, and autonomous agent 
 - **Market Data Feed (x402: $0.01 USDC)**: `GET https://stockbloc.ai.studio/api/data/market`
 - **0–100 SB Score & Quant Signal (x402: $0.05 USDC)**: `GET https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=NVDA`
 - **SEC 13F Whale Filings (x402: $0.10 USDC)**: `GET https://stockbloc.ai.studio/api/data/sec`
-- **Deep SEC Audit Job (x402: $0.25 USDC)**: `POST https://stockbloc.ai.studio/api/v1/sec/job`
+- **Deep SEC Audit Job (x402: $0.05 USDC)**: `POST https://stockbloc.ai.studio/api/v1/sec/job`
 - **Earnings Prep Pack Bundle (x402: $0.35 USDC)**: `GET https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack?ticker=NVDA`
 - **Evaluate Strategy vs Super Sonic Tsunami (x402: $0.10 USDC)**: `POST https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate`
 - **Quant Sim (x402: $0.10 USDC)**: `POST https://stockbloc.ai.studio/api/v1/agent/quant-sim`

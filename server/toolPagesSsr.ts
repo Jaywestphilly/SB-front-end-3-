@@ -40,11 +40,11 @@ export const TOOL_PAGES: Record<string, ToolPageSpec> = {
     badge: 'SEC ANALYST',
     category: 'SEC & Fundamental Intelligence',
     title: 'Stock Bloc SEC Analyst | Form 10-K, 10-Q & 8-K Filing Analysis',
-    description: 'Stock Bloc SEC Analyst: Autonomous Form 10-K, 10-Q, and 8-K filing analysis, revenue quality checks, and risk factor audits. Paid endpoint: POST /api/v1/sec/job with {"ticker":"AAPL","filingType":"10-K"} ($0.25 USDC). Free info page: GET /api/v1/sec/analyst.',
+    description: 'Stock Bloc SEC Analyst: Autonomous Form 10-K, 10-Q, and 8-K filing analysis, revenue quality checks, and risk factor audits. Paid endpoint: POST /api/v1/sec/job with {"ticker":"AAPL","filingType":"10-K"} ($0.05 USDC). Free info page: GET /api/v1/sec/analyst.',
     endpointMethod: 'POST',
     endpointPath: '/api/v1/sec/job',
-    priceDisplay: '$0.25',
-    priceUsd: 0.25,
+    priceDisplay: '$0.05',
+    priceUsd: 0.05,
     freeInfoPage: 'GET /api/v1/sec/analyst',
     structuredSection: `<section id="tool-details" class="tool-spec" data-tool="sec" data-canonical-url="https://stockbloc.ai.studio/tools/sec">
   <header>
@@ -55,7 +55,7 @@ export const TOOL_PAGES: Record<string, ToolPageSpec> = {
     <h2>API Endpoints</h2>
     <div class="endpoint-item paid-endpoint">
       <h3>Paid Analysis Job: <code>POST /api/v1/sec/job</code></h3>
-      <p class="price-badge">Price: <strong>$0.25 USDC</strong> (via x402 pay-per-call on Base)</p>
+      <p class="price-badge">Price: <strong>$0.05 USDC</strong> (via x402 pay-per-call on Base)</p>
       <p>Request payload example:</p>
       <pre><code>{"ticker":"AAPL","filingType":"10-K"}</code></pre>
       <pre><code>{"ticker":"AAPL","filingType":"10-K","mode":"diff"}</code></pre>

@@ -50,7 +50,7 @@ export const ComparisonView: React.FC = () => {
               <tr className="hover:bg-slate-800/20 transition-colors">
                 <td className="py-4 px-5 font-mono text-xs font-bold text-slate-300 uppercase">SEC filing analysis</td>
                 <td className="py-4 px-5 font-medium text-white bg-cyan-950/10 border-l border-r border-cyan-500/30">
-                  Yes, $0.25/call finished output with citations
+                  Yes, $0.05/call finished output with citations
                 </td>
                 <td className="py-4 px-5 text-slate-300">
                   No, returns raw web text you parse yourself
