@@ -129,7 +129,7 @@ export const VisualOrderDiagrams: React.FC = () => {
                 </p>
               </div>
               <div className="px-3 py-1 rounded bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 font-mono text-xs font-bold shrink-0">
-                Guaranteed Execution Speed
+                Optimized Execution Speed
               </div>
             </div>
 

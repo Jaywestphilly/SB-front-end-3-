@@ -637,7 +637,7 @@ export const RobotaxiVsHousingBreakdown: React.FC = () => {
         </h4>
 
         <p className="text-xs text-neutral-300 leading-relaxed">
-          This model is an educational capital efficiency comparison under stated assumptions rather than a guaranteed yield forecast. The order-of-magnitude capital difference ($1.5M vs $75M) is so wide that even under heavily discounted utilization scenarios (e.g., 180 miles/day or higher insurance reserves), autonomous fleet deployment remains an asymmetric capital-efficiency case study relative to high-cost coastal real estate.
+          This model is an educational capital efficiency comparison under stated assumptions rather than an estimated yield forecast. The order-of-magnitude capital difference ($1.5M vs $75M) is so wide that even under heavily discounted utilization scenarios (e.g., 180 miles/day or higher insurance reserves), autonomous fleet deployment remains an asymmetric capital-efficiency case study relative to high-cost coastal real estate.
         </p>
 
         <p className="text-[11px] text-neutral-500 font-mono italic">

@@ -383,7 +383,7 @@ https://stockbloc.ai.studio/credit-hub
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/15 px-3 py-1 rounded-full border border-emerald-500/30 flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                Federal Law Guaranteed (FCRA § 612)
+                Federal Law Protected (FCRA § 612)
               </span>
               <span className="text-xs font-mono font-bold text-emerald-300">
                 100% Free • Soft Inquiry
@@ -418,7 +418,7 @@ https://stockbloc.ai.studio/credit-hub
               </div>
               <div className="p-2.5 rounded-xl bg-black/40 border border-emerald-500/20 text-neutral-300">
                 <strong className="text-emerald-300 block">
-                  Soft Pull Guarantee
+                  Soft Pull Verification
                 </strong>
                 Zero score reduction.
               </div>
@@ -1529,7 +1529,7 @@ https://stockbloc.ai.studio/credit-hub
                   Free Credit Freeze Right
                 </strong>
                 <span>
-                  Federal law guarantees every consumer the right to freeze &
+                  Federal law protects every consumer's right to freeze &
                   unfreeze credit at zero cost to block identity theft &
                   fraudulent inquiry pulls.
                 </span>

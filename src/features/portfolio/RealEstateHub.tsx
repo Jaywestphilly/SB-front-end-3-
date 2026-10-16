@@ -748,7 +748,7 @@ https://stockbloc.ai.studio/real-estate
                 </div>
                 <div>
                   <h4 className="text-base font-black text-white animate-periodic-text-glitch">
-                    USDA Guaranteed Rural Housing Loans
+                    USDA Rural Housing Loans
                   </h4>
                   <p className="text-xs text-neutral-300 mt-1 leading-relaxed">
                     Provides 100% financing with zero down payment for eligible

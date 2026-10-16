@@ -298,7 +298,7 @@ const FALLBACK_WATCHLIST: DefenseWatchlistStock[] = [
     clearanceLevel: "TOP SECRET // NAVSEA",
     domain: "Maritime & Submarines",
     uapTechRole: "Virginia and Columbia-class nuclear submarines, Abrams tank platforms, & IT defense infrastructure.",
-    investmentThesis: "Sole manufacturer of US nuclear submarine hull structures with guaranteed multi-decade naval funding.",
+    investmentThesis: "Sole manufacturer of US nuclear submarine hull structures with multi-decade naval funding.",
     analystRating: "Buy"
   },
   {

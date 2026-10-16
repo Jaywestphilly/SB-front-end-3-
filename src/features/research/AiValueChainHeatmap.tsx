@@ -265,7 +265,7 @@ export const TSUNAMI_STACK_LEVELS: StackLevelExplainer[] = [
     icon: "Zap",
     bottleneck: "Nuclear reactor licensing, NRC regulations, 4–7 year SMR development timelines, and high-voltage transmission interconnects.",
     marginProfile: "Long-term (15–20 year) take-or-pay power purchase agreements (PPAs) with locked-in premium pricing over standard wholesale rates.",
-    capexDriver: "Direct off-take deals (e.g. Constellation/Microsoft 835MW restart, Talen/AWS 2.5GW Susquehanna campus) guaranteeing 99.999% uptime.",
+    capexDriver: "Direct off-take deals (e.g. Constellation/Microsoft 835MW restart, Talen/AWS 2.5GW Susquehanna campus) targeting 99.999% uptime.",
     description: "The primary physical constraint on AI growth. AI compute clusters require steady 24/7/365 baseload electricity that intermittent renewables cannot provide alone, catalyzing a historic renaissance in nuclear power, SMRs, and behind-the-meter fuel cells.",
     keyTickers: ["CEG", "VST", "TLN", "BE", "SMR", "OKLO", "NEE"]
   },

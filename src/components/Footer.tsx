@@ -28,7 +28,7 @@ export const Footer: React.FC<FooterProps> = ({
             <strong className="text-amber-400 font-mono font-bold uppercase tracking-wider block mb-1">
               EDUCATIONAL INTELLIGENCE & LEGAL DISCLAIMER
             </strong>
-            For educational and informational purposes only. Content is not financial, investment, or legal advice. All investments carry risk of capital loss. Past performance does not guarantee future results. Verify independent SEC filings before executing trades.
+            For educational and informational purposes only. Content is not financial, investment, or legal advice. All investments carry risk of capital loss. Past performance does not indicate future results. Verify independent SEC filings before executing trades.
           </div>
         </div>
 

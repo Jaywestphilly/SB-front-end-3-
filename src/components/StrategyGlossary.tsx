@@ -133,7 +133,7 @@ const STRATEGY_DICTIONARY: OptionsStrategyItem[] = [
     riskLevel: "Low Risk",
     analogyTitle: "Car or Home Insurance Policy 🛡️",
     highSchoolDefinition:
-      "You own 100 shares of stock and buy a Put option. If the stock crashes to zero, your Put contract guarantees you can still sell your shares at the agreed strike price floor, stopping all losses.",
+      "You own 100 shares of stock and buy a Put option. If the stock crashes to zero, your Put contract allows you to still sell your shares at the agreed strike price floor, stopping all losses.",
     realWorldExample:
       "You own 100 shares of $AMZN at $180. You buy a 90-day $170 Put for $4.00 ($400). If $AMZN crashes to $100 during a market panic, your Put allows you to sell at $170!",
     whenToUse:

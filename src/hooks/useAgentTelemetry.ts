@@ -4,7 +4,7 @@ export interface AgentTelemetryData {
   activeAgents24h: number;
   totalAgentPings24h: number;
   windowHours: number;
-  privacyGuaranteed: boolean;
+  privacyProtected: boolean;
   privacyNotice: string;
   lastUpdated: string;
 }
@@ -13,7 +13,7 @@ const DEFAULT_TELEMETRY: AgentTelemetryData = {
   activeAgents24h: 0,
   totalAgentPings24h: 0,
   windowHours: 24,
-  privacyGuaranteed: true,
+  privacyProtected: true,
   privacyNotice: 'Zero-knowledge rolling 24-hour counter. No agent identities, keys, IP addresses, or payloads are logged.',
   lastUpdated: new Date().toISOString()
 };

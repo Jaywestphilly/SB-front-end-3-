@@ -170,7 +170,7 @@ export const AgentActivityCounter: React.FC<AgentActivityCounterProps> = ({
               </div>
             </div>
 
-            {/* Privacy & Security Guarantees */}
+            {/* Privacy & Security Protections */}
             <div className="p-3.5 alien-block-cut-sm bg-cyan-950/30 border border-cyan-500/30 space-y-2">
               <div className="text-xs font-alien-hud font-bold text-cyan-300 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />

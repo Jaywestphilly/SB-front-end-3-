@@ -83,7 +83,7 @@ const DEFAULT_BROKERAGES: BrokeragePartner[] = [
   {
     id: "schwab",
     name: "Charles Schwab",
-    tagline: "24/7 client support, satisfaction guarantee & no fee index funds",
+    tagline: "24/7 client support, satisfaction focus & no fee index funds",
     bonusText: "Get up to $1,000 bonus when you open an account",
     commissionEarned: "$50 Referral Bonus",
     badge: "TRUSTED BANK",

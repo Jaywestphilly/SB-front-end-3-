@@ -78,7 +78,7 @@ export const DisclaimerModal: React.FC<DisclaimerModalProps> = ({
             <div className="space-y-4">
               <h3 className="text-amber-400 font-bold uppercase font-mono border-b border-amber-500/20 pb-2">2. Independent Verification Required</h3>
               <p>
-                You must independently verify any information you find on our platform before making investment decisions. Financial markets, real estate, and credit systems are inherently risky. Past performance of any algorithm, strategy, or asset does not guarantee future results.
+                You must independently verify any information you find on our platform before making investment decisions. Financial markets, real estate, and credit systems are inherently risky. Past performance of any algorithm, strategy, or asset does not indicate future results.
               </p>
             </div>
 

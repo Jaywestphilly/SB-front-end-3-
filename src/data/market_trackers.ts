@@ -302,7 +302,7 @@ export const REGULATORY_CAPTURE_DATA: RegulatoryCaptureItem[] = [
       "Global geopolitical treaties prohibit export of High-NA EUV scanners to non-allied nations, enforcing ASML's status as an indispensable Western tech pillar.",
     keyPolicyDevelopments: [
       "Dutch government export license mandates restrict advanced EUV equipment export",
-      "US CHIPS Act subsidies guarantee $50B+ foundry capital spending with ASML orders",
+      "US CHIPS Act subsidies support $50B+ foundry capital spending with ASML orders",
       "Zero substitute technology exists globally for sub-2nm lithography",
     ],
     lobbyingImpactScore: "Dominant Moat",

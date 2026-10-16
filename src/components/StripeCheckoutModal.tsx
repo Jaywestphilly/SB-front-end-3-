@@ -379,10 +379,10 @@ export const StripeCheckoutModal: React.FC<Props> = ({
           </div>
         )}
 
-        {/* Guarantee Banner */}
+        {/* Assurance Banner */}
         <div className="flex items-center justify-between text-[10px] text-neutral-400 font-sans border-t border-neutral-800 pt-3">
           <span className="flex items-center gap-1 text-emerald-400 font-bold">
-            <CheckCircle2 className="w-3.5 h-3.5" /> 100% Satisfaction Guarantee
+            <CheckCircle2 className="w-3.5 h-3.5" /> 100% Satisfaction Assurance
           </span>
           <span>Powered by Stripe Verified Payment</span>
         </div>

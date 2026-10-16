@@ -216,7 +216,7 @@ const MISSION_CATEGORIES: MissionCategory[] = [
     label: "Deep Research & Video Vault",
     shortLabel: "Research Vault",
     badge: "Curated Media",
-    description: "Peer-reviewed astronautical engineering analyses and full-length aerospace documentaries",
+    description: "Curated astronautical engineering analyses and full-length aerospace documentaries",
     icon: Film,
     color: "emerald",
     tabIds: ["space_docs"],

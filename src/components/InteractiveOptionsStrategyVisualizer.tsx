@@ -81,7 +81,7 @@ const STRATEGIES: StrategyConfig[] = [
     defaultStrikeB: 110,
     defaultPremiumA: 3.5, // Total Credit
     probabilityOfProfit: "~85% 90%",
-    upsideRisk: "Zero ($0 Risk Guaranteed Profit if Stock Soars)",
+    upsideRisk: "Zero ($0 Risk Capped Profit if Stock Soars)",
     downsideRisk: "Substantial (If stock plunges below $90)",
   },
   {
@@ -104,13 +104,13 @@ const STRATEGIES: StrategyConfig[] = [
     badge: "Stock Insurance",
     category: "Hedging",
     description:
-      "Own 100 shares of stock and buy a Put option to set a guaranteed floor price, protecting against market crashes.",
+      "Own 100 shares of stock and buy a Put option to set a defined floor price, protecting against market crashes.",
     defaultStockPrice: 100,
     defaultStrikeA: 90,
     defaultPremiumA: 3.8,
     probabilityOfProfit: "~45%",
     upsideRisk: "Unlimited upside minus premium cost",
-    downsideRisk: "Guaranteed Floor at Strike Price",
+    downsideRisk: "Defined Floor at Strike Price",
   },
   {
     id: "bull_call_spread",
