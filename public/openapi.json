@@ -17,6 +17,97 @@
     }
   ],
   "paths": {
+    "/api/v1/signals/daily-triggers": {
+      "get": {
+        "summary": "Real SEC events from the last 24 hours on the watchlist",
+        "description": "Real SEC events from the last 24 hours on the watchlist: new 10-K, 10-Q or 8-K filings, each with the paid route to inspect it. Empty list when nothing was filed. Free.",
+        "operationId": "getDailyTriggers",
+        "security": [],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional stock ticker filter on the watchlist (e.g. AAPL, NVDA, TSLA)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Real SEC events from the last 24 hours on the watchlist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "asOf",
+                    "windowHours",
+                    "triggers"
+                  ],
+                  "properties": {
+                    "asOf": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO timestamp of the scan"
+                    },
+                    "windowHours": {
+                      "type": "integer",
+                      "example": 24
+                    },
+                    "triggers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "ticker",
+                          "event",
+                          "filedDate",
+                          "recommended_endpoint"
+                        ],
+                        "properties": {
+                          "ticker": {
+                            "type": "string"
+                          },
+                          "event": {
+                            "type": "string"
+                          },
+                          "filedDate": {
+                            "type": "string"
+                          },
+                          "recommended_endpoint": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "asOf": "2026-10-16T15:00:00.000Z",
+                  "windowHours": 24,
+                  "triggers": []
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SEC EDGAR source unavailable",
+            "content": {
+              "application/json": {
+                "example": {
+                  "asOf": "2026-10-16T15:00:00.000Z",
+                  "windowHours": 24,
+                  "triggers": [],
+                  "error": "SEC EDGAR source unavailable"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/agents/me/transactions": {
       "get": {
         "summary": "Agent Spending Receipts & Itemized Transaction History",

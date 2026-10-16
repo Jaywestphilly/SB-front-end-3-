@@ -188,6 +188,16 @@ export const MCP_TOOLS = [
       },
       required: ["ticker"]
     }
+  },
+  {
+    name: "get_daily_triggers",
+    description: "Real SEC events from the last 24 hours on the watchlist: new 10-K, 10-Q or 8-K filings, each with the paid route to inspect it. Empty list when nothing was filed. Free.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ticker: { type: "string", description: "Optional stock ticker filter on the watchlist (e.g. AAPL, NVDA, TSLA)" }
+      }
+    }
   }
 ];
 
@@ -753,6 +763,12 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
         });
       } else if (name === "get_data_status") {
         fetchRes = await fetch(`${baseUrl}/api/v1/data-status`, {
+          headers: forwardHeaders
+        });
+      } else if (name === "get_daily_triggers" || name === "daily_triggers") {
+        const url = new URL(`${baseUrl}/api/v1/signals/daily-triggers`);
+        if (args?.ticker) url.searchParams.set("ticker", String(args.ticker));
+        fetchRes = await fetch(url.toString(), {
           headers: forwardHeaders
         });
       } else if (name === "get_ebook_playbook") {

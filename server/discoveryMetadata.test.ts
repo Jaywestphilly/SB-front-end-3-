@@ -92,7 +92,7 @@ describe('Discovery Metadata & Self-Correcting 400 Examples Suite', () => {
       expect(market).toBeDefined();
       expect(market.exampleRequest).toEqual({
         method: 'GET',
-        url: 'https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL'
+        url: 'https://stockbloc.ai.studio/api/v1/market/quote?ticker=AAPL'
       });
 
       const earnings = endpoints.find((e: any) => e.id === 'earnings_pack');
@@ -127,7 +127,7 @@ describe('Discovery Metadata & Self-Correcting 400 Examples Suite', () => {
       expect(res.headers['payment-required']).toBeUndefined();
       expect(res.body.example).toEqual({
         method: 'GET',
-        url: 'https://stockbloc.ai.studio/api/v1/market/quote?symbol=AAPL'
+        url: 'https://stockbloc.ai.studio/api/v1/market/quote?ticker=AAPL'
       });
     });
 

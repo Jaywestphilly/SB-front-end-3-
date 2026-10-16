@@ -28,6 +28,7 @@ import { issueUiCookie } from './server/uiSession.js';
 import { fetchRealStockQuote, fetchYahooQuote } from './server/marketQuoteService.js';
 import { handleToolPageRequest } from './server/toolPagesSsr.js';
 import { registerReportRoutes } from './server/reportService.js';
+import { fetchDailyTriggers } from './server/dailyTriggersService.js';
 
 const app = express();
 const portArgIndex = process.argv.indexOf('--port');
@@ -135,6 +136,23 @@ app.get('/.well-known/x402list.txt', (_req, res) => {
   return res.status(200).send('x402list-verify-ZYKyA4-o5e_y370ZiumJz1gXUMqMmnkK66p-z9S09Os');
 });
 
+// Free Signal Endpoint: Real SEC events from the last 24 hours on the watchlist
+app.get(['/api/v1/signals/daily-triggers', '/api/signals/daily-triggers'], async (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  try {
+    const rawTicker = (req.query.ticker as string) || (req.query.symbol as string);
+    const { status, body } = await fetchDailyTriggers(rawTicker);
+    return res.status(status).json(body);
+  } catch (err: any) {
+    return res.status(503).json({
+      asOf: new Date().toISOString(),
+      windowHours: 24,
+      triggers: [],
+      error: 'SEC EDGAR source unavailable'
+    });
+  }
+});
+
 // 1c. Real Coinbase CDP x402 Payment Gatekeeper Middleware (for priced endpoints)
 app.use(requireX402Payment());
 
@@ -238,14 +256,26 @@ app.get('/.well-known/x402', (_req, res) => {
     ...(ep.exampleRequest ? { exampleRequest: ep.exampleRequest } : {})
   }));
 
+  const freeEndpoints = [
+    {
+      id: 'daily_triggers',
+      name: 'Stock Bloc SEC Daily Triggers',
+      paths: ['/api/v1/signals/daily-triggers'],
+      description: 'Real SEC events from the last 24 hours on the watchlist: new 10-K, 10-Q or 8-K filings, each with the paid route to inspect it. Empty list when nothing was filed. Free.',
+      free: true
+    }
+  ];
+
+  const allEndpoints = [...endpoints, ...freeEndpoints];
+
   return res.status(200).json({
     x402Version: 2,
     network: 'eip155:8453',
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     payTo: recipient,
     facilitator: 'https://api.cdp.coinbase.com/platform/v2/x402',
-    endpoints,
-    resources: endpoints
+    endpoints: allEndpoints,
+    resources: allEndpoints
   });
 });
 
