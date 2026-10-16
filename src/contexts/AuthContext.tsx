@@ -88,19 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         username: username || user.displayName || user.email?.split("@")[0] || "Stock Bloc Member",
       };
     }
-    if (localProfile) {
-      return {
-        uid: localProfile.uid,
-        displayName: localProfile.displayName || localProfile.username || localProfile.email?.split("@")[0] || "Stock Bloc Member",
-        email: localProfile.email,
-        photoURL: localProfile.photoURL,
-        username: localProfile.username || localProfile.displayName || localProfile.email?.split("@")[0] || "Stock Bloc Member",
-      };
-    }
     return null;
-  }, [user, username, localProfile]);
+  }, [user, username]);
 
-  const isAuthenticated = Boolean(user || localProfile);
+  const isAuthenticated = Boolean(user);
 
   const contextValue = useMemo<AuthContextType>(() => ({
     user,

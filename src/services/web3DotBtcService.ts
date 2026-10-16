@@ -167,9 +167,9 @@ class Web3DotBtcService {
   }
 
   /**
-   * Connect Polkadot Wallet (Talisman, SubWallet, Polkadot.js, or Mock Substrate Account)
+   * Connect Polkadot Wallet (Talisman, SubWallet, Polkadot.js)
    */
-  public async connectPolkadotWallet(walletName = "Talisman / SubWallet"): Promise<ConnectedWeb3Wallet> {
+  public async connectPolkadotWallet(walletName = "Talisman / SubWallet"): Promise<ConnectedWeb3Wallet | null> {
     let address = "";
     let detectedName = walletName;
 
@@ -191,10 +191,11 @@ class Web3DotBtcService {
       }
     }
 
-    // Fallback/Deterministic Substrate Address if none injected or user in preview
     if (!address) {
-      const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-      address = `14E1gUf9RBZYFwFG8EHFi5aHeC6WzGg5rU7z2Uf${randomSuffix}`;
+      this.activeWallet = null;
+      localStorage.removeItem("stock_bloc_web3_wallet");
+      this.notify();
+      return null;
     }
 
     const res = await fetch("/api/v1/web3/wallets/connect", {
@@ -215,13 +216,10 @@ class Web3DotBtcService {
         walletName: detectedName,
         address,
         connectedAt: new Date().toISOString(),
-        balanceFormatted: "3,450.00 DOT",
-        tier: "DOT Whale",
+        balanceFormatted: "0.00 DOT",
+        tier: "Free",
         perks: [
           "Unrestricted AI Copilot Terminal",
-          "Substrate Cross-Chain Arbitrage Feeds",
-          "Coretime & JAM Early Signal Access",
-          "50% Discount on Autonomous Agent Tasks",
         ],
       };
     }
@@ -232,9 +230,9 @@ class Web3DotBtcService {
   }
 
   /**
-   * Connect Bitcoin Wallet (Unisat, Xverse, Leather, Phantom BTC, or Mock Taproot Account)
+   * Connect Bitcoin Wallet (Unisat, Xverse, Leather, Phantom BTC)
    */
-  public async connectBitcoinWallet(walletName = "Unisat / Xverse"): Promise<ConnectedWeb3Wallet> {
+  public async connectBitcoinWallet(walletName = "Unisat / Xverse"): Promise<ConnectedWeb3Wallet | null> {
     let address = "";
     let detectedName = walletName;
 
@@ -266,10 +264,11 @@ class Web3DotBtcService {
       }
     }
 
-    // Fallback/Deterministic Taproot Address
     if (!address) {
-      const randomSuffix = Math.random().toString(36).substring(2, 6).toLowerCase();
-      address = `bc1p7z8wly04764mrl2yq3dxz4x4z0y9tqstockbloc${randomSuffix}`;
+      this.activeWallet = null;
+      localStorage.removeItem("stock_bloc_web3_wallet");
+      this.notify();
+      return null;
     }
 
     const res = await fetch("/api/v1/web3/wallets/connect", {

@@ -1158,7 +1158,7 @@ export const auth: any = {
         // Fall back to bearer decode / development bypass
       }
     }
-    if (token === 'valid_human_token' || token.startsWith('mock_')) {
+    if (token === 'valid_human_token') {
       return { uid: 'human_developer_01', name: 'Developer', email: 'developer@stockbloc.ai' };
     }
     // Simple JWT parse fallback for development tokens
@@ -1176,6 +1176,6 @@ export const auth: any = {
       }
     } catch (e) {}
 
-    return { uid: 'human_developer_01', name: 'Developer', email: 'developer@stockbloc.ai' };
+    throw new Error("Invalid or unauthenticated user token");
   }
 };
