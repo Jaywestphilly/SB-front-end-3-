@@ -100,15 +100,12 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
               <span>STOP PLAYIN' WITH YOUR LIFE! WE GIVIN' YOU THE WHOLE BOARD.</span>
             </div>
 
-            <h1 className="text-xl sm:text-3xl md:text-4xl font-black font-tech text-white uppercase tracking-tight leading-tight">
-              FROM THE BLOCK TO THE BLOC: <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-200 to-amber-300">
-                INSTITUTIONAL QUANT WEALTH & 13F RADAR
-              </span>
+            <h1 className="text-xl sm:text-3xl md:text-4xl font-black font-tech text-white tracking-tight leading-tight">
+              Know what changed before everyone else
             </h1>
 
             <p className="text-xs sm:text-sm text-cyan-200/90 font-sans leading-relaxed max-w-2xl mx-auto">
-              Hedge funds, family offices, and Wall Street institutions been runnin' multi-billion dollar wealth plays behind closed doors. <strong>Stock Bloc cracked the terminal wide open.</strong> We combined real-time market data, 13F whale tracking, 800+ business credit stacking, cash-flowing real estate underwriting, and sci-fi aerospace tech into one unstoppable engine.
+              Weekly plain-language breakdowns of SEC filings, 13F investor moves, credit and real estate. Built for everyday investors.
             </p>
           </div>
 
@@ -126,8 +123,22 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
             <span>DSCR REAL ESTATE UNDERWRITING</span>
           </div>
 
-          {/* Community Buttons (X / Twitter & YouTube) */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 w-full max-w-md">
+          {/* Action & Community Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 w-full max-w-xl">
+            <a
+              href="/pricing"
+              onClick={(e) => {
+                e.preventDefault();
+                triggerHaptic("selection");
+                trackEvent("module_opened", { section: "hero_pricing" });
+                onSelectTab("pricing");
+              }}
+              className="w-full sm:w-auto py-2.5 px-6 bg-cyan-400 text-black font-black font-tech text-xs uppercase tracking-wider alien-block-cut-sm hover:bg-cyan-300 shadow-lg shadow-cyan-400/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-black" />
+              <span>Join The Bloc</span>
+            </a>
+
             <a
               href={appendUTM("https://x.com/thestockbloc?s=21", "hero_btn")}
               target="_blank"
@@ -136,9 +147,9 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
                 triggerHaptic("selection");
                 trackEvent("community_joined", { platform: "x_twitter" });
               }}
-              className="w-full sm:w-1/2 py-2.5 px-4 bg-cyan-400 text-black font-black font-tech text-xs uppercase tracking-wider alien-block-cut-sm hover:bg-cyan-300 shadow-lg shadow-cyan-400/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto py-2.5 px-4 bg-neutral-900 border border-cyan-500/40 text-cyan-300 font-black font-tech text-xs uppercase tracking-wider alien-block-cut-sm hover:bg-cyan-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Twitter className="w-4 h-4 text-black fill-black" />
+              <Twitter className="w-4 h-4 text-cyan-400 fill-cyan-400" />
               <span>FOLLOW ON X (@THESTOCKBLOC)</span>
             </a>
 
@@ -150,7 +161,7 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
                 triggerHaptic("selection");
                 trackEvent("community_joined", { platform: "youtube" });
               }}
-              className="w-full sm:w-1/2 py-2.5 px-4 bg-rose-950/60 border border-rose-500/60 text-rose-300 hover:bg-rose-900/60 font-black font-tech text-xs uppercase tracking-wider alien-block-cut-sm shadow-lg shadow-rose-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto py-2.5 px-4 bg-rose-950/60 border border-rose-500/60 text-rose-300 hover:bg-rose-900/60 font-black font-tech text-xs uppercase tracking-wider alien-block-cut-sm shadow-lg shadow-rose-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <Youtube className="w-4 h-4 text-rose-400" />
               <span>FOLLOW ON YOUTUBE</span>
