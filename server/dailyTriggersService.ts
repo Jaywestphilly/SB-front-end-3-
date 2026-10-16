@@ -5,7 +5,9 @@ export interface DailyTriggerItem {
   ticker: string;
   event: string;
   filedDate: string;
-  recommended_endpoint: string;
+  recommended_endpoint: string | null;
+  items?: string[];
+  filingUrl?: string;
 }
 
 export interface DailyTriggersResponse {
@@ -64,6 +66,36 @@ function parseSecTimestamp(rawAcceptance: string | undefined, filedDate: string)
     if (!isNaN(dt)) return dt;
   }
   return 0;
+}
+
+function parse8kItems(raw: any): string[] {
+  if (!raw) return [];
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item) => String(item).replace(/^Item\s+/i, '').trim())
+      .filter(Boolean);
+  }
+  if (typeof raw === 'string') {
+    return raw
+      .split(/[,;]+/)
+      .map((item) => item.replace(/^Item\s+/i, '').trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function buildFilingUrl(cik: string, accession?: string, primaryDoc?: string, explicitUrl?: string): string {
+  if (explicitUrl) return explicitUrl;
+  const cikNum = parseInt(cik, 10);
+  if (accession && primaryDoc) {
+    const accClean = accession.replace(/-/g, '');
+    return `https://www.sec.gov/ix?doc=/Archives/edgar/data/${cikNum}/${accClean}/${primaryDoc}`;
+  }
+  if (accession) {
+    const accClean = accession.replace(/-/g, '');
+    return `https://www.sec.gov/Archives/edgar/data/${cikNum}/${accClean}/`;
+  }
+  return `https://www.sec.gov/edgar/browse/?CIK=${cik}`;
 }
 
 function isInsideWindow(filingTs: number, filedDate: string, cutoffMs: number, nowMs: number): boolean {
@@ -136,6 +168,10 @@ export async function fetchDailyTriggers(requestedTicker?: string): Promise<{ st
             const forms: string[] = recent.form;
             const filingDates: string[] = recent.filingDate;
             const acceptances: string[] = recent.acceptanceDateTime || [];
+            const accessionNumbers: string[] = recent.accessionNumber || [];
+            const primaryDocuments: string[] = recent.primaryDocument || [];
+            const rawItemsList: any[] = recent.items || [];
+            const rawFilingUrls: string[] = recent.filingUrl || recent.url || [];
 
             for (let idx = 0; idx < forms.length; idx++) {
               const form = forms[idx];
@@ -146,12 +182,30 @@ export async function fetchDailyTriggers(requestedTicker?: string): Promise<{ st
 
               const filingTimestamp = parseSecTimestamp(acceptances[idx], filedDate);
               if (isInsideWindow(filingTimestamp, filedDate, cutoffMs, nowMs)) {
-                triggers.push({
-                  ticker,
-                  event: form,
-                  filedDate,
-                  recommended_endpoint: '/api/v1/sec/job'
-                });
+                if (form === '8-K') {
+                  const itemCodes = parse8kItems(rawItemsList[idx]);
+                  const filingUrl = buildFilingUrl(
+                    cik,
+                    accessionNumbers[idx],
+                    primaryDocuments[idx],
+                    rawFilingUrls[idx]
+                  );
+                  triggers.push({
+                    ticker,
+                    event: form,
+                    filedDate,
+                    recommended_endpoint: null,
+                    items: itemCodes,
+                    filingUrl
+                  });
+                } else {
+                  triggers.push({
+                    ticker,
+                    event: form,
+                    filedDate,
+                    recommended_endpoint: '/api/v1/sec/job'
+                  });
+                }
               }
             }
           } catch {

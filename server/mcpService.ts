@@ -47,7 +47,7 @@ export const MCP_TOOLS = [
       type: "object",
       properties: {
         ticker: { type: "string", description: "Stock ticker symbol (e.g. AAPL, NVDA, MSFT, TSLA)" },
-        filingType: { type: "string", enum: ["10-K", "10-Q", "8-K"], description: "SEC filing type to analyze" },
+        filingType: { type: "string", enum: ["10-K", "10-Q"], description: "SEC filing type to analyze (10-K, 10-Q)" },
         question: { type: "string", description: "Optional specific financial intelligence query" }
       },
       required: ["ticker", "filingType"]
@@ -60,7 +60,7 @@ export const MCP_TOOLS = [
       type: "object",
       properties: {
         ticker: { type: "string", description: "Stock ticker symbol (e.g. AAPL, NVDA, MSFT, TSLA)" },
-        filingType: { type: "string", enum: ["10-K", "10-Q", "8-K"], description: "SEC filing type to analyze" },
+        filingType: { type: "string", enum: ["10-K", "10-Q"], description: "SEC filing type to analyze (10-K, 10-Q)" },
         question: { type: "string", description: "Optional specific financial intelligence query" }
       },
       required: ["ticker", "filingType"]

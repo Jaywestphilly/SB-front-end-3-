@@ -369,7 +369,19 @@ export async function validatePricedRequestInput(
         charged: false
       };
     }
-    const allowedTypes = ['10-K', '10-Q', '8-K'];
+    if (normFilingType === '8-K' || normFilingType === '8K') {
+      return {
+        valid: false,
+        status: 400,
+        customJson: {
+          error: '8-K analysis is not available yet. Use filingType 10-K or 10-Q.',
+          supportedFilingTypes: ['10-K', '10-Q']
+        },
+        charged: false
+      };
+    }
+
+    const allowedTypes = ['10-K', '10-Q'];
     if (!normFilingType || !allowedTypes.includes(normFilingType)) {
       return {
         valid: false,

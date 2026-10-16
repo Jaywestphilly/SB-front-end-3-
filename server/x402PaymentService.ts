@@ -377,7 +377,7 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
       type: 'object',
       properties: {
         ticker: { type: 'string', description: 'US ticker, e.g. AAPL' },
-        filingType: { type: 'string', enum: ['10-K', '10-Q', '8-K'] },
+        filingType: { type: 'string', enum: ['10-K', '10-Q'] },
         mode: {
           type: 'string',
           enum: ['standard', 'diff'],

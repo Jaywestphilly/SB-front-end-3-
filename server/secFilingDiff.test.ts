@@ -451,7 +451,7 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
       });
     expect(res8K.status).toBe(400);
     expect(res8K.headers['payment-required']).toBeUndefined();
-    expect(res8K.body.error).toContain('supports 10-K and 10-Q only');
+    expect(res8K.body.error).toBe('8-K analysis is not available yet. Use filingType 10-K or 10-Q.');
 
     // B. Mode "foo" returns 400
     const resFoo = await request(app)

@@ -1234,8 +1234,8 @@ export const SEC_ANALYST_SERVICE_RECORD: any = {
       },
       filingType: {
         type: 'string',
-        enum: ['10-K', '10-Q', '8-K'],
-        description: 'SEC filing type to analyze'
+        enum: ['10-K', '10-Q'],
+        description: 'SEC filing type to analyze (10-K, 10-Q)'
       },
       question: {
         type: 'string',
@@ -1976,9 +1976,16 @@ secAnalystRouter.post(
         });
       }
 
-      // Enforce 10-K | 10-Q | 8-K contract
-      const allowedFilingTypes: SecFilingType[] = ['10-K', '10-Q', '8-K'];
       const rawFilingStr = String(filingType).trim().toUpperCase();
+      if (rawFilingStr === '8-K' || rawFilingStr === '8K') {
+        return res.status(400).json({
+          error: '8-K analysis is not available yet. Use filingType 10-K or 10-Q.',
+          supportedFilingTypes: ['10-K', '10-Q']
+        });
+      }
+
+      // Enforce 10-K | 10-Q contract
+      const allowedFilingTypes: SecFilingType[] = ['10-K', '10-Q'];
       const normalizedFilingType = (rawFilingStr === '10Q' ? '10-Q' : (rawFilingStr === '10K' ? '10-K' : rawFilingStr)) as SecFilingType;
       if (!allowedFilingTypes.includes(normalizedFilingType)) {
         return res.status(400).json({
@@ -1997,13 +2004,6 @@ secAnalystRouter.post(
           error: 'Validation error: "mode" must be one of: standard, diff.',
           code: 'INVALID_INPUT',
           example: secJobExample
-        });
-      }
-
-      if (mode === 'diff' && normalizedFilingType === '8-K') {
-        return res.status(400).json({
-          error: 'Validation error: mode "diff" supports 10-K and 10-Q only. Received: 8-K.',
-          code: 'INVALID_FILING_TYPE'
         });
       }
 

@@ -77,7 +77,19 @@
                             "type": "string"
                           },
                           "recommended_endpoint": {
-                            "type": "string"
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "8-K item codes from SEC submissions"
+                          },
+                          "filingUrl": {
+                            "type": "string",
+                            "description": "SEC document link"
                           }
                         }
                       }
@@ -681,8 +693,7 @@
                     "type": "string",
                     "enum": [
                       "10-K",
-                      "10-Q",
-                      "8-K"
+                      "10-Q"
                     ],
                     "example": "10-K"
                   },
@@ -810,8 +821,7 @@
                     "type": "string",
                     "enum": [
                       "10-K",
-                      "10-Q",
-                      "8-K"
+                      "10-Q"
                     ],
                     "example": "10-K"
                   },
@@ -965,8 +975,7 @@
                     "type": "string",
                     "enum": [
                       "10-K",
-                      "10-Q",
-                      "8-K"
+                      "10-Q"
                     ],
                     "example": "10-K"
                   },
