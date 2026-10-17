@@ -59,6 +59,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     onSelectTab(tab);
   };
 
+  const isBlocActive = !isTerminalOpen && activeTab === "bloc";
   const isIntelActive = !isTerminalOpen && activeTab === "news";
   const isMarketsActive =
     !isTerminalOpen &&
@@ -74,7 +75,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   return (
     <>
-      {/* 5-6 Core Streamlined Floating Bottom Navigation Bar */}
+      {/* 5-7 Core Streamlined Floating Bottom Navigation Bar */}
       <nav
         aria-label="Mobile Bottom Navigation"
         className={
@@ -83,7 +84,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             : "fixed bottom-2 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-xl font-mono select-none overflow-hidden"
         }
       >
-        <div className="obsidian-magma-dock alien-block-cut p-1 sm:p-1.5 grid grid-cols-6 gap-0.5 sm:gap-1 relative overflow-hidden">
+        <div className="obsidian-magma-dock alien-block-cut p-1 sm:p-1.5 grid grid-cols-7 gap-0.5 sm:gap-1 relative overflow-hidden">
           {/* Volcanic Magma WebGL Shader: continuous domain-warped molten flow rolling beneath translucent pads */}
           {magmaMode !== "off" && (
             <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -108,6 +109,32 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           <div className="hud-corner-tr z-10" />
           <div className="hud-corner-bl z-10" />
           <div className="hud-corner-br z-10" />
+
+          {/* TAB 0: THE BLOC (PRIMARY CALL TO ACTION) */}
+          <button
+            onClick={() => handleNavigate("bloc")}
+            className={`min-h-[48px] py-1 px-0.5 sm:py-1.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
+              isBlocActive
+                ? "dark-matter-pad-active pad-intel text-cyan-100 font-black"
+                : "text-cyan-200 hover:text-white"
+            }`}
+          >
+            <div className="magma-conduit-glow" />
+            <div 
+              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
+              style={{
+                background: isBlocActive 
+                  ? "radial-gradient(100% 100% at 50% 0%, rgba(34, 211, 238, 0.45) 0%, transparent 80%)"
+                  : "radial-gradient(100% 100% at 50% 100%, rgba(6, 182, 212, 0.25) 0%, transparent 65%)"
+              }}
+            />
+            <div className="relative z-10 flex items-center justify-center">
+              <Sparkles className={`w-4 h-4 shrink-0 transition-transform ${isBlocActive ? "text-cyan-200 drop-shadow-[0_0_10px_rgba(34,211,238,0.9)] scale-110" : "text-cyan-300 animate-pulse group-hover:scale-105"}`} />
+            </div>
+            <span className={`relative z-10 text-[7px] sm:text-[9.5px] font-black uppercase tracking-tight whitespace-nowrap leading-none ${isBlocActive ? "text-cyan-50 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" : "text-cyan-200"}`}>
+              THE BLOC
+            </span>
+          </button>
 
           {/* TAB 1: YOUTUBE & INTEL FEED */}
           <button

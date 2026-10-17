@@ -262,6 +262,21 @@ export const Header: React.FC<HeaderProps> = ({
             <span>COPILOT</span>
           </button>
 
+          {/* The Bloc Membership Quick Link */}
+          <a
+            href="/bloc"
+            onClick={(e) => {
+              e.preventDefault();
+              triggerHaptic("selection");
+              if (onSelectTab) onSelectTab("bloc");
+            }}
+            className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-cyan-500/25 to-blue-500/25 hover:from-cyan-400/40 hover:to-blue-400/40 text-cyan-200 hover:text-white border border-cyan-400/60 shadow-[0_0_12px_rgba(6,182,212,0.25)] text-[11px] font-mono font-bold flex items-center gap-1.5 cursor-pointer shrink-0"
+            title="The Bloc Membership - Weekly Filings & High Conviction Theses"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+            <span>THE BLOC</span>
+          </a>
+
           {/* My Bloc Portfolio Shortcut */}
           <button
             onClick={() => {
@@ -343,6 +358,43 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div className="grid grid-cols-2 gap-2 pt-1">
+            {/* THE BLOC - PRIMARY HIGHLIGHTED CALL TO ACTION */}
+            <a
+              href="/bloc"
+              onClick={(e) => {
+                e.preventDefault();
+                triggerHaptic("selection");
+                setIsMobileMenuOpen(false);
+                if (onSelectTab) onSelectTab("bloc");
+              }}
+              className="col-span-2 p-3 bg-gradient-to-r from-cyan-500/30 via-cyan-400/25 to-blue-500/30 text-white border-2 border-cyan-400 alien-block-cut-sm text-xs font-mono font-black flex items-center justify-between shadow-[0_0_15px_rgba(6,182,212,0.35)] cursor-pointer hover:bg-cyan-900/40"
+            >
+              <span className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-cyan-300 animate-pulse" />
+                <span className="text-sm font-bold tracking-wider">THE BLOC (MEMBERSHIP)</span>
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-400 text-slate-950 font-black uppercase">
+                JOIN
+              </span>
+            </a>
+
+            {/* DEVELOPERS ITEM (AGENTS, DEVELOPERS, DOCS) */}
+            <a
+              href="/developers"
+              onClick={(e) => {
+                e.preventDefault();
+                triggerHaptic("selection");
+                setIsMobileMenuOpen(false);
+                if (onSelectTab) onSelectTab("developers");
+              }}
+              className="col-span-2 p-2.5 bg-neutral-900/90 text-cyan-200 border border-cyan-400/50 alien-block-cut-sm text-xs font-mono font-bold flex items-center justify-between cursor-pointer hover:bg-neutral-800"
+            >
+              <span className="flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-cyan-400" />
+                <span>DEVELOPERS (AGENTS, DEVELOPERS, DOCS)</span>
+              </span>
+              <span className="text-[9px] text-cyan-400/80 uppercase font-mono">EXPLORE &rarr;</span>
+            </a>
             <button
               onClick={() => {
                 triggerHaptic("selection");

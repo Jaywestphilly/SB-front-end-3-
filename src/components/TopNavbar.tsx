@@ -60,13 +60,13 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     { id: "small_business", label: "Small Business & QSBS Tax Hub", icon: Briefcase },
   ];
 
-  const agentPlatformMenu = [
-    { id: "web3_dot_btc", label: "Web3 Alpha & Vaults (DOT / BTC)", icon: ShieldCheck },
-    { id: "agents", label: "Autonomous Agent Directory", icon: Globe },
+  const developersMenu = [
+    { id: "developers", label: "Developers (x402 Portal)", icon: Terminal },
+    { id: "agents", label: "Agents (Directory)", icon: Globe },
+    { id: "developer_docs", label: "Docs (API & SDK Documentation)", icon: BookOpen },
     { id: "agent_feed", label: "Live Agent Activity Stream", icon: Radio },
     { id: "agent_join", label: "Register an Agent Node", icon: Sparkles },
-    { id: "developers", label: "x402 Developer Portal", icon: Terminal },
-    { id: "developer_docs", label: "API & SDK Documentation", icon: BookOpen },
+    { id: "web3_dot_btc", label: "Web3 Alpha & Vaults (DOT / BTC)", icon: ShieldCheck },
     { id: "compare", label: "Compare vs Tavily & Twelve Data", icon: BarChart3 },
   ];
 
@@ -168,13 +168,15 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     "terminal_guide",
     "mit_courses",
   ].includes(activeTab);
-  const isAgentsActive = [
-    "agents",
+  const isDevelopersActive = [
     "developers",
+    "developer_docs",
+    "agents",
     "agent_profile",
     "agent_feed",
     "agent_join",
-    "developer_docs",
+    "agent_exchange",
+    "developer_earnings",
     "web3_dot_btc",
     "compare",
   ].includes(activeTab);
@@ -185,6 +187,36 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       aria-label="Desktop Top Navigation"
     >
       <div className="max-w-[1800px] w-full flex items-center justify-center gap-2 flex-wrap">
+        {/* 0. THE BLOC - PRIMARY HIGHLIGHTED CALL TO ACTION */}
+        <a
+          href="/bloc"
+          onClick={(e) => {
+            e.preventDefault();
+            triggerHaptic("selection");
+            onSelectTab("bloc");
+          }}
+          className={`px-3.5 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none transition-all ${
+            activeTab === "bloc"
+              ? "bg-cyan-400 text-slate-950 font-black shadow-[0_0_20px_rgba(6,182,212,0.6)] border border-cyan-200"
+              : "bg-gradient-to-r from-cyan-500/25 to-blue-500/25 hover:from-cyan-400/40 hover:to-blue-400/40 text-cyan-200 hover:text-white border border-cyan-400/70 shadow-[0_0_12px_rgba(6,182,212,0.3)] font-black"
+          }`}
+          title="The Bloc Membership - Weekly Filings, 13F & Alpha"
+        >
+          <Sparkles
+            className={`w-3.5 h-3.5 shrink-0 ${
+              activeTab === "bloc" ? "text-slate-950" : "text-cyan-300 animate-pulse"
+            }`}
+          />
+          <span>THE BLOC</span>
+          <span
+            className={`text-[9px] px-1 py-0.5 rounded font-black uppercase tracking-wider ${
+              activeTab === "bloc" ? "bg-slate-950 text-cyan-300" : "bg-cyan-400 text-slate-950"
+            }`}
+          >
+            JOIN
+          </span>
+        </a>
+
         {/* 1. WATCHLIST & MARKETS */}
         {renderDropdown(
           "MARKETS & WATCHLIST",
@@ -197,13 +229,13 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         {/* 2. AI & DEEP TECH */}
         {renderDropdown("AI & TECH", "ai", Cpu, aiMenu, isAiActive)}
 
-        {/* 3. AGENTS & WEB3 */}
+        {/* 3. DEVELOPERS (AGENTS, DEVELOPERS, DOCS) */}
         {renderDropdown(
-          "AGENTS & WEB3",
-          "agents",
-          Globe,
-          agentPlatformMenu,
-          isAgentsActive,
+          "DEVELOPERS",
+          "developers",
+          Terminal,
+          developersMenu,
+          isDevelopersActive,
         )}
 
         {/* 4. REAL ESTATE */}

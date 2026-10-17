@@ -6,8 +6,7 @@ export const BlocMembershipPage: React.FC = () => {
     document.title = "The Bloc | Stock Bloc Membership";
   }, []);
 
-  // Read config value from environment variable (not a secret)
-  const envCheckoutUrl = (import.meta.env?.VITE_BLOC_CHECKOUT_URL || import.meta.env?.BLOC_CHECKOUT_URL || "").trim();
+  const BLOC_CHECKOUT_URL = "https://whop.com/checkout/plan_5k5IKjEIAHHo5/";
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-8 sm:py-12 text-white font-sans space-y-8">
@@ -88,9 +87,9 @@ export const BlocMembershipPage: React.FC = () => {
 
       {/* CTA Button */}
       <div className="text-center pt-2">
-        {envCheckoutUrl ? (
+        {BLOC_CHECKOUT_URL ? (
           <a
-            href={envCheckoutUrl}
+            href={BLOC_CHECKOUT_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-extrabold text-lg transition-all shadow-lg shadow-cyan-500/20 active:scale-95"

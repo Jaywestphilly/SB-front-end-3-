@@ -126,12 +126,12 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
           {/* Action & Community Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2 w-full max-w-xl">
             <a
-              href="/pricing"
+              href="/bloc"
               onClick={(e) => {
                 e.preventDefault();
                 triggerHaptic("selection");
-                trackEvent("module_opened", { section: "hero_pricing" });
-                onSelectTab("pricing");
+                trackEvent("module_opened", { section: "hero_bloc" });
+                onSelectTab("bloc");
               }}
               className="w-full sm:w-auto py-2.5 px-6 bg-cyan-400 text-black font-black font-tech text-xs uppercase tracking-wider alien-block-cut-sm hover:bg-cyan-300 shadow-lg shadow-cyan-400/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
@@ -429,7 +429,7 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
               <span>WATCH THE WHALES, DON'T GUESS</span>
             </div>
             <p className="text-xs text-neutral-300 font-sans leading-relaxed">
-              Billionaires don't trade on gut feelings. They accumulate assets through SEC 13F filings. We give you their exact holdings—Warren Buffett, Ray Dalio, Citadel, and Renaissance Tech—so you see where trillions are moving before the herd.
+              Billionaires don't trade on gut feelings. They accumulate assets through SEC 13F filings. We give you their exact holdings, including Warren Buffett, Ray Dalio, Citadel, and Renaissance Tech, so you see where trillions are moving before the herd.
             </p>
           </div>
 
@@ -440,7 +440,7 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
               <span>CREDIT IS CAPITAL, CAPITAL IS LEVERAGE</span>
             </div>
             <p className="text-xs text-neutral-300 font-sans leading-relaxed">
-              Credit isn't for consumer debt or luxury clothes—it's the cheat code to buy businesses and cash-flowing real estate without using your own cash. Learn Tier 1–3 business tradelines, LLC structuring, and 800+ scoring.
+              Credit isn't for consumer debt or luxury clothes. It is the cheat code to buy businesses and cash-flowing real estate without using your own cash. Learn Tier 1-3 business tradelines, LLC structuring, and 800+ scoring.
             </p>
           </div>
 
