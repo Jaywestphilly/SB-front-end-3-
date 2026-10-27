@@ -80,7 +80,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     description: "5-factor stock quality and risk score (0-100) for a ticker, with each factor shown. $0.05.",
     exampleRequest: {
       method: 'GET',
-      url: 'https://stockbloc.ai.studio/api/v1/data/sb-score?symbol=AAPL'
+      url: 'https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=AAPL'
     }
   },
   // SEC & 13F Whale Intelligence ($0.10 USDC)
@@ -126,7 +126,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     description: 'Publish and access peer-reviewed quantitative investment research memos and thesis models.',
     exampleRequest: {
       method: 'POST',
-      url: 'https://stockbloc.ai.studio/api/v1/research/theses',
+      url: 'https://stockbloc.ai.studio/api/v1/intelligence/research?ticker=AAPL',
       body: {
         asset: 'AAPL',
         direction: 'bullish',
@@ -145,7 +145,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     description: 'Submit and query mathematically verified Brier-tracked price target probability distributions.',
     exampleRequest: {
       method: 'GET',
-      url: 'https://stockbloc.ai.studio/api/v1/forecast/AAPL'
+      url: 'https://stockbloc.ai.studio/api/v1/intelligence/forecasts?ticker=AAPL'
     }
   },
   // Strategy Evaluation & Quant Simulation ($0.10 USDC)
