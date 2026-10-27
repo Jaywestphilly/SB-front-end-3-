@@ -1276,7 +1276,7 @@ export function App() {
             />
 
             {/* Single Unified Watchlist Sorting Bar */}
-            <div className="mx-2 sm:mx-4 px-3 py-2 rounded-xl bg-[#030b16]/85 border border-cyan-500/25 flex items-center justify-between gap-2 overflow-x-auto no-scrollbar my-1.5 backdrop-blur-xl shadow-lg">
+            <div className="glass mx-2 sm:mx-4 px-3 py-2 rounded-xl flex items-center justify-between gap-2 overflow-x-auto no-scrollbar my-1.5">
               <div className="flex items-center gap-1.5 shrink-0 text-xs font-mono font-black text-cyan-300">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-400" />
                 <span className="font-tech uppercase tracking-wider text-[11px] text-cyan-200">
@@ -1491,7 +1491,7 @@ export function App() {
             </div>
 
             {/* Ticker List Container */}
-            <div className="w-full mt-1.5 relative rounded-2xl overflow-hidden min-h-[140px] border border-cyan-500/20 alien-grid-subtle p-1.5 sm:p-2 transition-all duration-300">
+            <div className="glass w-full mt-1.5 relative rounded-2xl overflow-hidden min-h-[140px] alien-grid-subtle p-1.5 sm:p-2 transition-all duration-300">
               <div className="relative z-10 w-full">
 
               <AnimatePresence mode="popLayout">

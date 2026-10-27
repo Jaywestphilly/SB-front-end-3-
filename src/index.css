@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -23,13 +24,13 @@
   --sb-glow-cyan: 0 0 20px rgba(0, 242, 255, 0.35);
   --sb-glow-bronze: 0 0 20px rgba(212, 154, 106, 0.25);
   
-  --font-primary: "Space Grotesk", system-ui, -apple-system, sans-serif;
-  --font-display: "Michroma", "Oxanium", "Orbitron", sans-serif;
-  --font-alien: "Oxanium", "Chakra Petch", "Orbitron", sans-serif;
-  --font-orbitron: "Orbitron", "Oxanium", sans-serif;
-  --font-zen: "Zen Dots", "Michroma", "Oxanium", sans-serif;
-  --font-martian: "Martian Mono", "JetBrains Mono", monospace;
-  --font-rune: "Syne", "Michroma", sans-serif;
+  --font-primary: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Orbitron", "Oxanium", sans-serif;
+  --font-alien: "Oxanium", "Chakra Petch", sans-serif;
+  --font-orbitron: "Orbitron", sans-serif;
+  --font-zen: "Zen Dots", sans-serif;
+  --font-martian: "Martian Mono", monospace;
+  --font-rune: "Syne", sans-serif;
   --font-mono: "JetBrains Mono", "Martian Mono", monospace;
 }
 
@@ -47,38 +48,77 @@
     min-height: 100vh;
   }
 
+  /* Big headings and logo strictly use Orbitron */
   h1,
   h2,
+  .big-heading {
+    font-family: "Orbitron", sans-serif;
+    letter-spacing: 0.04em;
+  }
+
   h3,
   h4,
   h5,
   h6 {
-    font-family: var(--font-display);
-    letter-spacing: 0.04em;
+    font-family: var(--font-primary);
+    letter-spacing: 0.01em;
+    font-weight: 700;
+  }
+
+  .logo,
+  .brand-logo,
+  .font-logo {
+    font-family: "Orbitron", sans-serif;
   }
 }
 
-/* Custom Typography Utility Overrides */
+/* Reusable Glass Class */
+.glass,
+.alien-card.glass,
+.obsidian-command-deck.glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* Custom Typography Utility Overrides - Monospace !important removed from generic text containers */
 .font-mono {
-  font-family: var(--font-mono) !important;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 .font-martian {
-  font-family: var(--font-martian) !important;
+  font-family: var(--font-martian);
   letter-spacing: -0.02em;
 }
 
 .font-cyber-mono {
-  font-family: "Martian Mono", "JetBrains Mono", monospace !important;
+  font-family: "Martian Mono", "JetBrains Mono", monospace;
 }
 
 .font-sans {
-  font-family: var(--font-primary) !important;
+  font-family: var(--font-primary);
 }
 
 .font-display {
-  font-family: var(--font-display) !important;
+  font-family: var(--font-display);
   letter-spacing: 0.04em;
+}
+
+/* Tabular Monospace strictly preserved for numbers, prices, and metrics */
+.tabular-nums,
+.tabular-telemetry,
+.price-mono,
+.num-mono,
+.font-mono-numbers,
+.stock-price,
+[data-numeric] {
+  font-family: var(--font-mono) !important;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 .font-michroma {
@@ -365,7 +405,7 @@ a:hover .font-alien,
 }
 
 .font-mono-tech {
-  font-family: "Share Tech Mono", "JetBrains Mono", monospace !important;
+  font-family: "Share Tech Mono", "JetBrains Mono", monospace;
 }
 
 /* Dedicated Holographic Alien Hover Zoom Effect */

@@ -1405,7 +1405,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
             onSelect(stock);
           }
         }}
-        className={`relative z-10 w-full px-4 py-3.5 rounded-2xl alien-card dark-matter-pad StockCard-pad obsidian-specular-rim my-2 transition-all duration-200 cursor-pointer overflow-hidden ${holoGlowClass} ${
+        className={`glass relative z-10 w-full px-4 py-3.5 rounded-2xl alien-card dark-matter-pad StockCard-pad obsidian-specular-rim my-2 transition-all duration-200 cursor-pointer overflow-hidden ${holoGlowClass} ${
           stock.isPinned ? "alien-card-active dark-matter-pad-active" : ""
         } ${
           isShaking ? "ring-2 ring-amber-400 bg-amber-950/20 animate-shake-card" : ""
@@ -1694,7 +1694,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                 52W
               </span>
               <span className="text-slate-300">
-                ${cardLow52.toFixed(0)} – ${cardHigh52.toFixed(0)}
+                ${cardLow52.toFixed(0)} - ${cardHigh52.toFixed(0)}
               </span>
             </div>
 

@@ -53,7 +53,7 @@ export const WatchlistIntelligenceHeader: React.FC<WatchlistIntelligenceHeaderPr
 
   return (
     <div className="w-full px-2 sm:px-4 pt-2.5 pb-1 font-martian">
-      <div className="obsidian-command-deck obsidian-specular-rim rounded-2xl p-3 sm:p-3.5 space-y-2.5">
+      <div className="glass obsidian-command-deck obsidian-specular-rim rounded-2xl p-3 sm:p-3.5 space-y-2.5">
         {/* Primary Command Row: Telemetry Pills + Chart Mode & Sync Controls */}
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Left: Market Status, Data Freshness, Asset Count & Feed Source */}
@@ -98,7 +98,7 @@ export const WatchlistIntelligenceHeader: React.FC<WatchlistIntelligenceHeaderPr
               title="Toggle 5-Factor SB Score Quant Legend (0-100)"
             >
               <Target className="w-3 h-3 text-cyan-400 shrink-0" />
-              <span>SB SCORE 0–100</span>
+              <span>SB SCORE 0-100</span>
               <span className="hidden sm:inline-flex items-center gap-1 ml-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                 <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
@@ -254,21 +254,21 @@ export const WatchlistIntelligenceHeader: React.FC<WatchlistIntelligenceHeaderPr
               <div className="px-2.5 py-1 bg-emerald-950/60 border border-emerald-400/50 rounded-lg flex items-center justify-between">
                 <span className="text-emerald-300 font-black flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  75–100
+                  75-100
                 </span>
                 <span className="text-[9px] text-emerald-400 font-bold">BULLISH</span>
               </div>
               <div className="px-2.5 py-1 bg-cyan-950/60 border border-cyan-400/50 rounded-lg flex items-center justify-between">
                 <span className="text-cyan-300 font-black flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                  60–74
+                  60-74
                 </span>
                 <span className="text-[9px] text-cyan-400 font-bold">MODERATE</span>
               </div>
               <div className="px-2.5 py-1 bg-amber-950/60 border border-amber-400/50 rounded-lg flex items-center justify-between">
                 <span className="text-amber-300 font-black flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  40–59
+                  40-59
                 </span>
                 <span className="text-[9px] text-amber-400 font-bold">NEUTRAL</span>
               </div>
