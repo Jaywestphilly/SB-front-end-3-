@@ -133,8 +133,110 @@ interface StockDetailModalProps {
 
 
 
+// Monotone cubic spline curve generator (Fritsch-Carlson)
+function monotoneCubicCurve(points: { x: number; y: number }[]): string {
+  const n = points.length;
+  if (n === 0) return "";
+  if (n === 1) return `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+  if (n === 2) {
+    return `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)} L ${points[1].x.toFixed(2)} ${points[1].y.toFixed(2)}`;
+  }
+
+  const deltas: number[] = new Array(n - 1);
+  const dxs: number[] = new Array(n - 1);
+  for (let i = 0; i < n - 1; i++) {
+    const dx = points[i + 1].x - points[i].x;
+    const dy = points[i + 1].y - points[i].y;
+    dxs[i] = dx;
+    deltas[i] = dx !== 0 ? dy / dx : 0;
+  }
+
+  const m: number[] = new Array(n);
+  m[0] = deltas[0];
+  m[n - 1] = deltas[n - 2];
+  for (let i = 1; i < n - 1; i++) {
+    if (deltas[i - 1] * deltas[i] <= 0) {
+      m[i] = 0;
+    } else {
+      m[i] = (deltas[i - 1] + deltas[i]) / 2;
+    }
+  }
+
+  for (let i = 0; i < n - 1; i++) {
+    if (deltas[i] === 0) {
+      m[i] = 0;
+      m[i + 1] = 0;
+    } else {
+      const alpha = m[i] / deltas[i];
+      const beta = m[i + 1] / deltas[i];
+      const sumSq = alpha * alpha + beta * beta;
+      if (sumSq > 9) {
+        const tau = 3 / Math.sqrt(sumSq);
+        m[i] = tau * alpha * deltas[i];
+        m[i + 1] = tau * beta * deltas[i];
+      }
+    }
+  }
+
+  let d = `M ${points[0].x.toFixed(2)} ${points[0].y.toFixed(2)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = points[i];
+    const p1 = points[i + 1];
+    const dx = dxs[i] / 3;
+    const cp1x = (p0.x + dx).toFixed(2);
+    const cp1y = (p0.y + m[i] * dx).toFixed(2);
+    const cp2x = (p1.x - dx).toFixed(2);
+    const cp2y = (p1.y - m[i + 1] * dx).toFixed(2);
+    d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x.toFixed(2)} ${p1.y.toFixed(2)}`;
+  }
+
+  return d;
+}
+
+function smoothPathD(pathStr: string): string {
+  if (!pathStr) return "";
+  const points: { x: number; y: number }[] = [];
+  const regex = /[ML]\s*(-?[\d.]+)[,\s]+(-?[\d.]+)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(pathStr)) !== null) {
+    const x = parseFloat(match[1]);
+    const y = parseFloat(match[2]);
+    if (!isNaN(x) && !isNaN(y)) {
+      points.push({ x, y });
+    }
+  }
+  if (points.length < 2) return pathStr;
+  return monotoneCubicCurve(points);
+}
+
 export const PriceChart = (props: StockDetailSubProps) => {
   const { stock, onClose, onTogglePin, onShare, onOpenBloombergTerminal, onOpenBrokerages, timeframe, setTimeframe, hoverIndex, setHoverIndex, aiAnalysis, setAiAnalysis, isAiLoading, setIsAiLoading, aiError, setAiError, displayStock, setDisplayStock, activeStock, chartMode, setChartMode, zoomLevel, setZoomLevel, panOffset, setPanOffset, showSMA, setShowSMA, showVWAP, setShowVWAP, showRSI, setShowRSI, touchStartDistRef, touchStartZoomRef, isDraggingPanRef, dragStartXRef, dragStartPanRef, isTrendlineActive, setIsTrendlineActive, isDrawingTrendline, setIsDrawingTrendline, trendline, setTrendline, paperTrades, setPaperTrades, showPaperForm, setShowPaperForm, sharesInput, setSharesInput, entryPriceInput, setEntryPriceInput, tradeType, setTradeType, tradeSuccessMsg, setTradeSuccessMsg, showAllInstitutionalHolders, setShowAllInstitutionalHolders, institutionalData, earningsReminder, setEarningsReminder, showEarningsHistory, setShowEarningsHistory, showAnalystFirms, setShowAnalystFirms, handleToggleEarningsReminder, isPrivateCompany, tickerHeadlines, analystConsensusData, symbolPaperTrades, portfolioAggregates, handleExecutePaperTrade, handleClosePosition, realHistory, setRealHistory, showOverlay, setShowOverlay, benchmarkSymbol, setBenchmarkSymbol, benchmarkHistory, setBenchmarkHistory, rsiData, fullCandleOHLCData, candleOHLCData, fullSmaValues, visibleSmaValues, fullVwapValues, visibleVwapValues, fullMacdData, macdData, fullRsiValues, visibleRsiValues, getChartCoords, startTrendline, updateTrendline, finishTrendline, trendlineMetrics, handleTouchStart, handleTouchMove, handleTouchEnd, handleWheelZoom, handleMouseDown, handleMouseMove, handleMouseUp, history, isPositive, prices, minPrice, maxPrice, priceRange, BENCHMARK_CONFIGS, activeBenchmark, stockBasePrice, stockReturns, benchHistoryPoints, benchBasePrice, benchReturns, svgWidth, svgHeight, rightMargin, plotWidth, plotTop, plotBottom, plotHeight, minVal, maxVal, valRange, zeroY, benchmarkPathD, candleAllPrices, activeCandle, activeSma, activeVwap, activeMacd, activeRsi, activeRsiStatus, macdStatus, hoveredPoint, maxVolume, yAxisTicks, linePathD, areaPathD, smaPathD, vwapPathD, macdSvgHeight, macdMaxAbs, macdY0, getMacdY, macdLinePath, macdSignalPath, timeTicks, handleSubchartHover, rsiSvgHeight, getRsiY, rsiLinePath, pathD, areaD, activeHoverIdx, hoveredStockReturn, hoveredBenchReturn, hoveredAlpha, fetchAiAnalysis } = props;
+
+  // Monotone cubic smoothed paths for price and indicator lines
+  const smoothedLineD = useMemo(() => {
+    if (candleOHLCData && candleOHLCData.length > 0) {
+      const points = candleOHLCData.map((c, idx) => ({
+        x: (idx / Math.max(1, candleOHLCData.length - 1)) * plotWidth,
+        y: plotBottom - ((c.close - minVal) / valRange) * plotHeight,
+      }));
+      return monotoneCubicCurve(points);
+    }
+    return smoothPathD(linePathD);
+  }, [candleOHLCData, plotWidth, plotBottom, minVal, valRange, plotHeight, linePathD]);
+
+  const smoothedAreaD = useMemo(() => {
+    if (!smoothedLineD) return "";
+    return `${smoothedLineD} L ${plotWidth.toFixed(2)} ${plotBottom} L 0 ${plotBottom} Z`;
+  }, [smoothedLineD, plotWidth, plotBottom]);
+
+  const smoothedSmaPathD = useMemo(() => smoothPathD(smaPathD), [smaPathD]);
+  const smoothedVwapPathD = useMemo(() => smoothPathD(vwapPathD), [vwapPathD]);
+  const smoothedRsiPathD = useMemo(() => smoothPathD(rsiLinePath), [rsiLinePath]);
+  const smoothedMacdLinePath = useMemo(() => smoothPathD(macdLinePath), [macdLinePath]);
+  const smoothedMacdSignalPath = useMemo(() => smoothPathD(macdSignalPath), [macdSignalPath]);
+
+  const mainLineColor = isPositive ? "#10b981" : "#ef4444";
+
   if (!stock) return null;
   return (
     <>
@@ -383,7 +485,7 @@ export const PriceChart = (props: StockDetailSubProps) => {
                 )}
 
                 {/* High Density Header HUD (Dynamic for Line vs Candle) */}
-                <div className="mb-2 p-2 rounded-lg bg-[#0d101b] border border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+                <div className="glass mb-2 p-2 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
                   <div className="flex items-center gap-3 flex-wrap">
                     <span className="text-slate-300 font-bold flex items-center gap-1.5">
                       <span
@@ -606,11 +708,75 @@ export const PriceChart = (props: StockDetailSubProps) => {
                     </div>
                   )}
 
+                  {/* Floating Hover Tooltip Box Styled with .glass */}
+                  {hoverIndex !== null && activeCandle && (
+                    <div
+                      className="glass absolute pointer-events-none z-20 px-3 py-2 rounded-xl text-xs flex flex-col gap-0.5 shadow-xl transition-all duration-75"
+                      style={{
+                        left: Math.min(
+                          Math.max(
+                            8,
+                            (hoverIndex /
+                              Math.max(1, candleOHLCData.length - 1)) *
+                              plotWidth -
+                              65,
+                          ),
+                          plotWidth - 140,
+                        ),
+                        top: 10,
+                      }}
+                    >
+                      <div className="flex items-center justify-between gap-3 text-[11px] text-slate-300 font-sans">
+                        <span className="font-semibold">{activeCandle.time}</span>
+                        <span
+                          className={`font-bold ${
+                            activeCandle.isUp
+                              ? "text-emerald-400"
+                              : "text-rose-400"
+                          }`}
+                        >
+                          {activeCandle.isUp ? "+" : ""}
+                          {activeCandle.changePercent.toFixed(2)}%
+                        </span>
+                      </div>
+                      <div className="text-white font-bold text-base tabular-nums font-mono">
+                        ${activeCandle.close.toFixed(2)}
+                      </div>
+                      {activeCandle.volume ? (
+                        <div className="text-[10px] text-cyan-300 font-mono">
+                          Vol: {(activeCandle.volume / 1000).toFixed(1)}k
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+
                   <svg
                     viewBox={`0 0 ${svgWidth} ${svgHeight}`}
                     className="w-full h-full overflow-visible"
                   >
                     <defs>
+                      {/* Soft glow filter for the main price line */}
+                      <filter
+                        id="softLineGlow"
+                        x="-20%"
+                        y="-20%"
+                        width="140%"
+                        height="140%"
+                      >
+                        <feGaussianBlur
+                          in="SourceGraphic"
+                          stdDeviation="3"
+                          result="blur"
+                        />
+                        <feComponentTransfer in="blur" result="lowOpacityGlow">
+                          <feFuncA type="linear" slope="0.35" />
+                        </feComponentTransfer>
+                        <feMerge>
+                          <feMergeNode in="lowOpacityGlow" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+
                       <linearGradient
                         id="chartGradient"
                         x1="0"
@@ -629,6 +795,8 @@ export const PriceChart = (props: StockDetailSubProps) => {
                           stopOpacity="0.0"
                         />
                       </linearGradient>
+
+                      {/* Area fill vertical linearGradient from line color at 35% opacity to 0% at bottom */}
                       <linearGradient
                         id="rhGradientUp"
                         x1="0"
@@ -638,12 +806,12 @@ export const PriceChart = (props: StockDetailSubProps) => {
                       >
                         <stop
                           offset="0%"
-                          stopColor="#00c805"
-                          stopOpacity="0.45"
+                          stopColor="#10b981"
+                          stopOpacity="0.35"
                         />
                         <stop
                           offset="100%"
-                          stopColor="#00c805"
+                          stopColor="#10b981"
                           stopOpacity="0.0"
                         />
                       </linearGradient>
@@ -656,13 +824,51 @@ export const PriceChart = (props: StockDetailSubProps) => {
                       >
                         <stop
                           offset="0%"
-                          stopColor="#ff3b30"
-                          stopOpacity="0.45"
+                          stopColor="#ef4444"
+                          stopOpacity="0.35"
                         />
                         <stop
                           offset="100%"
-                          stopColor="#ff3b30"
+                          stopColor="#ef4444"
                           stopOpacity="0.0"
+                        />
+                      </linearGradient>
+
+                      {/* Volume Bar Gradients with 40% Opacity */}
+                      <linearGradient
+                        id="volGradientUp"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#10b981"
+                          stopOpacity="0.40"
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#10b981"
+                          stopOpacity="0.10"
+                        />
+                      </linearGradient>
+                      <linearGradient
+                        id="volGradientDown"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#ef4444"
+                          stopOpacity="0.40"
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#ef4444"
+                          stopOpacity="0.10"
                         />
                       </linearGradient>
                     </defs>
@@ -676,7 +882,7 @@ export const PriceChart = (props: StockDetailSubProps) => {
                       fill="#090d16"
                     />
 
-                    {/* Horizontal Grid Lines & Y-Axis Scale */}
+                    {/* Horizontal Grid Lines & Y-Axis Scale (1px, rgba(255,255,255,0.06), dashed, horizontal only; 11px Inter, rgba(255,255,255,0.5)) */}
                     {yAxisTicks.map((tick, i) => (
                       <g key={tick.label + "_" + i}>
                         <line
@@ -684,16 +890,17 @@ export const PriceChart = (props: StockDetailSubProps) => {
                           y1={tick.y}
                           x2={plotWidth}
                           y2={tick.y}
-                          stroke="rgba(255, 255, 255, 0.05)"
-                          strokeDasharray="3 3"
+                          stroke="rgba(255, 255, 255, 0.06)"
+                          strokeWidth="1"
+                          strokeDasharray="4 4"
                         />
                         <text
                           x={plotWidth + 6}
-                          y={tick.y + 3}
-                          fill="rgba(255, 255, 255, 0.45)"
-                          fontSize="9"
-                          fontFamily="monospace"
-                          fontWeight="600"
+                          y={tick.y + 4}
+                          fill="rgba(255, 255, 255, 0.5)"
+                          fontSize="11"
+                          fontFamily="Inter, sans-serif"
+                          fontWeight="500"
                         >
                           {tick.label}
                         </text>
@@ -716,27 +923,14 @@ export const PriceChart = (props: StockDetailSubProps) => {
                           x={plotWidth - 80}
                           y={zeroY - 4}
                           fill="rgba(255, 255, 255, 0.5)"
-                          fontSize="10"
-                          fontFamily="monospace"
+                          fontSize="11"
+                          fontFamily="Inter, sans-serif"
                           fontWeight="bold"
                         >
                           0.0% Baseline
                         </text>
                       </>
                     )}
-
-                    {/* Vertical Time Gridlines */}
-                    {timeTicks.map((tick, i) => (
-                      <line
-                        key={`vtick-${i}`}
-                        x1={tick.x}
-                        y1="0"
-                        x2={tick.x}
-                        y2={plotBottom}
-                        stroke="rgba(255, 255, 255, 0.04)"
-                        strokeDasharray="2 2"
-                      />
-                    ))}
 
                     {/* Volume Histogram Baseline */}
                     <line
@@ -748,7 +942,7 @@ export const PriceChart = (props: StockDetailSubProps) => {
                       strokeWidth="1"
                     />
 
-                    {/* Bottom Volume Histogram Bars */}
+                    {/* Bottom Volume Histogram Bars (rx 2, gradient fill at 40% opacity) */}
                     <g>
                       {candleOHLCData.map((c, idx) => {
                         const x =
@@ -760,9 +954,6 @@ export const PriceChart = (props: StockDetailSubProps) => {
                         const vol = c.volume || 1000;
                         const volH = Math.max(2, (vol / maxVolume) * 22);
                         const volY = plotBottom - volH;
-                        const color = c.isUp
-                          ? "rgba(0, 200, 5, 0.28)"
-                          : "rgba(255, 80, 0, 0.28)";
                         return (
                           <rect
                             key={`vol-${idx}`}
@@ -770,14 +961,14 @@ export const PriceChart = (props: StockDetailSubProps) => {
                             y={volY}
                             width={barW}
                             height={volH}
-                            fill={color}
-                            rx="0.5"
+                            fill={c.isUp ? "url(#volGradientUp)" : "url(#volGradientDown)"}
+                            rx="2"
                           />
                         );
                       })}
                     </g>
 
-                    {/* X-Axis Time Ticks along bottom */}
+                    {/* X-Axis Time Ticks along bottom (11px Inter, rgba(255,255,255,0.5)) */}
                     <g>
                       {timeTicks.map((tick, i) => (
                         <text
@@ -785,10 +976,10 @@ export const PriceChart = (props: StockDetailSubProps) => {
                           x={tick.x}
                           y={plotBottom + 16}
                           textAnchor="middle"
-                          fill="rgba(255, 255, 255, 0.45)"
-                          fontSize="9"
-                          fontFamily="monospace"
-                          fontWeight="600"
+                          fill="rgba(255, 255, 255, 0.5)"
+                          fontSize="11"
+                          fontFamily="Inter, sans-serif"
+                          fontWeight="500"
                         >
                           {tick.label}
                         </text>
@@ -808,14 +999,15 @@ export const PriceChart = (props: StockDetailSubProps) => {
                       />
                     )}
 
-                    {/* 50-Day Simple Moving Average (SMA) Overlay Line */}
-                    {showSMA && smaPathD && (
+                    {/* 50-Day Simple Moving Average (SMA) Overlay Line (1.5px, smoothed, 80% opacity, same color) */}
+                    {showSMA && smoothedSmaPathD && (
                       <g className="pointer-events-none">
                         <path
-                          d={smaPathD}
+                          d={smoothedSmaPathD}
                           fill="none"
                           stroke="#f59e0b"
-                          strokeWidth="2.5"
+                          strokeWidth="1.5"
+                          opacity="0.8"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           className="transition-all duration-150 drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]"
@@ -844,14 +1036,15 @@ export const PriceChart = (props: StockDetailSubProps) => {
                       </g>
                     )}
 
-                    {/* Volume-Weighted Average Price (VWAP) Overlay Line */}
-                    {showVWAP && vwapPathD && (
+                    {/* Volume-Weighted Average Price (VWAP) Overlay Line (1.5px, smoothed, 80% opacity, same color) */}
+                    {showVWAP && smoothedVwapPathD && (
                       <g className="pointer-events-none">
                         <path
-                          d={vwapPathD}
+                          d={smoothedVwapPathD}
                           fill="none"
                           stroke="#c084fc"
-                          strokeWidth="2.5"
+                          strokeWidth="1.5"
+                          opacity="0.8"
                           strokeDasharray="5 3"
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -881,7 +1074,7 @@ export const PriceChart = (props: StockDetailSubProps) => {
                       </g>
                     )}
 
-                    {/* ROBINHOOD SLEEK SVG LINE CHART (6982) */}
+                    {/* ROBINHOOD SLEEK SVG LINE CHART */}
                     {chartMode === "line" && (
                       <g>
                         {/* Dotted Reference Baseline */}
@@ -906,9 +1099,9 @@ export const PriceChart = (props: StockDetailSubProps) => {
                         )}
 
                         {/* Smooth Gradient Fill Under Line */}
-                        {areaPathD && (
+                        {smoothedAreaD && (
                           <path
-                            d={areaPathD}
+                            d={smoothedAreaD}
                             fill={
                               isPositive
                                 ? "url(#rhGradientUp)"
@@ -918,20 +1111,16 @@ export const PriceChart = (props: StockDetailSubProps) => {
                           />
                         )}
 
-                        {/* Crisp Glowing Neon Price Line Path */}
-                        {linePathD && (
+                        {/* Crisp Glowing Neon Price Line Path (2px, smoothed, soft glow) */}
+                        {smoothedLineD && (
                           <path
-                            d={linePathD}
+                            d={smoothedLineD}
                             fill="none"
-                            stroke={isPositive ? "#00c805" : "#ff3b30"}
-                            strokeWidth="2.5"
+                            stroke={isPositive ? "#10b981" : "#ef4444"}
+                            strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            className={
-                              isPositive
-                                ? "drop-shadow-[0_0_8px_rgba(0,200,5,0.7)]"
-                                : "drop-shadow-[0_0_8px_rgba(255,59,48,0.7)]"
-                            }
+                            filter="url(#softLineGlow)"
                           />
                         )}
 
@@ -1118,7 +1307,7 @@ export const PriceChart = (props: StockDetailSubProps) => {
                     {/* DYNAMIC CROSSHAIR & AXIS MAGNET BADGES */}
                     {hoverIndex !== null && activeCandle && (
                       <g className="pointer-events-none">
-                        {/* Vertical Crosshair Line */}
+                        {/* Thin Vertical Crosshair Line */}
                         <line
                           x1={
                             (hoverIndex /
@@ -1131,18 +1320,12 @@ export const PriceChart = (props: StockDetailSubProps) => {
                               Math.max(1, candleOHLCData.length - 1)) *
                             plotWidth
                           }
-                          y2={265}
-                          stroke={
-                            chartMode === "line"
-                              ? isPositive
-                                ? "#00c805"
-                                : "#ff3b30"
-                              : "#38bdf8"
-                          }
-                          strokeWidth="1.2"
-                          strokeDasharray="3 3"
+                          y2={plotBottom}
+                          stroke="rgba(255, 255, 255, 0.4)"
+                          strokeWidth="1"
+                          strokeDasharray="2 2"
                         />
-                        {/* Horizontal Crosshair Line */}
+                        {/* Horizontal Crosshair Line (in candle mode) */}
                         {chartMode === "candle" && (
                           <line
                             x1="0"
@@ -1158,12 +1341,12 @@ export const PriceChart = (props: StockDetailSubProps) => {
                                 plotHeight
                             }
                             stroke="#38bdf8"
-                            strokeWidth="1.2"
+                            strokeWidth="1"
                             strokeDasharray="3 3"
                           />
                         )}
 
-                        {/* Glowing cursor beacon on line in Line Mode */}
+                        {/* Glowing cursor dot on line in Line Mode */}
                         {chartMode === "line" && (
                           <g>
                             <circle
@@ -1177,11 +1360,10 @@ export const PriceChart = (props: StockDetailSubProps) => {
                                 ((activeCandle.close - minVal) / valRange) *
                                   plotHeight
                               }
-                              r="5"
-                              fill="#ffffff"
-                              stroke={isPositive ? "#00c805" : "#ff3b30"}
-                              strokeWidth="2.5"
-                              className="drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]"
+                              r="4"
+                              fill={isPositive ? "#10b981" : "#ef4444"}
+                              stroke="#ffffff"
+                              strokeWidth="2"
                             />
                             <circle
                               cx={
@@ -1194,11 +1376,26 @@ export const PriceChart = (props: StockDetailSubProps) => {
                                 ((activeCandle.close - minVal) / valRange) *
                                   plotHeight
                               }
-                              r="9"
-                              fill="none"
-                              stroke={isPositive ? "#00c805" : "#ff3b30"}
-                              strokeWidth="1.2"
-                              strokeOpacity="0.4"
+                              r="8"
+                              fill={isPositive ? "#10b981" : "#ef4444"}
+                              opacity="0.35"
+                              className="animate-ping"
+                            />
+                            <circle
+                              cx={
+                                (hoverIndex /
+                                  Math.max(1, candleOHLCData.length - 1)) *
+                                plotWidth
+                              }
+                              cy={
+                                plotBottom -
+                                ((activeCandle.close - minVal) / valRange) *
+                                  plotHeight
+                              }
+                              r="10"
+                              fill={isPositive ? "#10b981" : "#ef4444"}
+                              opacity="0.25"
+                              filter="url(#softLineGlow)"
                             />
                           </g>
                         )}
@@ -1648,13 +1845,14 @@ export const PriceChart = (props: StockDetailSubProps) => {
                         />
                       )}
 
-                      {/* RSI Line Path */}
-                      {rsiLinePath && (
+                      {/* RSI Line Path (1.5px, smoothed, 80% opacity, same color) */}
+                      {smoothedRsiPathD && (
                         <path
-                          d={rsiLinePath}
+                          d={smoothedRsiPathD}
                           fill="none"
                           stroke="#00f2ff"
-                          strokeWidth="2.2"
+                          strokeWidth="1.5"
+                          opacity="0.8"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           className="drop-shadow-[0_0_8px_rgba(0,242,255,0.7)]"
@@ -1979,26 +2177,28 @@ export const PriceChart = (props: StockDetailSubProps) => {
                       );
                     })}
 
-                    {/* MACD Line (Cyan) */}
-                    {macdLinePath && (
+                    {/* MACD Line (Cyan) - 1.5px, smoothed, 80% opacity, same color */}
+                    {smoothedMacdLinePath && (
                       <path
-                        d={macdLinePath}
+                        d={smoothedMacdLinePath}
                         fill="none"
                         stroke="#00f2ff"
-                        strokeWidth="2"
+                        strokeWidth="1.5"
+                        opacity="0.8"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         className="drop-shadow-[0_0_6px_rgba(0,242,255,0.6)]"
                       />
                     )}
 
-                    {/* Signal Line (Fuchsia) */}
-                    {macdSignalPath && (
+                    {/* Signal Line (Fuchsia) - 1.5px, smoothed, 80% opacity, same color */}
+                    {smoothedMacdSignalPath && (
                       <path
-                        d={macdSignalPath}
+                        d={smoothedMacdSignalPath}
                         fill="none"
                         stroke="#e879f9"
-                        strokeWidth="1.8"
+                        strokeWidth="1.5"
+                        opacity="0.8"
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         className="drop-shadow-[0_0_6px_rgba(232,121,249,0.5)]"
