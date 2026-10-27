@@ -769,8 +769,94 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
     }
   }, [stock.price, stock.changePercent, isHighVolatility]);
 
-  // SVG Smooth Area Sparkline (monotone curve) for 24-hour price trend
+  // SVG Smooth Area Sparkline or Refined Mini Candlestick Chart for price trend
   const renderSparkline = () => {
+    if (watchlistChartStyle === "candlestick") {
+      const candles = generateCandlestickData(stock);
+      if (!candles || candles.length === 0) return null;
+
+      const chartWidth = 220;
+      const chartHeight = 36;
+      const padY = 3.5;
+      const padX = 2;
+      const plotW = chartWidth - 2 * padX;
+      const plotH = chartHeight - 2 * padY;
+
+      const allPrices = candles.flatMap((c) => [c.high, c.low, c.open, c.close]);
+      const minVal = Math.min(...allPrices);
+      const maxVal = Math.max(...allPrices);
+      const range = maxVal - minVal || 1;
+
+      const n = candles.length;
+      const totalGapSpace = Math.max(0, (n - 1) * 2);
+      const barW = Math.max(1.5, (plotW - totalGapSpace) / n);
+
+      return (
+        <div
+          className="relative w-full max-w-[170px] sm:max-w-[240px] md:max-w-[300px] h-[34px] flex items-center justify-center overflow-hidden"
+          onClick={(e) => {
+            e.stopPropagation();
+            triggerHaptic("selection");
+            onSelect(stock);
+          }}
+          title={`24H Candlestick Trend • Tap to open full chart`}
+        >
+          <svg
+            viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+            preserveAspectRatio="none"
+            className="w-full h-full overflow-visible z-10"
+          >
+            <defs>
+              <linearGradient id={`greenGrad-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#10b981" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#10b981" stopOpacity="0.6" />
+              </linearGradient>
+              <linearGradient id={`redGrad-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ef4444" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#ef4444" stopOpacity="0.6" />
+              </linearGradient>
+            </defs>
+            {candles.map((c, idx) => {
+              const x = padX + idx * (barW + 2) + barW / 2;
+              const yOpen = chartHeight - padY - ((c.open - minVal) / range) * plotH;
+              const yClose = chartHeight - padY - ((c.close - minVal) / range) * plotH;
+              const yHigh = chartHeight - padY - ((c.high - minVal) / range) * plotH;
+              const yLow = chartHeight - padY - ((c.low - minVal) / range) * plotH;
+
+              const isUp = c.close >= c.open;
+              const color = isUp ? "#10b981" : "#ef4444";
+              const rectY = Math.min(yOpen, yClose);
+              const rectHeight = Math.max(1.5, Math.abs(yOpen - yClose));
+              const gradUrl = isUp ? `url(#greenGrad-${stock.symbol})` : `url(#redGrad-${stock.symbol})`;
+
+              return (
+                <g key={`candle-${idx}`}>
+                  <line
+                    x1={x}
+                    y1={yHigh}
+                    x2={x}
+                    y2={yLow}
+                    stroke={color}
+                    strokeWidth={1}
+                  />
+                  <rect
+                    x={x - barW / 2}
+                    y={rectY}
+                    width={barW}
+                    height={rectHeight}
+                    fill={gradUrl}
+                    stroke={color}
+                    strokeWidth={0.5}
+                    rx={1.5}
+                  />
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+      );
+    }
+
     // Prefer 24h intraday history ('1D'), or fallback to stock.sparkline
     const dayHistoryPrices = stock.history?.['1D']?.map((p) => p.price);
     const rawData =
