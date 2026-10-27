@@ -60,12 +60,7 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
     <div className="w-full max-w-5xl mx-auto px-4 py-6 space-y-8 font-mono select-none">
       {/* Hero Header Card */}
       <div className="relative bg-black rounded-3xl p-6 sm:p-10 overflow-hidden shadow-2xl shadow-cyan-500/10 border border-cyan-500/30">
-        {/* Top Telemetry Hash Overlay */}
-        <div className="absolute top-2 left-4 right-4 flex items-center justify-between text-[9px] font-mono text-cyan-500/60 font-semibold tracking-widest pointer-events-none uppercase">
-          <span>blockchain data ie 8998141</span>
-          <span className="hidden sm:inline">blockchainsn date 802686</span>
-          <span>matrix rate 4002666</span>
-        </div>
+
 
         {/* Background Cyber Rays & Grid */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/30 via-black to-black pointer-events-none" />
@@ -111,13 +106,6 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
 
           {/* Social Proof Stats Bar */}
           <div className="w-full pt-3 border-t border-cyan-500/30 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-[10px] sm:text-xs text-cyan-300 font-bold uppercase tracking-widest font-mono">
-            <span className="flex items-center gap-1.5 text-emerald-400">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              REAL-TIME MARKET TELEMETRY
-            </span>
-            <span className="text-cyan-500/50">|</span>
-            <span>1,842+ DECLASSIFIED 13F RECORDS</span>
-            <span className="text-cyan-500/50">|</span>
             <span>800+ CREDIT ENGINE</span>
             <span className="text-cyan-500/50">|</span>
             <span>DSCR REAL ESTATE UNDERWRITING</span>
