@@ -12,7 +12,12 @@ import { computeDeterministicSignal, getSBScoreColor } from './src/utils/signalC
 import { SecIntelService } from './src/services/secIntelService.js';
 import { agentPlatformRouter, registerAutonomousAgentHandler, inMemoryAgentRegistry, inMemoryKeyRegistry, inMemoryWalletRegistry, verifyAndDebitAgentCredit, handleGetLeaderboard, handleGetTradeIdeas, globalActiveTradeIdeas, AgentTradeIdea, addCreditsToAgentWallet, resolveAgentIdFromKey, handleGetAgentMe, handleGetAgentTransactions, requireScope, handleCreditsRefill } from './server/agentPlatform.js';
 import { recordedStripeSessions, fulfilledStripeSessions, processedWebhookEvents, getRecordedStripeSessionAsync, setRecordedStripeSessionAsync, getFulfilledStripeSessionAsync, setFulfilledStripeSessionAsync, isWebhookEventProcessedAsync } from './server/stripePaymentProvider.js';
-import { userProfilePurchases } from './server/stripeRevenueService.js';
+import {
+  userProfilePurchases,
+  createCheckoutSessionHandler,
+  verifySessionHandler,
+  stripeWebhookHandler
+} from './server/stripeRevenueService.js';
 import { communityApiRouter } from './server/communityApi.js';
 import { agentIntelligenceRouter } from './server/agentIntelligenceApi.js';
 import { agentExchangeRouter, ensureSeedBountiesExist } from './server/agentExchangeApi.js';
@@ -86,6 +91,11 @@ app.use(['/api/v1/telemetry', '/api/telemetry'], agentTelemetryRouter);
 app.get(['/api/v1/agents/telemetry/24h', '/api/v1/community/agents-24h'], (_req, res) => {
   res.redirect(307, '/api/v1/telemetry/agents-24h');
 });
+
+// Stripe Revenue & Checkout Session Handlers
+app.post('/api/stripe/create-checkout-session', createCheckoutSessionHandler);
+app.get(['/api/checkout/verify-session', '/api/stripe/verify-session'], verifySessionHandler);
+app.post('/api/stripe/webhook', stripeWebhookHandler);
 
 // 1. Autonomous Agent Registration Route (Top Precedence)
 app.post(['/api/v1/agent/register', '/api/v1/agents/register', '/api/agent/register', '/api/agents/register'], registerAutonomousAgentHandler);
