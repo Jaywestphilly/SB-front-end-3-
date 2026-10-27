@@ -35,7 +35,7 @@ export const BlocMembershipPage: React.FC = () => {
           Founding member $19/month <span className="text-sm font-normal text-neutral-400">(first 50 members keep this rate)</span>
         </div>
         <p className="text-sm text-neutral-400 font-mono">
-          After that $29/month or $249/year.
+          Founding rate locked for the first 50 members.
         </p>
       </div>
 
@@ -53,33 +53,6 @@ export const BlocMembershipPage: React.FC = () => {
             </span>
             <div>
               <strong className="text-white">Weekly "What Changed" breakdown:</strong> plain-language changes in 10-K and 10-Q filings, plus 13F big-investor moves.
-            </div>
-          </li>
-
-          <li className="flex items-start gap-3">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 font-bold text-xs shrink-0 mt-0.5">
-              2
-            </span>
-            <div>
-              <strong className="text-white">Credit 800 self-help education:</strong> lessons and templates you use yourself. We do not do credit repair for you and we do not promise any score.
-            </div>
-          </li>
-
-          <li className="flex items-start gap-3">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 font-bold text-xs shrink-0 mt-0.5">
-              3
-            </span>
-            <div>
-              <strong className="text-white">Weekly real estate deal breakdown</strong> using the Stock Bloc calculators.
-            </div>
-          </li>
-
-          <li className="flex items-start gap-3">
-            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-300 font-bold text-xs shrink-0 mt-0.5">
-              4
-            </span>
-            <div>
-              <strong className="text-white">Monthly live Q&A.</strong>
             </div>
           </li>
         </ul>
