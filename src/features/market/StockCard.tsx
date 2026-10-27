@@ -208,13 +208,40 @@ const generateHeikinAshiCandlesticks = (
   return haCandles;
 };
 
-// Generate OHLC Candlestick data points for inline chart
+// Generate OHLC Candlestick data points for inline chart (24 equal buckets)
 const generateCandlestickData = (
   stock: StockTicker,
   timeframe: "1D" | "1W" = "1D",
 ) => {
   const points = stock.history?.[timeframe] || [];
-  const targetBars = 24;
+  let rawPrices: number[] = [];
+
+  if (points && points.length > 0) {
+    rawPrices = points.map((p) => p.price);
+  } else if (stock.sparkline && stock.sparkline.length > 0) {
+    rawPrices = stock.sparkline;
+  } else {
+    const base = stock.price || 100;
+    rawPrices = Array.from({ length: 48 }, (_, i) => base * (1 + Math.sin(i * 0.2) * 0.015));
+  }
+
+  // Ensure we have at least 24 points via linear interpolation if raw dataset is shorter
+  if (rawPrices.length < 24) {
+    const interpolated: number[] = [];
+    const len = rawPrices.length;
+    for (let i = 0; i < 24; i++) {
+      const pos = (i / 23) * (len - 1);
+      const idx = Math.floor(pos);
+      const frac = pos - idx;
+      const p1 = rawPrices[idx];
+      const p2 = rawPrices[Math.min(len - 1, idx + 1)];
+      interpolated.push(p1 + (p2 - p1) * frac);
+    }
+    rawPrices = interpolated;
+  }
+
+  // Aggregate intraday data into 24 equal buckets: open of first, max high, min low, close of last
+  const totalPoints = rawPrices.length;
   const candles: {
     time: string;
     open: number;
@@ -225,63 +252,29 @@ const generateCandlestickData = (
     isUp: boolean;
   }[] = [];
 
-  if (!points || points.length === 0) {
-    const spark =
-      stock.sparkline && stock.sparkline.length > 0
-        ? stock.sparkline
-        : [stock.price * 0.98, stock.price * 1.02];
-    for (let i = 0; i < spark.length; i++) {
-      const p = spark[i];
-      const prev = i > 0 ? spark[i - 1] : p * 0.995;
-      const open = prev;
-      const close = p;
-      const variance = Math.max(0.05, open * 0.003);
-      const high = Math.max(open, close) + variance;
-      const low = Math.min(open, close) - variance;
-      candles.push({
-        time: `T${i + 1}`,
-        open,
-        close,
-        high,
-        low,
-        volume: Math.floor(1000 + ((i * 350) % 5000)),
-        isUp: close >= open,
-      });
+  for (let i = 0; i < 24; i++) {
+    const startIdx = Math.floor((i * totalPoints) / 24);
+    const endIdx = Math.floor(((i + 1) * totalPoints) / 24);
+    const chunk = rawPrices.slice(startIdx, Math.max(startIdx + 1, endIdx));
+
+    const open = chunk[0];
+    const close = chunk[chunk.length - 1];
+    let high = Math.max(...chunk);
+    let low = Math.min(...chunk);
+
+    if (high === low) {
+      const spread = Math.max(0.01, open * 0.001);
+      high = open + spread;
+      low = open - spread;
     }
-    return candles;
-  }
-
-  const chunkSize = Math.max(1, Math.floor(points.length / targetBars));
-  for (let i = 0; i < points.length; i += chunkSize) {
-    const chunk = points.slice(i, i + chunkSize);
-    if (chunk.length === 0) continue;
-    let open = chunk[0].price;
-    let close = chunk[chunk.length - 1].price;
-    const prices = chunk.map((p) => p.price);
-    const maxP = Math.max(...prices);
-    const minP = Math.min(...prices);
-
-    if (Math.abs(close - open) < open * 0.001) {
-      const prevClose =
-        candles.length > 0 ? candles[candles.length - 1].close : open * 0.998;
-      open = prevClose;
-      const delta =
-        open * 0.003 * ((i % 2 === 0 ? 1 : -1) + Math.sin(i * 1.3) * 0.4);
-      close = open + delta;
-    }
-
-    const variance = Math.max(0.08, open * 0.0025);
-    const high = Math.max(maxP, open, close) + variance;
-    const low = Math.min(minP, open, close) - variance;
-    const timeLabel = formatChartTimestamp(chunk[chunk.length - 1].time) || `T-${i + 1}`;
 
     candles.push({
-      time: timeLabel,
+      time: `T-${24 - i}`,
       open,
       close,
       high,
       low,
-      volume: chunk.reduce((sum, p) => sum + (p.volume || 100), 0),
+      volume: 1000,
       isUp: close >= open,
     });
   }
@@ -769,93 +762,8 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
     }
   }, [stock.price, stock.changePercent, isHighVolatility]);
 
-  // SVG Smooth Area Sparkline or Refined Mini Candlestick Chart for price trend
+  // SVG Smooth Area Sparkline for price trend
   const renderSparkline = () => {
-    if (watchlistChartStyle === "candlestick") {
-      const candles = generateCandlestickData(stock);
-      if (!candles || candles.length === 0) return null;
-
-      const chartWidth = 220;
-      const chartHeight = 36;
-      const padY = 3.5;
-      const padX = 2;
-      const plotW = chartWidth - 2 * padX;
-      const plotH = chartHeight - 2 * padY;
-
-      const allPrices = candles.flatMap((c) => [c.high, c.low, c.open, c.close]);
-      const minVal = Math.min(...allPrices);
-      const maxVal = Math.max(...allPrices);
-      const range = maxVal - minVal || 1;
-
-      const n = candles.length;
-      const totalGapSpace = Math.max(0, (n - 1) * 2);
-      const barW = Math.max(1.5, (plotW - totalGapSpace) / n);
-
-      return (
-        <div
-          className="relative w-full max-w-[170px] sm:max-w-[240px] md:max-w-[300px] h-[34px] flex items-center justify-center overflow-hidden"
-          onClick={(e) => {
-            e.stopPropagation();
-            triggerHaptic("selection");
-            onSelect(stock);
-          }}
-          title={`24H Candlestick Trend • Tap to open full chart`}
-        >
-          <svg
-            viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-            preserveAspectRatio="none"
-            className="w-full h-full overflow-visible z-10"
-          >
-            <defs>
-              <linearGradient id={`greenGrad-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#10b981" stopOpacity="0.6" />
-              </linearGradient>
-              <linearGradient id={`redGrad-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ef4444" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#ef4444" stopOpacity="0.6" />
-              </linearGradient>
-            </defs>
-            {candles.map((c, idx) => {
-              const x = padX + idx * (barW + 2) + barW / 2;
-              const yOpen = chartHeight - padY - ((c.open - minVal) / range) * plotH;
-              const yClose = chartHeight - padY - ((c.close - minVal) / range) * plotH;
-              const yHigh = chartHeight - padY - ((c.high - minVal) / range) * plotH;
-              const yLow = chartHeight - padY - ((c.low - minVal) / range) * plotH;
-
-              const isUp = c.close >= c.open;
-              const color = isUp ? "#10b981" : "#ef4444";
-              const rectY = Math.min(yOpen, yClose);
-              const rectHeight = Math.max(1.5, Math.abs(yOpen - yClose));
-              const gradUrl = isUp ? `url(#greenGrad-${stock.symbol})` : `url(#redGrad-${stock.symbol})`;
-
-              return (
-                <g key={`candle-${idx}`}>
-                  <line
-                    x1={x}
-                    y1={yHigh}
-                    x2={x}
-                    y2={yLow}
-                    stroke={color}
-                    strokeWidth={1}
-                  />
-                  <rect
-                    x={x - barW / 2}
-                    y={rectY}
-                    width={barW}
-                    height={rectHeight}
-                    fill={gradUrl}
-                    stroke={color}
-                    strokeWidth={0.5}
-                    rx={1.5}
-                  />
-                </g>
-              );
-            })}
-          </svg>
-        </div>
-      );
-    }
 
     // Prefer 24h intraday history ('1D'), or fallback to stock.sparkline
     const dayHistoryPrices = stock.history?.['1D']?.map((p) => p.price);

@@ -53,7 +53,7 @@ describe('Free Static Sample Endpoints Suite', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(0);
   });
 
-  it('3. Unpaid POST /api/v1/sec/job and unpaid GET /api/v1/data/sec still return 402 with amounts 250000 and 100000', async () => {
+  it('3. Unpaid POST /api/v1/sec/job and unpaid GET /api/v1/data/sec still return 402 with amounts 50000 and 100000', async () => {
     const unpaidJob = await request(app)
       .post('/api/v1/sec/job')
       .send({ ticker: 'AAPL', filingType: '10-K' });
@@ -63,7 +63,7 @@ describe('Free Static Sample Endpoints Suite', () => {
     const decodedJob = JSON.parse(
       Buffer.from(unpaidJob.headers['payment-required'], 'base64').toString('utf8')
     );
-    expect(decodedJob.accepts[0].amount).toBe('250000');
+    expect(decodedJob.accepts[0].amount).toBe('50000');
 
     const unpaidSec = await request(app).get('/api/v1/data/sec');
     expect(unpaidSec.status).toBe(402);

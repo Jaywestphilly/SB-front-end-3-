@@ -182,7 +182,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     // Service definition check
     expect(SEC_ANALYST_SERVICE_RECORD.serviceId).toBe(SEC_ANALYST_SERVICE_ID);
     expect(SEC_ANALYST_SERVICE_RECORD.name).toBe(SEC_ANALYST_SERVICE_NAME);
-    expect(SEC_ANALYST_SERVICE_RECORD.price).toBe(0.25);
+    expect(SEC_ANALYST_SERVICE_RECORD.price).toBe(0.05);
     expect(SEC_ANALYST_SERVICE_RECORD.currency).toBe('USD');
     expect(SEC_ANALYST_SERVICE_RECORD.reputationScore).toBe(0);
     expect(SEC_ANALYST_SERVICE_RECORD.completedJobsCount).toBe(0);
@@ -226,7 +226,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     expect(result.sourceReferences[0].url).toContain('sec.gov');
   });
 
-  it('Requirement 3: Deterministic Test — AAPL 10-Q Job Execution with Exact Split (Buyer -25, Seller +24, Treasury +1)', async () => {
+  it('Requirement 3: Deterministic Test — AAPL 10-Q Job Execution with Exact Split (Buyer -5, Seller +5, Treasury +0)', async () => {
     const jobId = 'job_sec_test_deterministic_01';
     const initialBuyerBal = inMemoryWalletRegistry.get(buyerId)!.creditsBalance; // 100
     const initialSellerBal = inMemoryWalletRegistry.get(SEC_ANALYST_AGENT_ID)!.creditsBalance; // 100
@@ -244,7 +244,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       },
       requesterAgentId: buyerId,
       requesterHandle: buyerHandle,
-      price: SEC_ANALYST_SERVICE_PRICE_CREDITS // 25 credits
+      price: SEC_ANALYST_SERVICE_PRICE_CREDITS // 5 credits
     });
 
     expect(executionResult.success).toBe(true);
@@ -253,22 +253,22 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     // 1. Verify Settlement Output & 5% Platform Fee Split
     const settlement = executionResult.settlement;
     expect(settlement.success).toBe(true);
-    expect(settlement.grossAmount).toBe(25);
-    expect(settlement.platformFee).toBe(1); // 5% fee: Math.round((25 * 500) / 10000) = 1
-    expect(settlement.sellerNet).toBe(24); // 25 - 1 = 24
+    expect(settlement.grossAmount).toBe(5);
+    expect(settlement.platformFee).toBe(1); // 1 credit platform fee
+    expect(settlement.sellerNet).toBe(4); // 5 - 1 = 4
 
     // 2. Verify Exact Balance Changes
     const updatedBuyerWallet = inMemoryWalletRegistry.get(buyerId)!;
     const updatedSellerWallet = inMemoryWalletRegistry.get(SEC_ANALYST_AGENT_ID)!;
     const updatedTreasuryWallet = inMemoryWalletRegistry.get(PLATFORM_TREASURY_ACCOUNT_ID)!;
 
-    // Buyer: -25 (100 -> 75)
-    expect(updatedBuyerWallet.creditsBalance).toBe(initialBuyerBal - 25);
-    expect(updatedBuyerWallet.creditsBalance).toBe(75);
+    // Buyer: -5 (100 -> 95)
+    expect(updatedBuyerWallet.creditsBalance).toBe(initialBuyerBal - 5);
+    expect(updatedBuyerWallet.creditsBalance).toBe(95);
 
-    // Seller (Stock Bloc SEC Analyst): +24 (100 -> 124)
-    expect(updatedSellerWallet.creditsBalance).toBe(initialSellerBal + 24);
-    expect(updatedSellerWallet.creditsBalance).toBe(124);
+    // Seller (Stock Bloc SEC Analyst): +4 (100 -> 104)
+    expect(updatedSellerWallet.creditsBalance).toBe(initialSellerBal + 4);
+    expect(updatedSellerWallet.creditsBalance).toBe(104);
 
     // Stock Bloc Treasury: +1 (0 -> 1)
     expect(updatedTreasuryWallet.creditsBalance).toBe(initialTreasuryBal + 1);
@@ -279,7 +279,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
       updatedBuyerWallet.creditsBalance +
       updatedSellerWallet.creditsBalance +
       updatedTreasuryWallet.creditsBalance;
-    expect(totalCreditsAfter).toBe(totalCreditsBefore); // 75 + 124 + 1 = 200
+    expect(totalCreditsAfter).toBe(totalCreditsBefore); // 95 + 104 + 1 = 200
 
     // 4. Verify Double-Entry Ledger Journal Entries
     const entries = settlement.ledgerEntries;
@@ -292,15 +292,15 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
 
     expect(buyerEntry).toBeDefined();
     expect(buyerEntry.entryType).toBe('DEBIT');
-    expect(buyerEntry.amount).toBe(25);
+    expect(buyerEntry.amount).toBe(5);
     expect(buyerEntry.balanceBefore).toBe(100);
-    expect(buyerEntry.balanceAfter).toBe(75);
+    expect(buyerEntry.balanceAfter).toBe(95);
 
     expect(sellerEntry).toBeDefined();
     expect(sellerEntry.entryType).toBe('CREDIT');
-    expect(sellerEntry.amount).toBe(24);
+    expect(sellerEntry.amount).toBe(4);
     expect(sellerEntry.balanceBefore).toBe(100);
-    expect(sellerEntry.balanceAfter).toBe(124);
+    expect(sellerEntry.balanceAfter).toBe(104);
 
     expect(treasuryEntry).toBeDefined();
     expect(treasuryEntry.entryType).toBe('CREDIT');
@@ -310,9 +310,9 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
 
     // 5. Verify Agent Performance Statistics
     expect(executionResult.stats.jobsCompleted).toBe(1);
-    expect(executionResult.stats.revenue).toBe(25);
-    expect(executionResult.stats.netRevenue).toBe(24);
-    expect(executionResult.stats.averageJobValue).toBe(25);
+    expect(executionResult.stats.revenue).toBe(5);
+    expect(executionResult.stats.netRevenue).toBe(4);
+    expect(executionResult.stats.averageJobValue).toBe(5);
     expect(executionResult.stats.successRate).toBe(100);
 
     // 6. Verify Reputation Update
@@ -815,7 +815,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     const paymentHeader = Buffer.from(
       JSON.stringify({
         x402Version: 2,
-        authorization: { from: '0xPayerWallet123', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '250000' }
+        authorization: { from: '0xPayerWallet123', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '50000' }
       })
     ).toString('base64');
 
@@ -930,7 +930,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
     const paymentHeader = Buffer.from(
       JSON.stringify({
         x402Version: 2,
-        authorization: { from: '0xPayerWallet123', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '250000' }
+        authorization: { from: '0xPayerWallet123', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '50000' }
       })
     ).toString('base64');
 
@@ -1016,7 +1016,7 @@ describe('Stock Bloc Native SEC Analyst Agent — Verification, Security & Deter
         authorization: {
           from: '0xPayerWalletHonesty4',
           to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708',
-          value: '250000',
+          value: '50000',
           nonce: '0x_nonce_honesty_4'
         }
       })

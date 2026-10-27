@@ -48,12 +48,12 @@ describe('Bazaar Discovery Extensions & 402 Metadata Verification', () => {
   it('verifies market_data info.input.queryParams and schema properties include symbol and omit bloc', () => {
     const md = BAZAAR_DISCOVERY_EXTENSIONS.market_data.bazaar;
 
-    expect(md.info.input.queryParams).toHaveProperty('symbol');
-    expect(md.info.input.queryParams.symbol).toBe('AAPL');
+    expect(md.info.input.queryParams).toHaveProperty('ticker');
+    expect(md.info.input.queryParams.ticker).toBe('AAPL');
     expect(md.info.input.queryParams).not.toHaveProperty('bloc');
 
     const queryParamsProps = md.schema.properties.input.properties.queryParams.properties;
-    expect(queryParamsProps).toHaveProperty('symbol');
+    expect(queryParamsProps).toHaveProperty('ticker');
     expect(queryParamsProps).not.toHaveProperty('bloc');
   });
 

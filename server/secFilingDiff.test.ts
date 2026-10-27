@@ -393,7 +393,7 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     const paymentHeader = Buffer.from(
       JSON.stringify({
         x402Version: 2,
-        authorization: { from: '0xDiffPayer1', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '250000' }
+        authorization: { from: '0xDiffPayer1', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '50000' }
       })
     ).toString('base64');
 
@@ -440,7 +440,7 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     expect(diff.financialChanges.length).toBeGreaterThan(0);
   });
 
-  it('4. 8-K + diff, or mode "foo", returns 400 before any 402; unpaid diff with valid input returns 402 with amount 250000', async () => {
+  it('4. 8-K + diff, or mode "foo", returns 400 before any 402; unpaid diff with valid input returns 402 with amount 50000', async () => {
     // A. 8-K with mode diff returns 400
     const res8K = await request(app)
       .post('/api/v1/sec/job')
@@ -465,7 +465,7 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     expect(resFoo.headers['payment-required']).toBeUndefined();
     expect(resFoo.body.error).toContain('"mode" must be one of: standard, diff');
 
-    // C. Valid input with mode diff but NO payment returns 402 with amount 250000
+    // C. Valid input with mode diff but NO payment returns 402 with amount 50000
     const resUnpaid = await request(app)
       .post('/api/v1/sec/job')
       .send({
@@ -479,7 +479,7 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     // Verify 402 requirement details
     const accepts = resUnpaid.body.accepts?.[0];
     expect(accepts).toBeDefined();
-    expect(accepts.amount).toBe('250000');
+    expect(accepts.amount).toBe('50000');
     expect(accepts.payTo).toBe('0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708');
   });
 
@@ -925,7 +925,7 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     const paymentHeader = Buffer.from(
       JSON.stringify({
         x402Version: 2,
-        authorization: { from: '0xDpzPayer', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '250000' }
+        authorization: { from: '0xDpzPayer', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '50000' }
       })
     ).toString('base64');
 
@@ -1022,7 +1022,7 @@ describe('SEC Filing Diff Mode Suite — Financial & Item 1A Risk Factor Compari
     const paymentHeader = Buffer.from(
       JSON.stringify({
         x402Version: 2,
-        authorization: { from: '0xDpzPayer2', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '250000' }
+        authorization: { from: '0xDpzPayer2', to: '0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708', value: '50000' }
       })
     ).toString('base64');
 

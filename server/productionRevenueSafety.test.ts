@@ -79,6 +79,7 @@ describe('STOCK BLOC PRODUCTION REVENUE SAFETY AUDIT — 16 Verification Tests',
     delete process.env.NODE_ENV;
     delete process.env.PAYMENT_MODE;
     delete process.env.AGENT_ENV;
+    delete process.env.STRIPE_SECRET_KEY;
   });
 
   // TEST 1: Paid session grants credits once

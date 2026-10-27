@@ -93,15 +93,15 @@ describe('Agent Pure x402 Discoverability & Retired Registration', () => {
     expect(secAnalyst.method).toBe('POST');
     expect(secAnalyst.path).toBe('/api/v1/sec/analyst');
     expect(secAnalyst.alias).toBe('/api/v1/sec/job');
-    expect(secAnalyst.supportedFilingTypes).toEqual(['10-K', '10-Q', '8-K']);
+    expect(secAnalyst.supportedFilingTypes).toEqual(['10-K', '10-Q']);
     expect(secAnalyst.requestBody.ticker).toBeDefined();
     expect(secAnalyst.requestBody.filingType).toBeDefined();
 
     // Must have complete x402 payment block
     expect(secAnalyst.x402).toBeDefined();
     expect(secAnalyst.x402.priced).toBe(true);
-    expect(secAnalyst.x402.priceUsd).toBe(0.25);
-    expect(secAnalyst.x402.atomicAmount).toBe('250000');
+    expect(secAnalyst.x402.priceUsd).toBe(0.05);
+    expect(secAnalyst.x402.atomicAmount).toBe('50000');
     expect(secAnalyst.x402.asset).toBe('USDC');
     expect(secAnalyst.x402.network).toBe('Base');
     expect(secAnalyst.x402.chainId).toBe(8453);
@@ -119,7 +119,7 @@ describe('Agent Pure x402 Discoverability & Retired Registration', () => {
     expect(content).toContain('/api/v1/sec/analyst');
     expect(content).toContain('/api/v1/sec/job');
     expect(content).toMatch(/10-K.*10-Q.*8-K/i);
-    expect(content).toContain('$0.25 USDC');
+    expect(content).toContain('$0.05 USDC');
   });
 
   it('verifies openapi.json documents Stock Bloc SEC Analyst operation and tags', () => {

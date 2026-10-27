@@ -112,7 +112,7 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
 
     expect(res.status).toBe(402);
     expect(res.body.status).toBe('payment_required');
-    expect(res.body.accepts[0].amount).toBe('250000');
+    expect(res.body.accepts[0].amount).toBe('50000');
 
     const wallet = inMemoryWalletRegistry.get(agentId);
     // Under pure x402, 0 debited from credits: remains 100
@@ -179,7 +179,7 @@ describe('SEC Job Unified Payment Architecture Suite', () => {
     expect(res.body.result).toBeDefined();
     expect(res.body.result.isError).toBe(true);
     expect(res.body.result.structuredContent.status).toBe('payment_required');
-    expect(res.body.result.structuredContent.accepts[0].amount).toBe('250000');
+    expect(res.body.result.structuredContent.accepts[0].amount).toBe('50000');
 
     // 0 credits debited: remains 100
     const wallet = inMemoryWalletRegistry.get(agentId);
