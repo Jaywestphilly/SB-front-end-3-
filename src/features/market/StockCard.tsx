@@ -35,7 +35,6 @@ import {
   Tooltip,
   CartesianGrid,
 } from "recharts";
-import { AlienCornerHieroglyph } from "../../components/ui/AlienCornerHieroglyph";
 
 interface StockCardProps {
   stock: StockTicker;
@@ -770,10 +769,10 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
     }
   }, [stock.price, stock.changePercent, isHighVolatility]);
 
-  // SVG Mini Candlestick or Line Chart for 24-hour price trend
+  // SVG Smooth Area Sparkline (monotone curve) for 24-hour price trend
   const renderSparkline = () => {
     // Prefer 24h intraday history ('1D'), or fallback to stock.sparkline
-    const dayHistoryPrices = stock.history?.["1D"]?.map((p) => p.price);
+    const dayHistoryPrices = stock.history?.['1D']?.map((p) => p.price);
     const rawData =
       dayHistoryPrices && dayHistoryPrices.length >= 2
         ? dayHistoryPrices
@@ -786,330 +785,83 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
     const chartWidth = 220;
     const chartHeight = 36;
     const padY = 3.5;
-    const padX = 4;
+    const padX = 2;
 
     const trendIsPositive = stock.changePercent >= 0;
     const minVal = Math.min(...rawData);
     const maxVal = Math.max(...rawData);
     const range = maxVal - minVal || 1;
-    const lineColor = isOrange
-      ? "#f7931a"
-      : isGold
-        ? "#fbbf24"
-        : isSilver
-          ? "#e2e8f0"
-          : isCopper
-            ? "#fb923c"
-            : isPurple
-              ? "#d946ef"
-              : trendIsPositive
-                ? "#00ff88"
-                : "#ef4444";
+    const strokeColor = trendIsPositive ? "#10b981" : "#ef4444";
 
-    // HEIKIN-ASHI & TRADINGVIEW JAPANESE CANDLESTICK MODE (Matching Deeper Analysis Detail Chart)
-    if (watchlistChartStyle === "candlestick") {
-      const candles = generateHeikinAshiCandlesticks(stock, 22);
-      if (!candles || candles.length === 0) return null;
+    const points = rawData.map((val, idx) => ({
+      x: padX + (idx / Math.max(1, rawData.length - 1)) * (chartWidth - 2 * padX),
+      y: chartHeight - padY - ((val - minVal) / range) * (chartHeight - 2 * padY),
+    }));
 
-      const candleSvgWidth = 220;
-      const candleSvgHeight = 36;
-      const cPadX = 3;
-      const plotTop = 2;
-      const plotBottom = 28;
-      const plotHeight = plotBottom - plotTop;
-
-      const minCandle = Math.min(...candles.map((c) => c.low));
-      const maxCandle = Math.max(...candles.map((c) => c.high));
-      const priceSpan = maxCandle - minCandle || 1;
-      const padMin = minCandle - priceSpan * 0.04;
-      const padMax = maxCandle + priceSpan * 0.04;
-      const totalSpan = padMax - padMin || 1;
-
-      const getCandleY = (p: number) =>
-        plotBottom - ((p - padMin) / totalSpan) * plotHeight;
-
-      const slotWidth = (candleSvgWidth - 2 * cPadX) / Math.max(1, candles.length);
-      const barWidth = Math.max(2.5, Math.min(5.0, slotWidth * 0.65));
-
-      // Compute 5-period Simple Moving Average (SMA - Gold/Amber)
-      const smaValues = candles.map((_, i) => {
-        const start = Math.max(0, i - 4);
-        const sub = candles.slice(start, i + 1);
-        const sum = sub.reduce((acc, c) => acc + c.close, 0);
-        return sum / sub.length;
-      });
-      const smaPathD = smaValues
-        .map((val, i) => {
-          const x = cPadX + i * slotWidth + slotWidth / 2;
-          const y = getCandleY(val);
-          return `${i === 0 ? "M" : "L"} ${x.toFixed(1)},${y.toFixed(1)}`;
-        })
-        .join(" ");
-
-      // Compute Volume-Weighted Average Price (VWAP - Purple dashed)
-      let cTPV = 0;
-      let cVol = 0;
-      const vwapValues = candles.map((c) => {
-        const tp = (c.high + c.low + c.close) / 3;
-        const vol = (c as { volume?: number }).volume || 1200;
-        cTPV += tp * vol;
-        cVol += vol;
-        return cTPV / (cVol || 1);
-      });
-      const vwapPathD = vwapValues
-        .map((val, i) => {
-          const x = cPadX + i * slotWidth + slotWidth / 2;
-          const y = getCandleY(val);
-          return `${i === 0 ? "M" : "L"} ${x.toFixed(1)},${y.toFixed(1)}`;
-        })
-        .join(" ");
-
-      // Volume scaling
-      const maxVol = Math.max(
-        ...candles.map((c) => (c as { volume?: number }).volume || 1200),
-        1000,
-      );
-
-      const latestCandle = candles[candles.length - 1];
-      const livePriceY = getCandleY(latestCandle.close);
-      const activeHoverCandle =
-        hoveredCandleIdx !== null && candles[hoveredCandleIdx]
-          ? candles[hoveredCandleIdx]
-          : null;
-
-      return (
-        <div
-          className="relative w-full max-w-[170px] sm:max-w-[240px] md:max-w-[300px] h-[34px] flex items-center justify-center overflow-visible group/sparkline cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-            triggerHaptic("selection");
-            onSelect(stock);
-          }}
-          onMouseLeave={() => setHoveredCandleIdx(null)}
-          title={`24H Candlesticks (SMA #f59e0b • VWAP #c084fc) • O: $${latestCandle.open.toFixed(2)} H: $${maxCandle.toFixed(2)} L: $${minCandle.toFixed(2)} C: $${latestCandle.close.toFixed(2)} • RelVol: ${volatilityOverlay.relVolText} • Tap for Deeper Analysis`}
-        >
-          {/* Subtle Dotted 24h Baseline (Blends with Card Style) */}
-          <div className="absolute w-full border-t border-dashed border-cyan-900/40 top-1/2 pointer-events-none z-0" />
-
-          {/* Floating Hover Candlestick HUD Tooltip */}
-          {activeHoverCandle && (
-            <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-30 px-2 py-0.5 rounded bg-[#031322]/95 border border-cyan-400/50 shadow-xl backdrop-blur-md text-[8.5px] font-mono whitespace-nowrap pointer-events-none flex items-center gap-1.5 text-white">
-              <span className={activeHoverCandle.isUp ? "text-emerald-400 font-bold" : "text-red-400 font-bold"}>
-                {activeHoverCandle.isUp ? "▲" : "▼"} ${activeHoverCandle.close.toFixed(2)}
-              </span>
-              <span className="text-white/60 text-[7.5px]">
-                O:${activeHoverCandle.open.toFixed(1)} H:${activeHoverCandle.high.toFixed(1)} L:${activeHoverCandle.low.toFixed(1)}
-              </span>
-            </div>
-          )}
-
-          <svg
-            viewBox={`0 0 ${candleSvgWidth} ${candleSvgHeight}`}
-            preserveAspectRatio="none"
-            className="w-full h-full overflow-visible z-10"
-          >
-            <defs>
-              <linearGradient id={`ha-up-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity="1" />
-                <stop offset="100%" stopColor="#059669" stopOpacity="0.9" />
-              </linearGradient>
-              <linearGradient id={`ha-dn-${stock.symbol}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#ef4444" stopOpacity="1" />
-                <stop offset="100%" stopColor="#dc2626" stopOpacity="0.9" />
-              </linearGradient>
-            </defs>
-
-            {/* Bottom Volume Histogram Bars (Matching Deeper Analysis) */}
-            <g>
-              {candles.map((c, idx) => {
-                const xCenter = cPadX + idx * slotWidth + slotWidth / 2;
-                const vol = (c as { volume?: number }).volume || 1200;
-                const volH = Math.max(1.2, (vol / maxVol) * 5.5);
-                const volY = candleSvgHeight - 0.5 - volH;
-                const volColor = c.isUp
-                  ? "rgba(16, 185, 129, 0.35)"
-                  : "rgba(239, 68, 68, 0.35)";
-                return (
-                  <rect
-                    key={`vol-${idx}`}
-                    x={xCenter - barWidth / 2}
-                    y={volY}
-                    width={barWidth}
-                    height={volH}
-                    fill={volColor}
-                    rx="0.3"
-                  />
-                );
-              })}
-            </g>
-
-            {/* 50-period Simple Moving Average (SMA) Line - Amber #f59e0b */}
-            {smaPathD && (
-              <path
-                d={smaPathD}
-                fill="none"
-                stroke="#f59e0b"
-                strokeWidth="1.1"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                opacity="0.8"
-                className="drop-shadow-[0_0_3px_rgba(245,158,11,0.5)]"
-              />
-            )}
-
-            {/* Volume-Weighted Average Price (VWAP) Line - Purple #c084fc Dashed */}
-            {vwapPathD && (
-              <path
-                d={vwapPathD}
-                fill="none"
-                stroke="#c084fc"
-                strokeWidth="1.0"
-                strokeDasharray="2.5 1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                opacity="0.75"
-                className="drop-shadow-[0_0_3px_rgba(192,132,252,0.5)]"
-              />
-            )}
-
-            {/* Real Japanese Candlesticks with Wicks and Bodies */}
-            {candles.map((c, idx) => {
-              const xCenter = cPadX + idx * slotWidth + slotWidth / 2;
-              const yHigh = getCandleY(c.high);
-              const yLow = getCandleY(c.low);
-              const yOpen = getCandleY(c.open);
-              const yClose = getCandleY(c.close);
-
-              const bodyTop = Math.min(yOpen, yClose);
-              const bodyHeight = Math.max(1.6, Math.abs(yClose - yOpen));
-              const candleColor = c.isUp ? "#10b981" : "#ef4444";
-              const candleFill = c.isUp ? `url(#ha-up-${stock.symbol})` : `url(#ha-dn-${stock.symbol})`;
-              const isHovered = hoveredCandleIdx === idx;
-
-              return (
-                <g
-                  key={`ha-${idx}`}
-                  className="transition-opacity cursor-crosshair"
-                  onMouseEnter={() => setHoveredCandleIdx(idx)}
-                >
-                  {/* High/Low Japanese Candlestick Center Wick */}
-                  <line
-                    x1={xCenter}
-                    y1={yHigh}
-                    x2={xCenter}
-                    y2={yLow}
-                    stroke={candleColor}
-                    strokeWidth={isHovered ? "1.3" : "0.85"}
-                    strokeLinecap="round"
-                    strokeOpacity={isHovered ? 1 : 0.85}
-                  />
-                  {/* Candlestick Body */}
-                  <rect
-                    x={xCenter - barWidth / 2}
-                    y={bodyTop}
-                    width={barWidth}
-                    height={bodyHeight}
-                    fill={candleFill}
-                    stroke={candleColor}
-                    strokeWidth={isHovered ? "0.6" : "0.4"}
-                    strokeOpacity="0.9"
-                    rx="0.3"
-                  />
-                </g>
-              );
-            })}
-
-            {/* Live Current Price Horizontal Dotted Line */}
-            <line
-              x1="0"
-              y1={livePriceY}
-              x2={candleSvgWidth}
-              y2={livePriceY}
-              stroke={latestCandle.isUp ? "#10b981" : "#ef4444"}
-              strokeDasharray="2 2"
-              strokeWidth="0.6"
-              strokeOpacity="0.6"
-            />
-
-            {/* Live Price Pulsating Dot at Right Edge */}
-            <circle
-              cx={candleSvgWidth - cPadX}
-              cy={livePriceY}
-              r="1.5"
-              fill={latestCandle.isUp ? "#10b981" : "#ef4444"}
-              className="animate-ping"
-            />
-            <circle
-              cx={candleSvgWidth - cPadX}
-              cy={livePriceY}
-              r="1.8"
-              fill={latestCandle.isUp ? "#10b981" : "#ef4444"}
-              stroke="#ffffff"
-              strokeWidth="0.4"
-            />
-          </svg>
-        </div>
-      );
+    const n = points.length;
+    let lineD = "";
+    if (n === 2) {
+      lineD = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)} L ${points[1].x.toFixed(1)} ${points[1].y.toFixed(1)}`;
+    } else if (n > 2) {
+      const deltas = new Array(n - 1);
+      const dxs = new Array(n - 1);
+      for (let i = 0; i < n - 1; i++) {
+        const dx = points[i + 1].x - points[i].x;
+        const dy = points[i + 1].y - points[i].y;
+        dxs[i] = dx;
+        deltas[i] = dx !== 0 ? dy / dx : 0;
+      }
+      const m = new Array(n);
+      m[0] = deltas[0];
+      m[n - 1] = deltas[n - 2];
+      for (let i = 1; i < n - 1; i++) {
+        if (deltas[i - 1] * deltas[i] <= 0) {
+          m[i] = 0;
+        } else {
+          m[i] = (deltas[i - 1] + deltas[i]) / 2;
+        }
+      }
+      for (let i = 0; i < n - 1; i++) {
+        if (deltas[i] === 0) {
+          m[i] = 0;
+          m[i + 1] = 0;
+        } else {
+          const alpha = m[i] / deltas[i];
+          const beta = m[i + 1] / deltas[i];
+          const sumSq = alpha * alpha + beta * beta;
+          if (sumSq > 9) {
+            const tau = 3 / Math.sqrt(sumSq);
+            m[i] = tau * alpha * deltas[i];
+            m[i + 1] = tau * beta * deltas[i];
+          }
+        }
+      }
+      lineD = `M ${points[0].x.toFixed(1)} ${points[0].y.toFixed(1)}`;
+      for (let i = 0; i < n - 1; i++) {
+        const p0 = points[i];
+        const p1 = points[i + 1];
+        const dx = dxs[i] / 3;
+        const cp1x = (p0.x + dx).toFixed(1);
+        const cp1y = (p0.y + m[i] * dx).toFixed(1);
+        const cp2x = (p1.x - dx).toFixed(1);
+        const cp2y = (p1.y - m[i + 1] * dx).toFixed(1);
+        lineD += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p1.x.toFixed(1)} ${p1.y.toFixed(1)}`;
+      }
     }
 
-    // LINE MODE (Default: Clean, Crisp, High-Contrast Glow Chart)
-    const linePoints = rawData.map((val, idx) => {
-      const x =
-        padX + (idx / Math.max(1, rawData.length - 1)) * (chartWidth - 2 * padX);
-      const y =
-        chartHeight - padY - ((val - minVal) / range) * (chartHeight - 2 * padY);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    });
-    const lineD = `M ${linePoints.join(" L ")}`;
-    const areaD = `${lineD} L ${chartWidth - padX} ${chartHeight - padY} L ${padX} ${chartHeight - padY} Z`;
-    const lastX = padX + (chartWidth - 2 * padX);
-    const lastY =
-      chartHeight -
-      padY -
-      ((rawData[rawData.length - 1] - minVal) / range) *
-        (chartHeight - 2 * padY);
-
-    const activeHoverVal =
-      hoveredCandleIdx !== null && rawData[hoveredCandleIdx] !== undefined
-        ? rawData[hoveredCandleIdx]
-        : null;
-    const hoverX =
-      hoveredCandleIdx !== null
-        ? padX +
-          (hoveredCandleIdx / Math.max(1, rawData.length - 1)) *
-            (chartWidth - 2 * padX)
-        : null;
-    const hoverY =
-      hoveredCandleIdx !== null && activeHoverVal !== null
-        ? chartHeight -
-          padY -
-          ((activeHoverVal - minVal) / range) * (chartHeight - 2 * padY)
-        : null;
+    const areaD = `${lineD} L ${(chartWidth - padX).toFixed(1)} ${(chartHeight - padY).toFixed(1)} L ${padX.toFixed(1)} ${(chartHeight - padY).toFixed(1)} Z`;
+    const gradId = `sparkGrad-${stock.symbol}`;
 
     return (
       <div
-        className="relative w-full max-w-[170px] sm:max-w-[240px] md:max-w-[300px] h-[34px] flex items-center justify-center overflow-visible group/sparkline cursor-pointer"
+        className="relative w-full max-w-[170px] sm:max-w-[240px] md:max-w-[300px] h-[34px] flex items-center justify-center overflow-hidden"
         onClick={(e) => {
           e.stopPropagation();
           triggerHaptic("selection");
           onSelect(stock);
         }}
-        onMouseLeave={() => setHoveredCandleIdx(null)}
-        title={`24H Price Trend • RelVol: ${volatilityOverlay.relVolText} • Tap to open full chart`}
+        title={`24H Price Trend • Tap to open full chart`}
       >
-        {/* Dotted 24h Price Baseline */}
-        <div className="absolute w-full border-t border-dashed border-cyan-900/50 top-1/2 pointer-events-none z-0" />
-
-        {/* Floating Hover Price Tooltip */}
-        {activeHoverVal !== null && (
-          <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-30 px-2 py-0.5 rounded bg-[#031322]/95 border border-cyan-400/50 shadow-xl backdrop-blur-md text-[8.5px] font-mono whitespace-nowrap pointer-events-none flex items-center gap-1.5 text-white">
-            <span className="font-bold" style={{ color: lineColor }}>
-              ${activeHoverVal.toFixed(2)}
-            </span>
-            <span className="text-white/60 text-[7.5px]">24H</span>
-          </div>
-        )}
-
         <svg
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
           preserveAspectRatio="none"
@@ -1117,106 +869,25 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
         >
           <defs>
             <linearGradient
-              id={`sparkGrad-${stock.symbol}`}
+              id={gradId}
               x1="0"
               y1="0"
               x2="0"
               y2="1"
             >
-              <stop offset="0%" stopColor={lineColor} stopOpacity="0.38" />
-              <stop offset="100%" stopColor={lineColor} stopOpacity="0.0" />
+              <stop offset="0%" stopColor={strokeColor} stopOpacity="0.30" />
+              <stop offset="100%" stopColor={strokeColor} stopOpacity="0.0" />
             </linearGradient>
-            <filter
-              id={`glow-${stock.symbol}`}
-              x="-20%"
-              y="-20%"
-              width="140%"
-              height="140%"
-            >
-              <feDropShadow
-                dx="0"
-                dy="0"
-                stdDeviation="1.5"
-                floodColor={lineColor}
-                floodOpacity="0.6"
-              />
-            </filter>
           </defs>
-          <path d={areaD} fill={`url(#sparkGrad-${stock.symbol})`} />
+          <path d={areaD} fill={`url(#${gradId})`} />
           <path
             d={lineD}
             fill="none"
-            stroke={lineColor}
-            strokeWidth="2.0"
+            stroke={strokeColor}
+            strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            filter={`url(#glow-${stock.symbol})`}
           />
-
-          {/* Live Price End-Point Marker when not hovering */}
-          {activeHoverVal === null && (
-            <>
-              <circle
-                cx={lastX}
-                cy={lastY}
-                r="2.5"
-                fill={lineColor}
-                className="animate-pulse"
-              />
-              <circle
-                cx={lastX}
-                cy={lastY}
-                r="4.5"
-                fill="none"
-                stroke={lineColor}
-                strokeWidth="0.8"
-                strokeOpacity="0.5"
-              />
-            </>
-          )}
-
-          {/* Hover Cursor and Snapped Beacon */}
-          {hoverX !== null && hoverY !== null && (
-            <g className="pointer-events-none">
-              <line
-                x1={hoverX}
-                y1={0}
-                x2={hoverX}
-                y2={chartHeight}
-                stroke="rgba(255,255,255,0.4)"
-                strokeDasharray="2 2"
-                strokeWidth="1"
-              />
-              <circle
-                cx={hoverX}
-                cy={hoverY}
-                r="3.5"
-                fill="#ffffff"
-                stroke={lineColor}
-                strokeWidth="2"
-              />
-            </g>
-          )}
-
-          {/* Interactive Scrubbing Columns */}
-          {rawData.map((_, idx) => {
-            const slotW =
-              (chartWidth - 2 * padX) / Math.max(1, rawData.length - 1);
-            const x = padX + idx * slotW;
-            return (
-              <rect
-                key={`scrub-line-${idx}`}
-                x={x - slotW / 2}
-                y={0}
-                width={Math.max(4, slotW)}
-                height={chartHeight}
-                fill="transparent"
-                className="cursor-crosshair"
-                onMouseEnter={() => setHoveredCandleIdx(idx)}
-                onTouchStart={() => setHoveredCandleIdx(idx)}
-              />
-            );
-          })}
         </svg>
       </div>
     );
@@ -1288,7 +959,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
         delay: Math.min(index * 0.035, 0.4),
         ease: [0.16, 1, 0.3, 1],
       }}
-      className="StockCard relative w-full overflow-hidden my-0.5 select-none group/card-wrapper"
+      className="StockCard relative w-full overflow-hidden rounded-2xl my-0.5 select-none group/card-wrapper"
     >
       {/* Sleek Data Stream Edge Accent Beam */}
       <div
@@ -1474,12 +1145,6 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
           )}
         </AnimatePresence>
 
-        {/* Alien Hieroglyphic Corner Cartouches */}
-        <AlienCornerHieroglyph position="tl" color={cardTheme.cornerColor} symbolSeed={stock.symbol} />
-        <AlienCornerHieroglyph position="tr" color={cardTheme.cornerColor} symbolSeed={stock.symbol} />
-        <AlienCornerHieroglyph position="bl" color={cardTheme.cornerColor} symbolSeed={stock.symbol} />
-        <AlienCornerHieroglyph position="br" color={cardTheme.cornerColor} symbolSeed={stock.symbol} />
-
         {saveSuccessToast && (
           <div className="absolute inset-x-0 top-0 z-30 bg-emerald-950/95 border-b border-emerald-400 text-emerald-200 text-xs font-mono font-bold py-1 px-3 flex items-center justify-between shadow-lg">
             <div className="flex items-center gap-1.5">
@@ -1492,7 +1157,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
 
         <div className="relative z-10 flex items-center justify-between w-full gap-2">
           {/* Left Ticker, SB Score Badge & Company Subtitle */}
-          <div className="flex flex-col min-w-[125px] max-w-[175px] sm:max-w-[210px] pr-2">
+          <div className="flex flex-col flex-shrink-0 min-w-0 max-w-[130px] min-[380px]:max-w-[175px] sm:max-w-[210px] pr-1.5 sm:pr-2">
             <div className="flex items-center gap-1.5 flex-wrap">
               <button
                 onClick={(e) => {
@@ -1510,7 +1175,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                 <Star className={`w-4 h-4 ${isStarred ? "fill-amber-400" : ""}`} />
               </button>
               <span
-                className={`font-zen text-sm sm:text-base tracking-wider ${
+                className={`font-sans font-bold text-[18px] tracking-tight leading-none ${
                   isSyncing
                     ? "glitch-text-refresh text-cyan-300"
                     : isOrange
@@ -1562,7 +1227,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
               )}
             </div>
             <span
-              className={`text-[11px] font-medium font-sans truncate mt-0.5 ${
+              className={`text-[11px] font-normal font-sans truncate mt-1 ${
                 isOrange
                   ? "text-orange-200/85"
                   : isGold
@@ -1580,15 +1245,15 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
             </span>
           </div>
 
-          {/* Center Expanded Sparkline / Heikin-Ashi Chart */}
-          <div className="flex-1 flex items-center justify-center px-1 sm:px-3 min-w-[110px]">
+          {/* Center Expanded Sparkline */}
+          <div className="flex-1 min-w-0 flex items-center justify-center px-1 sm:px-2 overflow-hidden">
             {renderSparkline()}
           </div>
 
           {/* Right Price & 1D % Change Pill */}
-          <div className="flex flex-col items-end justify-center pl-2 min-w-[98px] tabular-telemetry">
+          <div className="flex flex-col items-end justify-center shrink-0 pl-1.5 sm:pl-2 tabular-telemetry">
             <span
-              className={`font-martian font-black text-sm sm:text-[15px] tracking-tight ${
+              className={`font-mono tabular-nums font-bold text-[16px] min-[380px]:text-[18px] tracking-tight leading-tight ${
                 isSyncing ? "glitch-text-refresh text-cyan-200" : "text-white"
               }`}
             >
@@ -1601,7 +1266,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                 : stock.price.toFixed(2)}
             </span>
             <div
-              className={`min-w-[78px] text-center px-2.5 py-0.5 mt-1 rounded-lg font-martian font-bold text-xs tracking-wider transition-all flex items-center justify-center gap-1 ${
+              className={`shrink-0 px-2 min-[380px]:px-2.5 py-0.5 mt-1 rounded-lg font-mono tabular-nums font-bold text-[11px] min-[380px]:text-xs tracking-tight transition-all flex items-center justify-center gap-1 ${
                 isOrange
                   ? "bg-orange-950/90 text-orange-200 border border-orange-400/80 shadow-[0_0_14px_rgba(247,147,26,0.4)]"
                   : isGold
@@ -1663,7 +1328,7 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
 
             {/* Market Cap */}
             <div
-              className="flex items-center gap-1 shrink-0"
+              className="hidden min-[380px]:flex items-center gap-1 shrink-0"
               title={`Market Cap: ${stock.marketCap || "$2.4T"}`}
             >
               <span className="text-[8.5px] text-slate-500 font-sans uppercase font-bold tracking-wider">
