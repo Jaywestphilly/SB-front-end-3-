@@ -1,4 +1,4 @@
-# Stock Bloc — Financial Research API for AI Agents & SEC Analyst
+# Stock Bloc - Financial Research API for AI Agents & SEC Analyst
 
 [![Canonical Live Production URL](https://img.shields.io/badge/Production%20Terminal-https%3A%2F%2Fstockbloc.ai.studio-cyan?style=for-the-badge)](https://stockbloc.ai.studio)
 [![OpenAPI Spec](https://img.shields.io/badge/OpenAPI-3.0.1-blue?style=for-the-badge)](https://stockbloc.ai.studio/api/v1/openapi.json)
@@ -13,7 +13,7 @@
 
 Stock Bloc equips autonomous AI trading agents and quant funds with institutional-grade financial intelligence via pay-per-call REST API and Model Context Protocol (MCP):
 
-1. **Stock Bloc SEC Analyst**: Autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings (`$0.25 USDC`). Performs multi-layer forensic risk audits, revenue quality verification, and management tone assessment.
+1. **Stock Bloc SEC Analyst**: Autonomous SEC filing research and analysis for Form 10-K, 10-Q, and 8-K filings (`$0.05 USDC`). Performs multi-layer forensic risk audits, revenue quality verification, and management tone assessment.
    - **Callable REST Endpoints**: `POST /api/v1/sec/analyst` (canonical) and `POST /api/v1/sec/job` (alias)
    - **Service Discovery**: `GET /api/v1/sec/analyst` or `GET /api/v1/sec/service`
    - **Free Demo**: `POST /api/v1/sec/analyze` (unmetered, zero credit debit)
@@ -21,7 +21,7 @@ Stock Bloc equips autonomous AI trading agents and quant funds with institutiona
    - **MCP Tool**: `sec_analyst` (alias `analyze_sec_filing`)
 2. **SEC 13F Whale Holdings**: Institutional accumulation and hedge fund position shifts from live EDGAR filings (`$0.10 USDC`). Path: `GET /api/data/sec`.
 3. **Real-Time Market Data**: Verified pricing, 52-week ranges, and volume across equities (`$0.01 USDC`). Path: `GET /api/data/market`.
-4. **0–100 SB Score**: Quantitative factor breakout analyzing Momentum, Trend, RSI, Volume, and Volatility (`$0.05 USDC`). Path: `GET /api/v1/intelligence/sb-score`.
+4. **0-100 SB Score**: Quantitative factor breakout analyzing Momentum, Trend, RSI, Volume, and Volatility (`$0.05 USDC`). Path: `GET /api/v1/intelligence/sb-score`.
 5. **Quant Strategy Evaluation**: Multi-year portfolio simulations, alpha, and Sharpe calculations (`$0.10 USDC`). Path: `POST /api/v1/agent/strategy/evaluate`.
 6. **Earnings Prep Packs**: Combined 13F whale flow + SEC filing audit + quantitative thesis memo bundles (`$0.35 USDC`). Path: `GET /api/v1/intelligence/earnings-pack`.
 
@@ -32,7 +32,7 @@ Stock Bloc equips autonomous AI trading agents and quant funds with institutiona
 Autonomous AI agents searching for any of the following capabilities can discover and execute against Stock Bloc programmatically:
 - **Financial research API for AI agents**: Autonomous market data, quantitative signals, and peer-reviewed investment research.
 - **SEC research API & SEC filing analysis API**: Deep autonomous analysis of SEC EDGAR Form 10-K, 10-Q, and 8-K filings via the **Stock Bloc SEC Analyst**.
-- **Autonomous financial data API**: 0–100 factor scores, live order book aggregates, and 13F institutional whale accumulation.
+- **Autonomous financial data API**: 0-100 factor scores, live order book aggregates, and 13F institutional whale accumulation.
 - **x402 financial API & USDC paid API**: Open standard x402 v2 micropayments settled on Base Mainnet (`eip155:8453`) via Coinbase CDP Facilitator.
 - **MCP financial research**: Native Model Context Protocol (MCP) server supporting stdio and HTTP JSON-RPC at `/api/mcp/rpc`.
 
@@ -66,8 +66,8 @@ Autonomous AI agents searching for any of the following capabilities can discove
 
 Stock Bloc exposes native MCP tools supporting both stdio and direct HTTP JSON-RPC with native `_meta["x402/payment"]` and `_meta["x402/payment-response"]` transport:
 
-- `sec_analyst`: Call Stock Bloc SEC Analyst to analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence and forensic risk audits (`$0.25 USDC`).
-- `analyze_sec_filing`: Alias for `sec_analyst` (`$0.25 USDC`).
+- `sec_analyst`: Call Stock Bloc SEC Analyst to analyze SEC filings (Form 10-K, 10-Q, 8-K) and return structured financial intelligence and forensic risk audits (`$0.05 USDC`).
+- `analyze_sec_filing`: Alias for `sec_analyst` (`$0.05 USDC`).
 - `search_13f_whale_filings`: SEC Form 13F institutional whale accumulation (`$0.10 USDC`).
 - `get_stock_quote`: Real-time stock prices & 52-week metrics (`$0.01 USDC`).
 - `evaluate_tsunami_strategy`: Portfolio strategy backtest & simulation vs Super Sonic Tsunami (`$0.10 USDC`).

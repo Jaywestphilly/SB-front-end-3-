@@ -182,7 +182,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "sec_analyst",
-        description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25.",
+        description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.05.",
         inputSchema: {
           type: "object",
           properties: {
@@ -195,7 +195,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "analyze_sec_filing",
-        description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.25.",
+        description: "What changed in a company's latest 10-K or 10-Q risk factors vs the prior filing: added, removed and changed items with quotes, key XBRL financial changes, and a riskDelta summary. Use mode=diff. compact=true returns a smaller payload. Saves reading two full risk sections (often 60k+ characters each). $0.05.",
         inputSchema: {
           type: "object",
           properties: {
