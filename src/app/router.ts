@@ -8,7 +8,7 @@ export interface RouteState {
 }
 
 export const ROUTE_MAP: Record<string, ViewTab> = {
-  "/": "watchlist",
+  "/": "brand",
   "/news": "news",
   "/feed": "news",
   "/brand": "brand",
@@ -449,7 +449,7 @@ export const SUBTAB_METADATA: Record<string, { title: string; description: strin
  */
 export function getRouteFromLocation(): RouteState {
   if (typeof window === "undefined") {
-    return { tab: "watchlist", isTerminalOpen: false };
+    return { tab: "brand", isTerminalOpen: false };
   }
 
   // Handle client-side redirects for legacy tool URLs preserving path, query, and hash
@@ -532,7 +532,7 @@ export function getRouteFromLocation(): RouteState {
     }
   }
 
-  return { tab: tab || "watchlist", isTerminalOpen: false, stockSymbol, subTab };
+  return { tab: tab || "brand", isTerminalOpen: false, stockSymbol, subTab };
 }
 
 function updateMetaTag(selector: string, attribute: string, content: string) {
