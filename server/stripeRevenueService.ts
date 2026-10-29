@@ -148,9 +148,24 @@ export const SERVER_CATALOG: Record<string, ServerCatalogItem> = {
 export const userProfilePurchases: Record<string, {
   email: string;
   purchasedItems: Array<{ id: string; title: string; category: string; downloadUrl: string }>;
+  keyId?: string;
+  keyLast4?: string;
   apiKey?: string;
   linkedAt: string;
 }> = {};
+
+/**
+ * Sanitizes checkout metadata by removing sensitive API keys, raw keys, secrets and tokens.
+ */
+export function sanitizeCheckoutMetadata<T extends Record<string, any>>(meta: T): T {
+  if (!meta || typeof meta !== 'object') return meta;
+  delete (meta as any).apiKey;
+  delete (meta as any).api_key;
+  delete (meta as any).rawKey;
+  delete (meta as any).secret;
+  delete (meta as any).token;
+  return meta;
+}
 
 /**
  * Auto-provision an agent identity server-side for human purchasers or unverified agent references.
@@ -256,7 +271,8 @@ export function autoProvisionPurchaserAgent(email?: string): {
     userProfilePurchases[cleanEmail] = {
       email: cleanEmail,
       purchasedItems: userProfilePurchases[cleanEmail]?.purchasedItems || [],
-      apiKey: rawKey,
+      keyId: publicId,
+      keyLast4: secret.slice(-4),
       linkedAt: new Date().toISOString()
     };
   }
@@ -481,6 +497,16 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
       resolvedPublicId = provisioned.publicId;
     }
 
+    // Compute keyLast4 if key/publicId is present
+    let resolvedKeyLast4 = '';
+    if (apiKey && typeof apiKey === 'string' && apiKey.trim().length >= 4) {
+      resolvedKeyLast4 = apiKey.trim().slice(-4);
+    } else if (resolvedPublicId && resolvedPublicId.length >= 4) {
+      resolvedKeyLast4 = resolvedPublicId.slice(-4);
+    } else if (resolvedKeyId && resolvedKeyId.length >= 4) {
+      resolvedKeyLast4 = resolvedKeyId.slice(-4);
+    }
+
     // Production check passed: create hosted Stripe checkout session
     if (isProd) {
       const { default: Stripe } = await import('stripe');
@@ -488,21 +514,24 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
 
       const paymentTypes: any[] = ['card', 'link', 'cashapp', 'klarna', 'afterpay_clearpay', 'affirm'];
 
+      const checkoutMetadata = sanitizeCheckoutMetadata({
+        productId: catalogItem.productId,
+        productType: catalogItem.category,
+        credits: String(catalogItem.credits),
+        priceUsd: String(catalogItem.priceUsd),
+        amountCents: String(catalogItem.amountCents),
+        currency: catalogItem.currency,
+        agentId: resolvedAgentId,
+        keyId: resolvedKeyId || resolvedPublicId || '',
+        publicId: resolvedPublicId || resolvedKeyId || '',
+        keyLast4: resolvedKeyLast4,
+        email: email || ''
+      });
+
       const session = await stripe.checkout.sessions.create({
         payment_method_types: paymentTypes,
         customer_email: email || undefined,
-        metadata: {
-          productId: catalogItem.productId,
-          productType: catalogItem.category,
-          credits: String(catalogItem.credits),
-          priceUsd: String(catalogItem.priceUsd),
-          amountCents: String(catalogItem.amountCents),
-          currency: catalogItem.currency,
-          agentId: resolvedAgentId,
-          keyId: resolvedKeyId || resolvedPublicId || '',
-          publicId: resolvedPublicId || resolvedKeyId || '',
-          email: email || ''
-        },
+        metadata: checkoutMetadata,
         line_items: [
           {
             price_data: {
@@ -535,21 +564,24 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
       const { default: Stripe } = await import('stripe');
       const stripe = new Stripe(stripeKey, { apiVersion: '2024-12-18.acacia' as any });
 
+      const devCheckoutMetadata = sanitizeCheckoutMetadata({
+        productId: catalogItem.productId,
+        productType: catalogItem.category,
+        credits: String(catalogItem.credits),
+        priceUsd: String(catalogItem.priceUsd),
+        amountCents: String(catalogItem.amountCents),
+        currency: catalogItem.currency,
+        agentId: resolvedAgentId,
+        keyId: resolvedKeyId || resolvedPublicId || '',
+        publicId: resolvedPublicId || resolvedKeyId || '',
+        keyLast4: resolvedKeyLast4,
+        email: email || ''
+      });
+
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
         customer_email: email || undefined,
-        metadata: {
-          productId: catalogItem.productId,
-          productType: catalogItem.category,
-          credits: String(catalogItem.credits),
-          priceUsd: String(catalogItem.priceUsd),
-          amountCents: String(catalogItem.amountCents),
-          currency: catalogItem.currency,
-          agentId: resolvedAgentId,
-          keyId: resolvedKeyId || resolvedPublicId || '',
-          publicId: resolvedPublicId || resolvedKeyId || '',
-          email: email || ''
-        },
+        metadata: devCheckoutMetadata,
         line_items: [
           {
             price_data: {
@@ -579,6 +611,20 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
 
     // Pure local developer sandbox fallback (only when explicitly non-production and key is absent)
     const devSessionId = `cs_dev_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    const sandboxStoreMetadata = sanitizeCheckoutMetadata({
+      productId: catalogItem.productId,
+      productType: catalogItem.category,
+      credits: String(catalogItem.credits),
+      priceUsd: String(catalogItem.priceUsd),
+      amountCents: String(catalogItem.amountCents),
+      currency: catalogItem.currency,
+      agentId: resolvedAgentId,
+      keyId: resolvedKeyId || resolvedPublicId || '',
+      publicId: resolvedPublicId || resolvedKeyId || '',
+      keyLast4: resolvedKeyLast4,
+      email: email || ''
+    });
+
     await setRecordedStripeSessionAsync(devSessionId, {
       id: devSessionId,
       payment_status: 'paid',
@@ -586,18 +632,7 @@ export async function createCheckoutSessionHandler(req: Request, res: Response) 
       amount_total: catalogItem.amountCents,
       currency: catalogItem.currency,
       customer_details: { email: email || 'dev@stockbloc.ai' },
-      metadata: {
-        productId: catalogItem.productId,
-        productType: catalogItem.category,
-        credits: String(catalogItem.credits),
-        priceUsd: String(catalogItem.priceUsd),
-        amountCents: String(catalogItem.amountCents),
-        currency: catalogItem.currency,
-        agentId: resolvedAgentId,
-        keyId: resolvedKeyId || resolvedPublicId || '',
-        publicId: resolvedPublicId || resolvedKeyId || '',
-        email: email || ''
-      }
+      metadata: sandboxStoreMetadata
     });
 
     logPaymentEvent('checkout_created', { sessionId: devSessionId, productId: catalogItem.productId, sandbox: true });
@@ -780,11 +815,26 @@ export async function fulfillAuthoritativePayment(params: {
       const rec = inMemoryKeyRegistry.get(keyId);
       if (rec?.agentId) {
         targetAgentId = rec.agentId;
+      } else if (db) {
+        try {
+          let snap = await db.collection('api_keys').doc(keyId).get();
+          if (!snap.exists) {
+            snap = await db.collection('agent_api_keys').doc(keyId).get();
+          }
+          if (snap.exists && snap.data()?.agentId) {
+            targetAgentId = snap.data().agentId;
+          }
+        } catch (_) {}
       }
     } else if (metadata.apiKey && typeof metadata.apiKey === 'string') {
       targetAgentId = resolveAgentIdFromKey(metadata.apiKey);
     } else if (authenticatedAgentId && authenticatedAgentId.trim()) {
       targetAgentId = authenticatedAgentId.trim();
+    }
+
+    // Never persist legacy metadata.apiKey in recorded session
+    if (session?.metadata) {
+      sanitizeCheckoutMetadata(session.metadata);
     }
 
     const creditsToAdd = catalogItem.credits;
@@ -1187,7 +1237,8 @@ export async function stripeWebhookHandler(req: any, res: Response) {
         userProfilePurchases[userEmail] = {
           email: userEmail,
           purchasedItems: currentItems,
-          apiKey: userProfilePurchases[userEmail]?.apiKey,
+          keyId: metadata.keyId || metadata.publicId || userProfilePurchases[userEmail]?.keyId,
+          keyLast4: metadata.keyLast4 || userProfilePurchases[userEmail]?.keyLast4,
           linkedAt: new Date().toISOString()
         };
       }
@@ -1412,10 +1463,13 @@ export async function verifySessionHandler(req: Request, res: Response) {
   // Metadata email (from checkout creation time, NOT from ?email=)
   const metadataEmail = metadata.email || session.customer_details?.email || session.customer_email;
   if (metadataEmail) {
+    const kId = metadata.keyId || metadata.publicId || (activeApiKey ? activeApiKey.split('_')[2] : undefined) || userProfilePurchases[metadataEmail]?.keyId;
+    const kLast4 = metadata.keyLast4 || (activeApiKey ? activeApiKey.slice(-4) : undefined) || userProfilePurchases[metadataEmail]?.keyLast4;
     userProfilePurchases[metadataEmail] = {
       email: metadataEmail,
       purchasedItems: items,
-      apiKey: activeApiKey,
+      keyId: kId,
+      keyLast4: kLast4,
       linkedAt: new Date().toISOString()
     };
   }

@@ -61,6 +61,9 @@ describe('Fix 2: Telemetry rebuild from x402_settlements and self-wallet filteri
     expect(isSelfWallet('0x26b610a059dE2488ebe3e0EDa02Ae17907917419')).toBe(true);
     expect(isSelfWallet('0xB4807865A786E9E9E26E6A9610F2078e7fc507fB')).toBe(true);
     expect(isSelfWallet('0xd86cAdB414171d1155aA88076504763F7DE32805')).toBe(true);
+    expect(isSelfWallet('0x6a0b784cf4e3f79e0bca889e35a1b3aa1dc24518')).toBe(true);
+    expect(isSelfWallet('0xec2abd3eda89bed90124736e317e847d5fb6d034')).toBe(true);
+    expect(isSelfWallet('0x6dcbce46a8b494c885d0e7b6817d2b519df64467')).toBe(true);
     expect(isSelfWallet('0x1111111111111111111111111111111111111111')).toBe(false);
   });
 

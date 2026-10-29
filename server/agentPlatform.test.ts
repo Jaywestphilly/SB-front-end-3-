@@ -69,6 +69,17 @@ vi.mock('./firebaseAdmin.js', () => {
             update: (data: any) => updateDoc(name, docId, data)
           };
         },
+        get: () => {
+          if (!dbStore[name]) dbStore[name] = new Map();
+          const docs = Array.from(dbStore[name].entries()).map(([id, data]) => ({
+            id,
+            ref: {
+              update: (updateData: any) => updateDoc(name, id, updateData)
+            },
+            data: () => data
+          }));
+          return Promise.resolve({ docs, size: docs.length, empty: docs.length === 0 });
+        },
         where: function mockWhere() {
           const self = {
             where: mockWhere,
@@ -306,5 +317,157 @@ describe('Agent Platform API', () => {
     expect(MCP_TOOLS.length).toBe(14);
     const names = MCP_TOOLS.map((t: any) => t.name);
     expect(names).not.toContain('register_autonomous_agent');
+  });
+
+  it('15. admin bulk revocation rejects non-admin and revokes matching keys', async () => {
+    const { inMemoryKeyRegistry, inMemoryAgentRegistry } = await import('./agentPlatform.js');
+
+    // Ensure validAgentId exists in inMemoryAgentRegistry
+    inMemoryAgentRegistry.set(validAgentId, {
+      agentId: validAgentId,
+      handle: 'valid_agent',
+      status: 'active'
+    });
+
+    // Setup an old active key and a new active key in dbStore and inMemoryKeyRegistry
+    const oldPublicId = 'oldpub_' + crypto.randomBytes(4).toString('hex');
+    const oldKeyRecord = {
+      keyId: oldPublicId,
+      publicId: oldPublicId,
+      agentId: validAgentId,
+      status: 'active',
+      createdAt: '2026-10-20T00:00:00.000Z'
+    };
+    dbStore.api_keys.set(oldPublicId, oldKeyRecord);
+    inMemoryKeyRegistry.set(oldPublicId, oldKeyRecord as any);
+
+    const newPublicId = 'newpub_' + crypto.randomBytes(4).toString('hex');
+    const newKeyRecord = {
+      keyId: newPublicId,
+      publicId: newPublicId,
+      agentId: validAgentId,
+      status: 'active',
+      createdAt: '2026-10-30T00:00:00.000Z'
+    };
+    dbStore.api_keys.set(newPublicId, newKeyRecord);
+    inMemoryKeyRegistry.set(newPublicId, newKeyRecord as any);
+
+    // Setup an active non-admin key with valid persisted agent
+    const nonAdminAgentId = 'agent_non_admin_' + crypto.randomBytes(4).toString('hex');
+    inMemoryAgentRegistry.set(nonAdminAgentId, {
+      agentId: nonAdminAgentId,
+      handle: 'non_admin',
+      status: 'active'
+    });
+    const nonAdminPublicId = 'nonadmin_' + crypto.randomBytes(4).toString('hex');
+    const nonAdminSecret = crypto.randomBytes(16).toString('hex');
+    const nonAdminRawKey = `sb_live_${nonAdminPublicId}_${nonAdminSecret}`;
+    const nonAdminHash = crypto.createHash('sha256').update(nonAdminSecret).digest('hex');
+    const nonAdminKeyRecord = {
+      keyId: nonAdminPublicId,
+      publicId: nonAdminPublicId,
+      agentId: nonAdminAgentId,
+      ownerUid: 'different_user',
+      scopes: ['services:read'],
+      keyHash: nonAdminHash,
+      secretHash: nonAdminHash,
+      status: 'active',
+      createdAt: '2026-10-30T00:00:00.000Z'
+    };
+    dbStore.api_keys.set(nonAdminPublicId, nonAdminKeyRecord);
+    inMemoryKeyRegistry.set(nonAdminPublicId, nonAdminKeyRecord as any);
+    inMemoryKeyRegistry.set(nonAdminRawKey, nonAdminKeyRecord as any);
+
+    // Non-admin request rejected with 403
+    const nonAdminRes = await request(app)
+      .post('/api/v1/agents/keys/admin/revoke-before')
+      .set('Authorization', 'Bearer ' + nonAdminRawKey)
+      .send({ beforeIso: '2026-10-29T00:00:00.000Z' });
+    expect(nonAdminRes.status).toBe(403);
+
+    // Master admin key succeeds
+    const adminKey = process.env.AGENT_API_SECRET_KEY || 'master_admin_secret_key_testing';
+    process.env.AGENT_API_SECRET_KEY = adminKey;
+
+    const adminRes = await request(app)
+      .post('/api/v1/agents/keys/admin/revoke-before')
+      .set('Authorization', 'Bearer ' + adminKey)
+      .send({ beforeIso: '2026-10-29T00:00:00.000Z' });
+
+    expect(adminRes.status).toBe(200);
+    expect(adminRes.body.revokedCount).toBeGreaterThanOrEqual(1);
+    expect(adminRes.body.revokedKeyIds).toContain(oldPublicId);
+    expect(adminRes.body.revokedKeyIds).not.toContain(newPublicId);
+
+    const updatedOld = dbStore.api_keys.get(oldPublicId);
+    expect(updatedOld.status).toBe('revoked');
+    expect(updatedOld.revokeReason).toBe('bulk_pre_2026-10-29_rotation');
+    expect(inMemoryKeyRegistry.has(oldPublicId)).toBe(false);
+  });
+
+  it('16. key reissue mints new secret, resets active status, and sets keyPrefix', async () => {
+    const { inMemoryKeyRegistry, inMemoryAgentRegistry } = await import('./agentPlatform.js');
+
+    const keyToReissueId = 'reissue_' + crypto.randomBytes(4).toString('hex');
+    const initialRecord = {
+      keyId: keyToReissueId,
+      publicId: keyToReissueId,
+      agentId: validAgentId,
+      ownerUid: 'human_uid_123',
+      status: 'revoked',
+      revokedAt: '2026-10-25T00:00:00.000Z',
+      keyPrefix: 'old_...'
+    };
+    dbStore.api_keys.set(keyToReissueId, initialRecord);
+    inMemoryKeyRegistry.set(keyToReissueId, initialRecord as any);
+
+    // Setup an active other key that does not own keyToReissueId
+    const otherAgentId = 'agent_other_' + crypto.randomBytes(4).toString('hex');
+    inMemoryAgentRegistry.set(otherAgentId, {
+      agentId: otherAgentId,
+      handle: 'other_agent',
+      status: 'active'
+    });
+    const otherPublicId = 'other_' + crypto.randomBytes(4).toString('hex');
+    const otherSecret = crypto.randomBytes(16).toString('hex');
+    const otherRawKey = `sb_live_${otherPublicId}_${otherSecret}`;
+    const otherHash = crypto.createHash('sha256').update(otherSecret).digest('hex');
+    const otherRecord = {
+      keyId: otherPublicId,
+      publicId: otherPublicId,
+      agentId: otherAgentId,
+      ownerUid: 'other_human_999',
+      scopes: ['services:read'],
+      keyHash: otherHash,
+      secretHash: otherHash,
+      status: 'active',
+      createdAt: new Date().toISOString()
+    };
+    dbStore.api_keys.set(otherPublicId, otherRecord);
+    inMemoryKeyRegistry.set(otherPublicId, otherRecord as any);
+    inMemoryKeyRegistry.set(otherRawKey, otherRecord as any);
+
+    // Unauthorized non-owner receives 403
+    const unauthRes = await request(app)
+      .post(`/api/v1/agents/keys/${keyToReissueId}/reissue`)
+      .set('Authorization', 'Bearer ' + otherRawKey);
+    expect(unauthRes.status).toBe(403);
+
+    // Authorized owner reissues key
+    const reissueRes = await request(app)
+      .post(`/api/v1/agents/keys/${keyToReissueId}/reissue`)
+      .set('Authorization', 'Bearer valid_human_token');
+
+    expect(reissueRes.status).toBe(200);
+    expect(reissueRes.body.keyId).toBe(keyToReissueId);
+    expect(reissueRes.body.status).toBe('active');
+    expect(reissueRes.body.key).toMatch(/^sb_live_/);
+    expect(reissueRes.body.key).toContain(keyToReissueId);
+
+    const updatedDoc = dbStore.api_keys.get(keyToReissueId);
+    expect(updatedDoc.status).toBe('active');
+    expect(updatedDoc.revokedAt).toBeNull();
+    expect(updatedDoc.reissuedAt).toBeDefined();
+    expect(updatedDoc.keyPrefix).toBe(keyToReissueId.slice(-4) + '...');
   });
 });

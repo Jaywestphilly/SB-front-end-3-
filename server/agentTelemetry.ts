@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { db } from './firebaseAdmin.js';
+import { FieldValue } from 'firebase-admin/firestore';
 
 export interface AgentTelemetry24h {
   activeAgents24h: number;
@@ -105,7 +106,10 @@ export const KNOWN_SELF_WALLETS = new Set<string>([
   '0xd86cadb414171d1155aa88076504763f7de32805',
   '0x40ebc1ac8d4fedd2e144b75fe9c0420be82750c6',
   '0x1985ea6e9c68e1c272d8209f3b478ac2fdb25c87',
-  '0xd34ea7278e6bd48defe656bbe263aef11101469c'
+  '0xd34ea7278e6bd48defe656bbe263aef11101469c',
+  '0x6a0b784cf4e3f79e0bca889e35a1b3aa1dc24518',
+  '0xec2abd3eda89bed90124736e317e847d5fb6d034',
+  '0x6dcbce46a8b494c885d0e7b6817d2b519df64467'
 ]);
 
 export function isSelfWallet(payer?: string): boolean {
@@ -138,6 +142,8 @@ let totalUsdcRevenue = 0;
 const revenueByEndpoint = new Map<string, number>();
 const revenueBySource = new Map<string, number>();
 const agentLifetimeSpend = new Map<string, number>();
+const inMemoryChallengesByEndpoint = new Map<string, number>();
+const inMemorySuccessesByEndpoint = new Map<string, number>();
 const machineCommerceEvents: MachineCommerceEvent[] = [];
 
 // Flag to track initial database hydration
@@ -177,6 +183,8 @@ export function clearMachineCommerceState(): void {
   revenueByEndpoint.clear();
   revenueBySource.clear();
   agentLifetimeSpend.clear();
+  inMemoryChallengesByEndpoint.clear();
+  inMemorySuccessesByEndpoint.clear();
   machineCommerceEvents.length = 0;
 }
 
@@ -212,17 +220,50 @@ export function recordMachineCommerceEvent(event: MachineCommerceEvent): void {
 
   if (event.eventType === 'payment_required') {
     paymentRequiredCount++;
+    const cleanEndpoint = (event.endpoint || 'unknown').replace(/\//g, '_');
+    inMemoryChallengesByEndpoint.set(
+      cleanEndpoint,
+      (inMemoryChallengesByEndpoint.get(cleanEndpoint) || 0) + 1
+    );
+
+    if (db && typeof db.collection === 'function') {
+      const utcDay = new Date().toISOString().slice(0, 10);
+      const dayDocId = `commerce_day_${utcDay}`;
+      const payload: Record<string, any> = {
+        challengesServed: FieldValue.increment(1),
+        [`challengesServedByEndpoint.${cleanEndpoint}`]: FieldValue.increment(1)
+      };
+      Promise.all([
+        db.collection('telemetry_aggregates').doc('commerce_lifetime').set(payload, { merge: true }),
+        db.collection('telemetry_aggregates').doc(dayDocId).set(payload, { merge: true })
+      ]).catch(() => {});
+    }
   }
 
   if (event.eventType === 'payment_attempt') {
     const attemptKey = event.paymentId || event.txHash || event.details?.paymentId;
+    let isNewAttempt = true;
     if (attemptKey) {
       if (!attemptedPaymentKeys.has(attemptKey)) {
         attemptedPaymentKeys.add(attemptKey);
         paymentAttemptCount++;
+      } else {
+        isNewAttempt = false;
       }
     } else {
       paymentAttemptCount++;
+    }
+
+    if (isNewAttempt && db && typeof db.collection === 'function') {
+      const utcDay = new Date().toISOString().slice(0, 10);
+      const dayDocId = `commerce_day_${utcDay}`;
+      const payload = {
+        paymentAttempts: FieldValue.increment(1)
+      };
+      Promise.all([
+        db.collection('telemetry_aggregates').doc('commerce_lifetime').set(payload, { merge: true }),
+        db.collection('telemetry_aggregates').doc(dayDocId).set(payload, { merge: true })
+      ]).catch(() => {});
     }
   }
 
@@ -275,6 +316,22 @@ export function recordMachineCommerceEvent(event: MachineCommerceEvent): void {
 
     if (isNewSettlement) {
       paymentSuccessCount++;
+      if (event.endpoint) {
+        const cleanEp = event.endpoint.replace(/\//g, '_');
+        inMemorySuccessesByEndpoint.set(cleanEp, (inMemorySuccessesByEndpoint.get(cleanEp) || 0) + 1);
+      }
+
+      if (db && typeof db.collection === 'function') {
+        const utcDay = new Date().toISOString().slice(0, 10);
+        const dayDocId = `commerce_day_${utcDay}`;
+        const payload = {
+          paymentSuccesses: FieldValue.increment(1)
+        };
+        Promise.all([
+          db.collection('telemetry_aggregates').doc('commerce_lifetime').set(payload, { merge: true }),
+          db.collection('telemetry_aggregates').doc(dayDocId).set(payload, { merge: true })
+        ]).catch(() => {});
+      }
       if (event.payer && isSelfWallet(event.payer)) {
         event.source = 'self' as any;
       }
@@ -501,8 +558,58 @@ export async function rebuildTelemetryFromFirestore(): Promise<void> {
         timestamp
       });
     }
+
+    await hydrateCommerceLifetimeFromFirestore();
   } catch (err) {
     console.warn('[TELEMETRY] Failed to rebuild telemetry from x402_settlements:', err);
+  }
+}
+
+/**
+ * Hydrate commerce lifetime aggregates from Firestore if doc exists.
+ * Sets in-memory counters to Math.max(current, stored). Does not invent numbers if missing.
+ */
+export async function hydrateCommerceLifetimeFromFirestore(): Promise<void> {
+  if (!db || typeof db.collection !== 'function') return;
+  try {
+    const docRef = db.collection('telemetry_aggregates').doc('commerce_lifetime');
+    const docSnap = await docRef.get();
+    if (docSnap && docSnap.exists) {
+      const data = docSnap.data() || {};
+      const resolveNum = (val: any): number => {
+        if (typeof val === 'number') return val;
+        if (val && typeof val.operand === 'number') return val.operand;
+        return 0;
+      };
+
+      const storedChallenges = resolveNum(data.challengesServed);
+      const storedAttempts = resolveNum(data.paymentAttempts);
+      const storedSuccesses = resolveNum(data.paymentSuccesses);
+
+      paymentRequiredCount = Math.max(paymentRequiredCount, storedChallenges);
+      paymentAttemptCount = Math.max(paymentAttemptCount, storedAttempts);
+      paymentSuccessCount = Math.max(paymentSuccessCount, storedSuccesses);
+
+      if (data.challengesServedByEndpoint && typeof data.challengesServedByEndpoint === 'object') {
+        for (const [ep, count] of Object.entries(data.challengesServedByEndpoint)) {
+          const c = resolveNum(count);
+          if (c > 0) {
+            inMemoryChallengesByEndpoint.set(ep, Math.max(inMemoryChallengesByEndpoint.get(ep) || 0, c));
+          }
+        }
+      }
+      for (const [k, v] of Object.entries(data)) {
+        if (k.startsWith('challengesServedByEndpoint.')) {
+          const ep = k.slice('challengesServedByEndpoint.'.length);
+          const c = resolveNum(v);
+          if (c > 0) {
+            inMemoryChallengesByEndpoint.set(ep, Math.max(inMemoryChallengesByEndpoint.get(ep) || 0, c));
+          }
+        }
+      }
+    }
+  } catch (err) {
+    // Non-blocking fallback
   }
 }
 
@@ -516,6 +623,7 @@ export async function hydrateTelemetryFromFirestore(): Promise<void> {
 
   try {
     await rebuildTelemetryFromFirestore();
+    await hydrateCommerceLifetimeFromFirestore();
     if (!db) return;
     const docRef = db.collection('telemetry_aggregates').doc('agents_24h');
     const docSnap = await docRef.get();
@@ -638,9 +746,127 @@ agentTelemetryRouter.get(['/funnel', '/telemetry/funnel'], (_req: Request, res: 
   res.status(200).json(funnel);
 });
 
+export interface AttemptsSummary {
+  lifetime: {
+    challengesServed: number;
+    paymentAttempts: number;
+    paymentSuccesses: number;
+    challengeToAttempt: number;
+    attemptToSuccess: number;
+  };
+  last24h: {
+    challengesServed: number;
+    paymentAttempts: number;
+    paymentSuccesses: number;
+  };
+  topUnpaidEndpoints: string[];
+  lastUpdated: string;
+}
+
+export async function getAttemptsSummary(): Promise<AttemptsSummary> {
+  const resolveNum = (val: any): number => {
+    if (typeof val === 'number') return val;
+    if (val && typeof val.operand === 'number') return val.operand;
+    return 0;
+  };
+
+  const challengesServed = paymentRequiredCount;
+  const paymentAttempts = paymentAttemptCount;
+  const paymentSuccesses = paymentSuccessCount;
+
+  const challengeToAttempt = challengesServed > 0
+    ? Number((paymentAttempts / challengesServed).toFixed(4))
+    : 0;
+  const attemptToSuccess = paymentAttempts > 0
+    ? Number((paymentSuccesses / paymentAttempts).toFixed(4))
+    : 0;
+
+  const now = Date.now();
+  const cutoff = now - TWENTY_FOUR_HOURS_MS;
+  let memChallenges = 0;
+  let memAttempts = 0;
+  let memSuccesses = 0;
+
+  for (const ev of machineCommerceEvents) {
+    const t = ev.timestamp ? new Date(ev.timestamp).getTime() : now;
+    if (t >= cutoff) {
+      if (ev.eventType === 'payment_required') memChallenges++;
+      else if (ev.eventType === 'payment_attempt') memAttempts++;
+      else if (ev.eventType === 'payment_success') memSuccesses++;
+    }
+  }
+
+  let dayChallenges = 0;
+  let dayAttempts = 0;
+  let daySuccesses = 0;
+
+  if (db && typeof db.collection === 'function') {
+    try {
+      const utcDay = new Date().toISOString().slice(0, 10);
+      const dayDocId = `commerce_day_${utcDay}`;
+      const daySnap = await db.collection('telemetry_aggregates').doc(dayDocId).get();
+      if (daySnap && daySnap.exists) {
+        const dayData = daySnap.data() || {};
+        dayChallenges = resolveNum(dayData.challengesServed);
+        dayAttempts = resolveNum(dayData.paymentAttempts);
+        daySuccesses = resolveNum(dayData.paymentSuccesses);
+      }
+    } catch {}
+  }
+
+  const endpointUnpaidScores = new Map<string, number>();
+  for (const [ep, count] of inMemoryChallengesByEndpoint.entries()) {
+    const successes = inMemorySuccessesByEndpoint.get(ep) || 0;
+    const unpaid = Math.max(0, count - successes);
+    if (unpaid > 0) {
+      endpointUnpaidScores.set(ep, unpaid);
+    }
+  }
+
+  const topUnpaidEndpoints: string[] = Array.from(endpointUnpaidScores.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([ep]) => ep);
+
+  return {
+    lifetime: {
+      challengesServed,
+      paymentAttempts,
+      paymentSuccesses,
+      challengeToAttempt,
+      attemptToSuccess
+    },
+    last24h: {
+      challengesServed: Math.max(memChallenges, dayChallenges),
+      paymentAttempts: Math.max(memAttempts, dayAttempts),
+      paymentSuccesses: Math.max(memSuccesses, daySuccesses)
+    },
+    topUnpaidEndpoints,
+    lastUpdated: new Date().toISOString()
+  };
+}
+
 export function getRecentCommerceEvents(limit: number = 50): MachineCommerceEvent[] {
   return machineCommerceEvents.slice(-limit);
 }
+
+agentTelemetryRouter.get(['/attempts-summary', '/telemetry/attempts-summary'], async (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  const expectedKey = process.env.AGENT_API_SECRET_KEY;
+
+  if (!expectedKey || token !== expectedKey) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Valid AGENT_API_SECRET_KEY Bearer token required'
+    });
+  }
+
+  res.setHeader('Cache-Control', 'no-store');
+  const summary = await getAttemptsSummary();
+  return res.status(200).json(summary);
+});
 
 agentTelemetryRouter.get(['/events', '/telemetry/events'], (_req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store, private');

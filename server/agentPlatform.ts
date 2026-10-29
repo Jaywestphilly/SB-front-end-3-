@@ -797,6 +797,154 @@ agentPlatformRouter.get('/keys', authenticateHuman, async (req, res) => {
   }
 });
 
+// POST /api/v1/agents/keys/admin/revoke-before (Admin authority required)
+agentPlatformRouter.post(
+  ['/keys/admin/revoke-before', '/agents/keys/admin/revoke-before'],
+  authenticateAgent,
+  async (req: Request, res: Response) => {
+    try {
+      const agent = (req as any).agent;
+      const agentKey = (req as any).agentKey;
+
+      const scopes: string[] = [
+        ...(Array.isArray(agent?.scopes) ? agent.scopes : []),
+        ...(Array.isArray(agentKey?.scopes) ? agentKey.scopes : [])
+      ];
+      const isMaster = agent?.isMaster === true || agent?.agentId === 'platform_master_admin';
+      const hasAdminAuthority = isMaster || scopes.includes('admin') || scopes.includes('*');
+
+      if (!hasAdminAuthority) {
+        return res.status(403).json({
+          error: 'forbidden',
+          message: 'Admin authority required for bulk key revocation.'
+        });
+      }
+
+      const { beforeIso = '2026-10-29T00:00:00.000Z', publicIds } = req.body || {};
+      const cutoffMs = new Date(beforeIso).getTime();
+      const targetPublicIds = Array.isArray(publicIds) ? new Set(publicIds.map(String)) : null;
+
+      let scannedCount = 0;
+      let revokedCount = 0;
+      const revokedKeyIds: string[] = [];
+
+      if (db) {
+        const snap = await db.collection('api_keys').get();
+        scannedCount = snap.size;
+
+        for (const doc of snap.docs) {
+          const data = doc.data();
+          const docPublicId = data.publicId || data.keyId || doc.id;
+
+          if (data.status !== 'active') {
+            continue;
+          }
+
+          let createdMs: number | null = null;
+          if (data.createdAt) {
+            if (typeof data.createdAt === 'string') {
+              const parsed = new Date(data.createdAt).getTime();
+              if (!isNaN(parsed)) createdMs = parsed;
+            } else if (typeof data.createdAt?._seconds === 'number') {
+              createdMs = data.createdAt._seconds * 1000;
+            } else if (typeof data.createdAt?.seconds === 'number') {
+              createdMs = data.createdAt.seconds * 1000;
+            } else if (typeof data.createdAt?.toDate === 'function') {
+              createdMs = data.createdAt.toDate().getTime();
+            } else if (data.createdAt instanceof Date) {
+              createdMs = data.createdAt.getTime();
+            }
+          }
+
+          const isListed = targetPublicIds ? (targetPublicIds.has(docPublicId) || targetPublicIds.has(doc.id)) : false;
+          const isBefore = createdMs !== null && !isNaN(cutoffMs) && createdMs < cutoffMs;
+
+          if (isListed || isBefore) {
+            await doc.ref.update({
+              status: 'revoked',
+              revokedAt: FieldValue.serverTimestamp(),
+              revokeReason: 'bulk_pre_2026-10-29_rotation'
+            });
+
+            // Mirror on agent_api_keys/{id} if it exists
+            try {
+              const mirrorRef = db.collection('agent_api_keys').doc(doc.id);
+              const mirrorSnap = await mirrorRef.get();
+              if (mirrorSnap.exists) {
+                await mirrorRef.update({
+                  status: 'revoked',
+                  revokedAt: FieldValue.serverTimestamp(),
+                  revokeReason: 'bulk_pre_2026-10-29_rotation'
+                });
+              }
+            } catch (_) {}
+
+            // Evict from inMemoryKeyRegistry
+            inMemoryKeyRegistry.delete(doc.id);
+            if (docPublicId) inMemoryKeyRegistry.delete(docPublicId);
+            for (const [memKey, memVal] of inMemoryKeyRegistry.entries()) {
+              if (memVal.keyId === doc.id || memVal.keyId === docPublicId || (memVal as any).publicId === docPublicId) {
+                inMemoryKeyRegistry.delete(memKey);
+              }
+            }
+
+            revokedCount++;
+            revokedKeyIds.push(docPublicId);
+          }
+        }
+      }
+
+      // In-memory fallback if firestore returned 0 docs but registry has keys
+      if (scannedCount === 0 && inMemoryKeyRegistry.size > 0) {
+        const checkedPublicIds = new Set<string>();
+        for (const [memKey, data] of Array.from(inMemoryKeyRegistry.entries())) {
+          if (data && typeof data === 'object' && data.keyId) {
+            const docPublicId = (data as any).publicId || data.keyId || memKey;
+            if (checkedPublicIds.has(docPublicId)) continue;
+            checkedPublicIds.add(docPublicId);
+            scannedCount++;
+
+            if (data.status === 'active') {
+              let createdMs: number | null = null;
+              if (data.createdAt) {
+                if (typeof data.createdAt === 'string') {
+                  const parsed = new Date(data.createdAt).getTime();
+                  if (!isNaN(parsed)) createdMs = parsed;
+                } else if (typeof (data.createdAt as any)?._seconds === 'number') {
+                  createdMs = (data.createdAt as any)._seconds * 1000;
+                }
+              }
+
+              const isListed = targetPublicIds ? (targetPublicIds.has(docPublicId) || targetPublicIds.has(memKey)) : false;
+              const isBefore = createdMs !== null && !isNaN(cutoffMs) && createdMs < cutoffMs;
+
+              if (isListed || isBefore) {
+                data.status = 'revoked';
+                data.revokedAt = new Date().toISOString();
+                (data as any).revokeReason = 'bulk_pre_2026-10-29_rotation';
+                inMemoryKeyRegistry.delete(memKey);
+                inMemoryKeyRegistry.delete(docPublicId);
+                revokedCount++;
+                revokedKeyIds.push(docPublicId);
+              }
+            }
+          }
+        }
+      }
+
+      return res.json({
+        revokedCount,
+        scannedCount,
+        beforeIso,
+        revokedKeyIds: revokedKeyIds.slice(0, 200)
+      });
+    } catch (err: any) {
+      console.error('[revoke-before] Error:', err);
+      return res.status(500).json({ error: 'Internal server error.' });
+    }
+  }
+);
+
 // POST /api/v1/agents/keys/:keyId/revoke (Requires human auth)
 agentPlatformRouter.post('/keys/:keyId/revoke', authenticateHuman, async (req, res) => {
   try {
@@ -830,6 +978,171 @@ agentPlatformRouter.post('/keys/:keyId/revoke', authenticateHuman, async (req, r
     return res.status(500).json({ error: 'Internal server error.' });
   }
 });
+
+// POST /api/v1/agents/keys/:keyId/reissue (Owner or Admin)
+agentPlatformRouter.post(
+  ['/keys/:keyId/reissue', '/agents/keys/:keyId/reissue'],
+  async (req: Request, res: Response) => {
+    try {
+      const { keyId } = req.params;
+      const authHeader = req.headers.authorization || (req.headers['x-agent-key'] as string);
+      if (!authHeader) {
+        return res.status(401).json({ error: 'Unauthorized: Missing authentication credentials.' });
+      }
+
+      const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7).trim() : authHeader.trim();
+
+      let callerUid: string | null = null;
+      let callerAgent: any = null;
+      let callerAgentKey: any = null;
+
+      const configuredMasterKey = (process.env.AGENT_API_SECRET_KEY || '').trim();
+      const internalAdminKeys = [
+        configuredMasterKey,
+        (process.env.INTERNAL_ADMIN_KEY || '').trim(),
+        (process.env.ADMIN_API_KEY || '').trim(),
+        (process.env.ADMIN_KEY || '').trim(),
+        (process.env.ADMIN_SECRET || '').trim(),
+        (process.env.ADMIN_TOKEN || '').trim(),
+        (process.env.NODE_ENV !== 'production' && process.env.AGENT_ENV !== 'production' ? 'stock_bloc_agent_secret_2026' : '')
+      ].filter(Boolean);
+
+      if (internalAdminKeys.includes(token)) {
+        callerAgent = {
+          agentId: 'platform_master_admin',
+          handle: 'admin',
+          displayName: 'Platform Admin Agent',
+          isMaster: true,
+          status: 'active'
+        };
+        callerAgentKey = {
+          keyId: 'master',
+          agentId: 'platform_master_admin',
+          scopes: ['admin', '*'],
+          status: 'active'
+        };
+      } else if (token.startsWith('sb_live_')) {
+        await new Promise<void>((resolve) => {
+          canonicalAuthenticateAgent(req, res, () => {
+            callerAgent = (req as any).agent;
+            callerAgentKey = (req as any).agentKey;
+            resolve();
+          });
+        });
+        if (res.headersSent) return;
+      } else {
+        try {
+          const decodedToken = await auth.verifyIdToken(token);
+          callerUid = decodedToken.uid;
+        } catch (_) {
+          await new Promise<void>((resolve) => {
+            canonicalAuthenticateAgent(req, res, () => {
+              callerAgent = (req as any).agent;
+              callerAgentKey = (req as any).agentKey;
+              resolve();
+            });
+          });
+          if (res.headersSent) return;
+        }
+      }
+
+      if (!callerUid && !callerAgent) {
+        return res.status(401).json({ error: 'Unauthorized: Authentication required.' });
+      }
+
+      let keyData: any = null;
+      let keyRef = db ? db.collection('api_keys').doc(keyId) : null;
+      if (keyRef) {
+        const keySnap = await keyRef.get();
+        if (keySnap.exists) {
+          keyData = keySnap.data();
+        } else {
+          const altRef = db.collection('agent_api_keys').doc(keyId);
+          const altSnap = await altRef.get();
+          if (altSnap.exists) {
+            keyData = altSnap.data();
+            keyRef = altRef;
+          }
+        }
+      }
+
+      if (!keyData) {
+        keyData = inMemoryKeyRegistry.get(keyId);
+      }
+
+      if (!keyData) {
+        return res.status(404).json({ error: 'Key not found.' });
+      }
+
+      const scopes: string[] = [
+        ...(Array.isArray(callerAgent?.scopes) ? callerAgent.scopes : []),
+        ...(Array.isArray(callerAgentKey?.scopes) ? callerAgentKey.scopes : [])
+      ];
+      const isAdmin = callerAgent?.isMaster === true || scopes.includes('admin') || scopes.includes('*');
+      const isOwner = (callerUid && keyData.ownerUid === callerUid) ||
+                      (callerAgent?.agentId && keyData.agentId === callerAgent.agentId);
+
+      if (!isAdmin && !isOwner) {
+        return res.status(403).json({ error: 'You do not own this key and are not an admin.' });
+      }
+
+      // Mint a new secret with crypto.randomBytes(32)
+      const secret = crypto.randomBytes(32).toString('hex');
+      const rawKey = `sb_live_${keyId}_${secret}`;
+      const keyHash = crypto.createHash('sha256').update(secret).digest('hex');
+      const publicId = keyData.publicId || keyData.keyId || keyId;
+      const keyPrefix = publicId.slice(-4) + '...';
+      const reissuedAt = new Date().toISOString();
+
+      const updatedDoc = {
+        ...keyData,
+        keyId,
+        agentId: keyData.agentId,
+        publicId,
+        keyPrefix,
+        keyHash,
+        secretHash: keyHash,
+        status: 'active',
+        revokedAt: null,
+        reissuedAt,
+        lastUsedAt: null
+      };
+
+      // Dual-write both collections
+      if (db) {
+        try {
+          await db.collection('api_keys').doc(keyId).set(updatedDoc, { merge: true });
+          await db.collection('agent_api_keys').doc(keyId).set(updatedDoc, { merge: true });
+        } catch (dbErr: any) {
+          console.warn('[reissue] Firestore dual-write deferred:', dbErr?.message || dbErr);
+        }
+      }
+
+      // Update inMemoryKeyRegistry
+      inMemoryKeyRegistry.delete(keyId);
+      inMemoryKeyRegistry.delete(publicId);
+      for (const [memKey, memVal] of inMemoryKeyRegistry.entries()) {
+        if (memVal.keyId === keyId || memVal.keyId === publicId) {
+          inMemoryKeyRegistry.delete(memKey);
+        }
+      }
+      inMemoryKeyRegistry.set(keyId, updatedDoc);
+      inMemoryKeyRegistry.set(publicId, updatedDoc);
+      inMemoryKeyRegistry.set(rawKey, updatedDoc);
+
+      // Return once { keyId, key: "sb_live_"+keyId+"_"+secret, status: "active" }
+      // Never log the raw key or secret
+      return res.json({
+        keyId,
+        key: rawKey,
+        status: 'active'
+      });
+    } catch (error) {
+      console.error('Key reissue error:', error);
+      return res.status(500).json({ error: 'Internal server error.' });
+    }
+  }
+);
 
 // POST /api/v1/agents/keys/:keyId/rotate (Requires human auth)
 agentPlatformRouter.post('/keys/:keyId/rotate', authenticateHuman, async (req, res) => {

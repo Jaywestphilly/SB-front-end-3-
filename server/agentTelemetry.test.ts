@@ -12,8 +12,11 @@ import {
   getMachineRevenueMetrics,
   getRecentCommerceEvents,
   isSelfWallet,
-  KNOWN_SELF_WALLETS
+  KNOWN_SELF_WALLETS,
+  getAttemptsSummary,
+  hydrateCommerceLifetimeFromFirestore
 } from './agentTelemetry.js';
+import { db } from './firebaseAdmin.js';
 
 describe('Zero-Knowledge 24-Hour Agent Telemetry Counter (Honest Metrics)', () => {
   beforeEach(() => {
@@ -449,5 +452,160 @@ describe('Transaction Funnel Telemetry & Conversion Engine (Blocker 3)', () => {
     const metrics = getMachineRevenueMetrics();
     expect(metrics.externalAgentsCount).toBe(0);
     expect(metrics.revenueBySource['self']).toBe(10.0);
+  });
+
+  it('8. Recognizes the three new self-wallets', () => {
+    const additionalWallets = [
+      '0x6a0b784cf4e3f79e0bca889e35a1b3aa1dc24518',
+      '0xec2abd3eda89bed90124736e317e847d5fb6d034',
+      '0x6dcbce46a8b494c885d0e7b6817d2b519df64467'
+    ];
+    for (const wallet of additionalWallets) {
+      expect(isSelfWallet(wallet)).toBe(true);
+      expect(isSelfWallet(wallet.toUpperCase())).toBe(true);
+      expect(KNOWN_SELF_WALLETS.has(wallet)).toBe(true);
+    }
+  });
+
+  it('9. GET /attempts-summary requires Bearer equal to process.env.AGENT_API_SECRET_KEY else 401 JSON', async () => {
+    const testSecret = 'test_agent_secret_key_summary_123';
+    process.env.AGENT_API_SECRET_KEY = testSecret;
+
+    const app = express();
+    app.use('/api/v1/telemetry', agentTelemetryRouter);
+
+    // Missing Authorization header -> 401 JSON
+    const resNoAuth = await request(app)
+      .get('/api/v1/telemetry/attempts-summary')
+      .expect(401);
+    expect(resNoAuth.body).toHaveProperty('error', 'Unauthorized');
+    expect(resNoAuth.headers['cache-control']).toBe('no-store');
+
+    // Wrong Bearer token -> 401 JSON
+    const resBadAuth = await request(app)
+      .get('/api/v1/telemetry/attempts-summary')
+      .set('Authorization', 'Bearer wrong_token_xyz')
+      .expect(401);
+    expect(resBadAuth.body).toHaveProperty('error', 'Unauthorized');
+
+    // Correct Bearer token -> 200 JSON with no-store
+    const resOk = await request(app)
+      .get('/api/v1/telemetry/attempts-summary')
+      .set('Authorization', `Bearer ${testSecret}`)
+      .expect(200);
+    expect(resOk.headers['cache-control']).toBe('no-store');
+    expect(resOk.body).toHaveProperty('lifetime');
+    expect(resOk.body).toHaveProperty('last24h');
+    expect(resOk.body).toHaveProperty('topUnpaidEndpoints');
+    expect(resOk.body).toHaveProperty('lastUpdated');
+  });
+
+  it('10. GET /attempts-summary returns exact expected structure and tracks top unpaid endpoints', async () => {
+    const testSecret = 'test_agent_secret_key_structure_456';
+    process.env.AGENT_API_SECRET_KEY = testSecret;
+
+    // Record 3 challenges on /api/v1/sec/job, 1 paid
+    recordMachineCommerceEvent({
+      eventType: 'payment_required',
+      endpoint: '/api/v1/sec/job'
+    });
+    recordMachineCommerceEvent({
+      eventType: 'payment_required',
+      endpoint: '/api/v1/sec/job'
+    });
+    recordMachineCommerceEvent({
+      eventType: 'payment_required',
+      endpoint: '/api/v1/sec/job'
+    });
+    recordMachineCommerceEvent({
+      eventType: 'payment_attempt',
+      endpoint: '/api/v1/sec/job',
+      paymentId: 'attempt_sec_01'
+    });
+    recordMachineCommerceEvent({
+      eventType: 'payment_success',
+      endpoint: '/api/v1/sec/job',
+      paymentId: 'attempt_sec_01',
+      txHash: '0xhash_sec_01',
+      amountUsd: 0.05
+    });
+
+    // Record 2 challenges on /api/v1/intelligence/sb-score, 0 paid
+    recordMachineCommerceEvent({
+      eventType: 'payment_required',
+      endpoint: '/api/v1/intelligence/sb-score'
+    });
+    recordMachineCommerceEvent({
+      eventType: 'payment_required',
+      endpoint: '/api/v1/intelligence/sb-score'
+    });
+
+    const app = express();
+    app.use('/api/v1/telemetry', agentTelemetryRouter);
+
+    const res = await request(app)
+      .get('/api/v1/telemetry/attempts-summary')
+      .set('Authorization', `Bearer ${testSecret}`)
+      .expect(200);
+
+    const { lifetime, last24h, topUnpaidEndpoints, lastUpdated } = res.body;
+
+    expect(lifetime.challengesServed).toBe(5);
+    expect(lifetime.paymentAttempts).toBe(1);
+    expect(lifetime.paymentSuccesses).toBe(1);
+    expect(lifetime.challengeToAttempt).toBe(0.2);
+    expect(lifetime.attemptToSuccess).toBe(1.0);
+
+    expect(last24h.challengesServed).toBeGreaterThanOrEqual(5);
+    expect(last24h.paymentAttempts).toBeGreaterThanOrEqual(1);
+    expect(last24h.paymentSuccesses).toBeGreaterThanOrEqual(1);
+
+    expect(Array.isArray(topUnpaidEndpoints)).toBe(true);
+    // Both endpoints have unpaid challenges: /api/v1/sec/job (2 unpaid), /api/v1/intelligence/sb-score (2 unpaid)
+    expect(topUnpaidEndpoints.length).toBeLessThanOrEqual(10);
+    expect(topUnpaidEndpoints).toContain('_api_v1_sec_job');
+    expect(topUnpaidEndpoints).toContain('_api_v1_intelligence_sb-score');
+    expect(typeof lastUpdated).toBe('string');
+  });
+
+  it('11. Hydration sets in-memory counters to Math.max(current, stored) and does not invent numbers if doc missing', async () => {
+    // Current in-memory counters
+    recordMachineCommerceEvent({
+      eventType: 'payment_required',
+      endpoint: 'sec_job'
+    });
+    expect(getTransactionFunnelMetrics().challengesServed).toBe(1);
+
+    // Set doc in Firestore with higher challenges and successes
+    await db.collection('telemetry_aggregates').doc('commerce_lifetime').set({
+      challengesServed: 10,
+      paymentAttempts: 5,
+      paymentSuccesses: 4,
+      challengesServedByEndpoint: {
+        sec_job: 10
+      }
+    }, { merge: true });
+
+    await hydrateCommerceLifetimeFromFirestore();
+
+    const summary = await getAttemptsSummary();
+    expect(summary.lifetime.challengesServed).toBe(10);
+    expect(summary.lifetime.paymentAttempts).toBe(5);
+    expect(summary.lifetime.paymentSuccesses).toBe(4);
+  });
+
+  it('12. Keeps /revenue and /funnel routes public without requiring credentials', async () => {
+    const app = express();
+    app.use('/api/v1/telemetry', agentTelemetryRouter);
+
+    const revRes = await request(app)
+      .get('/api/v1/telemetry/revenue')
+      .expect(200);
+    expect(revRes.body).toHaveProperty('totalUsdcRevenue');
+
+    const funRes = await request(app)
+      .get('/api/v1/telemetry/funnel')
+      .expect(200);
+    expect(funRes.body).toHaveProperty('challengesServed');
   });
 });
