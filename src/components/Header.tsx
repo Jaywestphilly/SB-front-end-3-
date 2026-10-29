@@ -20,7 +20,6 @@ import {
   BookOpen,
   Youtube,
   Database,
-  Watch,
   Users,
   Menu,
   X,
@@ -306,17 +305,6 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          {/* Apple Watch Companion Glance View */}
-          <button
-            onClick={() => {
-              triggerHaptic("selection");
-              if (onSelectTab) onSelectTab("apple_watch");
-            }}
-            className="p-1.5 rounded-lg obsidian-pill-btn text-emerald-300 hover:text-emerald-200 border-emerald-500/35 cursor-pointer shrink-0"
-            title="Apple Watch Companion Mode & Glance View"
-          >
-            <Watch className="w-4 h-4 text-emerald-400" />
-          </button>
 
           {/* Day / Dark Theme Mode Toggle */}
           {onToggleDayMode && (
@@ -509,17 +497,6 @@ export const Header: React.FC<HeaderProps> = ({
               <span>YOUTUBE</span>
             </button>
 
-            <button
-              onClick={() => {
-                triggerHaptic("selection");
-                setIsMobileMenuOpen(false);
-                if (onSelectTab) onSelectTab("apple_watch");
-              }}
-              className="p-2.5 bg-neutral-900 text-emerald-300 border border-emerald-500/40 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-neutral-800"
-            >
-              <Watch className="w-4 h-4 text-emerald-400" />
-              <span>WATCH MODE</span>
-            </button>
 
             <button
               onClick={() => {

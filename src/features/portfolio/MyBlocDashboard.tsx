@@ -59,7 +59,6 @@ import {
   Library,
   Eye,
   FileText,
-  Watch,
   Users,
 } from "lucide-react";
 import { NotFinancialAdviceTag } from "../../components/NotFinancialAdviceTag";
@@ -1342,31 +1341,6 @@ export const MyBlocDashboard: React.FC<MyBlocDashboardProps> = ({
               </div>
             </div>
 
-            {/* Apple Watch Mode Settings */}
-            <div className="bg-neutral-900/60 border border-neutral-700/60 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <Watch className="w-4 h-4 text-emerald-400" />
-                  <h3 className="text-sm font-bold text-white uppercase">Apple Watch Companion Mode</h3>
-                  <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded font-mono font-bold uppercase">
-                    GLANCE READY
-                  </span>
-                </div>
-                <p className="text-xs text-neutral-400 mt-1">
-                  Launch the ultra-compact OLED watch interface designed for Apple Watch Series, SE, & Ultra screens, or view Swift Playgrounds code.
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  triggerHaptic("selection");
-                  onSelectTab("apple_watch");
-                }}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md shadow-emerald-500/20 shrink-0 flex items-center gap-1.5 cursor-pointer"
-              >
-                <Watch className="w-4 h-4 text-black" />
-                <span>LAUNCH WATCH GLANCE</span>
-              </button>
-            </div>
           </div>
         </div>
       )}

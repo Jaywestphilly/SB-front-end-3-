@@ -284,7 +284,6 @@ const HubLoadingFallback: React.FC = () => (
   </div>
 );
 
-import { AppleWatchGlanceView } from "../components/AppleWatchGlanceView";
 import { DisclaimerBar } from "../components/DisclaimerBar";
 import { trackEvent } from "../utils/analytics";
 import { FloatingCommunityButton } from "../components/FloatingCommunityButton";
@@ -341,12 +340,6 @@ export function App() {
 
   // Route & High Contrast Initial State
   const initialRoute = useMemo(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("watch") === "true" || params.get("mode") === "watch") {
-        return { tab: "apple_watch" as ViewTab, isTerminalOpen: false, stockSymbol: undefined };
-      }
-    }
     return getRouteFromLocation();
   }, []);
   const [activeTab, setActiveTab] = useState<ViewTab>(initialRoute.tab);
@@ -1705,16 +1698,6 @@ export function App() {
           />
         )}
 
-        {activeTab === "apple_watch" && (
-          <AppleWatchGlanceView
-            stocks={stocks}
-            onExitWatchMode={() => setActiveTab("watchlist")}
-            onSelectStock={(stk) => {
-              setSelectedStock(stk);
-              setActiveTab("watchlist");
-            }}
-          />
-        )}
 
         {activeTab === "docs" && <DocsHub />}
 
