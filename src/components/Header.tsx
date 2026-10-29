@@ -25,6 +25,7 @@ import {
   Menu,
   X,
   BarChart3,
+  ShoppingBag,
 } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics";
 import { useMarketStore } from "../stores/marketStore";
@@ -466,6 +467,21 @@ export const Header: React.FC<HeaderProps> = ({
               <BookOpen className="w-4 h-4 text-purple-400" />
               <span>BOOKS & STORE</span>
             </button>
+
+            <a
+              href="https://t98k4m-v0.myshopify.com/collections/stock-bloc-tees"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsMobileMenuOpen(false);
+              }}
+              className="p-2.5 bg-neutral-900 text-cyan-200 border border-cyan-400/50 alien-block-cut-sm text-xs font-mono font-bold flex items-center gap-2 cursor-pointer hover:bg-neutral-800"
+            >
+              <ShoppingBag className="w-4 h-4 text-cyan-400" />
+              <span>SHOP</span>
+              <ExternalLink className="w-3 h-3 text-cyan-400/70 ml-auto" />
+            </a>
 
             {onOpenBloombergTerminal && (
               <button

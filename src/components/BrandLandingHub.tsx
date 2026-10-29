@@ -27,6 +27,7 @@ import { triggerHaptic } from "../utils/haptics";
 import { trackEvent } from "../utils/analytics";
 import { ViewTab } from "../types";
 import { appendUTM } from "../utils/utm";
+import { MerchSection } from "./MerchSection";
 
 interface BrandLandingHubProps {
   onSelectTab: (tab: ViewTab) => void;
@@ -715,6 +716,9 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Official Merch Section */}
+      <MerchSection />
     </div>
   );
 };

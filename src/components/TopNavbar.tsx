@@ -21,6 +21,8 @@ import {
   BarChart3,
   Users,
   MessageSquare,
+  ShoppingBag,
+  ExternalLink,
 } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics";
 
@@ -335,7 +337,20 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           <span>STORE & BOOKS</span>
         </button>
 
-        {/* 9. ABOUT & MISSION HUB */}
+        {/* 9. SHOP (MERCH TEES) */}
+        <a
+          href="https://t98k4m-v0.myshopify.com/collections/stock-bloc-tees"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => triggerHaptic("selection")}
+          className="px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none obsidian-pill-btn text-cyan-200/90 hover:text-white border-cyan-500/30 hover:border-cyan-400"
+          title="Stock Bloc Merch Tees - Shopify Store"
+        >
+          <ShoppingBag className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+          <span>SHOP</span>
+        </a>
+
+        {/* 10. ABOUT & MISSION HUB */}
         <button
           onClick={() => {
             triggerHaptic("selection");
