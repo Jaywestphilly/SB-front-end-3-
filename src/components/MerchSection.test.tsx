@@ -9,53 +9,39 @@ describe("MerchSection component", () => {
     expect(screen.getByRole("heading", { name: /Stock Bloc Merch/i })).toBeInTheDocument();
   });
 
-  it("renders exactly 7 merch cards with the specified tees and $29.99 price", () => {
+  it("renders the View All link to the full collection", () => {
+    render(<MerchSection />);
+    const viewAllLink = screen.getByRole("link", { name: /View All/i });
+    expect(viewAllLink).toHaveAttribute("href", "https://t98k4m-v0.myshopify.com/collections/all");
+    expect(viewAllLink).toHaveAttribute("target", "_blank");
+    expect(viewAllLink).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("renders exactly 12 merch cards with product name, price, image, and Shop button", () => {
     render(<MerchSection />);
 
-    const expectedTees = [
-      {
-        name: "Neon Logo Tee",
-        url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-neon-logo-tee",
-      },
-      {
-        name: "Outline Logo Tee",
-        url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-outline-logo-tee",
-      },
-      {
-        name: "Sparkle Outline Tee",
-        url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-sparkle-outline-tee",
-      },
-      {
-        name: "Sixers Sparkle Tee",
-        url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-sixers-sparkle-tee",
-      },
-      {
-        name: "Eagles Sparkle Tee",
-        url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-eagles-sparkle-tee",
-      },
-      {
-        name: "Phillies Sparkle Tee",
-        url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-phillies-sparkle-tee",
-      },
-      {
-        name: "Philly Connect Sparkle Tee",
-        url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-philly-connect-sparkle-tee",
-      },
-    ];
+    expect(MERCH_PRODUCTS).toHaveLength(12);
 
-    expect(MERCH_PRODUCTS).toHaveLength(7);
+    MERCH_PRODUCTS.forEach((product) => {
+      expect(screen.getByText(product.name)).toBeInTheDocument();
 
-    expectedTees.forEach((tee) => {
-      expect(screen.getByText(tee.name)).toBeInTheDocument();
-      const link = screen.getAllByRole("link").find((l) => l.getAttribute("href") === tee.url);
+      const image = screen.getByAltText(product.name);
+      expect(image).toBeInTheDocument();
+      expect(image).toHaveAttribute("src", product.image);
+
+      const link = screen.getAllByRole("link").find((l) => l.getAttribute("href") === product.url);
       expect(link).toBeDefined();
       expect(link).toHaveAttribute("target", "_blank");
       expect(link).toHaveAttribute("rel", "noopener noreferrer");
       expect(link?.textContent).toContain("Shop");
     });
 
-    const prices = screen.getAllByText("$29.99");
-    expect(prices).toHaveLength(7);
+    // Check prices
+    expect(screen.getAllByText("$29.99")).toHaveLength(8);
+    expect(screen.getByText("$54.99")).toBeInTheDocument();
+    expect(screen.getByText("$44.99")).toBeInTheDocument();
+    expect(screen.getByText("$34.99")).toBeInTheDocument();
+    expect(screen.getByText("from $4.99")).toBeInTheDocument();
   });
 
   it("does not include shipping or discount claims", () => {
