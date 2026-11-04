@@ -30,7 +30,7 @@ describe("MerchSection component", () => {
 
     render(<MerchSection />);
     const viewAllLink = screen.getByRole("link", { name: /View All/i });
-    expect(viewAllLink).toHaveAttribute("href", "https://t98k4m-v0.myshopify.com/collections/all");
+    expect(viewAllLink).toHaveAttribute("href", "https://thestockbloc.myshopify.com/collections/all");
     expect(viewAllLink).toHaveAttribute("target", "_blank");
     expect(viewAllLink).toHaveAttribute("rel", "noopener noreferrer");
   });

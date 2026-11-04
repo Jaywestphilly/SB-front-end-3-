@@ -343,7 +343,7 @@ export const MerchSection: React.FC<MerchSectionProps> = ({ className = "" }) =>
         </div>
 
         <a
-          href="https://t98k4m-v0.myshopify.com/collections/all"
+          href="https://thestockbloc.myshopify.com/collections/all"
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => triggerHaptic("selection")}
