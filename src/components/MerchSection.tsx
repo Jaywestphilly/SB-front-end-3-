@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ExternalLink, ShoppingBag } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics";
 
@@ -6,7 +6,8 @@ export interface MerchProduct {
   id: string;
   name: string;
   price: string;
-  image: string;
+  image?: string;
+  handle?: string;
   url: string;
 }
 
@@ -95,6 +96,97 @@ export const MERCH_PRODUCTS: MerchProduct[] = [
     image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_neon_logo_stickers.jpg?v=1793364661",
     url: "https://t98k4m-v0.myshopify.com/products/bubble-free-stickers",
   },
+  {
+    id: "stock-bloc-flyers-snow-tee",
+    name: "Stock Bloc Flyers Snow Tee",
+    price: "$29.99",
+    handle: "stock-bloc-flyers-snow-tee",
+    url: "https://thestockbloc.myshopify.com/products/stock-bloc-flyers-snow-tee",
+  },
+  {
+    id: "bullish-patient-liquid-pick-two-tee",
+    name: "Bullish Patient Liquid Pick Two Tee",
+    price: "$29.99",
+    handle: "bullish-patient-liquid-pick-two-tee",
+    url: "https://thestockbloc.myshopify.com/products/bullish-patient-liquid-pick-two-tee",
+  },
+  {
+    id: "good-fast-cheap-pick-two-tee",
+    name: "Good Fast Cheap Pick Two Tee",
+    price: "$29.99",
+    handle: "good-fast-cheap-pick-two-tee",
+    url: "https://thestockbloc.myshopify.com/products/good-fast-cheap-pick-two-tee",
+  },
+  {
+    id: "i-just-like-the-stock-tee",
+    name: "I Just Like The Stock Tee",
+    price: "$29.99",
+    handle: "i-just-like-the-stock-tee",
+    url: "https://thestockbloc.myshopify.com/products/i-just-like-the-stock-tee",
+  },
+  {
+    id: "bitcoin-fixes-this-tee",
+    name: "Bitcoin Fixes This Tee",
+    price: "$29.99",
+    handle: "bitcoin-fixes-this-tee",
+    url: "https://thestockbloc.myshopify.com/products/bitcoin-fixes-this-tee",
+  },
+  {
+    id: "diamond-hands-beanie",
+    name: "Diamond Hands Beanie",
+    price: "$24.99",
+    handle: "diamond-hands-beanie",
+    url: "https://thestockbloc.myshopify.com/products/diamond-hands-beanie",
+  },
+  {
+    id: "priced-in-dad-hat",
+    name: "Priced In Dad Hat",
+    price: "$29.99",
+    handle: "priced-in-dad-hat",
+    url: "https://thestockbloc.myshopify.com/products/priced-in-dad-hat",
+  },
+  {
+    id: "buy-the-dip-mug",
+    name: "Buy The Dip Mug",
+    price: "from $22.99",
+    handle: "buy-the-dip-mug",
+    url: "https://thestockbloc.myshopify.com/products/buy-the-dip-mug",
+  },
+  {
+    id: "still-accumulating-tumbler",
+    name: "Still Accumulating Tumbler",
+    price: "$39.99",
+    handle: "still-accumulating-tumbler",
+    url: "https://thestockbloc.myshopify.com/products/still-accumulating-tumbler",
+  },
+  {
+    id: "hodl-chart-crossbody-bag",
+    name: "HODL Chart Crossbody Bag",
+    price: "$44.99",
+    handle: "hodl-chart-crossbody-bag",
+    url: "https://thestockbloc.myshopify.com/products/hodl-chart-crossbody-bag",
+  },
+  {
+    id: "rising-chart-aop-shorts",
+    name: "Rising Chart AOP Shorts",
+    price: "$42.99",
+    handle: "rising-chart-aop-shorts",
+    url: "https://thestockbloc.myshopify.com/products/rising-chart-aop-shorts",
+  },
+  {
+    id: "rising-chart-aop-joggers",
+    name: "Rising Chart AOP Joggers",
+    price: "$69.99",
+    handle: "rising-chart-aop-joggers",
+    url: "https://thestockbloc.myshopify.com/products/rising-chart-aop-joggers",
+  },
+  {
+    id: "rising-chart-aop-hoodie",
+    name: "Rising Chart AOP Hoodie",
+    price: "$69.99",
+    handle: "rising-chart-aop-hoodie",
+    url: "https://thestockbloc.myshopify.com/products/rising-chart-aop-hoodie",
+  },
 ];
 
 interface MerchSectionProps {
@@ -102,6 +194,33 @@ interface MerchSectionProps {
 }
 
 export const MerchSection: React.FC<MerchSectionProps> = ({ className = "" }) => {
+  const [shopifyImages, setShopifyImages] = useState<Record<string, string>>({});
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+    const productsWithHandle = MERCH_PRODUCTS.filter((p) => Boolean(p.handle));
+
+    productsWithHandle.forEach(async (item) => {
+      if (!item.handle || typeof fetch !== "function") return;
+      try {
+        const res = await fetch(`https://thestockbloc.myshopify.com/products/${item.handle}.json`);
+        if (!res || !res.ok) return;
+        const data = await res.json();
+        const src = data?.product?.image?.src;
+        if (isMounted && typeof src === "string" && src.trim().length > 0) {
+          setShopifyImages((prev) => ({ ...prev, [item.handle as string]: src }));
+        }
+      } catch {
+        // If fetch fails, show name and price with no image instead of a placeholder
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <section
       aria-label="Stock Bloc Merch"
@@ -139,50 +258,60 @@ export const MerchSection: React.FC<MerchSectionProps> = ({ className = "" }) =>
         </a>
       </div>
 
-      {/* Grid of 12 Cards */}
+      {/* Grid of Merch Cards */}
       <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {MERCH_PRODUCTS.map((item) => (
-          <div
-            key={item.id}
-            className="group relative bg-black/90 hover:bg-[#020b14] border border-[#00E5FF]/30 hover:border-[#00E5FF] rounded-2xl p-4 flex flex-col justify-between transition-all duration-200 shadow-lg hover:shadow-[0_0_20px_rgba(0,229,255,0.2)]"
-          >
-            <div>
-              {/* Product Image */}
-              <div className="aspect-square w-full rounded-xl overflow-hidden bg-neutral-950 border border-cyan-500/20 mb-3.5 relative flex items-center justify-center">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  loading="lazy"
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
+        {MERCH_PRODUCTS.map((item) => {
+          const resolvedImage = item.image || (item.handle ? shopifyImages[item.handle] : undefined);
+          const showImage = Boolean(resolvedImage && !failedImages[item.id]);
 
-              {/* Name & Price */}
-              <div className="space-y-1.5">
-                <h3 className="font-mono font-bold text-white text-sm uppercase tracking-wide group-hover:text-[#00E5FF] transition-colors leading-snug line-clamp-2">
-                  {item.name}
-                </h3>
-                <div className="text-sm font-black font-mono text-[#00E5FF]">
-                  {item.price}
+          return (
+            <div
+              key={item.id}
+              className="group relative bg-black/90 hover:bg-[#020b14] border border-[#00E5FF]/30 hover:border-[#00E5FF] rounded-2xl p-4 flex flex-col justify-between transition-all duration-200 shadow-lg hover:shadow-[0_0_20px_rgba(0,229,255,0.2)]"
+            >
+              <div>
+                {/* Product Image (hidden if fetch fails or not loaded yet) */}
+                {showImage && (
+                  <div className="aspect-square w-full rounded-xl overflow-hidden bg-neutral-950 border border-cyan-500/20 mb-3.5 relative flex items-center justify-center">
+                    <img
+                      src={resolvedImage}
+                      alt={item.name}
+                      loading="lazy"
+                      onError={() =>
+                        setFailedImages((prev) => ({ ...prev, [item.id]: true }))
+                      }
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                )}
+
+                {/* Name & Price */}
+                <div className="space-y-1.5">
+                  <h3 className="font-mono font-bold text-white text-sm uppercase tracking-wide group-hover:text-[#00E5FF] transition-colors leading-snug line-clamp-2">
+                    {item.name}
+                  </h3>
+                  <div className="text-sm font-black font-mono text-[#00E5FF]">
+                    {item.price}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Bottom row: Shop Button */}
-            <div className="mt-4 pt-3 border-t border-cyan-500/20">
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => triggerHaptic("selection")}
-                className="w-full py-2 px-4 rounded-xl bg-black hover:bg-[#00E5FF] border border-[#00E5FF] text-[#00E5FF] hover:text-black font-mono font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-              >
-                <span>Shop</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+              {/* Bottom row: Shop Button */}
+              <div className="mt-4 pt-3 border-t border-cyan-500/20">
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => triggerHaptic("selection")}
+                  className="w-full py-2 px-4 rounded-xl bg-black hover:bg-[#00E5FF] border border-[#00E5FF] text-[#00E5FF] hover:text-black font-mono font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                >
+                  <span>Shop</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

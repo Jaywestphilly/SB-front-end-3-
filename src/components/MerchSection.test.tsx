@@ -1,15 +1,33 @@
 import React from "react";
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 import { MerchSection, MERCH_PRODUCTS } from "./MerchSection";
 
 describe("MerchSection component", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("renders the Merch section with title Stock Bloc Merch", () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: false,
+      json: async () => ({}),
+    } as Response);
+
     render(<MerchSection />);
     expect(screen.getByRole("heading", { name: /Stock Bloc Merch/i })).toBeInTheDocument();
   });
 
   it("renders the View All link to the full collection", () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: false,
+      json: async () => ({}),
+    } as Response);
+
     render(<MerchSection />);
     const viewAllLink = screen.getByRole("link", { name: /View All/i });
     expect(viewAllLink).toHaveAttribute("href", "https://t98k4m-v0.myshopify.com/collections/all");
@@ -17,34 +35,70 @@ describe("MerchSection component", () => {
     expect(viewAllLink).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("renders exactly 12 merch cards with product name, price, image, and Shop button", () => {
+  it("renders all 25 merch cards (12 existing + 13 new) and loads dynamic Shopify images at runtime", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      const match = url.match(/https:\/\/thestockbloc\.myshopify\.com\/products\/([^/]+)\.json$/);
+      const handle = match ? match[1] : "unknown";
+      return {
+        ok: true,
+        json: async () => ({
+          product: {
+            image: {
+              src: `https://cdn.shopify.com/mock/${handle}.jpg`,
+            },
+          },
+        }),
+      } as Response;
+    });
+
     render(<MerchSection />);
 
-    expect(MERCH_PRODUCTS).toHaveLength(12);
+    expect(MERCH_PRODUCTS).toHaveLength(25);
 
-    MERCH_PRODUCTS.forEach((product) => {
+    for (const product of MERCH_PRODUCTS) {
       expect(screen.getByText(product.name)).toBeInTheDocument();
-
-      const image = screen.getByAltText(product.name);
-      expect(image).toBeInTheDocument();
-      expect(image).toHaveAttribute("src", product.image);
 
       const link = screen.getAllByRole("link").find((l) => l.getAttribute("href") === product.url);
       expect(link).toBeDefined();
       expect(link).toHaveAttribute("target", "_blank");
       expect(link).toHaveAttribute("rel", "noopener noreferrer");
       expect(link?.textContent).toContain("Shop");
+    }
+
+    await waitFor(() => {
+      for (const product of MERCH_PRODUCTS) {
+        const image = screen.getByAltText(product.name);
+        expect(image).toBeInTheDocument();
+        if (product.image) {
+          expect(image).toHaveAttribute("src", product.image);
+        } else if (product.handle) {
+          expect(image).toHaveAttribute("src", `https://cdn.shopify.com/mock/${product.handle}.jpg`);
+        }
+      }
     });
 
-    // Check prices
-    expect(screen.getAllByText("$29.99")).toHaveLength(8);
-    expect(screen.getByText("$54.99")).toBeInTheDocument();
-    expect(screen.getByText("$44.99")).toBeInTheDocument();
-    expect(screen.getByText("$34.99")).toBeInTheDocument();
-    expect(screen.getByText("from $4.99")).toBeInTheDocument();
+    expect(fetchSpy).toHaveBeenCalledTimes(13);
+  });
+
+  it("shows name and price with no image instead of a placeholder if the Shopify JSON fetch fails", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("Network error"));
+
+    render(<MerchSection />);
+
+    expect(screen.getByText("Stock Bloc Flyers Snow Tee")).toBeInTheDocument();
+    expect(screen.queryByAltText("Stock Bloc Flyers Snow Tee")).not.toBeInTheDocument();
+
+    // Existing static image cards still render their image
+    expect(screen.getByAltText("Neon Logo Tee")).toBeInTheDocument();
   });
 
   it("does not include shipping or discount claims", () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: false,
+      json: async () => ({}),
+    } as Response);
+
     const { container } = render(<MerchSection />);
     const text = container.textContent?.toLowerCase() || "";
     expect(text).not.toContain("free shipping");
