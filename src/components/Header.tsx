@@ -457,7 +457,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             <a
-              href="https://t98k4m-v0.myshopify.com/collections/stock-bloc-tees"
+              href="https://thestockbloc.myshopify.com/collections/all"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => {

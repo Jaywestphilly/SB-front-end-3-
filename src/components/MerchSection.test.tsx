@@ -35,7 +35,7 @@ describe("MerchSection component", () => {
     expect(viewAllLink).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("renders all 25 merch cards with thestockbloc.myshopify.com links and loads all images at runtime from <handle>.json", async () => {
+  it("renders all 39 merch cards with thestockbloc.myshopify.com links and loads all images at runtime from <handle>.json", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
       const url = String(input);
       const match = url.match(/https:\/\/thestockbloc\.myshopify\.com\/products\/([^/]+)\.json$/);
@@ -54,13 +54,15 @@ describe("MerchSection component", () => {
 
     render(<MerchSection />);
 
-    expect(MERCH_PRODUCTS).toHaveLength(25);
+    expect(MERCH_PRODUCTS).toHaveLength(39);
+
+    const allLinks = screen.getAllByRole("link");
 
     for (const product of MERCH_PRODUCTS) {
       expect(screen.getByText(product.name)).toBeInTheDocument();
       expect(product.url).toBe(`https://thestockbloc.myshopify.com/products/${product.handle}`);
 
-      const link = screen.getAllByRole("link").find((l) => l.getAttribute("href") === product.url);
+      const link = allLinks.find((l) => l.getAttribute("href") === product.url);
       expect(link).toBeDefined();
       expect(link).toHaveAttribute("target", "_blank");
       expect(link).toHaveAttribute("rel", "noopener noreferrer");
@@ -75,7 +77,7 @@ describe("MerchSection component", () => {
       }
     });
 
-    expect(fetchSpy).toHaveBeenCalledTimes(25);
+    expect(fetchSpy).toHaveBeenCalledTimes(39);
   });
 
   it("shows name and price with no image instead of a placeholder if the Shopify JSON fetch fails", async () => {

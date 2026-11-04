@@ -339,7 +339,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 
         {/* 9. SHOP (MERCH TEES) */}
         <a
-          href="https://t98k4m-v0.myshopify.com/collections/stock-bloc-tees"
+          href="https://thestockbloc.myshopify.com/collections/all"
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => triggerHaptic("selection")}

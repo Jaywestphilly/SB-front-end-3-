@@ -11,7 +11,7 @@ describe("TopNavbar main nav menu", () => {
     expect(shopLink).toBeInTheDocument();
     expect(shopLink).toHaveAttribute(
       "href",
-      "https://t98k4m-v0.myshopify.com/collections/stock-bloc-tees"
+      "https://thestockbloc.myshopify.com/collections/all"
     );
     expect(shopLink).toHaveAttribute("target", "_blank");
     expect(shopLink).toHaveAttribute("rel", "noopener noreferrer");
