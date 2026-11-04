@@ -35,7 +35,7 @@ describe("MerchSection component", () => {
     expect(viewAllLink).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("renders all 25 merch cards (12 existing + 13 new) and loads dynamic Shopify images at runtime", async () => {
+  it("renders all 25 merch cards with thestockbloc.myshopify.com links and loads all images at runtime from <handle>.json", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
       const url = String(input);
       const match = url.match(/https:\/\/thestockbloc\.myshopify\.com\/products\/([^/]+)\.json$/);
@@ -58,6 +58,7 @@ describe("MerchSection component", () => {
 
     for (const product of MERCH_PRODUCTS) {
       expect(screen.getByText(product.name)).toBeInTheDocument();
+      expect(product.url).toBe(`https://thestockbloc.myshopify.com/products/${product.handle}`);
 
       const link = screen.getAllByRole("link").find((l) => l.getAttribute("href") === product.url);
       expect(link).toBeDefined();
@@ -70,15 +71,11 @@ describe("MerchSection component", () => {
       for (const product of MERCH_PRODUCTS) {
         const image = screen.getByAltText(product.name);
         expect(image).toBeInTheDocument();
-        if (product.image) {
-          expect(image).toHaveAttribute("src", product.image);
-        } else if (product.handle) {
-          expect(image).toHaveAttribute("src", `https://cdn.shopify.com/mock/${product.handle}.jpg`);
-        }
+        expect(image).toHaveAttribute("src", `https://cdn.shopify.com/mock/${product.handle}.jpg`);
       }
     });
 
-    expect(fetchSpy).toHaveBeenCalledTimes(13);
+    expect(fetchSpy).toHaveBeenCalledTimes(25);
   });
 
   it("shows name and price with no image instead of a placeholder if the Shopify JSON fetch fails", async () => {
@@ -86,11 +83,9 @@ describe("MerchSection component", () => {
 
     render(<MerchSection />);
 
+    expect(screen.getByText("Neon Logo Tee")).toBeInTheDocument();
     expect(screen.getByText("Stock Bloc Flyers Snow Tee")).toBeInTheDocument();
-    expect(screen.queryByAltText("Stock Bloc Flyers Snow Tee")).not.toBeInTheDocument();
-
-    // Existing static image cards still render their image
-    expect(screen.getByAltText("Neon Logo Tee")).toBeInTheDocument();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
   it("does not include shipping or discount claims", () => {

@@ -6,8 +6,7 @@ export interface MerchProduct {
   id: string;
   name: string;
   price: string;
-  image?: string;
-  handle?: string;
+  handle: string;
   url: string;
 }
 
@@ -16,85 +15,85 @@ export const MERCH_PRODUCTS: MerchProduct[] = [
     id: "neon-logo-tee",
     name: "Neon Logo Tee",
     price: "$29.99",
-    image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_neon_logo.jpg?v=1793364640",
-    url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-neon-logo-tee",
+    handle: "stock-bloc-neon-logo-tee",
+    url: "https://thestockbloc.myshopify.com/products/stock-bloc-neon-logo-tee",
   },
   {
     id: "outline-logo-tee",
     name: "Outline Logo Tee",
     price: "$29.99",
-    image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_outline_logo.jpg?v=1793364641",
-    url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-outline-logo-tee",
+    handle: "stock-bloc-outline-logo-tee",
+    url: "https://thestockbloc.myshopify.com/products/stock-bloc-outline-logo-tee",
   },
   {
     id: "sparkle-outline-tee",
     name: "Sparkle Outline Tee",
     price: "$29.99",
-    image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_sparkle_outline.jpg?v=1793364642",
-    url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-sparkle-outline-tee",
+    handle: "stock-bloc-sparkle-outline-tee",
+    url: "https://thestockbloc.myshopify.com/products/stock-bloc-sparkle-outline-tee",
   },
   {
     id: "sixers-sparkle-tee",
     name: "Sixers Sparkle Tee",
     price: "$29.99",
-    image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_sixers_sparkle.jpg?v=1793364643",
-    url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-sixers-sparkle-tee",
+    handle: "stock-bloc-sixers-sparkle-tee",
+    url: "https://thestockbloc.myshopify.com/products/stock-bloc-sixers-sparkle-tee",
   },
   {
     id: "eagles-sparkle-tee",
     name: "Eagles Sparkle Tee",
     price: "$29.99",
-    image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_eagles_sparkle.jpg?v=1793364644",
-    url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-eagles-sparkle-tee",
+    handle: "stock-bloc-eagles-sparkle-tee",
+    url: "https://thestockbloc.myshopify.com/products/stock-bloc-eagles-sparkle-tee",
   },
   {
     id: "phillies-sparkle-tee",
     name: "Phillies Sparkle Tee",
     price: "$29.99",
-    image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_phillies_sparkle.jpg?v=1793364646",
-    url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-phillies-sparkle-tee",
+    handle: "stock-bloc-phillies-sparkle-tee",
+    url: "https://thestockbloc.myshopify.com/products/stock-bloc-phillies-sparkle-tee",
   },
   {
     id: "philly-connect-sparkle-tee",
     name: "Philly Connect Sparkle Tee",
     price: "$29.99",
-    image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_philly_connect_sparkle.jpg?v=1793364656",
-    url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-philly-connect-sparkle-tee",
+    handle: "stock-bloc-philly-connect-sparkle-tee",
+    url: "https://thestockbloc.myshopify.com/products/stock-bloc-philly-connect-sparkle-tee",
   },
   {
     id: "quiet-snow-hoodie",
     name: "Quiet Snow Hoodie",
     price: "$54.99",
-    image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_quiet_snow_hoodie.jpg?v=1793364657",
-    url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-neon-logo-hoodie",
+    handle: "stock-bloc-neon-logo-hoodie",
+    url: "https://thestockbloc.myshopify.com/products/stock-bloc-neon-logo-hoodie",
   },
   {
     id: "quiet-snow-crewneck",
     name: "Quiet Snow Crewneck",
     price: "$44.99",
-    image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_quiet_snow_crewneck.jpg?v=1793364658",
-    url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-neon-logo-crewneck-sweatshirt",
+    handle: "stock-bloc-neon-logo-crewneck-sweatshirt",
+    url: "https://thestockbloc.myshopify.com/products/stock-bloc-neon-logo-crewneck-sweatshirt",
   },
   {
     id: "quiet-snow-long-sleeve",
     name: "Quiet Snow Long Sleeve",
     price: "$34.99",
-    image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_quiet_snow_longsleeve.jpg?v=1793364659",
-    url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-neon-logo-long-sleeve-tee",
+    handle: "stock-bloc-neon-logo-long-sleeve-tee",
+    url: "https://thestockbloc.myshopify.com/products/stock-bloc-neon-logo-long-sleeve-tee",
   },
   {
     id: "neon-two-tone-cap",
     name: "Neon Two-Tone Cap",
     price: "$29.99",
-    image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_neon_two_tone_cap.jpg?v=1793364661",
-    url: "https://t98k4m-v0.myshopify.com/products/stock-bloc-neon-two-tone-cap",
+    handle: "stock-bloc-neon-two-tone-cap",
+    url: "https://thestockbloc.myshopify.com/products/stock-bloc-neon-two-tone-cap",
   },
   {
     id: "neon-logo-stickers",
     name: "Neon Logo Stickers",
     price: "from $4.99",
-    image: "https://cdn.shopify.com/s/files/1/0761/4251/0216/files/v4_neon_logo_stickers.jpg?v=1793364661",
-    url: "https://t98k4m-v0.myshopify.com/products/bubble-free-stickers",
+    handle: "bubble-free-stickers",
+    url: "https://thestockbloc.myshopify.com/products/bubble-free-stickers",
   },
   {
     id: "stock-bloc-flyers-snow-tee",
@@ -199,9 +198,8 @@ export const MerchSection: React.FC<MerchSectionProps> = ({ className = "" }) =>
 
   useEffect(() => {
     let isMounted = true;
-    const productsWithHandle = MERCH_PRODUCTS.filter((p) => Boolean(p.handle));
 
-    productsWithHandle.forEach(async (item) => {
+    MERCH_PRODUCTS.forEach(async (item) => {
       if (!item.handle || typeof fetch !== "function") return;
       try {
         const res = await fetch(`https://thestockbloc.myshopify.com/products/${item.handle}.json`);
@@ -209,7 +207,7 @@ export const MerchSection: React.FC<MerchSectionProps> = ({ className = "" }) =>
         const data = await res.json();
         const src = data?.product?.image?.src;
         if (isMounted && typeof src === "string" && src.trim().length > 0) {
-          setShopifyImages((prev) => ({ ...prev, [item.handle as string]: src }));
+          setShopifyImages((prev) => ({ ...prev, [item.handle]: src }));
         }
       } catch {
         // If fetch fails, show name and price with no image instead of a placeholder
@@ -261,7 +259,7 @@ export const MerchSection: React.FC<MerchSectionProps> = ({ className = "" }) =>
       {/* Grid of Merch Cards */}
       <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {MERCH_PRODUCTS.map((item) => {
-          const resolvedImage = item.image || (item.handle ? shopifyImages[item.handle] : undefined);
+          const resolvedImage = shopifyImages[item.handle];
           const showImage = Boolean(resolvedImage && !failedImages[item.id]);
 
           return (
