@@ -243,11 +243,18 @@ export const MERCH_PRODUCTS: MerchProduct[] = [
     url: "https://thestockbloc.myshopify.com/products/stock-bloc-logo-corduroy-hat",
   },
   {
-    id: "to-the-moon-trucker-hat",
-    name: "To The Moon Trucker Hat",
+    id: "to-the-moon-corduroy-hat",
+    name: "To The Moon Corduroy Hat",
+    price: "$34.99",
+    handle: "to-the-moon-corduroy-hat",
+    url: "https://thestockbloc.myshopify.com/products/to-the-moon-corduroy-hat",
+  },
+  {
+    id: "to-the-moon-5-panel-cap",
+    name: "To The Moon 5-Panel Cap",
     price: "$32.99",
-    handle: "to-the-moon-trucker-hat",
-    url: "https://thestockbloc.myshopify.com/products/to-the-moon-trucker-hat",
+    handle: "to-the-moon-5-panel-cap",
+    url: "https://thestockbloc.myshopify.com/products/to-the-moon-5-panel-cap",
   },
   {
     id: "rising-chart-bomber-jacket",

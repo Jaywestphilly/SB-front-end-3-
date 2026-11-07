@@ -35,7 +35,7 @@ describe("MerchSection component", () => {
     expect(viewAllLink).toHaveAttribute("rel", "noopener noreferrer");
   });
 
-  it("renders all 39 merch cards with thestockbloc.myshopify.com links and loads all images at runtime from <handle>.json", async () => {
+  it("renders all 40 merch cards with thestockbloc.myshopify.com links and loads all images at runtime from <handle>.json", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
       const url = String(input);
       const match = url.match(/https:\/\/thestockbloc\.myshopify\.com\/products\/([^/]+)\.json$/);
@@ -54,7 +54,7 @@ describe("MerchSection component", () => {
 
     render(<MerchSection />);
 
-    expect(MERCH_PRODUCTS).toHaveLength(39);
+    expect(MERCH_PRODUCTS).toHaveLength(40);
 
     const allLinks = screen.getAllByRole("link");
 
@@ -77,7 +77,7 @@ describe("MerchSection component", () => {
       }
     });
 
-    expect(fetchSpy).toHaveBeenCalledTimes(39);
+    expect(fetchSpy).toHaveBeenCalledTimes(40);
   });
 
   it("shows name and price with no image instead of a placeholder if the Shopify JSON fetch fails", async () => {
