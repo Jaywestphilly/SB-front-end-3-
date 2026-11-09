@@ -303,6 +303,94 @@ app.get('/.well-known/claims.json', (_req, res) => {
   return res.status(404).json({ error: 'claims.json not found' });
 });
 
+// A2A Agent Card Discovery Endpoint: /.well-known/agent-card.json
+app.get('/.well-known/agent-card.json', (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  const filePath = path.join(process.cwd(), 'public', '.well-known', 'agent-card.json');
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+  return res.status(200).json({
+    name: "Stock Bloc",
+    description: "Financial intelligence API for AI agents: real-time market data, SEC filing analysis, 13F intelligence, quant scores, forecasts, research memos, and strategy evaluation. Pay per call in USDC on Base via x402. No subscription, no free credits.",
+    url: "https://stockbloc.ai.studio",
+    version: "1.0.0",
+    protocolVersion: "0.3.0",
+    capabilities: {
+      streaming: false,
+      pushNotifications: false,
+      stateTransitionHistory: false
+    },
+    defaultInputModes: ["text"],
+    defaultOutputModes: ["text"],
+    authentication: {
+      schemes: ["x402"]
+    },
+    payment: {
+      protocol: "x402",
+      version: "v2",
+      network: "eip155:8453",
+      asset: "USDC",
+      payTo: "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+      priceRangeUsd: "0.01-0.35"
+    },
+    skills: [
+      {
+        id: "market-data",
+        name: "Market Data",
+        description: "Live market quotes with SB quant scores across a 20-asset watchlist.",
+        tags: ["market-data", "stocks", "quotes"]
+      },
+      {
+        id: "sec-data",
+        name: "SEC Data",
+        description: "SEC filing data for a ticker.",
+        tags: ["sec", "filings"]
+      },
+      {
+        id: "sec-analyst",
+        name: "SEC Analyst",
+        description: "10-K and 10-Q filing analysis.",
+        tags: ["sec", "filings", "10-k", "10-q"]
+      },
+      {
+        id: "sb-score",
+        name: "SB Score",
+        description: "Quant score for a ticker.",
+        tags: ["quant", "score"]
+      },
+      {
+        id: "forecast",
+        name: "Forecast",
+        description: "Price forecasts.",
+        tags: ["forecast"]
+      },
+      {
+        id: "13f-intelligence",
+        name: "13F Intelligence",
+        description: "Institutional holdings from SEC 13F filings.",
+        tags: ["13f", "holdings"]
+      },
+      {
+        id: "research-memo",
+        name: "Research Memo",
+        description: "Research memos on a ticker.",
+        tags: ["research"]
+      },
+      {
+        id: "strategy-evaluation",
+        name: "Strategy Evaluation",
+        description: "Strategy evaluation for a ticker.",
+        tags: ["strategy"]
+      }
+    ]
+  });
+});
+
 // Autonomous Agent vs Tavily vs Twelve Data Comparison Page: GET /compare
 app.get(['/compare', '/compare.html'], (_req, res) => {
   const filePath = path.join(process.cwd(), 'public', 'compare.html');
