@@ -429,10 +429,20 @@ function generateFutureBlueprint(doc: typeof PDFDocument.prototype) {
   doc.fontSize(16).fillColor('#0f172a').text('THE STOCK BLOC MANIFESTO');
   doc.moveDown(0.5);
   doc.fontSize(10).fillColor('#1e293b').text(
-    'We believe financial intelligence should be understandable, practical, and available to people outside traditional power centers.\n\n' +
-      'We believe credit should be used as infrastructure, not identity. We believe real estate should be underwritten as a business. We believe stocks should be studied as ownership. We believe artificial intelligence should expand human capability.\n\n' +
-      'We believe the future should not belong only to the people who already own everything. It should include the people willing to learn, build, share, and stay disciplined long enough for ownership to compound.\n\n' +
-      '-- Jumanne Carter, Founder Stock Bloc'
+    'We were taught how to earn. It’s time to understand how to own.\n\n' +
+      'The world is changing. Money moves differently. Technology is changing how businesses operate. Artificial intelligence is transforming entire industries. Traditional markets and digital assets are becoming increasingly interconnected.\n\n' +
+      'But one thing hasn’t changed. People who understand how capital works have an advantage over people who don’t. Too many people are left trying to figure it out through headlines, hype, speculation, and somebody else’s opinion.\n\n' +
+      'We believe there is a better way. Stock Bloc was built around a simple idea: Financial intelligence should not be reserved for people who already have access to it.\n\n' +
+      'We believe ordinary people deserve to understand markets, businesses, assets, technology, risk, and ownership. We believe the ability to evaluate an opportunity is more valuable than blindly following a prediction. We believe technology should make people more capable, not more dependent. We believe knowledge becomes more powerful when it is shared. And we believe the future belongs to people willing to learn, adapt, question, build, and think independently.\n\n' +
+      'We don’t worship tickers. We don’t follow gurus. We don’t promise overnight wealth. We don’t confuse a rising price with actual value.\n\n' +
+      'We study the system. We question assumptions. We document what we learn. We acknowledge what we get wrong. We help others understand what we’re learning.\n\n' +
+      'We are investors, builders, students, entrepreneurs, researchers, and curious minds. Different backgrounds. Different ambitions. Different perspectives. One shared standard.\n\n' +
+      'Understand before you invest. Evidence before conviction. Ownership over optics.\n\n' +
+      'Stock Bloc is not about telling you what to think. It’s about giving you the knowledge, tools, and community to think for yourself. Because the goal isn’t simply to participate in the economy. The goal is to understand how it works, recognize opportunities, manage risk, and build ownership over time.\n\n' +
+      'We are not here to watch the future happen. We are here to understand it, participate in it, and help build it.\n\n' +
+      'WELCOME TO THE BLOC.\n' +
+      'KNOW THE SYSTEM. BUILD OWNERSHIP. MOVE TOGETHER.\n' +
+      'Stock Bloc. Wall Street smarts. Blockchain hearts.'
   );
 }
 

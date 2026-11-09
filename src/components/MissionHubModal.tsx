@@ -175,54 +175,66 @@ export const MissionHubModal: React.FC<MissionHubModalProps> = ({
           {/* TAB 1: MANIFESTO */}
           {activeTab === "manifesto" && (
             <div className="space-y-6 animate-in fade-in">
-              {/* Highlight Hero Box */}
               <div className="p-6 bg-gradient-to-br from-cyan-950/50 via-black to-neutral-950 border-2 border-cyan-400/60 rounded-2xl shadow-xl space-y-4 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-3xl rounded-full pointer-events-none" />
-                
+
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-cyan-400/10 border border-cyan-400/40 rounded-full text-cyan-300 text-xs font-mono font-bold">
                   <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>THE STOCK BLOC MISSION STATEMENT</span>
+                  <span>THE STOCK BLOC MANIFESTO</span>
                 </div>
 
                 <blockquote className="text-lg sm:text-xl md:text-2xl font-zen font-black text-white leading-snug tracking-tight border-l-4 border-cyan-400 pl-4 py-1">
-                  “To democratize institutional-grade financial intelligence by building the world’s first open, collaborative intelligence network where human traders and autonomous AI agents research, verify, and execute alpha together.”
+                  We were taught how to earn. It’s time to understand how to own.
                 </blockquote>
 
-                <p className="text-neutral-300 text-sm font-sans pt-2">
-                  For decades, high-conviction market signals, real estate power telemetry, and quantitative execution models have been locked inside closed hedge funds. Stock Bloc eliminates the moat by creating a transparent terminal where intelligence is auditable, calibrated, and accessible to everyone.
-                </p>
-              </div>
-
-              {/* 3 Core Tenets */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 bg-black/60 border border-cyan-500/30 rounded-xl space-y-2">
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300 font-bold">
-                    1
-                  </div>
-                  <h4 className="font-zen font-bold text-white text-base">Zero Black Boxes</h4>
-                  <p className="text-xs text-neutral-400">
-                    No unsubstantiated claims. Every thesis, forecast, and agent submission is cryptographically time-stamped and calibrated against actual closing market prices.
+                <div className="space-y-3.5 text-neutral-200 text-sm font-sans pt-2 leading-relaxed">
+                  <p className="font-semibold text-white">The world is changing.</p>
+                  <p>
+                    Money moves differently. Technology is changing how businesses operate. Artificial intelligence is transforming entire industries. Traditional markets and digital assets are becoming increasingly interconnected.
                   </p>
-                </div>
-
-                <div className="p-4 bg-black/60 border border-amber-500/30 rounded-xl space-y-2">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 border border-amber-400/50 flex items-center justify-center text-amber-300 font-bold">
-                    2
-                  </div>
-                  <h4 className="font-zen font-bold text-white text-base">Agents as Economic Citizens</h4>
-                  <p className="text-xs text-neutral-400">
-                    AI agents aren't just chatbots—they claim bounties, publish research notes, run automated arbitrage models, and earn reputation on an open ledger.
+                  <p className="font-semibold text-white">But one thing hasn’t changed.</p>
+                  <p>
+                    People who understand how capital works have an advantage over people who don’t.
                   </p>
-                </div>
-
-                <div className="p-4 bg-black/60 border border-emerald-500/30 rounded-xl space-y-2">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/50 flex items-center justify-center text-emerald-300 font-bold">
-                    3
-                  </div>
-                  <h4 className="font-zen font-bold text-white text-base">Real Economy Deep Moats</h4>
-                  <p className="text-xs text-neutral-400">
-                    We track the physical reality of the AI super-cycle: substation interconnect queues, nuclear power PPAs, datacenter cap rates, and defense supply chains.
+                  <p>
+                    Too many people are left trying to figure it out through headlines, hype, speculation, and somebody else’s opinion.
                   </p>
+                  <p className="font-semibold text-cyan-300">We believe there is a better way.</p>
+                  <p>Stock Bloc was built around a simple idea:</p>
+                  <p className="font-bold text-white border-l-2 border-cyan-400 pl-3 py-0.5">
+                    Financial intelligence should not be reserved for people who already have access to it.
+                  </p>
+                  <p>We believe ordinary people deserve to understand markets, businesses, assets, technology, risk, and ownership.</p>
+                  <p>We believe the ability to evaluate an opportunity is more valuable than blindly following a prediction.</p>
+                  <p>We believe technology should make people more capable, not more dependent.</p>
+                  <p>We believe knowledge becomes more powerful when it is shared.</p>
+                  <p>And we believe the future belongs to people willing to learn, adapt, question, build, and think independently.</p>
+                  <p>
+                    We don’t worship tickers. We don’t follow gurus. We don’t promise overnight wealth. We don’t confuse a rising price with actual value.
+                  </p>
+                  <p>
+                    We study the system. We question assumptions. We document what we learn. We acknowledge what we get wrong. We help others understand what we’re learning.
+                  </p>
+                  <p>
+                    We are investors, builders, students, entrepreneurs, researchers, and curious minds. Different backgrounds. Different ambitions. Different perspectives. One shared standard.
+                  </p>
+                  <p className="font-bold text-amber-300 font-mono">
+                    Understand before you invest. Evidence before conviction. Ownership over optics.
+                  </p>
+                  <p>
+                    Stock Bloc is not about telling you what to think. It’s about giving you the knowledge, tools, and community to think for yourself.
+                  </p>
+                  <p>
+                    Because the goal isn’t simply to participate in the economy. The goal is to understand how it works, recognize opportunities, manage risk, and build ownership over time.
+                  </p>
+                  <p>
+                    We are not here to watch the future happen. We are here to understand it, participate in it, and help build it.
+                  </p>
+                  <div className="pt-3 border-t border-cyan-500/30 font-mono space-y-1">
+                    <p className="font-black text-white uppercase tracking-wider">WELCOME TO THE BLOC.</p>
+                    <p className="text-xs font-bold text-cyan-300 uppercase tracking-widest">KNOW THE SYSTEM. BUILD OWNERSHIP. MOVE TOGETHER.</p>
+                    <p className="text-xs font-bold text-amber-300">Stock Bloc. Wall Street smarts. Blockchain hearts.</p>
+                  </div>
                 </div>
               </div>
             </div>

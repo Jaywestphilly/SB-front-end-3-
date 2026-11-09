@@ -121,7 +121,7 @@ export const STOCK_BLOC_EBOOKS: EBook[] = [
       {
         page: 104,
         heading: "The Stock Bloc Manifesto",
-        body: "We believe financial intelligence should be understandable, practical, and available to people outside traditional power centers. We believe credit should be used as infrastructure, not identity. We believe real estate should be underwritten as a business. We believe stocks should be studied as ownership.",
+        body: "We were taught how to earn. It’s time to understand how to own. Financial intelligence should not be reserved for people who already have access to it. Understand before you invest. Evidence before conviction. Ownership over optics. WELCOME TO THE BLOC. KNOW THE SYSTEM. BUILD OWNERSHIP. MOVE TOGETHER. Stock Bloc. Wall Street smarts. Blockchain hearts.",
       },
     ],
     downloadUrl: "/api/download/ebook/future_wealth_blueprint",

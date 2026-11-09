@@ -132,6 +132,120 @@ export const BrandLandingHub: React.FC<BrandLandingHubProps> = ({
         </div>
       </div>
 
+      {/* THE STOCK BLOC MANIFESTO SECTION */}
+      <section
+        aria-label="The Stock Bloc Manifesto"
+        className="relative bg-black rounded-3xl p-6 sm:p-10 border-2 border-cyan-500/40 text-white shadow-2xl shadow-cyan-500/10 overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/25 via-black to-black pointer-events-none" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#00E5FF10_1px,transparent_1px),linear-gradient(to_bottom,#00E5FF10_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
+        <div className="relative z-10 max-w-3xl mx-auto space-y-6 font-sans">
+          <div className="border-b border-cyan-500/30 pb-4 text-center sm:text-left">
+            <h2 className="text-xl sm:text-3xl font-black font-mono text-cyan-100 uppercase tracking-wider alien-text-glow">
+              THE STOCK BLOC MANIFESTO
+            </h2>
+            <p className="text-base sm:text-lg font-bold text-[#00E5FF] mt-2">
+              We were taught how to earn. It’s time to understand how to own.
+            </p>
+          </div>
+
+          <div className="space-y-4 text-sm sm:text-base text-neutral-200 leading-relaxed">
+            <p className="font-semibold text-white">The world is changing.</p>
+
+            <p>
+              Money moves differently. Technology is changing how businesses operate. Artificial intelligence is transforming entire industries. Traditional markets and digital assets are becoming increasingly interconnected.
+            </p>
+
+            <p className="font-semibold text-white">But one thing hasn’t changed.</p>
+
+            <p>
+              People who understand how capital works have an advantage over people who don’t.
+            </p>
+
+            <p>
+              Too many people are left trying to figure it out through headlines, hype, speculation, and somebody else’s opinion.
+            </p>
+
+            <p className="font-semibold text-cyan-300">We believe there is a better way.</p>
+
+            <p>Stock Bloc was built around a simple idea:</p>
+
+            <p className="text-base sm:text-lg font-bold text-white border-l-2 border-[#00E5FF] pl-4 py-1">
+              Financial intelligence should not be reserved for people who already have access to it.
+            </p>
+
+            <div className="space-y-2.5 pt-1">
+              <p>We believe ordinary people deserve to understand markets, businesses, assets, technology, risk, and ownership.</p>
+              <p>We believe the ability to evaluate an opportunity is more valuable than blindly following a prediction.</p>
+              <p>We believe technology should make people more capable, not more dependent.</p>
+              <p>We believe knowledge becomes more powerful when it is shared.</p>
+              <p>And we believe the future belongs to people willing to learn, adapt, question, build, and think independently.</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 py-2 font-mono text-xs sm:text-sm text-cyan-200">
+              <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/30">We don’t worship tickers.</div>
+              <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/30">We don’t follow gurus.</div>
+              <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/30">We don’t promise overnight wealth.</div>
+              <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-500/30">We don’t confuse a rising price with actual value.</div>
+            </div>
+
+            <p>
+              We study the system. We question assumptions. We document what we learn. We acknowledge what we get wrong. We help others understand what we’re learning.
+            </p>
+
+            <p>
+              We are investors, builders, students, entrepreneurs, researchers, and curious minds.
+            </p>
+
+            <p>
+              Different backgrounds. Different ambitions. Different perspectives.
+            </p>
+
+            <p className="font-semibold text-white">One shared standard.</p>
+
+            <p className="text-base sm:text-lg font-bold text-amber-300 font-mono">
+              Understand before you invest. Evidence before conviction. Ownership over optics.
+            </p>
+
+            <p>
+              Stock Bloc is not about telling you what to think.
+            </p>
+
+            <p>
+              It’s about giving you the knowledge, tools, and community to think for yourself.
+            </p>
+
+            <p>
+              Because the goal isn’t simply to participate in the economy.
+            </p>
+
+            <p>
+              The goal is to understand how it works, recognize opportunities, manage risk, and build ownership over time.
+            </p>
+
+            <p>
+              We are not here to watch the future happen.
+            </p>
+
+            <p className="font-semibold text-white">
+              We are here to understand it, participate in it, and help build it.
+            </p>
+          </div>
+
+          <div className="pt-4 border-t border-cyan-500/30 space-y-2 text-center sm:text-left font-mono">
+            <p className="text-lg sm:text-xl font-black text-white uppercase tracking-wider">
+              WELCOME TO THE BLOC.
+            </p>
+            <p className="text-xs sm:text-sm font-bold text-[#00E5FF] uppercase tracking-widest">
+              KNOW THE SYSTEM. BUILD OWNERSHIP. MOVE TOGETHER.
+            </p>
+            <p className="text-xs sm:text-sm text-amber-300 font-bold pt-1">
+              Stock Bloc. Wall Street smarts. Blockchain hearts.
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* WALLO WEALTH CODE & DECLASSIFIED GAME SECTION */}
       <div className="relative bg-gradient-to-b from-[#020d18] via-black to-[#050b14] border-2 border-amber-400/60 rounded-3xl p-6 sm:p-10 text-white space-y-6 shadow-2xl shadow-amber-500/10 overflow-hidden">
