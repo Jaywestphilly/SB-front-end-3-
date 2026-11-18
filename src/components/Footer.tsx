@@ -70,6 +70,21 @@ export const Footer: React.FC<FooterProps> = ({
             >
               <span>About Us & Platform Mission &rarr;</span>
             </button>
+            <div className="flex items-center gap-3 pt-1 text-[11px] font-mono">
+              <a
+                href="/terms"
+                className="text-neutral-300 hover:text-cyan-300 underline transition-colors"
+              >
+                Terms of Service
+              </a>
+              <span className="text-neutral-600">•</span>
+              <a
+                href="/privacy"
+                className="text-neutral-300 hover:text-cyan-300 underline transition-colors"
+              >
+                Privacy Policy
+              </a>
+            </div>
           </div>
 
           {/* Col 2: Core Hubs */}
@@ -260,6 +275,16 @@ export const Footer: React.FC<FooterProps> = ({
             <span className="text-amber-400/90 font-mono font-bold">
               Stock Bloc — Founded & Curated by Jumanne Carter (Jay West Philly). Wall Street Smarts, Blockchain Hearts.
             </span>
+            <span className="hidden sm:inline text-neutral-600">•</span>
+            <div className="flex items-center gap-3 font-mono">
+              <a href="/terms" className="text-cyan-400 hover:text-cyan-300 underline">
+                Terms of Service
+              </a>
+              <span className="text-neutral-600">•</span>
+              <a href="/privacy" className="text-cyan-400 hover:text-cyan-300 underline">
+                Privacy Policy
+              </a>
+            </div>
           </div>
           <span className="text-cyan-500/80 font-mono shrink-0">
             SEC EDGAR • QUANT-SIGNAL v2.8 // GROUNDED

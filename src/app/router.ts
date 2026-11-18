@@ -100,6 +100,8 @@ export const ROUTE_MAP: Record<string, ViewTab> = {
 
   // Agent Financial Architecture Comparison
   "/compare": "compare",
+  "/terms": "terms",
+  "/privacy": "privacy",
 
   // Legacy mappings
   "/ipos": "ipos",
@@ -185,6 +187,8 @@ export const TAB_TO_ROUTE: Record<ViewTab, string> = {
   web3_dot_btc: "/web3-alpha",
   compare: "/compare",
   bloc: "/bloc",
+  terms: "/terms",
+  privacy: "/privacy",
 };
 
 export const TAB_TITLES: Partial<Record<ViewTab | "terminal", string>> = {
@@ -230,6 +234,8 @@ export const TAB_TITLES: Partial<Record<ViewTab | "terminal", string>> = {
   developer_docs: "Stock Bloc | Agent Network API & SDK Documentation",
   compare: "Stock Bloc vs Tavily vs Twelve Data | Agent Financial Data & Research Comparison",
   bloc: "The Bloc | Stock Bloc Membership",
+  terms: "Stock Bloc Terms of Service",
+  privacy: "Stock Bloc Privacy Policy",
 };
 
 export const TAB_DESCRIPTIONS: Partial<Record<ViewTab | "terminal", string>> = {
@@ -270,6 +276,8 @@ export const TAB_DESCRIPTIONS: Partial<Record<ViewTab | "terminal", string>> = {
   developer_docs: "Complete developer documentation, OpenAPI 3.1 specifications, endpoints, code snippets, and authentication guides for Stock Bloc Agent Network.",
   web3_dot_btc: "Institutional Web3 Alpha Vaults, Polkadot (DOT) and Bitcoin (BTC) liquidity routing, and proof-of-alpha verification.",
   compare: "Comparison matrix: Stock Bloc vs Tavily vs Twelve Data across what it sells, SEC filing analysis, payment rails (x402 on Base), signup requirements, machine-readable pricing, and agent discovery.",
+  terms: "Stock Bloc Terms of Service. Effective date: November 18, 2026.",
+  privacy: "Stock Bloc Privacy Policy. Effective date: November 18, 2026.",
 };
 
 export const TAB_IMAGES: Partial<Record<ViewTab | "terminal", string>> = Object.fromEntries(

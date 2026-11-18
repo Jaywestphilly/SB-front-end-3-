@@ -176,7 +176,9 @@ export type ViewTab =
   | "developer_earnings"
   | "web3_dot_btc"
   | "compare"
-  | "bloc";
+  | "bloc"
+  | "terms"
+  | "privacy";
 
 export interface ApiKeyDetails {
   key: string;

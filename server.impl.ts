@@ -33,6 +33,7 @@ import { issueUiCookie } from './server/uiSession.js';
 import { fetchRealStockQuote, fetchYahooQuote } from './server/marketQuoteService.js';
 import { handleToolPageRequest } from './server/toolPagesSsr.js';
 import { registerReportRoutes } from './server/reportService.js';
+import { registerLegalRoutes } from './server/legalPages.js';
 import { fetchDailyTriggers } from './server/dailyTriggersService.js';
 
 const app = express();
@@ -5163,6 +5164,9 @@ app.all('/tools/*', handleToolPageRequest);
 
 // Human Card-Paid Report Flow Routes (GET /report, GET /report/success, GET /report/view/:session_id)
 registerReportRoutes(app);
+
+// Terms of Service (/terms) and Privacy Policy (/privacy) SSR pages
+registerLegalRoutes(app);
 
 // Explicit Public Static Serving for Raw JSON Backend Feeds
 const publicFolder = path.join(process.cwd(), 'public');

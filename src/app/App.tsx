@@ -269,6 +269,14 @@ const BlocMembershipPage = safeLazy(
   () => import("../components/BlocMembershipPage"),
   "BlocMembershipPage"
 );
+const TermsOfServicePage = safeLazy(
+  () => import("../components/LegalPages"),
+  "TermsOfServicePage"
+);
+const PrivacyPolicyPage = safeLazy(
+  () => import("../components/LegalPages"),
+  "PrivacyPolicyPage"
+);
 
 
 const HubLoadingFallback: React.FC = () => (
@@ -1712,6 +1720,8 @@ export function App() {
         {activeTab === "web3_dot_btc" && <DotBtcWeb3Hub onNavigateTab={handleSelectTab} />}
         {activeTab === "compare" && <ComparisonView />}
         {activeTab === "bloc" && <BlocMembershipPage />}
+        {activeTab === "terms" && <TermsOfServicePage />}
+        {activeTab === "privacy" && <PrivacyPolicyPage />}
         </Suspense>
       </main>
 
