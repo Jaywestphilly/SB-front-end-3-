@@ -1971,6 +1971,94 @@ const handleManifest = (req: Request, res: Response) => {
       communityFeed: { method: 'GET', path: '/api/v1/community/feed', scope: 'community:read' },
       publishPost: { method: 'POST', path: '/api/v1/community/discussions', scope: 'community:write' },
       replyPost: { method: 'POST', path: '/api/v1/community/discussions/:id/replies', scope: 'community:reply' },
+      dailyTriggers: {
+        method: 'GET',
+        path: '/api/v1/signals/daily-triggers',
+        scope: 'public',
+        description: 'Real SEC events from the last 24 hours on the watchlist: new 10-K, 10-Q or 8-K filings, each with the paid route to inspect it. Free.'
+      },
+      signals8k: {
+        name: 'Stock Bloc 8-K Event Monitor',
+        method: 'GET',
+        path: '/api/v1/signals/8k',
+        alias: '/api/signals/8k',
+        scope: 'metered_data',
+        description: 'Per-ticker or multi-ticker Form 8-K monitor from SEC EDGAR with item codes, plain-English itemLabels, SEC filing URLs, and 2-3 sentence filing-text summaries. Free sample: https://stockbloc.ai.studio/api/v1/signals/8k/sample',
+        queryParams: {
+          ticker: 'string (optional single ticker, e.g. NVDA)',
+          watchlist: 'string (optional comma-separated tickers, max 20, e.g. NVDA,ASTS,OKLO)',
+          since: 'string (optional ISO-8601 timestamp cutoff, default 24h ago)',
+          limit: 'integer (optional, default 20, max 50)'
+        },
+        x402: {
+          priced: true,
+          priceUsd: 0.05,
+          priceDisplay: '$0.05 USDC',
+          atomicAmount: '50000',
+          asset: 'USDC',
+          assetContract: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          network: 'Base',
+          networkCaip2: 'eip155:8453',
+          chainId: 8453,
+          howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.05 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
+        }
+      },
+      sec8kEvents: {
+        method: 'GET',
+        path: '/api/v1/sec/8k-events',
+        alias: '/api/sec/8k-events',
+        scope: 'metered_data',
+        description: 'Structured Form 8-K current reports from SEC EDGAR with item codes (2.02 Earnings, 5.02 Officer Changes), filing timestamps, and direct EDGAR URLs. Free sample: https://stockbloc.ai.studio/api/v1/sec/8k-events/sample',
+        x402: {
+          priced: true,
+          priceUsd: 0.05,
+          priceDisplay: '$0.05 USDC',
+          atomicAmount: '50000',
+          asset: 'USDC',
+          assetContract: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          network: 'Base',
+          networkCaip2: 'eip155:8453',
+          chainId: 8453,
+          howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.05 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
+        }
+      },
+      intelligenceChanges: {
+        method: 'GET',
+        path: '/api/v1/intelligence/changes',
+        alias: '/api/intelligence/changes',
+        scope: 'metered_data',
+        description: 'Lightweight change feed since a timestamp across SEC filings, watchlist market movers, forecasts, memos, and space launches. Free sample: https://stockbloc.ai.studio/api/v1/intelligence/changes/sample',
+        x402: {
+          priced: true,
+          priceUsd: 0.01,
+          priceDisplay: '$0.01 USDC',
+          atomicAmount: '10000',
+          asset: 'USDC',
+          assetContract: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          network: 'Base',
+          networkCaip2: 'eip155:8453',
+          chainId: 8453,
+          howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.01 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
+        }
+      },
+      spaceTelemetry: {
+        method: 'GET',
+        path: '/api/v1/space/telemetry',
+        scope: 'metered_data',
+        description: 'Live CelesTrak Starlink SATCAT counts, Launch Library 2 orbital windows, and space/power equity quotes. Free sample: https://stockbloc.ai.studio/api/v1/space/telemetry/sample',
+        x402: {
+          priced: true,
+          priceUsd: 0.05,
+          priceDisplay: '$0.05 USDC',
+          atomicAmount: '50000',
+          asset: 'USDC',
+          assetContract: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          network: 'Base',
+          networkCaip2: 'eip155:8453',
+          chainId: 8453,
+          howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.05 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
+        }
+      },
       publishResearch: {
         method: 'POST',
         path: '/api/v1/intelligence/research',

@@ -43,9 +43,9 @@ const LAUNCH_DATA_SOURCES: DataProvenanceItem[] = [
     metricName: "SpaceX Falcon 9 & Starship Launch Economics",
     source: "NASA Commercial Crew / Cargo Contracts & FAA Commercial Space Launch Manifest",
     sourceType: "Regulatory Agency",
-    asOfDate: "August 2026",
+    asOfDate: "November 2026",
     updateFrequency: "Monthly",
-    details: "Contracted launch service pricing, payload capacities to LEO, and turnaround cadence metrics."
+    details: "Contracted launch service pricing, Flight 14/15 orbital V3 deployment milestones, and Starship modeled target curves."
   },
   {
     metricName: "Megaconstellation Fleet Deployment Sizing",
@@ -158,13 +158,13 @@ const VEHICLE_BENCHMARKS: LaunchVehicleComparison[] = [
     color: "#10b981"
   },
   {
-    name: "Starship V3 (Scale Target)",
-    provider: "SpaceX",
-    payloadToLeoKg: 200000,
+    name: "Starship V3 (Modeled Scale Target)",
+    provider: "SpaceX (Projected High Cadence)",
+    payloadToLeoKg: 150000,
     costPerLaunchMillion: 10,
-    costPerKg: 50,
+    costPerKg: 67,
     reusability: "Full & Rapid",
-    status: "Operational",
+    status: "In Development",
     color: "#a855f7"
   }
 ];
@@ -246,10 +246,10 @@ export const OrbitalLaunchEconomics: React.FC = () => {
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
               <Rocket className="w-6 h-6 text-cyan-400" />
-              Starship $/kg to Low Earth Orbit (LEO) Decay Engine
+              Starship $/kg to Low Earth Orbit (LEO) Sensitivity Engine
             </h2>
             <p className="text-xs sm:text-sm text-neutral-300 max-w-3xl leading-relaxed">
-              Explore how Mechazilla tower catches, Raptor 3 mass-production, and methalox economies of scale collapse the orbital payload threshold from <strong>$1,500/kg</strong> to under <strong>$75/kg</strong>.
+              Following Flight 14's orbital V3 deployment (Sep 2026) and Flight 15's historic Ship 42 upper-stage tower catch (Nov 2026), model how hardware reuse turns, Raptor production, and flight cadence drive $/kg down from Falcon 9 levels (~$1,450/kg internal) toward long-run reusable targets.
             </p>
           </div>
 
@@ -594,7 +594,7 @@ export const OrbitalLaunchEconomics: React.FC = () => {
       {/* DATA PROVENANCE & SOURCE ATTRIBUTION */}
       <DataProvenanceCard
         category="Orbital Aerospace & Propulsion Physics"
-        lastUpdated="August 2026 (NASA / CSIS / FAA Verified)"
+        lastUpdated="November 2026 (NASA / CSIS / FAA / SpaceX Flight 15 Updated)"
         sources={LAUNCH_DATA_SOURCES}
         defaultExpanded={false}
       />

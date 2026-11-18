@@ -35,6 +35,20 @@ import { handleToolPageRequest } from './server/toolPagesSsr.js';
 import { registerReportRoutes } from './server/reportService.js';
 import { registerLegalRoutes } from './server/legalPages.js';
 import { fetchDailyTriggers } from './server/dailyTriggersService.js';
+import { STATIC_SAMPLES } from './server/samples/staticSamples.js';
+import {
+  getUpcomingAndRecentLaunches,
+  getStarlinkCatalogSummary,
+  getSpaceNewsFeed,
+  getSpaceTelemetryQuotes,
+  getDysonFeedSummary,
+} from './server/spaceTelemetryService.js';
+import {
+  fetchSec8kEvents,
+  fetchIntelligenceChanges,
+  fetchSpaceTelemetryBundle,
+} from './server/newStreamsService.js';
+import { fetchSignals8k } from './server/signals8kService.js';
 
 const app = express();
 const portArgIndex = process.argv.indexOf('--port');
@@ -142,6 +156,60 @@ app.get(['/api/v1/data/sec/sample', '/api/data/sec/sample'], (_req, res) => {
   return res.status(200).json(sec13fSample);
 });
 
+app.get(['/api/v1/intelligence/sb-score/sample', '/api/intelligence/sb-score/sample'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(STATIC_SAMPLES.sb_score);
+});
+
+app.get(['/api/v1/intelligence/earnings-pack/sample', '/api/intelligence/earnings-pack/sample'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(STATIC_SAMPLES.earnings_pack);
+});
+
+app.get(['/api/v1/market/quote/sample', '/api/market/quote/sample', '/api/data/market/sample'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(STATIC_SAMPLES.market_quote);
+});
+
+app.get(['/api/v1/agent/strategy/evaluate/sample', '/api/agent/strategy/evaluate/sample'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(STATIC_SAMPLES.strategy_eval);
+});
+
+app.get(['/api/v1/intelligence/forecasts/sample', '/api/intelligence/forecasts/sample'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(STATIC_SAMPLES.forecasts);
+});
+
+app.get(['/api/v1/sec/8k-events/sample', '/api/sec/8k-events/sample'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(STATIC_SAMPLES.sec_8k_events);
+});
+
+app.get(['/api/v1/intelligence/changes/sample', '/api/intelligence/changes/sample'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(STATIC_SAMPLES.delta_changes);
+});
+
+app.get(['/api/v1/space/telemetry/sample', '/api/space/telemetry/sample'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(STATIC_SAMPLES.space_telemetry);
+});
+
+app.get(['/api/v1/signals/8k/sample', '/api/signals/8k/sample'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(STATIC_SAMPLES.signals_8k);
+});
+
 app.get('/.well-known/x402list.txt', (_req, res) => {
   res.setHeader('Content-Type', 'text/plain');
   return res.status(200).send('x402list-verify-ZYKyA4-o5e_y370ZiumJz1gXUMqMmnkK66p-z9S09Os');
@@ -233,6 +301,71 @@ app.get('/agents/feed', (req, res, next) => {
   }
   next();
 });
+// Part 2 x402 Priced Agent Intelligence Streams (mounted before broad sub-routers)
+app.get(['/api/v1/sec/8k-events', '/api/sec/8k-events'], async (req, res) => {
+  try {
+    const ticker = (req.query.ticker as string) || (req.query.symbol as string);
+    const limit = req.query.limit !== undefined ? Number(req.query.limit) : undefined;
+    const { status, body } = await fetchSec8kEvents({ ticker, limit });
+    res.setHeader('Cache-Control', 'public, max-age=180');
+    return res.status(status).json(body);
+  } catch (err: any) {
+    return res.status(503).json({
+      status: 'error',
+      error: 'sec_unavailable',
+      message: err?.message || 'SEC EDGAR submissions feed unavailable.'
+    });
+  }
+});
+
+app.get(['/api/v1/signals/8k', '/api/signals/8k'], async (req, res) => {
+  try {
+    const ticker = (req.query.ticker as string) || (req.query.symbol as string);
+    const watchlist = req.query.watchlist as string | string[] | undefined;
+    const since = req.query.since !== undefined ? String(req.query.since) : undefined;
+    const limit = req.query.limit !== undefined ? Number(req.query.limit) : undefined;
+    const { status, body } = await fetchSignals8k({ ticker, watchlist, since, limit });
+    res.setHeader('Cache-Control', 'public, max-age=120');
+    return res.status(status).json(body);
+  } catch (err: any) {
+    return res.status(503).json({
+      status: 'error',
+      error: 'sec_unavailable',
+      message: err?.message || 'SEC EDGAR Form 8-K monitor temporarily unavailable.'
+    });
+  }
+});
+
+app.get(['/api/v1/intelligence/changes', '/api/intelligence/changes'], async (req, res) => {
+  try {
+    const since = req.query.since ? String(req.query.since) : undefined;
+    const limit = req.query.limit !== undefined ? Number(req.query.limit) : undefined;
+    const data = await fetchIntelligenceChanges({ since, limit });
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    return res.status(200).json(data);
+  } catch (err: any) {
+    return res.status(500).json({
+      status: 'error',
+      error: 'delta_feed_error',
+      message: err?.message || 'Failed to assemble intelligence delta feed.'
+    });
+  }
+});
+
+app.get('/api/v1/space/telemetry', async (_req, res) => {
+  try {
+    const bundle = await fetchSpaceTelemetryBundle();
+    res.setHeader('Cache-Control', 'public, max-age=180');
+    return res.status(200).json(bundle);
+  } catch (err: any) {
+    return res.status(503).json({
+      status: 'error',
+      error: 'space_telemetry_unavailable',
+      message: err?.message || 'Space telemetry sources temporarily unavailable.'
+    });
+  }
+});
+
 app.use('/api/v1/community', communityApiRouter);
 app.use(['/api/v1/intelligence', '/api/v1/intelligence/*', '/api/intelligence', '/api/intelligence/*'], agentIntelligenceRouter);
 app.use('/api/v1/web3', web3DotBtcRouter);
@@ -2640,6 +2773,40 @@ async function fetchAndProcessFeed(feedKey: 'market' | 'sec' | 'dyson' | 'news',
     };
   }
 
+  if (feedKey === 'dyson') {
+    try {
+      return await getDysonFeedSummary(forceRefresh);
+    } catch (e) {
+      console.warn('[Dyson Telemetry Warning] Live feed fetch failed:', e);
+      return {
+        status: 'unavailable',
+        unavailable: true,
+        stale: true,
+        updated_at: null,
+        source: 'Launch Library 2 / CelesTrak SATCAT / Spaceflight News v4',
+        fleet_metrics: {
+          active_satellites: null,
+          total_in_orbit: null,
+          raising_or_partial: 0,
+          decayed_historical: 0,
+          latest_starlink_launch_date: null,
+          inclination_breakdown: {
+            shell53Deg: 0,
+            shell43Deg: 0,
+            polarSso97Deg: 0,
+            otherOr33To70Deg: 0,
+          },
+          satcat_as_of: null,
+          satcat_source: 'CelesTrak SATCAT unavailable',
+          satcat_stale: true,
+        },
+        next_launch: null,
+        upcoming_launches_count: 0,
+        recent_news_as_of: null,
+      };
+    }
+  }
+
   const url = FEED_URLS[feedKey];
   const now = Date.now();
   const cached = dataFeedCache[feedKey];
@@ -2701,9 +2868,7 @@ async function fetchAndProcessFeed(feedKey: 'market' | 'sec' | 'dyson' | 'news',
   }
 
   let source = rawJson.source;
-  if (feedKey === 'dyson') {
-    source = "SpaceX / Planet Labs / NASA Orbital Telemetry";
-  } else if (feedKey === 'news') {
+  if (feedKey === 'news') {
     source = "Financial News RSS & YouTube Intel Aggregator";
     if (serverYouTubeIntelFeed && serverYouTubeIntelFeed.length > 0) {
       rawJson.items = [
@@ -2722,7 +2887,7 @@ async function fetchAndProcessFeed(feedKey: 'market' | 'sec' | 'dyson' | 'news',
   const processedData = {
     ...rawJson,
     updated_at: updatedAt,
-    source: source || (feedKey === 'dyson' ? 'SpaceX / Planet Labs / NASA Orbital Telemetry' : 'StockBloc Live Feed'),
+    source: source || 'StockBloc Live Feed',
     stale: false
   };
 
@@ -2795,10 +2960,11 @@ app.get('/api/macro/credit', async (req, res) => {
 
 app.get('/api/space/news', async (req, res) => {
   try {
-    // Spaceflight News API v4
-    const newsRes = await fetch('https://api.spaceflightnewsapi.net/v4/articles?limit=15');
-    const newsData = await newsRes.json();
-    res.json(newsData.results || []);
+    const force = req.query.force === 'true';
+    const feed = await getSpaceNewsFeed(force);
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader('X-Data-As-Of', feed.asOf);
+    res.json(feed.items || []);
   } catch (e) {
     console.error('Error fetching space news:', e);
     res.status(500).json({ error: 'Failed to fetch space news' });
@@ -2807,20 +2973,40 @@ app.get('/api/space/news', async (req, res) => {
 
 app.get('/api/space/launches', async (req, res) => {
   try {
-    // SpaceX API v4
-    const upcomingRes = await fetch('https://api.spacexdata.com/v4/launches/upcoming');
-    const upcomingData = await upcomingRes.json();
-    
-    const pastRes = await fetch('https://api.spacexdata.com/v4/launches/past');
-    const pastData = await pastRes.json();
-    
-    res.json({
-      upcoming: upcomingData || [],
-      past: (pastData || []).slice(-10).reverse() // get 10 most recent past launches
-    });
+    const force = req.query.force === 'true';
+    const launches = await getUpcomingAndRecentLaunches(force);
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader('X-Data-As-Of', launches.asOf);
+    res.json(launches);
   } catch (e) {
-    console.error('Error fetching spacex launches:', e);
-    res.status(500).json({ error: 'Failed to fetch spacex launches' });
+    console.error('Error fetching orbital launches:', e);
+    res.status(500).json({ error: 'Failed to fetch orbital launches' });
+  }
+});
+
+app.get('/api/space/starlink-status', async (req, res) => {
+  try {
+    const force = req.query.force === 'true';
+    const summary = await getStarlinkCatalogSummary(force);
+    res.setHeader('Cache-Control', 'public, max-age=600');
+    res.setHeader('X-Data-As-Of', summary.asOf);
+    res.json(summary);
+  } catch (e) {
+    console.error('Error fetching Starlink SATCAT status:', e);
+    res.status(500).json({ error: 'Failed to fetch Starlink SATCAT catalog status' });
+  }
+});
+
+app.get('/api/space/quotes', async (req, res) => {
+  try {
+    const force = req.query.force === 'true';
+    const quotes = await getSpaceTelemetryQuotes(force);
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    res.setHeader('X-Data-As-Of', quotes.asOf);
+    res.json(quotes);
+  } catch (e) {
+    console.error('Error fetching space & orbital power equities:', e);
+    res.status(500).json({ error: 'Failed to fetch space & orbital power equity quotes' });
   }
 });
 
@@ -4062,7 +4248,11 @@ app.get(['/mcp.json', '/api/v1/mcp-config.json'], (req, res) => {
           "analyze_stock_ai",
           "get_data_status",
           "get_ebook_playbook",
-          "get_sb_score_history"
+          "get_sb_score_history",
+          "get_daily_triggers",
+          "get_sec_8k_events",
+          "get_intelligence_changes",
+          "get_space_telemetry"
         ]
       }
     },

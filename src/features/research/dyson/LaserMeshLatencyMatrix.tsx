@@ -383,7 +383,7 @@ export const LaserMeshLatencyMatrix: React.FC = () => {
       {/* DATA PROVENANCE & SOURCE ATTRIBUTION */}
       <DataProvenanceCard
         category="Optical Quantum Physics & Subsea Fiber Telemetry"
-        lastUpdated="August 2026 (NIST / TeleGeography / FCC Verified)"
+        lastUpdated="November 2026 (NIST / TeleGeography / FCC Verified)"
         sources={LATENCY_DATA_SOURCES}
         defaultExpanded={false}
       />

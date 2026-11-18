@@ -1142,6 +1142,138 @@
           }
         }
       }
+    },
+    "/api/v1/signals/daily-triggers": {
+      "get": {
+        "summary": "Real SEC events from the last 24 hours on the watchlist",
+        "description": "Free daily triggers feed scanning recent 10-K, 10-Q, and 8-K filings.",
+        "operationId": "getDailyTriggersV1",
+        "security": [],
+        "parameters": [
+          { "name": "ticker", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Watchlist SEC triggers feed." } }
+      }
+    },
+    "/api/v1/sec/8k-events": {
+      "get": {
+        "summary": "SEC Form 8-K Material Event Intelligence ($0.05 USDC)",
+        "operationId": "getSec8kEventsV1",
+        "parameters": [
+          { "name": "ticker", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 25 } }
+        ],
+        "x-payment-info": {
+          "price": { "mode": "fixed", "currency": "USD", "amount": "0.050000" },
+          "protocols": [{
+            "x402": {
+              "version": 2,
+              "scheme": "exact",
+              "network": "eip155:8453",
+              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+              "amountAtomic": "50000",
+              "decimals": 6
+            }
+          }]
+        },
+        "responses": { "200": { "description": "Form 8-K events." }, "402": { "description": "Payment Required." } }
+      }
+    },
+    "/api/v1/intelligence/changes": {
+      "get": {
+        "summary": "Stock Bloc Intelligence Delta Change Feed ($0.01 USDC)",
+        "operationId": "getIntelligenceChangesV1",
+        "parameters": [
+          { "name": "since", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 50 } }
+        ],
+        "x-payment-info": {
+          "price": { "mode": "fixed", "currency": "USD", "amount": "0.010000" },
+          "protocols": [{
+            "x402": {
+              "version": 2,
+              "scheme": "exact",
+              "network": "eip155:8453",
+              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+              "amountAtomic": "10000",
+              "decimals": 6
+            }
+          }]
+        },
+        "responses": { "200": { "description": "Intelligence delta change feed." }, "402": { "description": "Payment Required." } }
+      }
+    },
+    "/api/v1/space/telemetry": {
+      "get": {
+        "summary": "Orbital Infrastructure & Space Telemetry API ($0.05 USDC)",
+        "operationId": "getSpaceTelemetryV1",
+        "parameters": [
+          { "name": "includeEquities", "in": "query", "required": false, "schema": { "type": "boolean", "default": true } }
+        ],
+        "x-payment-info": {
+          "price": { "mode": "fixed", "currency": "USD", "amount": "0.050000" },
+          "protocols": [{
+            "x402": {
+              "version": 2,
+              "scheme": "exact",
+              "network": "eip155:8453",
+              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+              "amountAtomic": "50000",
+              "decimals": 6
+            }
+          }]
+        },
+        "responses": { "200": { "description": "Space telemetry bundle." }, "402": { "description": "Payment Required." } }
+      }
+    },
+    "/api/v1/signals/8k": {
+      "get": {
+        "summary": "SEC Form 8-K Event Monitor ($0.05 USDC)",
+        "description": "Monitor real SEC EDGAR Form 8-K filings by ticker or watchlist (max 20) since a timestamp (default 24h) with item labels and filing-text summaries.",
+        "operationId": "getSignals8kV1",
+        "parameters": [
+          { "name": "ticker", "in": "query", "required": false, "schema": { "type": "string", "example": "NVDA" } },
+          { "name": "watchlist", "in": "query", "required": false, "schema": { "type": "string", "example": "NVDA,ASTS,OKLO" } },
+          { "name": "since", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time", "example": "2026-11-17T00:00:00Z" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 } }
+        ],
+        "x-example-request": {
+          "ticker": "NVDA",
+          "watchlist": "NVDA,ASTS,OKLO",
+          "since": "2026-11-17T00:00:00Z"
+        },
+        "x-payment-info": {
+          "price": { "mode": "fixed", "currency": "USD", "amount": "0.050000" },
+          "protocols": [{
+            "x402": {
+              "version": 2,
+              "scheme": "exact",
+              "network": "eip155:8453",
+              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+              "amountAtomic": "50000",
+              "decimals": 6
+            }
+          }]
+        },
+        "responses": {
+          "200": { "description": "Newest-first Form 8-K events." },
+          "400": { "description": "Free validation error." },
+          "402": { "description": "Payment Required." },
+          "404": { "description": "Free unknown ticker error." }
+        }
+      }
+    },
+    "/api/v1/signals/8k/sample": {
+      "get": {
+        "summary": "Free static sample of SEC Form 8-K Event Monitor",
+        "operationId": "getSignals8kSampleV1",
+        "security": [],
+        "responses": { "200": { "description": "Static NVDA Form 8-K sample." } }
+      }
     }
   },
   "components": {

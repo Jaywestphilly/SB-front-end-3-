@@ -102,19 +102,23 @@ const SHELL_TELEMETRY_META: Record<
     planeCount: 28,
   },
   dyson_ring: {
-    label: "Dyson Solar Collector Swarm Ring",
-    altitudeKm: "1,150 km Dawn-Dusk SSO",
-    inclinationDeg: "98.2° Sun-Locked",
+    label: "Dyson Solar Collector Swarm Ring (Conceptual / Unbuilt Future)",
+    altitudeKm: "1,150 km Dawn-Dusk SSO (Concept)",
+    inclinationDeg: "98.2° Sun-Locked (Concept)",
     velocityKms: "7.28 km/s",
-    laserThroughputTbps: "64.0 Tbps Power-Link",
-    solarCaptureGw: "3.40 GW Continuous AM0",
+    laserThroughputTbps: "Simulated Power-Link",
+    solarCaptureGw: "Conceptual AM0 Overlay",
     planeCount: 12,
   },
 };
 
 export const Starlink3DGlobe: React.FC<Starlink3DGlobeProps> = ({
-  activeSatellitesCount = 10840,
+  activeSatellitesCount,
+  lastUpdatedIso,
+  isStale = false,
 }) => {
+  const isLiveCount = typeof activeSatellitesCount === "number" && activeSatellitesCount > 0;
+  const resolvedCount = isLiveCount ? activeSatellitesCount : 10941;
   const globeRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -161,17 +165,17 @@ export const Starlink3DGlobe: React.FC<Starlink3DGlobeProps> = ({
     return () => observer.disconnect();
   }, []);
 
-  // Compute filtered working satellite estimate based on active shell
+  // Compute filtered operational satellite count based on active shell
   const displayedSatelliteCount = useMemo(() => {
-    if (selectedShellFilter === "all") return activeSatellitesCount;
-    if (selectedShellFilter === "shell1") return Math.round(activeSatellitesCount * 0.55);
-    if (selectedShellFilter === "shell2") return Math.round(activeSatellitesCount * 0.2);
-    if (selectedShellFilter === "shell3") return Math.round(activeSatellitesCount * 0.12);
-    if (selectedShellFilter === "shell4") return Math.round(activeSatellitesCount * 0.08);
-    if (selectedShellFilter === "shell5") return Math.round(activeSatellitesCount * 0.05);
+    if (selectedShellFilter === "all") return resolvedCount;
+    if (selectedShellFilter === "shell1") return Math.round(resolvedCount * 0.41);
+    if (selectedShellFilter === "shell2") return Math.round(resolvedCount * 0.35);
+    if (selectedShellFilter === "shell3") return Math.round(resolvedCount * 0.15);
+    if (selectedShellFilter === "shell4") return Math.round(resolvedCount * 0.09);
+    if (selectedShellFilter === "shell5") return 52;
     if (selectedShellFilter === "dyson_ring") return 420;
-    return activeSatellitesCount;
-  }, [selectedShellFilter, activeSatellitesCount]);
+    return resolvedCount;
+  }, [selectedShellFilter, resolvedCount]);
 
   const activeShellMeta =
     SHELL_TELEMETRY_META[selectedShellFilter] || SHELL_TELEMETRY_META.all;
@@ -465,16 +469,12 @@ export const Starlink3DGlobe: React.FC<Starlink3DGlobeProps> = ({
         <div className="bg-[#050d1a]/85 backdrop-blur-xl border border-cyan-500/30 rounded-2xl p-3 shadow-2xl space-y-2">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
-              </span>
               <h2 className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-cyan-300">
-                Orbital & Dyson Swarm 3D HUD
+                Orbital & Conceptual Swarm 3D HUD
               </h2>
             </div>
             <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-              ● 60FPS KEPLERIAN
+              KEPLERIAN 3D
             </span>
           </div>
 
@@ -674,13 +674,22 @@ export const Starlink3DGlobe: React.FC<Starlink3DGlobeProps> = ({
           ))}
         </div>
 
-        {/* Live Metric Chip */}
-        <div className="flex items-center gap-3 bg-[#050d1a]/90 backdrop-blur-xl px-3.5 py-1.5 rounded-2xl border border-cyan-500/30 text-[11px] font-mono tabular-nums text-cyan-300 shadow-xl">
+        {/* Live Metric Readout */}
+        <div className="flex flex-wrap items-center gap-3 bg-[#050d1a]/90 backdrop-blur-xl px-3.5 py-1.5 rounded-2xl border border-cyan-500/30 text-[11px] font-mono tabular-nums text-cyan-300 shadow-xl">
           <div className="flex items-center gap-1.5">
-            <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span className="font-bold text-white">~{displayedSatelliteCount.toLocaleString()}</span>
+            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="font-bold text-white">
+              {selectedShellFilter === "dyson_ring" || !isLiveCount || selectedShellFilter !== "all" ? "~" : ""}
+              {displayedSatelliteCount.toLocaleString()}
+            </span>
             <span className="text-neutral-400">
-              {selectedShellFilter === "dyson_ring" ? "Solar Collectors" : "Active Nodes"}
+              {selectedShellFilter === "dyson_ring"
+                ? "Simulated Nodes (Concept)"
+                : isLiveCount
+                ? isStale
+                  ? "Operational (Stale)"
+                  : "CelesTrak Operational"
+                : "Operational Estimate"}
             </span>
           </div>
           <span className="text-neutral-600">|</span>
@@ -688,6 +697,14 @@ export const Starlink3DGlobe: React.FC<Starlink3DGlobeProps> = ({
             <Zap className="w-3.5 h-3.5 text-amber-400" />
             <span className="text-amber-300 font-bold">1,361 W/m² AM0</span>
           </div>
+          {lastUpdatedIso && (
+            <>
+              <span className="text-neutral-600 hidden sm:inline">|</span>
+              <span className="hidden sm:inline text-[10px] text-neutral-400">
+                {new Date(lastUpdatedIso).toISOString().slice(0, 10)}
+              </span>
+            </>
+          )}
         </div>
       </div>
     </div>

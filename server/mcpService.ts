@@ -198,6 +198,36 @@ export const MCP_TOOLS = [
         ticker: { type: "string", description: "Optional stock ticker filter on the watchlist (e.g. AAPL, NVDA, TSLA)" }
       }
     }
+  },
+  {
+    name: "get_sec_8k_events",
+    description: "Structured Form 8-K current reports from SEC EDGAR with item codes (2.02 Earnings, 5.02 Officer Changes), filing timestamps, and direct EDGAR URLs. $0.05.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ticker: { type: "string", description: "Optional US stock ticker symbol (e.g. NVDA, AAPL). Defaults to watchlist." },
+        limit: { type: "number", description: "Maximum 8-K events to return (1-25, default: 10)" }
+      }
+    }
+  },
+  {
+    name: "get_intelligence_changes",
+    description: "Lightweight change feed since an ISO timestamp across SEC filings, watchlist market movers (>=2%), research memos, forecasts, and upcoming space launches. $0.01.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        since: { type: "string", description: "Optional ISO-8601 timestamp cutoff (defaults to last 24 hours)" },
+        limit: { type: "number", description: "Maximum items per category (1-50, default: 20)" }
+      }
+    }
+  },
+  {
+    name: "get_space_telemetry",
+    description: "Live CelesTrak Starlink SATCAT satellite counts, Launch Library 2 orbital launch windows, and space/power equity quotes (RKLB, ASTS, LUNR, PL, BE, CEG, TLN). $0.05.",
+    inputSchema: {
+      type: "object",
+      properties: {}
+    }
   }
 ];
 
@@ -210,7 +240,10 @@ export const PAID_MCP_TOOLS = new Set([
   'analyze_sec_filing',
   'sec_analyst',
   'search_13f_whale_filings',
-  'get_sb_score_history'
+  'get_sb_score_history',
+  'get_sec_8k_events',
+  'get_intelligence_changes',
+  'get_space_telemetry'
 ]);
 
 export interface McpToolPricingConfig {
@@ -265,6 +298,24 @@ export const MCP_TOOL_PRICING: Record<string, McpToolPricingConfig> = {
   },
   get_sb_score_history: {
     endpointId: 'sb_score',
+    priceUsd: 0.05,
+    priceDisplay: '$0.05',
+    atomicAmount: '50000'
+  },
+  get_sec_8k_events: {
+    endpointId: 'sec_8k_events',
+    priceUsd: 0.05,
+    priceDisplay: '$0.05',
+    atomicAmount: '50000'
+  },
+  get_intelligence_changes: {
+    endpointId: 'delta_changes',
+    priceUsd: 0.01,
+    priceDisplay: '$0.01',
+    atomicAmount: '10000'
+  },
+  get_space_telemetry: {
+    endpointId: 'space_telemetry',
     priceUsd: 0.05,
     priceDisplay: '$0.05',
     atomicAmount: '50000'
@@ -452,6 +503,30 @@ function getMcpValidationParams(name: string, args: any = {}) {
           agentId: args.agentId,
           handle: args.handle
         }
+      };
+    case 'get_sec_8k_events':
+      return {
+        endpointId: 'sec_8k_events',
+        rawPath: '/api/v1/sec/8k-events',
+        method: 'GET',
+        query: { ticker: args.ticker, limit: args.limit },
+        body: {}
+      };
+    case 'get_intelligence_changes':
+      return {
+        endpointId: 'delta_changes',
+        rawPath: '/api/v1/intelligence/changes',
+        method: 'GET',
+        query: { since: args.since, limit: args.limit },
+        body: {}
+      };
+    case 'get_space_telemetry':
+      return {
+        endpointId: 'space_telemetry',
+        rawPath: '/api/v1/space/telemetry',
+        method: 'GET',
+        query: {},
+        body: {}
       };
     default:
       return null;
@@ -769,6 +844,24 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
         const url = new URL(`${baseUrl}/api/v1/signals/daily-triggers`);
         if (args?.ticker) url.searchParams.set("ticker", String(args.ticker));
         fetchRes = await fetch(url.toString(), {
+          headers: forwardHeaders
+        });
+      } else if (name === "get_sec_8k_events") {
+        const url = new URL(`${baseUrl}/api/v1/sec/8k-events`);
+        if (args?.ticker) url.searchParams.set("ticker", String(args.ticker).toUpperCase().trim());
+        if (args?.limit !== undefined) url.searchParams.set("limit", String(args.limit));
+        fetchRes = await fetch(url.toString(), {
+          headers: forwardHeaders
+        });
+      } else if (name === "get_intelligence_changes") {
+        const url = new URL(`${baseUrl}/api/v1/intelligence/changes`);
+        if (args?.since) url.searchParams.set("since", String(args.since));
+        if (args?.limit !== undefined) url.searchParams.set("limit", String(args.limit));
+        fetchRes = await fetch(url.toString(), {
+          headers: forwardHeaders
+        });
+      } else if (name === "get_space_telemetry") {
+        fetchRes = await fetch(`${baseUrl}/api/v1/space/telemetry`, {
           headers: forwardHeaders
         });
       } else if (name === "get_ebook_playbook") {

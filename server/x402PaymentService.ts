@@ -31,7 +31,17 @@ export const USDC_VERSION = '2';
 export interface X402PricedEndpoint {
   id: string;
   name: string;
-  category: 'market_data' | 'sb_score' | 'sec_13f_intel' | 'research' | 'forecast' | 'strategy_eval' | 'earnings_pack';
+  category:
+    | 'market_data'
+    | 'sb_score'
+    | 'sec_13f_intel'
+    | 'research'
+    | 'forecast'
+    | 'strategy_eval'
+    | 'earnings_pack'
+    | 'sec_events'
+    | 'intelligence_delta'
+    | 'space_telemetry';
   priceUsd: number;
   priceDisplay: string;
   atomicAmount: string; // 6 decimal string
@@ -49,7 +59,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.35,
     priceDisplay: '$0.35',
     atomicAmount: '350000', // 0.35 * 10^6
-    description: "One-call earnings prep for a ticker: 13F institutional accumulation, latest 10-K/10-Q filing audit, and a thesis memo. $0.35.",
+    description: "One-call earnings prep for a ticker: 13F institutional accumulation, latest 10-K/10-Q filing audit, and a thesis memo. $0.35. Free sample: https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack/sample",
     exampleRequest: {
       method: 'GET',
       url: 'https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack?ticker=AAPL'
@@ -63,7 +73,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.01,
     priceDisplay: '$0.01',
     atomicAmount: '10000', // 0.01 * 10^6
-    description: "Current stock price, 24h change and volume for a ticker (US, Hong Kong, India). Unknown tickers return a free 404. $0.01.",
+    description: "Current stock price, 24h change and volume for a ticker (US, Hong Kong, India). Unknown tickers return a free 404. $0.01. Free sample: https://stockbloc.ai.studio/api/v1/market/quote/sample",
     exampleRequest: {
       method: 'GET',
       url: 'https://stockbloc.ai.studio/api/v1/market/quote?ticker=AAPL'
@@ -77,7 +87,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.05,
     priceDisplay: '$0.05',
     atomicAmount: '50000', // 0.05 * 10^6
-    description: "5-factor stock quality and risk score (0-100) for a ticker, with each factor shown. $0.05.",
+    description: "5-factor stock quality and risk score (0-100) for a ticker, with each factor shown. $0.05. Free sample: https://stockbloc.ai.studio/api/v1/intelligence/sb-score/sample",
     exampleRequest: {
       method: 'GET',
       url: 'https://stockbloc.ai.studio/api/v1/intelligence/sb-score?ticker=AAPL'
@@ -142,7 +152,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.05,
     priceDisplay: '$0.05',
     atomicAmount: '50000', // 0.05 * 10^6
-    description: 'Submit and query mathematically verified Brier-tracked price target probability distributions.',
+    description: 'Submit and query mathematically verified Brier-tracked price target probability distributions. Free sample: https://stockbloc.ai.studio/api/v1/intelligence/forecasts/sample',
     exampleRequest: {
       method: 'GET',
       url: 'https://stockbloc.ai.studio/api/v1/intelligence/forecasts?ticker=AAPL'
@@ -156,7 +166,7 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     priceUsd: 0.10,
     priceDisplay: '$0.10',
     atomicAmount: '100000', // 0.10 * 10^6
-    description: "Backtest a stock strategy over multiple years against Stock Bloc's high-growth watchlist benchmark. $0.10.",
+    description: "Backtest a stock strategy over multiple years against Stock Bloc's high-growth watchlist benchmark. $0.10. Free sample: https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate/sample",
     exampleRequest: {
       method: 'POST',
       url: 'https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate',
@@ -164,6 +174,62 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
         strategy: 'momentum',
         ticker: 'AAPL'
       }
+    }
+  },
+  // Form 8-K Material Events Intelligence ($0.05 USDC)
+  sec_8k_events: {
+    id: 'sec_8k_events',
+    name: 'SEC Form 8-K Material Event Intelligence',
+    category: 'sec_events',
+    priceUsd: 0.05,
+    priceDisplay: '$0.05',
+    atomicAmount: '50000',
+    description: "Structured Form 8-K current reports from SEC EDGAR with item codes (2.02 Earnings, 5.02 Officer Changes), filing timestamps, and direct EDGAR URLs. $0.05. Free sample: https://stockbloc.ai.studio/api/v1/sec/8k-events/sample",
+    exampleRequest: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/sec/8k-events?ticker=NVDA&limit=5'
+    }
+  },
+  // Watchlist Delta Change Feed ($0.01 USDC)
+  delta_changes: {
+    id: 'delta_changes',
+    name: 'Stock Bloc Intelligence Delta Feed',
+    category: 'intelligence_delta',
+    priceUsd: 0.01,
+    priceDisplay: '$0.01',
+    atomicAmount: '10000',
+    description: "Lightweight change feed since a timestamp across SEC filings, watchlist market movers, forecasts, memos, and space launches. $0.01. Free sample: https://stockbloc.ai.studio/api/v1/intelligence/changes/sample",
+    exampleRequest: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/intelligence/changes?limit=15'
+    }
+  },
+  // Structured Space Telemetry & Orbital Equities ($0.05 USDC)
+  space_telemetry: {
+    id: 'space_telemetry',
+    name: 'Orbital Infrastructure & Space Telemetry API',
+    category: 'space_telemetry',
+    priceUsd: 0.05,
+    priceDisplay: '$0.05',
+    atomicAmount: '50000',
+    description: "Live CelesTrak Starlink SATCAT counts, Launch Library 2 orbital windows, and space/power equity quotes. $0.05. Free sample: https://stockbloc.ai.studio/api/v1/space/telemetry/sample",
+    exampleRequest: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/space/telemetry'
+    }
+  },
+  // 8-K Event Monitor ($0.05 USDC)
+  signals_8k: {
+    id: 'signals_8k',
+    name: 'Stock Bloc 8-K Event Monitor',
+    category: 'sec_events',
+    priceUsd: 0.05,
+    priceDisplay: '$0.05',
+    atomicAmount: '50000',
+    description: "Per-ticker or multi-ticker Form 8-K monitor from SEC EDGAR with item codes, plain-English itemLabels, filing URLs, and factual 2-3 sentence filing summaries. $0.05. Free sample: https://stockbloc.ai.studio/api/v1/signals/8k/sample",
+    exampleRequest: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/signals/8k?ticker=NVDA'
     }
   }
 };
@@ -471,6 +537,121 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
         evaluatedAt: '2026-09-29T00:00:00.000Z'
       }
     }
+  }),
+
+  sec_8k_events: declareDiscovery({
+    method: 'GET',
+    input: { ticker: 'NVDA', limit: '5' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ticker: { type: 'string', description: 'Optional US stock ticker (e.g. NVDA)' },
+        limit: { type: 'string', description: 'Maximum 8-K events to return (1-25)' }
+      },
+      additionalProperties: false
+    },
+    output: {
+      example: {
+        status: 'string',
+        source: 'string',
+        ticker: 'string',
+        asOf: 'ISO 8601 string',
+        count: 'number',
+        events: ['object']
+      }
+    }
+  }),
+
+  delta_changes: declareDiscovery({
+    method: 'GET',
+    input: { since: '2026-11-17T00:00:00Z', limit: '15' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        since: { type: 'string', description: 'Optional ISO 8601 timestamp cutoff' },
+        limit: { type: 'string', description: 'Maximum events per feed (1-50)' }
+      },
+      additionalProperties: false
+    },
+    output: {
+      example: {
+        status: 'string',
+        since: 'ISO 8601 string',
+        asOf: 'ISO 8601 string',
+        counts: {
+          secFilings: 'number',
+          marketMovers: 'number',
+          researchMemos: 'number',
+          forecasts: 'number',
+          upcomingSpaceLaunches: 'number'
+        },
+        secFilings: ['object'],
+        marketMovers: ['object']
+      }
+    }
+  }),
+
+  space_telemetry: declareDiscovery({
+    method: 'GET',
+    input: {},
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false
+    },
+    output: {
+      example: {
+        status: 'string',
+        asOf: 'ISO 8601 string',
+        starlinkConstellation: {
+          totalInOrbit: 'number',
+          operationalCount: 'number',
+          raisingOrPartialCount: 'number',
+          source: 'string'
+        },
+        launches: {
+          upcoming: ['object'],
+          recent: ['object']
+        },
+        spaceAndPowerEquities: 'object'
+      }
+    }
+  }),
+
+  signals_8k: declareDiscovery({
+    method: 'GET',
+    input: { ticker: 'NVDA' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ticker: { type: 'string', description: 'Single US stock ticker (e.g. NVDA)' },
+        watchlist: { type: 'string', description: 'Comma-separated US stock tickers (max 20), e.g. NVDA,ASTS,OKLO' },
+        since: { type: 'string', description: 'Optional ISO-8601 cutoff timestamp (default 24h ago)' },
+        limit: { type: 'integer', minimum: 1, maximum: 50, description: 'Maximum 8-K filings to return (default 20, max 50)' }
+      },
+      additionalProperties: false
+    },
+    output: {
+      example: {
+        status: 'string',
+        source: 'string',
+        since: 'ISO 8601 string',
+        asOf: 'ISO 8601 string',
+        count: 'number',
+        filings: [
+          {
+            ticker: 'string',
+            companyName: 'string',
+            filedDate: 'YYYY-MM-DD',
+            accessionNumber: 'string',
+            filingUrl: 'string',
+            items: ['string'],
+            itemLabels: ['string'],
+            summary: 'string'
+          }
+        ]
+      }
+    }
   })
 };
 
@@ -526,6 +707,21 @@ export const X402_ROUTE_PATHS: Record<string, string[]> = {
   earnings_pack: [
     '/api/v1/intelligence/earnings-pack',
     '/api/intelligence/earnings-pack'
+  ],
+  sec_8k_events: [
+    '/api/v1/sec/8k-events',
+    '/api/sec/8k-events'
+  ],
+  delta_changes: [
+    '/api/v1/intelligence/changes',
+    '/api/intelligence/changes'
+  ],
+  space_telemetry: [
+    '/api/v1/space/telemetry'
+  ],
+  signals_8k: [
+    '/api/v1/signals/8k',
+    '/api/signals/8k'
   ]
 };
 
@@ -719,13 +915,28 @@ export function matchPricedEndpoint(path: string, method: string = 'GET'): X402P
   const normalized = path.split('?')[0].toLowerCase();
 
   // Explicit exclusion for free static sample endpoints
-  if (
-    normalized === '/api/v1/sec/job/sample' ||
-    normalized === '/api/sec/job/sample' ||
-    normalized === '/api/v1/data/sec/sample' ||
-    normalized === '/api/data/sec/sample'
-  ) {
+  if (normalized.endsWith('/sample')) {
     return null;
+  }
+
+  // SEC 8-K Material Event Intelligence ($0.05 USDC)
+  if (normalized === '/api/v1/sec/8k-events' || normalized === '/api/sec/8k-events') {
+    return PRICED_ENDPOINTS.sec_8k_events;
+  }
+
+  // Watchlist Intelligence Delta Changes ($0.01 USDC)
+  if (normalized === '/api/v1/intelligence/changes' || normalized === '/api/intelligence/changes') {
+    return PRICED_ENDPOINTS.delta_changes;
+  }
+
+  // Space & Orbital Telemetry Bundle ($0.05 USDC)
+  if (normalized === '/api/v1/space/telemetry') {
+    return PRICED_ENDPOINTS.space_telemetry;
+  }
+
+  // 8-K Event Monitor ($0.05 USDC)
+  if (normalized === '/api/v1/signals/8k' || normalized === '/api/signals/8k') {
+    return PRICED_ENDPOINTS.signals_8k;
   }
 
   // Earnings Prep Pack Bundle ($0.35 USDC)

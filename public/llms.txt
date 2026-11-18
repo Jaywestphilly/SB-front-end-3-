@@ -41,11 +41,11 @@ Agents, tools, and autonomous crawlers must NOT call the following retired conce
 
 ---
 
-## Paid Agent API Catalog (Exact 8 x402 Priced Products)
+## Paid Agent API Catalog (x402 Priced Products)
 
 Every priced endpoint is pay-per-call via x402 (USDC on Base) with no API key and no credits.
 
-All programmatic agent intelligence endpoints are priced in USDC on Base Mainnet (`eip155:8453`) using the exact catalog below:
+All programmatic agent intelligence endpoints are priced in USDC on Base Mainnet (`eip155:8453`) using the catalog below:
 
 | # | Product Name | Category | HTTP Path | x402 Price | Atomic Amount (USDC 6 Dec) | Description |
 |---|---|---|---|---|---|---|
@@ -57,10 +57,36 @@ All programmatic agent intelligence endpoints are priced in USDC on Base Mainnet
 | 6 | **Brier-Calibrated Forecast** | `forecast` | `POST /api/v1/intelligence/forecasts` | **$0.05 USDC** | `50000` | Submit and query mathematically verified Brier-tracked price target probability distributions. |
 | 7 | **Strategy Backtest & Sim** | `strategy_eval` | `POST /api/v1/agent/strategy/evaluate` | **$0.10 USDC** | `100000` | Backtest a stock strategy over multiple years against Stock Bloc's high-growth watchlist benchmark. $0.10. |
 | 8 | **Earnings Prep Pack Bundle** | `earnings_pack` | `GET /api/v1/intelligence/earnings-pack` | **$0.35 USDC** | `350000` | One-call earnings prep for a ticker: 13F institutional accumulation, latest 10-K/10-Q filing audit, and a thesis memo. $0.35. |
+| 9 | **SEC Form 8-K Material Events** | `sec_events` | `GET /api/v1/sec/8k-events` | **$0.05 USDC** | `50000` | Structured Form 8-K current reports from SEC EDGAR with item codes (1.01, 2.02, 5.02, 8.01), filing timestamps, and direct EDGAR URLs. |
+| 10 | **Intelligence Delta Change Feed** | `intelligence_delta` | `GET /api/v1/intelligence/changes` | **$0.01 USDC** | `10000` | Lightweight change feed since a timestamp across SEC filings, watchlist market movers (>=2%), forecasts, memos, and space launches. |
+| 11 | **Space & Orbital Telemetry API** | `space_telemetry` | `GET /api/v1/space/telemetry` | **$0.05 USDC** | `50000` | Live CelesTrak Starlink SATCAT counts, Launch Library 2 orbital windows, and space/power equity quotes (RKLB, ASTS, LUNR, PL, BE, CEG, TLN). |
+| 12 | **8-K Event Monitor** | `signals_8k` | `GET /api/v1/signals/8k` | **$0.05 USDC** | `50000` | Real-time SEC EDGAR Form 8-K monitor for a `ticker` or `watchlist` (up to 20) since a timestamp (default 24h), returning newest-first filings with `items`, plain-English `itemLabels`, `filingUrl`, and a 2-3 sentence `summary` from the filing text. |
+
+### Free Inspection Routes & Static Samples (Zero Cost / Zero x402)
+- **Daily SEC Watchlist Triggers (Free live scan)**: `GET https://stockbloc.ai.studio/api/v1/signals/daily-triggers`
+- **Free static samples (0 network calls)**:
+  - `GET https://stockbloc.ai.studio/api/v1/sec/job/sample`
+  - `GET https://stockbloc.ai.studio/api/v1/data/sec/sample`
+  - `GET https://stockbloc.ai.studio/api/v1/intelligence/sb-score/sample`
+  - `GET https://stockbloc.ai.studio/api/v1/intelligence/earnings-pack/sample`
+  - `GET https://stockbloc.ai.studio/api/v1/market/quote/sample`
+  - `GET https://stockbloc.ai.studio/api/v1/agent/strategy/evaluate/sample`
+  - `GET https://stockbloc.ai.studio/api/v1/intelligence/forecasts/sample`
+  - `GET https://stockbloc.ai.studio/api/v1/sec/8k-events/sample`
+  - `GET https://stockbloc.ai.studio/api/v1/intelligence/changes/sample`
+  - `GET https://stockbloc.ai.studio/api/v1/space/telemetry/sample`
+  - `GET https://stockbloc.ai.studio/api/v1/signals/8k/sample`
+
+### 8-K Event Monitor (`GET /api/v1/signals/8k`) — $0.05 USDC
+Query live SEC EDGAR Form 8-K filings by single `ticker` or comma-separated `watchlist` (max 20) with optional `since` ISO timestamp (defaults to 24h ago) and `limit` (default 20, max 50). Returns newest-first filings with `ticker`, `filedDate`, `accessionNumber`, `filingUrl`, `items`, `itemLabels`, and a 2–3 sentence `summary` drawn from the filing text (`asOf` included; empty `filings: []` returns 200; unknown ticker returns free 404; invalid `since` returns free 400).
+- **Free sample**: `GET https://stockbloc.ai.studio/api/v1/signals/8k/sample`
+- **Example call**:
+```bash
+curl -s "https://stockbloc.ai.studio/api/v1/signals/8k?watchlist=NVDA,ASTS,OKLO&since=2026-11-17T00:00:00Z" \
+  -H "PAYMENT-SIGNATURE: <base64_x402_signature>"
+```
 
 - **sec_job modes**: `POST /api/v1/sec/job` accepts optional `"mode": "standard" (default) | "diff"` (cross-filing financial and Item 1A risk factor changes for 10-K and 10-Q).
-- Free sample (static, captured 2026-10-12): https://stockbloc.ai.studio/api/v1/sec/job/sample
-- Free sample (static, captured 2026-10-12): https://stockbloc.ai.studio/api/v1/data/sec/sample
 
 ---
 
@@ -301,6 +327,10 @@ Stock Bloc provides a native Model Context Protocol (MCP) server for Claude Desk
   - `get_top_trade_ideas`: High-conviction community trade ideas (Free)
   - `submit_agent_trade_idea`: Publish trade ideas to community ($0.10 USDC)
   - `analyze_stock_ai`: AI-grounded fundamental stock analysis (Free)
+  - `get_daily_triggers`: Real SEC filing triggers on the watchlist from the last 24h (Free)
+  - `get_sec_8k_events`: Structured Form 8-K item-level material events from SEC EDGAR ($0.05 USDC)
+  - `get_intelligence_changes`: Lightweight intelligence delta feed across filings, movers, memos, forecasts, and launches ($0.01 USDC)
+  - `get_space_telemetry`: Live CelesTrak Starlink SATCAT counts, Launch Library 2 windows, and space/power equities ($0.05 USDC)
   - `get_data_status`: Check data pipeline freshness (Free)
   - `get_ebook_playbook`: Read financial instructional playbooks (Free)
 

@@ -86,17 +86,17 @@ interface PowerArchitecture {
 const ARCHITECTURES: PowerArchitecture[] = [
   {
     id: "sbsp_orbital",
-    name: "Orbital Space-Based Solar (SBSP)",
-    ticker: "STARLINK / SBSP",
+    name: "Orbital Space-Based Solar (SBSP — Theoretical Model)",
+    ticker: "SBSP CONCEPT",
     category: "Orbital SBSP",
-    lcoeMWh: 68, // Projected with Starship $50/kg launch costs
+    lcoeMWh: 68, // Theoretical projection contingent on <$100/kg launch costs & GW-scale rectennas
     deploymentTimeMonths: 18,
     capacityFactorPercent: 99.6,
     carbonGramsKWh: 8,
     waterConsumptionGallonsMWh: 0,
     gridInterconnectionRisk: "None (Bypassed)",
     color: "#06b6d4",
-    summary: "Continuous 1,361 W/m² solar constant in Sun-Synchronous Orbit. No night, no cloud attenuation. Microwave beam downlinked directly to dedicated AI data center ground rectenna array."
+    summary: "CONCEPTUAL PROJECTION — UNPROVEN COMMERCIAL INFRASTRUCTURE. Models continuous 1,361 W/m² AM0 solar flux in orbit with wireless microwave beaming; requires orders-of-magnitude scale beyond current MW R&D demos."
   },
   {
     id: "bloom_sofc",
@@ -142,11 +142,22 @@ const ARCHITECTURES: PowerArchitecture[] = [
   }
 ];
 
-export const SpacePowerArbitrage: React.FC = () => {
+export interface PowerEquityQuote {
+  symbol: string;
+  price: number | null;
+  changePercent: number | null;
+}
+
+export interface SpacePowerArbitrageProps {
+  liveQuotes?: PowerEquityQuote[];
+}
+
+export const SpacePowerArbitrage: React.FC<SpacePowerArbitrageProps> = ({ liveQuotes = [] }) => {
   // Model interactive parameters
   const [dataCenterPowerMW, setDataCenterPowerMW] = useState<number>(500); // 500 MW cluster
   const [aiTokenRevenuePerMWh, setAiTokenRevenuePerMWh] = useState<number>(650); // $650 AI compute revenue per MWh
   const [gridQueueDelayMonths, setGridQueueDelayMonths] = useState<number>(44);
+  const powerStocks = liveQuotes.filter((q) => ["BE", "CEG", "TLN"].includes(q.symbol));
 
   // Financial arbitrage model calculations
   const analysis = useMemo(() => {
@@ -209,33 +220,44 @@ export const SpacePowerArbitrage: React.FC = () => {
         <div className="absolute -right-12 -top-12 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="flex flex-wrap items-center justify-between gap-4 relative z-10">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-black uppercase tracking-wider">
-                Orbital vs Terrestrial Power Arbitrage
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider">
-                Hyperscaler Energy Moat
-              </span>
+            <div className="text-[11px] font-mono text-cyan-300/90 tracking-wide">
+              Orbital SBSP (Conceptual Model) vs Terrestrial Power Arbitrage
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
               <Zap className="w-6 h-6 text-cyan-400" />
-              Orbital Solar (SBSP) vs Solid-Oxide & Nuclear AI Power Arbitrage
+              Orbital Solar (SBSP Concept) vs Solid-Oxide & Nuclear AI Power Arbitrage
             </h2>
             <p className="text-xs sm:text-sm text-neutral-300 max-w-3xl leading-relaxed">
-              AI data centers face severe <strong>44-month transmission grid delays</strong>. Compare space-based continuous orbital solar collection against on-site solid-oxide microgrids ($BE) and nuclear restarts ($CEG).
+              AI data centers face multi-year transmission grid delays. Compare theoretical space-based solar economics (unproven commercial scale) against operational on-site solid-oxide microgrids ($BE) and nuclear restarts ($CEG / $TLN).
             </p>
+            {powerStocks.length > 0 && (
+              <div className="flex flex-wrap items-center gap-3 pt-1 font-mono tabular-nums text-xs">
+                {powerStocks.map((q) => (
+                  <span key={q.symbol} className="text-neutral-300">
+                    <strong className="text-white">${q.symbol}</strong>{" "}
+                    {typeof q.price === "number" ? `$${q.price.toFixed(2)}` : "Unavailable"}
+                    {typeof q.changePercent === "number" && (
+                      <span className={q.changePercent >= 0 ? "text-emerald-400 ml-1" : "text-rose-400 ml-1"}>
+                        {q.changePercent >= 0 ? "+" : ""}
+                        {q.changePercent.toFixed(2)}%
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="p-4 rounded-2xl bg-black/60 border border-emerald-500/30 text-right min-w-[220px]">
+          <div className="p-4 rounded-2xl bg-black/60 border border-emerald-500/30 text-right min-w-[220px] font-mono tabular-nums">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-400">
-              Grid Bypass AI Alpha
+              Modeled Grid-Bypass Revenue Alpha
             </span>
             <div className="text-3xl font-black text-emerald-300 mt-0.5">
               +${(analysis.computeOpportunityGainedMillion / 1000).toFixed(2)}B
             </div>
             <span className="text-[11px] text-emerald-400 font-bold flex items-center justify-end gap-1 mt-1">
               <Clock className="w-3.5 h-3.5" />
-              {gridQueueDelayMonths - 6} Mo Faster AI Training
+              {gridQueueDelayMonths - 6} Mo Earlier Online Power
             </span>
           </div>
         </div>
@@ -468,7 +490,7 @@ export const SpacePowerArbitrage: React.FC = () => {
       {/* DATA PROVENANCE & SOURCE ATTRIBUTION */}
       <DataProvenanceCard
         category="Energy Generation Economics & SBSP Physics"
-        lastUpdated="August 2026 (Lazard v17 / NASA OTPS / FERC Tracked)"
+        lastUpdated="November 2026 (Lazard v17 / NASA OTPS / FERC Filings · SBSP is conceptual)"
         sources={POWER_DATA_SOURCES}
         defaultExpanded={false}
       />

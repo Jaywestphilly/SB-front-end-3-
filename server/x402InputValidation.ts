@@ -648,6 +648,261 @@ export async function validatePricedRequestInput(
     return { valid: true };
   }
 
+  // 9. sec_8k_events
+  if (endpointId === 'sec_8k_events') {
+    if (normMethod !== 'GET') {
+      return {
+        valid: false,
+        status: 405,
+        code: 'METHOD_NOT_ALLOWED',
+        error: 'Method Not Allowed. sec_8k_events requires GET.',
+        message: 'Method Not Allowed. sec_8k_events requires GET.',
+        allowHeader: 'GET',
+        charged: false
+      };
+    }
+    const ticker = query?.ticker || query?.symbol;
+    if (ticker !== undefined && String(ticker).trim().length > 0 && !isValidSymbolFormat(String(ticker))) {
+      return {
+        valid: false,
+        status: 400,
+        code: 'INVALID_INPUT',
+        error: `Invalid ticker format: "${ticker}".`,
+        message: `Invalid ticker format: "${ticker}".`,
+        field: 'ticker',
+        charged: false
+      };
+    }
+    if (query?.limit !== undefined) {
+      const lim = Number(query.limit);
+      if (!Number.isInteger(lim) || lim < 1 || lim > 25) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Validation error: "limit" must be an integer between 1 and 25.',
+          message: 'Validation error: "limit" must be an integer between 1 and 25.',
+          field: 'limit',
+          charged: false
+        };
+      }
+    }
+    return { valid: true };
+  }
+
+  // 10. delta_changes
+  if (endpointId === 'delta_changes') {
+    if (normMethod !== 'GET') {
+      return {
+        valid: false,
+        status: 405,
+        code: 'METHOD_NOT_ALLOWED',
+        error: 'Method Not Allowed. delta_changes requires GET.',
+        message: 'Method Not Allowed. delta_changes requires GET.',
+        allowHeader: 'GET',
+        charged: false
+      };
+    }
+    if (query?.since !== undefined && String(query.since).trim().length > 0) {
+      const parsed = new Date(String(query.since).trim()).getTime();
+      if (Number.isNaN(parsed)) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Validation error: "since" must be a valid ISO-8601 timestamp.',
+          message: 'Validation error: "since" must be a valid ISO-8601 timestamp.',
+          field: 'since',
+          charged: false
+        };
+      }
+    }
+    return { valid: true };
+  }
+
+  // 11. space_telemetry
+  if (endpointId === 'space_telemetry') {
+    if (normMethod !== 'GET') {
+      return {
+        valid: false,
+        status: 405,
+        code: 'METHOD_NOT_ALLOWED',
+        error: 'Method Not Allowed. space_telemetry requires GET.',
+        message: 'Method Not Allowed. space_telemetry requires GET.',
+        allowHeader: 'GET',
+        charged: false
+      };
+    }
+    return { valid: true };
+  }
+
+  // 12. signals_8k (GET /api/v1/signals/8k)
+  if (endpointId === 'signals_8k') {
+    if (normMethod !== 'GET') {
+      return {
+        valid: false,
+        status: 405,
+        code: 'METHOD_NOT_ALLOWED',
+        error: 'Method Not Allowed. signals_8k requires GET.',
+        message: 'Method Not Allowed. signals_8k requires GET.',
+        allowHeader: 'GET',
+        charged: false
+      };
+    }
+
+    if (query?.since !== undefined && String(query.since).trim().length > 0) {
+      const sinceRaw = String(query.since).trim();
+      const parsed = Date.parse(sinceRaw);
+      if (!/^\d{4}-\d{2}-\d{2}/.test(sinceRaw) || Number.isNaN(parsed)) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Invalid "since" timestamp. Provide a valid ISO-8601 timestamp (e.g. 2026-11-17T00:00:00Z).',
+          message: 'Invalid "since" timestamp. Provide a valid ISO-8601 timestamp (e.g. 2026-11-17T00:00:00Z).',
+          field: 'since',
+          example: {
+            method: 'GET',
+            url: 'https://stockbloc.ai.studio/api/v1/signals/8k?watchlist=NVDA,ASTS,OKLO&since=2026-11-17T00:00:00Z'
+          },
+          charged: false
+        };
+      }
+    }
+
+    if (query?.limit !== undefined && String(query.limit).trim().length > 0) {
+      const limStr = String(query.limit).trim();
+      if (!/^\d+$/.test(limStr)) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Validation error: "limit" must be an integer between 1 and 50.',
+          message: 'Validation error: "limit" must be an integer between 1 and 50.',
+          field: 'limit',
+          charged: false
+        };
+      }
+      const lim = parseInt(limStr, 10);
+      if (lim < 1 || lim > 50) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Validation error: "limit" must be an integer between 1 and 50.',
+          message: 'Validation error: "limit" must be an integer between 1 and 50.',
+          field: 'limit',
+          charged: false
+        };
+      }
+    }
+
+    const singleTicker = query?.ticker || query?.symbol;
+    if (singleTicker !== undefined) {
+      const tickerStr = String(singleTicker).trim();
+      if (!tickerStr || !isValidSymbolFormat(tickerStr)) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: `Invalid ticker format: "${singleTicker}".`,
+          message: `Invalid ticker format: "${singleTicker}".`,
+          field: 'ticker',
+          example: {
+            method: 'GET',
+            url: 'https://stockbloc.ai.studio/api/v1/signals/8k?ticker=NVDA'
+          },
+          charged: false
+        };
+      }
+      try {
+        const { cik, secReachable } = await lookupTickerCik(tickerStr);
+        if (!cik && secReachable) {
+          return {
+            valid: false,
+            status: 404,
+            code: 'UNKNOWN_TICKER',
+            error: 'unknown_ticker',
+            message: `Ticker "${tickerStr.toUpperCase()}" was not found in U.S. SEC EDGAR directory.`,
+            customJson: {
+              error: 'unknown_ticker',
+              message: `Ticker "${tickerStr.toUpperCase()}" was not found in U.S. SEC EDGAR directory.`,
+              charged: false
+            },
+            charged: false
+          } as any;
+        }
+      } catch {}
+    } else if (query?.watchlist !== undefined) {
+      const rawWatchlist = String(query.watchlist);
+      const list = Array.from(
+        new Set(
+          rawWatchlist
+            .split(',')
+            .map((t) => t.trim().toUpperCase())
+            .filter(Boolean)
+        )
+      );
+      if (list.length === 0) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Validation error: "watchlist" must contain at least 1 valid ticker (max 20).',
+          message: 'Validation error: "watchlist" must contain at least 1 valid ticker (max 20).',
+          field: 'watchlist',
+          charged: false
+        };
+      }
+      if (list.length > 20) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Validation error: "watchlist" supports at most 20 tickers per request.',
+          message: 'Validation error: "watchlist" supports at most 20 tickers per request.',
+          field: 'watchlist',
+          charged: false
+        };
+      }
+      for (const sym of list) {
+        if (!isValidSymbolFormat(sym)) {
+          return {
+            valid: false,
+            status: 400,
+            code: 'INVALID_INPUT',
+            error: `Invalid ticker format in watchlist: "${sym}".`,
+            message: `Invalid ticker format in watchlist: "${sym}".`,
+            field: 'watchlist',
+            charged: false
+          };
+        }
+      }
+      try {
+        const checks = await Promise.all(list.map((sym) => lookupTickerCik(sym)));
+        const secReachable = checks.some((c) => c.secReachable);
+        const foundCount = checks.filter((c) => Boolean(c.cik)).length;
+        if (foundCount === 0 && secReachable) {
+          return {
+            valid: false,
+            status: 404,
+            code: 'UNKNOWN_TICKER',
+            error: 'unknown_ticker',
+            message: `None of the requested watchlist tickers (${list.join(', ')}) were found in U.S. SEC EDGAR directory.`,
+            customJson: {
+              error: 'unknown_ticker',
+              message: `None of the requested watchlist tickers (${list.join(', ')}) were found in U.S. SEC EDGAR directory.`,
+              charged: false
+            },
+            charged: false
+          } as any;
+        }
+      } catch {}
+    }
+
+    return { valid: true };
+  }
+
   return { valid: true };
 }
 

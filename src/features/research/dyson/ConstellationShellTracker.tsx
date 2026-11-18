@@ -19,24 +19,24 @@ import { DataProvenanceCard, DataProvenanceItem } from "../../../components/comm
 
 const CONSTELLATION_DATA_SOURCES: DataProvenanceItem[] = [
   {
-    metricName: "Active On-Orbit Satellite Counts & Two-Line Elements (TLEs)",
-    source: "US Space Force 18th Space Defense Squadron (Space-Track.org / CelesTrak)",
+    metricName: "Active On-Orbit Satellite Counts & GP Orbital Elements",
+    source: "CelesTrak NORAD SATCAT Starlink Catalog (derived from US Space Force 18th SDS tracking)",
     sourceType: "Regulatory Agency",
-    asOfDate: "August 2026 (Daily Ephemeris)",
+    asOfDate: "November 2026 (Live SATCAT Poll)",
     updateFrequency: "Daily",
-    details: "Automated two-line element orbital tracking, active vs. decaying satellites, and mean motion vectors."
+    details: "Automated General Perturbations (GP) catalog, operational vs. orbit-raising vs. decayed Starlink satellites."
   },
   {
     metricName: "FCC Gen-1 & Gen-2 Constellation Licensing & Shell Grants",
-    source: "Federal Communications Commission (FCC) Part 25 Satellite Space Station Licenses (Call Sign: SAT-MOD-20200417)",
+    source: "Federal Communications Commission (FCC) Space Bureau Part 25 Licenses",
     sourceType: "Regulatory Agency",
-    asOfDate: "July 2026",
+    asOfDate: "November 2026",
     updateFrequency: "Monthly",
-    details: "Approved orbital shells (525 km, 530 km, 535 km, 345 km), inclination angles, and Ku/Ka/V/E-band frequency allocations."
+    details: "Approved orbital shells (525 km, 530 km, 535 km, 350 km), inclination angles, and Ku/Ka/V/E-band frequency allocations."
   },
   {
     metricName: "Direct-to-Cell Cellular Spectrum Authorizations",
-    source: "FCC Special Temporary Authority (STA) & T-Mobile US 1900 MHz PCS G-Block Filings",
+    source: "FCC Special Temporary Authority (STA) & Carrier PCS G-Block Filings",
     sourceType: "Regulatory Agency",
     asOfDate: "2026 Commercial Rollout",
     updateFrequency: "Quarterly",
@@ -44,11 +44,11 @@ const CONSTELLATION_DATA_SOURCES: DataProvenanceItem[] = [
   },
   {
     metricName: "Aviation & Maritime Commercial Enterprise ARPU",
-    source: "SpaceX Starlink Enterprise Commercial Rate Cards & Public Airline Carrier Contracts",
+    source: "SpaceX Starlink Enterprise Rate Cards & Public Airline Carrier Agreements",
     sourceType: "Industry Benchmark",
-    asOfDate: "Q2 2026",
-    updateFrequency: "Monthly",
-    details: "Wholesale terminal licensing, high-gain electronically steered array (ESA) antenna pricing, and committed CIR bandwidth."
+    asOfDate: "Q4 2026",
+    updateFrequency: "Quarterly",
+    details: "Wholesale terminal licensing, electronically steered array (ESA) antenna pricing, and committed CIR bandwidth."
   }
 ];
 
@@ -121,10 +121,26 @@ const ORBITAL_SHELLS: OrbitalShellDetail[] = [
   }
 ];
 
-export const ConstellationShellTracker: React.FC = () => {
+export interface ConstellationShellTrackerProps {
+  operationalCount?: number | null;
+  totalInOrbit?: number | null;
+  raisingOrPartialCount?: number | null;
+  satcatAsOf?: string | null;
+  satcatSource?: string | null;
+}
+
+export const ConstellationShellTracker: React.FC<ConstellationShellTrackerProps> = ({
+  operationalCount,
+  totalInOrbit,
+  raisingOrPartialCount,
+  satcatAsOf,
+  satcatSource,
+}) => {
   const [selectedShellId, setSelectedShellId] = useState<string>("shell_350_d2c");
 
   const selectedShell = ORBITAL_SHELLS.find((s) => s.id === selectedShellId) || ORBITAL_SHELLS[0];
+  const hasLiveSatcat = typeof operationalCount === "number" && operationalCount > 0;
+  const displayedOperational = hasLiveSatcat ? operationalCount : 10941;
 
   return (
     <div className="space-y-6 text-white animate-fadeIn">
@@ -133,34 +149,32 @@ export const ConstellationShellTracker: React.FC = () => {
         <div className="absolute -right-10 -top-10 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="flex flex-wrap items-center justify-between gap-4 relative z-10">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-black uppercase tracking-wider">
-                Orbital Shell Architecture
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider">
-                Direct-to-Cell + E-band
-              </span>
+            <div className="text-[11px] font-mono text-cyan-300/90 tracking-wide">
+              Orbital Shell Architecture · Direct-to-Cell + E-band
             </div>
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2">
               <Satellite className="w-6 h-6 text-cyan-400" />
               Constellation Orbital Shell & Spectrum Architecture
             </h2>
             <p className="text-xs sm:text-sm text-neutral-300 max-w-3xl leading-relaxed">
-              Explore Starlink’s multi-layered orbital shells, radio frequency spectrum grants (Ku, Ka, E-band 71-86 GHz), and revolutionary <strong>Direct-to-Cell</strong> phased array antennas connecting stock smartphones without hardware modifications.
+              Explore Starlink’s multi-layered orbital shells, radio frequency spectrum grants (Ku, Ka, E-band 71-86 GHz), and Direct-to-Cell phased array antennas connecting standard smartphones.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/30 text-right min-w-[200px]">
+          <div className="p-4 rounded-2xl bg-black/60 border border-cyan-500/30 text-right min-w-[220px] font-mono tabular-nums">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-neutral-400">
-              Total Active Constellation
+              {hasLiveSatcat ? "CelesTrak Operational Fleet" : "SATCAT Operational Baseline"}
             </span>
             <div className="text-3xl font-black text-cyan-300 mt-0.5">
-              ~10,840
+              {hasLiveSatcat ? "" : "~"}
+              {displayedOperational.toLocaleString()}
               <span className="text-xs font-normal text-neutral-400"> Sats</span>
             </div>
             <span className="text-[11px] text-emerald-400 font-bold flex items-center justify-end gap-1 mt-1">
               <TrendingUp className="w-3.5 h-3.5" />
-              150+ Added Monthly
+              {typeof totalInOrbit === "number" && totalInOrbit > 0
+                ? `${totalInOrbit.toLocaleString()} total in orbit · ${raisingOrPartialCount ?? 0} raising`
+                : "CelesTrak SATCAT Verified"}
             </span>
           </div>
         </div>
@@ -313,7 +327,11 @@ export const ConstellationShellTracker: React.FC = () => {
       {/* DATA PROVENANCE & SOURCE ATTRIBUTION */}
       <DataProvenanceCard
         category="LEO Telemetry & Spacecraft Communications"
-        lastUpdated="August 2026 (Space-Track & FCC Part 25 Daily)"
+        lastUpdated={
+          satcatAsOf
+            ? `CelesTrak SATCAT (${new Date(satcatAsOf).toISOString().slice(0, 16).replace("T", " ")} UTC${satcatSource ? ` · ${satcatSource}` : ""})`
+            : "November 2026 (CelesTrak SATCAT & FCC Part 25)"
+        }
         sources={CONSTELLATION_DATA_SOURCES}
         defaultExpanded={false}
       />

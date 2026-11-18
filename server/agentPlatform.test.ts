@@ -312,9 +312,9 @@ describe('Agent Platform API', () => {
     expect(res.body.key.startsWith('sb_live_')).toBe(true);
   });
 
-  it('14. tools/list has 14 tools and no register_autonomous_agent', async () => {
+  it('14. tools/list has 17 tools and no register_autonomous_agent', async () => {
     const { MCP_TOOLS } = await import('./mcpService.js');
-    expect(MCP_TOOLS.length).toBe(14);
+    expect(MCP_TOOLS.length).toBe(17);
     const names = MCP_TOOLS.map((t: any) => t.name);
     expect(names).not.toContain('register_autonomous_agent');
   });

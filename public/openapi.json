@@ -2003,6 +2003,225 @@
           }
         }
       }
+    },
+    "/api/v1/sec/8k-events": {
+      "get": {
+        "summary": "SEC Form 8-K Material Event Intelligence ($0.05 USDC)",
+        "description": "Structured Form 8-K current reports from SEC EDGAR with decoded item codes (1.01, 2.02, 5.02, 8.01), filing dates, and direct EDGAR links.",
+        "operationId": "getSec8kEvents",
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Optional US stock ticker (e.g. NVDA). Defaults to watchlist."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "maximum": 25, "default": 10 },
+            "description": "Maximum Form 8-K events to return (1-25)."
+          }
+        ],
+        "x-payment-info": {
+          "price": { "mode": "fixed", "currency": "USD", "amount": "0.050000" },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "50000",
+                "decimals": 6
+              }
+            }
+          ]
+        },
+        "responses": {
+          "200": { "description": "Structured Form 8-K material event list from SEC EDGAR." },
+          "402": { "description": "Payment Required. Returns x402 PAYMENT-REQUIRED header." },
+          "404": { "description": "Unknown ticker." }
+        }
+      }
+    },
+    "/api/v1/intelligence/changes": {
+      "get": {
+        "summary": "Stock Bloc Intelligence Delta Change Feed ($0.01 USDC)",
+        "description": "Lightweight change feed since an ISO timestamp across SEC filings, watchlist market movers (>=2%), research memos, forecasts, and upcoming orbital launches.",
+        "operationId": "getIntelligenceChanges",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date-time" },
+            "description": "Optional ISO-8601 cutoff timestamp (defaults to 24 hours ago)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 },
+            "description": "Maximum events per category (1-50)."
+          }
+        ],
+        "x-payment-info": {
+          "price": { "mode": "fixed", "currency": "USD", "amount": "0.010000" },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "10000",
+                "decimals": 6
+              }
+            }
+          ]
+        },
+        "responses": {
+          "200": { "description": "Intelligence delta change feed." },
+          "402": { "description": "Payment Required. Returns x402 PAYMENT-REQUIRED header." }
+        }
+      }
+    },
+    "/api/v1/space/telemetry": {
+      "get": {
+        "summary": "Orbital Infrastructure & Space Telemetry API ($0.05 USDC)",
+        "description": "Live CelesTrak Starlink SATCAT constellation counts, Launch Library 2 upcoming & recent orbital launches, and space/power equity quotes.",
+        "operationId": "getSpaceTelemetry",
+        "parameters": [
+          {
+            "name": "includeEquities",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "boolean", "default": true },
+            "description": "Include live equity quotes for RKLB, ASTS, LUNR, PL, BE, CEG, and TLN."
+          }
+        ],
+        "x-payment-info": {
+          "price": { "mode": "fixed", "currency": "USD", "amount": "0.050000" },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "50000",
+                "decimals": 6
+              }
+            }
+          ]
+        },
+        "responses": {
+          "200": { "description": "Structured orbital & space/power telemetry bundle." },
+          "402": { "description": "Payment Required. Returns x402 PAYMENT-REQUIRED header." }
+        }
+      }
+    },
+    "/api/v1/sec/8k-events/sample": {
+      "get": {
+        "summary": "Free static sample of SEC Form 8-K events",
+        "operationId": "getSec8kEventsSample",
+        "security": [],
+        "responses": { "200": { "description": "Static Form 8-K sample payload." } }
+      }
+    },
+    "/api/v1/intelligence/changes/sample": {
+      "get": {
+        "summary": "Free static sample of intelligence delta feed",
+        "operationId": "getIntelligenceChangesSample",
+        "security": [],
+        "responses": { "200": { "description": "Static delta feed sample payload." } }
+      }
+    },
+    "/api/v1/space/telemetry/sample": {
+      "get": {
+        "summary": "Free static sample of orbital & space telemetry",
+        "operationId": "getSpaceTelemetrySample",
+        "security": [],
+        "responses": { "200": { "description": "Static space telemetry sample payload." } }
+      }
+    },
+    "/api/v1/signals/8k": {
+      "get": {
+        "summary": "SEC Form 8-K Event Monitor ($0.05 USDC)",
+        "description": "Monitor real SEC EDGAR Form 8-K filings by single ticker or watchlist (max 20 tickers) since a timestamp (default 24h). Returns newest-first filings with item codes, plain-English itemLabels, filingUrl, and a 2-3 sentence summary extracted from the filing text.",
+        "operationId": "getSignals8k",
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "example": "NVDA" },
+            "description": "Single ticker symbol to monitor (e.g. NVDA)."
+          },
+          {
+            "name": "watchlist",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "example": "NVDA,ASTS,OKLO" },
+            "description": "Comma-separated list of up to 20 ticker symbols."
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "format": "date-time", "example": "2026-11-17T00:00:00Z" },
+            "description": "ISO-8601 timestamp lower bound (defaults to 24 hours ago)."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 },
+            "description": "Maximum number of newest-first 8-K filings to return (1-50)."
+          }
+        ],
+        "x-example-request": {
+          "ticker": "NVDA",
+          "watchlist": "NVDA,ASTS,OKLO",
+          "since": "2026-11-17T00:00:00Z"
+        },
+        "x-payment-info": {
+          "price": { "mode": "fixed", "currency": "USD", "amount": "0.050000" },
+          "protocols": [
+            {
+              "x402": {
+                "version": 2,
+                "scheme": "exact",
+                "network": "eip155:8453",
+                "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+                "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+                "amountAtomic": "50000",
+                "decimals": 6
+              }
+            }
+          ]
+        },
+        "responses": {
+          "200": { "description": "Newest-first SEC Form 8-K event list with item labels and filing-text summaries." },
+          "400": { "description": "Free validation error for invalid since, limit, or watchlist (>20)." },
+          "402": { "description": "Payment Required. Returns x402 PAYMENT-REQUIRED header." },
+          "404": { "description": "Free error for unknown ticker symbol (not charged)." }
+        }
+      }
+    },
+    "/api/v1/signals/8k/sample": {
+      "get": {
+        "summary": "Free static sample of SEC Form 8-K Event Monitor",
+        "operationId": "getSignals8kSample",
+        "security": [],
+        "responses": { "200": { "description": "Static NVDA Form 8-K monitor sample payload." } }
+      }
     }
   },
   "components": {
