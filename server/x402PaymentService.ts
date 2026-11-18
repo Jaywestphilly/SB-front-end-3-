@@ -190,18 +190,18 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
       url: 'https://stockbloc.ai.studio/api/v1/sec/8k-events?ticker=NVDA&limit=5'
     }
   },
-  // Watchlist Delta Change Feed ($0.01 USDC)
-  delta_changes: {
-    id: 'delta_changes',
-    name: 'Stock Bloc Intelligence Delta Feed',
+  // Per-Ticker Change-Detection Endpoint ($0.01 USDC)
+  intelligence_changes: {
+    id: 'intelligence_changes',
+    name: 'Stock Bloc Per-Ticker Change Detector',
     category: 'intelligence_delta',
     priceUsd: 0.01,
     priceDisplay: '$0.01',
     atomicAmount: '10000',
-    description: "Lightweight change feed since a timestamp across SEC filings, watchlist market movers, forecasts, memos, and space launches. $0.01. Free sample: https://stockbloc.ai.studio/api/v1/intelligence/changes/sample",
+    description: "What changed for a ticker since a timestamp across SEC filings (8-K/10-K/10-Q), 5-factor SB Score deltas, and tracked Form 13F filings. $0.01. Free sample: https://stockbloc.ai.studio/api/v1/intelligence/changes/sample",
     exampleRequest: {
       method: 'GET',
-      url: 'https://stockbloc.ai.studio/api/v1/intelligence/changes?limit=15'
+      url: 'https://stockbloc.ai.studio/api/v1/intelligence/changes?ticker=NVDA&since=2026-11-17T00:00:00Z'
     }
   },
   // Structured Space Telemetry & Orbital Equities ($0.05 USDC)
@@ -562,31 +562,35 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
     }
   }),
 
-  delta_changes: declareDiscovery({
+  intelligence_changes: declareDiscovery({
     method: 'GET',
-    input: { since: '2026-11-17T00:00:00Z', limit: '15' },
+    input: { ticker: 'NVDA', since: '2026-11-17T00:00:00Z' },
     inputSchema: {
       type: 'object',
       properties: {
-        since: { type: 'string', description: 'Optional ISO 8601 timestamp cutoff' },
-        limit: { type: 'string', description: 'Maximum events per feed (1-50)' }
+        ticker: { type: 'string', description: 'US stock ticker symbol (e.g. NVDA)' },
+        since: { type: 'string', description: 'Required ISO-8601 timestamp cutoff (windows >90 days are clamped to 90 days)' }
       },
+      required: ['ticker', 'since'],
       additionalProperties: false
     },
     output: {
       example: {
         status: 'string',
+        ticker: 'string',
         since: 'ISO 8601 string',
         asOf: 'ISO 8601 string',
-        counts: {
-          secFilings: 'number',
-          marketMovers: 'number',
-          researchMemos: 'number',
-          forecasts: 'number',
-          upcomingSpaceLaunches: 'number'
-        },
-        secFilings: ['object'],
-        marketMovers: ['object']
+        summary: 'string',
+        count: 'number',
+        changes: [
+          {
+            type: 'filing | sb_score | 13f',
+            what: 'string',
+            detail: 'string',
+            changedAt: 'ISO 8601 string',
+            link: 'string'
+          }
+        ]
       }
     }
   }),
@@ -712,7 +716,7 @@ export const X402_ROUTE_PATHS: Record<string, string[]> = {
     '/api/v1/sec/8k-events',
     '/api/sec/8k-events'
   ],
-  delta_changes: [
+  intelligence_changes: [
     '/api/v1/intelligence/changes',
     '/api/intelligence/changes'
   ],
@@ -924,9 +928,9 @@ export function matchPricedEndpoint(path: string, method: string = 'GET'): X402P
     return PRICED_ENDPOINTS.sec_8k_events;
   }
 
-  // Watchlist Intelligence Delta Changes ($0.01 USDC)
+  // Per-Ticker Change-Detection Endpoint ($0.01 USDC)
   if (normalized === '/api/v1/intelligence/changes' || normalized === '/api/intelligence/changes') {
-    return PRICED_ENDPOINTS.delta_changes;
+    return PRICED_ENDPOINTS.intelligence_changes;
   }
 
   // Space & Orbital Telemetry Bundle ($0.05 USDC)

@@ -163,26 +163,41 @@ export const STATIC_SAMPLES: Record<string, any> = {
     },
   },
 
-  delta_changes: {
+  intelligence_changes: {
     sample: true,
-    capturedAt: '2026-11-18T12:00:00Z',
-    sampleNote: 'Static sample of lightweight watchlist & intelligence delta changes since a timestamp.',
+    capturedAt: '2026-11-18T14:30:00Z',
+    sampleNote: 'Static sample of per-ticker change detection for NVDA since 2026-11-17T00:00:00Z (0 network calls). Call GET /api/v1/intelligence/changes?ticker=NVDA&since=2026-11-17T00:00:00Z via x402 ($0.01 USDC on Base).',
     paidRoute: {
       method: 'GET',
-      url: 'https://stockbloc.ai.studio/api/v1/intelligence/changes?since=2026-11-17T00:00:00Z',
+      url: 'https://stockbloc.ai.studio/api/v1/intelligence/changes?ticker=NVDA&since=2026-11-17T00:00:00Z',
       price: '$0.01 USDC (x402, Base)',
       atomicAmount: '10000',
     },
     output: {
       status: 'success',
+      ticker: 'NVDA',
       since: '2026-11-17T00:00:00Z',
-      counts: {
-        secFilings: 2,
-        marketMovers: 3,
-        researchMemos: 1,
-        forecasts: 2,
-        upcomingSpaceLaunches: 3,
-      },
+      effectiveSince: '2026-11-17T00:00:00.000Z',
+      windowClamped: false,
+      asOf: '2026-11-18T14:30:00.000Z',
+      coverageNote: 'Checks SEC EDGAR 8-K/10-K/10-Q filings, deterministic 5-factor SB Score vs daily bars as of since, and tracked institutional Form 13F-HR filings as of their reported filing timestamps (not real-time tick surveillance).',
+      summary: '2 changes since Nov 17',
+      count: 2,
+      changes: [
+        {
+          type: 'sb_score',
+          what: 'SB Score Momentum factor rose from 60 to 64 (+4 pts)',
+          detail: 'Momentum: 60 -> 64 (+4 pts); overall SB Score 48 -> 49',
+          changedAt: '2026-11-18T14:30:00.000Z',
+        },
+        {
+          type: 'filing',
+          what: 'New Form 8-K filed (Items 2.02, 9.01)',
+          detail: 'NVIDIA CORP filed Form 8-K on 2026-11-17 (Accession 0001045810-26-000088): 2.02: Results of Operations and Financial Condition; 9.01: Financial Statements and Exhibits',
+          changedAt: '2026-11-17T21:20:51.000Z',
+          link: 'https://www.sec.gov/Archives/edgar/data/1045810/000104581026000088/nvda-20261117.htm',
+        },
+      ],
     },
   },
 

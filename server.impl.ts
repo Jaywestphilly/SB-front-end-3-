@@ -45,10 +45,10 @@ import {
 } from './server/spaceTelemetryService.js';
 import {
   fetchSec8kEvents,
-  fetchIntelligenceChanges,
   fetchSpaceTelemetryBundle,
 } from './server/newStreamsService.js';
 import { fetchSignals8k } from './server/signals8kService.js';
+import { fetchTickerIntelligenceChanges } from './server/intelligenceChangesService.js';
 
 const app = express();
 const portArgIndex = process.argv.indexOf('--port');
@@ -195,7 +195,7 @@ app.get(['/api/v1/sec/8k-events/sample', '/api/sec/8k-events/sample'], (_req, re
 app.get(['/api/v1/intelligence/changes/sample', '/api/intelligence/changes/sample'], (_req, res) => {
   res.setHeader('Cache-Control', 'public, max-age=3600');
   res.setHeader('X-Stock-Bloc-Sample', 'true');
-  return res.status(200).json(STATIC_SAMPLES.delta_changes);
+  return res.status(200).json(STATIC_SAMPLES.intelligence_changes);
 });
 
 app.get(['/api/v1/space/telemetry/sample', '/api/space/telemetry/sample'], (_req, res) => {
@@ -338,16 +338,16 @@ app.get(['/api/v1/signals/8k', '/api/signals/8k'], async (req, res) => {
 
 app.get(['/api/v1/intelligence/changes', '/api/intelligence/changes'], async (req, res) => {
   try {
-    const since = req.query.since ? String(req.query.since) : undefined;
-    const limit = req.query.limit !== undefined ? Number(req.query.limit) : undefined;
-    const data = await fetchIntelligenceChanges({ since, limit });
+    const ticker = (req.query.ticker as string) || (req.query.symbol as string);
+    const since = req.query.since !== undefined ? String(req.query.since) : undefined;
+    const { status, body } = await fetchTickerIntelligenceChanges({ ticker, since });
     res.setHeader('Cache-Control', 'public, max-age=60');
-    return res.status(200).json(data);
+    return res.status(status).json(body);
   } catch (err: any) {
-    return res.status(500).json({
+    return res.status(503).json({
       status: 'error',
-      error: 'delta_feed_error',
-      message: err?.message || 'Failed to assemble intelligence delta feed.'
+      error: 'intelligence_changes_unavailable',
+      message: err?.message || 'Failed to compute ticker intelligence changes.'
     });
   }
 });

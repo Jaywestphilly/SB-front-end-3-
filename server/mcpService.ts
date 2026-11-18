@@ -212,13 +212,14 @@ export const MCP_TOOLS = [
   },
   {
     name: "get_intelligence_changes",
-    description: "Lightweight change feed since an ISO timestamp across SEC filings, watchlist market movers (>=2%), research memos, forecasts, and upcoming space launches. $0.01.",
+    description: "Per-ticker change detector since an ISO timestamp across SEC filings (8-K/10-K/10-Q), 5-factor SB Score deltas, and Form 13F filings (clamped to 90 days max). $0.01.",
     inputSchema: {
       type: "object",
       properties: {
-        since: { type: "string", description: "Optional ISO-8601 timestamp cutoff (defaults to last 24 hours)" },
-        limit: { type: "number", description: "Maximum items per category (1-50, default: 20)" }
-      }
+        ticker: { type: "string", description: "US stock ticker symbol (e.g. NVDA)" },
+        since: { type: "string", description: "Required ISO-8601 timestamp cutoff (e.g. 2026-11-17T00:00:00Z)" }
+      },
+      required: ["ticker", "since"]
     }
   },
   {
@@ -309,7 +310,7 @@ export const MCP_TOOL_PRICING: Record<string, McpToolPricingConfig> = {
     atomicAmount: '50000'
   },
   get_intelligence_changes: {
-    endpointId: 'delta_changes',
+    endpointId: 'intelligence_changes',
     priceUsd: 0.01,
     priceDisplay: '$0.01',
     atomicAmount: '10000'
@@ -514,10 +515,10 @@ function getMcpValidationParams(name: string, args: any = {}) {
       };
     case 'get_intelligence_changes':
       return {
-        endpointId: 'delta_changes',
+        endpointId: 'intelligence_changes',
         rawPath: '/api/v1/intelligence/changes',
         method: 'GET',
-        query: { since: args.since, limit: args.limit },
+        query: { ticker: args.ticker, since: args.since },
         body: {}
       };
     case 'get_space_telemetry':
@@ -855,8 +856,8 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
         });
       } else if (name === "get_intelligence_changes") {
         const url = new URL(`${baseUrl}/api/v1/intelligence/changes`);
+        if (args?.ticker) url.searchParams.set("ticker", String(args.ticker).toUpperCase().trim());
         if (args?.since) url.searchParams.set("since", String(args.since));
-        if (args?.limit !== undefined) url.searchParams.set("limit", String(args.limit));
         fetchRes = await fetch(url.toString(), {
           headers: forwardHeaders
         });

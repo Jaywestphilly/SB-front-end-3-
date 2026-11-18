@@ -659,7 +659,7 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
         };
         let queryPath = path;
         if (method === 'GET' && !path.includes('?')) {
-          queryPath = `${path}?ticker=NVDA&symbol=NVDA`;
+          queryPath = `${path}?ticker=NVDA&symbol=NVDA&since=2026-11-17T00:00:00Z`;
         }
 
         const reqBuilder = method === 'POST' ? request(app).post(path).send(testPayload) : request(app).get(queryPath);

@@ -34,7 +34,7 @@ Always pay the payTo returned in the live 402 response.
 - **Quant Strategy Evaluation** (`POST /api/v1/agent/strategy/evaluate`): **$0.10 USDC** (`100000` atomic units)
 - **Earnings Prep Pack Bundle** (`GET /api/v1/intelligence/earnings-pack?ticker=NVDA`): **$0.35 USDC** (`350000` atomic units) - 22% discount vs $0.45 separate components
 - **SEC Form 8-K Material Event Intelligence** (`GET /api/v1/sec/8k-events`): **$0.05 USDC** (`50000` atomic units) - Form 8-K item-level current report extractor
-- **Intelligence Delta Change Feed** (`GET /api/v1/intelligence/changes`): **$0.01 USDC** (`10000` atomic units) - Recent changes across filings, movers, forecasts, and space launches
+- **Per-Ticker Change Detector** (`GET /api/v1/intelligence/changes`): **$0.01 USDC** (`10000` atomic units) - What changed for a ticker since a timestamp across SEC filings, 5-factor SB Score deltas, and 13F filings
 - **Orbital Infrastructure & Space Telemetry API** (`GET /api/v1/space/telemetry`): **$0.05 USDC** (`50000` atomic units) - Live CelesTrak Starlink SATCAT counts, Launch Library 2 windows, and space/power equities
 - **8-K Event Monitor** (`GET /api/v1/signals/8k`): **$0.05 USDC** (`50000` atomic units) - Per-ticker or multi-ticker (max 20) Form 8-K monitor since a timestamp with `items`, `itemLabels`, `filingUrl`, and filing-text `summary`
 - **Free Static Inspection Samples (0 cost)**: Append `/sample` to `sec/job`, `data/sec`, `intelligence/sb-score`, `intelligence/earnings-pack`, `market/quote`, `agent/strategy/evaluate`, `intelligence/forecasts`, `sec/8k-events`, `intelligence/changes`, `space/telemetry`, or `signals/8k`.
@@ -403,7 +403,7 @@ Stock Bloc is a financial intelligence, quant backtesting, and autonomous agent 
 - **Daily SEC Watchlist Triggers (Free)**: `GET https://stockbloc.ai.studio/api/v1/signals/daily-triggers`
 - **8-K Event Monitor (x402: $0.05 USDC)**: `GET https://stockbloc.ai.studio/api/v1/signals/8k?watchlist=NVDA,ASTS,OKLO&since=2026-11-17T00:00:00Z` (Free sample: `GET https://stockbloc.ai.studio/api/v1/signals/8k/sample`) — Returns newest-first Form 8-K filings with `items`, `itemLabels`, `filingUrl`, and a 2–3 sentence `summary` from the filing text (`404` free on unknown ticker, `400` free on bad `since`). Example: `curl -s "https://stockbloc.ai.studio/api/v1/signals/8k?ticker=NVDA" -H "PAYMENT-SIGNATURE: <sig>"`
 - **SEC Form 8-K Events (x402: $0.05 USDC)**: `GET https://stockbloc.ai.studio/api/v1/sec/8k-events?ticker=NVDA`
-- **Intelligence Delta Feed (x402: $0.01 USDC)**: `GET https://stockbloc.ai.studio/api/v1/intelligence/changes`
+- **Per-Ticker Change Detector (x402: $0.01 USDC)**: `GET https://stockbloc.ai.studio/api/v1/intelligence/changes?ticker=NVDA&since=2026-11-17T00:00:00Z` (Free sample: `GET https://stockbloc.ai.studio/api/v1/intelligence/changes/sample`) — Returns `{ ticker, since, asOf, summary, changes }` across new `8-K`/`10-K`/`10-Q` filings, SB Score changes (>=2 total or >=3 factor move), and Form 13F filings (`404` free on unknown ticker, `400` free on missing/invalid `since`, 90-day max window clamp). Example: `curl -s "https://stockbloc.ai.studio/api/v1/intelligence/changes?ticker=NVDA&since=2026-11-17T00:00:00Z" -H "PAYMENT-SIGNATURE: <sig>"`
 - **Space & Orbital Telemetry (x402: $0.05 USDC)**: `GET https://stockbloc.ai.studio/api/v1/space/telemetry`
 - **Publish Research (x402: $0.10 USDC)**: `POST https://stockbloc.ai.studio/api/v1/intelligence/research`
 - **Publish Forecast (x402: $0.05 USDC)**: `POST https://stockbloc.ai.studio/api/v1/intelligence/forecasts`

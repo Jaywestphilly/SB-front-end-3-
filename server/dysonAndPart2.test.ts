@@ -74,8 +74,8 @@ describe('Dyson Swarm Live Telemetry & Part 2 x402 Streams Suite', () => {
     const cases = [
       { path: '/api/v1/sec/8k-events?ticker=NVDA', expectedAmount: '50000' },
       { path: '/api/sec/8k-events?ticker=NVDA', expectedAmount: '50000' },
-      { path: '/api/v1/intelligence/changes?since=2026-11-17T00:00:00Z', expectedAmount: '10000' },
-      { path: '/api/intelligence/changes?since=2026-11-17T00:00:00Z', expectedAmount: '10000' },
+      { path: '/api/v1/intelligence/changes?ticker=NVDA&since=2026-11-17T00:00:00Z', expectedAmount: '10000' },
+      { path: '/api/intelligence/changes?ticker=NVDA&since=2026-11-17T00:00:00Z', expectedAmount: '10000' },
       { path: '/api/v1/space/telemetry', expectedAmount: '50000' },
     ];
 
@@ -101,7 +101,7 @@ describe('Dyson Swarm Live Telemetry & Part 2 x402 Streams Suite', () => {
     expect(badLimit.status).toBe(400);
     expect(badLimit.body.charged).toBe(false);
 
-    const badSince = await request(app).get('/api/v1/intelligence/changes?since=not-a-date');
+    const badSince = await request(app).get('/api/v1/intelligence/changes?ticker=NVDA&since=not-a-date');
     expect(badSince.status).toBe(400);
     expect(badSince.body.charged).toBe(false);
   });
@@ -214,11 +214,11 @@ describe('Dyson Swarm Live Telemetry & Part 2 x402 Streams Suite', () => {
   it('6. Discovery registries include Part 2 priced endpoints & MCP tools cleanly without breaking original endpoints', () => {
     expect(PRICED_ENDPOINTS.sec_8k_events.id).toBe('sec_8k_events');
     expect(PRICED_ENDPOINTS.sec_8k_events.atomicAmount).toBe('50000');
-    expect(PRICED_ENDPOINTS.delta_changes.atomicAmount).toBe('10000');
+    expect(PRICED_ENDPOINTS.intelligence_changes.atomicAmount).toBe('10000');
     expect(PRICED_ENDPOINTS.space_telemetry.atomicAmount).toBe('50000');
 
     expect(BAZAAR_DISCOVERY_EXTENSIONS.sec_8k_events).toBeDefined();
-    expect(BAZAAR_DISCOVERY_EXTENSIONS.delta_changes).toBeDefined();
+    expect(BAZAAR_DISCOVERY_EXTENSIONS.intelligence_changes).toBeDefined();
     expect(BAZAAR_DISCOVERY_EXTENSIONS.space_telemetry).toBeDefined();
 
     const toolNames = MCP_TOOLS.map((t) => t.name);

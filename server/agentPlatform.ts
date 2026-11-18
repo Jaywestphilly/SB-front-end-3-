@@ -2027,7 +2027,11 @@ const handleManifest = (req: Request, res: Response) => {
         path: '/api/v1/intelligence/changes',
         alias: '/api/intelligence/changes',
         scope: 'metered_data',
-        description: 'Lightweight change feed since a timestamp across SEC filings, watchlist market movers, forecasts, memos, and space launches. Free sample: https://stockbloc.ai.studio/api/v1/intelligence/changes/sample',
+        description: 'Per-ticker change detector since a timestamp across SEC filings (8-K/10-K/10-Q), 5-factor SB Score deltas, and tracked Form 13F filings (clamped to 90 days max). Free sample: https://stockbloc.ai.studio/api/v1/intelligence/changes/sample',
+        queryParams: {
+          ticker: 'string (required, e.g. NVDA; unknown ticker returns free 404)',
+          since: 'string (required ISO-8601 timestamp; windows >90 days are clamped to 90 days)'
+        },
         x402: {
           priced: true,
           priceUsd: 0.01,

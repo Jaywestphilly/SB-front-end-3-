@@ -2050,25 +2050,29 @@
     },
     "/api/v1/intelligence/changes": {
       "get": {
-        "summary": "Stock Bloc Intelligence Delta Change Feed ($0.01 USDC)",
-        "description": "Lightweight change feed since an ISO timestamp across SEC filings, watchlist market movers (>=2%), research memos, forecasts, and upcoming orbital launches.",
+        "summary": "Per-Ticker Change-Detection Endpoint ($0.01 USDC)",
+        "description": "Answers what changed for a single ticker since a timestamp across SEC EDGAR filings (8-K/10-K/10-Q), SB Score & 5-factor breakdown (>=2 total or >=3 factor move), and Form 13F filings naming the ticker. Windows >90 days are clamped to 90 days.",
         "operationId": "getIntelligenceChanges",
         "parameters": [
           {
-            "name": "since",
+            "name": "ticker",
             "in": "query",
-            "required": false,
-            "schema": { "type": "string", "format": "date-time" },
-            "description": "Optional ISO-8601 cutoff timestamp (defaults to 24 hours ago)."
+            "required": true,
+            "schema": { "type": "string", "example": "NVDA" },
+            "description": "US stock ticker symbol (e.g. NVDA). Unknown tickers return free HTTP 404."
           },
           {
-            "name": "limit",
+            "name": "since",
             "in": "query",
-            "required": false,
-            "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 },
-            "description": "Maximum events per category (1-50)."
+            "required": true,
+            "schema": { "type": "string", "format": "date-time", "example": "2026-11-17T00:00:00Z" },
+            "description": "Required ISO-8601 cutoff timestamp. Windows older than 90 days are clamped to 90 days."
           }
         ],
+        "x-example-request": {
+          "ticker": "NVDA",
+          "since": "2026-11-17T00:00:00Z"
+        },
         "x-payment-info": {
           "price": { "mode": "fixed", "currency": "USD", "amount": "0.010000" },
           "protocols": [
@@ -2086,8 +2090,10 @@
           ]
         },
         "responses": {
-          "200": { "description": "Intelligence delta change feed." },
-          "402": { "description": "Payment Required. Returns x402 PAYMENT-REQUIRED header." }
+          "200": { "description": "Per-ticker change list (possibly empty) with summary and asOf timestamp." },
+          "400": { "description": "Free validation error for missing or invalid ticker or since." },
+          "402": { "description": "Payment Required. Returns x402 PAYMENT-REQUIRED header." },
+          "404": { "description": "Free unknown ticker error (not charged)." }
         }
       }
     },
@@ -2137,10 +2143,10 @@
     },
     "/api/v1/intelligence/changes/sample": {
       "get": {
-        "summary": "Free static sample of intelligence delta feed",
+        "summary": "Free static sample of per-ticker change detection (NVDA since Nov 17)",
         "operationId": "getIntelligenceChangesSample",
         "security": [],
-        "responses": { "200": { "description": "Static delta feed sample payload." } }
+        "responses": { "200": { "description": "Static NVDA change-detection sample payload." } }
       }
     },
     "/api/v1/space/telemetry/sample": {

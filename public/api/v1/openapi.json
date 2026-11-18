@@ -1182,12 +1182,17 @@
     },
     "/api/v1/intelligence/changes": {
       "get": {
-        "summary": "Stock Bloc Intelligence Delta Change Feed ($0.01 USDC)",
+        "summary": "Per-Ticker Change-Detection Endpoint ($0.01 USDC)",
+        "description": "What changed for a ticker since a timestamp across SEC EDGAR filings (8-K/10-K/10-Q), 5-factor SB Score deltas, and Form 13F filings. Windows >90 days are clamped to 90 days.",
         "operationId": "getIntelligenceChangesV1",
         "parameters": [
-          { "name": "since", "in": "query", "required": false, "schema": { "type": "string" } },
-          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 50 } }
+          { "name": "ticker", "in": "query", "required": true, "schema": { "type": "string", "example": "NVDA" } },
+          { "name": "since", "in": "query", "required": true, "schema": { "type": "string", "format": "date-time", "example": "2026-11-17T00:00:00Z" } }
         ],
+        "x-example-request": {
+          "ticker": "NVDA",
+          "since": "2026-11-17T00:00:00Z"
+        },
         "x-payment-info": {
           "price": { "mode": "fixed", "currency": "USD", "amount": "0.010000" },
           "protocols": [{
@@ -1202,7 +1207,20 @@
             }
           }]
         },
-        "responses": { "200": { "description": "Intelligence delta change feed." }, "402": { "description": "Payment Required." } }
+        "responses": {
+          "200": { "description": "Per-ticker changes since timestamp." },
+          "400": { "description": "Free validation error for missing/invalid ticker or since." },
+          "402": { "description": "Payment Required." },
+          "404": { "description": "Free unknown ticker error." }
+        }
+      }
+    },
+    "/api/v1/intelligence/changes/sample": {
+      "get": {
+        "summary": "Free static sample of per-ticker change detection (NVDA)",
+        "operationId": "getIntelligenceChangesSampleV1",
+        "security": [],
+        "responses": { "200": { "description": "Static NVDA change-detection sample." } }
       }
     },
     "/api/v1/space/telemetry": {

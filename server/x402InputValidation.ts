@@ -690,33 +690,87 @@ export async function validatePricedRequestInput(
     return { valid: true };
   }
 
-  // 10. delta_changes
-  if (endpointId === 'delta_changes') {
+  // 10. intelligence_changes (GET /api/v1/intelligence/changes)
+  if (endpointId === 'intelligence_changes') {
     if (normMethod !== 'GET') {
       return {
         valid: false,
         status: 405,
         code: 'METHOD_NOT_ALLOWED',
-        error: 'Method Not Allowed. delta_changes requires GET.',
-        message: 'Method Not Allowed. delta_changes requires GET.',
+        error: 'Method Not Allowed. intelligence_changes requires GET.',
+        message: 'Method Not Allowed. intelligence_changes requires GET.',
         allowHeader: 'GET',
         charged: false
       };
     }
-    if (query?.since !== undefined && String(query.since).trim().length > 0) {
-      const parsed = new Date(String(query.since).trim()).getTime();
-      if (Number.isNaN(parsed)) {
+
+    const rawTicker = query?.ticker || query?.symbol;
+    const tickerStr = rawTicker !== undefined ? String(rawTicker).trim() : '';
+    if (!tickerStr) {
+      return {
+        valid: false,
+        status: 400,
+        code: 'INVALID_INPUT',
+        error: 'Query parameter "ticker" is required (e.g. ?ticker=NVDA&since=2026-11-17T00:00:00Z).',
+        message: 'Query parameter "ticker" is required (e.g. ?ticker=NVDA&since=2026-11-17T00:00:00Z).',
+        field: 'ticker',
+        example: {
+          method: 'GET',
+          url: 'https://stockbloc.ai.studio/api/v1/intelligence/changes?ticker=NVDA&since=2026-11-17T00:00:00Z'
+        },
+        charged: false
+      };
+    }
+
+    if (!isValidSymbolFormat(tickerStr)) {
+      return {
+        valid: false,
+        status: 400,
+        code: 'INVALID_INPUT',
+        error: `Invalid ticker format: "${tickerStr}".`,
+        message: `Invalid ticker format: "${tickerStr}".`,
+        field: 'ticker',
+        charged: false
+      };
+    }
+
+    const rawSince = query?.since !== undefined ? String(query.since).trim() : '';
+    const parsedSince = rawSince ? Date.parse(rawSince) : NaN;
+    if (!rawSince || !/^\d{4}-\d{2}-\d{2}/.test(rawSince) || Number.isNaN(parsedSince)) {
+      return {
+        valid: false,
+        status: 400,
+        code: 'INVALID_INPUT',
+        error: 'Query parameter "since" is required and must be a valid ISO-8601 timestamp (e.g. 2026-11-17T00:00:00Z).',
+        message: 'Query parameter "since" is required and must be a valid ISO-8601 timestamp (e.g. 2026-11-17T00:00:00Z).',
+        field: 'since',
+        example: {
+          method: 'GET',
+          url: 'https://stockbloc.ai.studio/api/v1/intelligence/changes?ticker=NVDA&since=2026-11-17T00:00:00Z'
+        },
+        charged: false
+      };
+    }
+
+    try {
+      const { cik, secReachable } = await lookupTickerCik(tickerStr);
+      if (!cik && secReachable) {
         return {
           valid: false,
-          status: 400,
-          code: 'INVALID_INPUT',
-          error: 'Validation error: "since" must be a valid ISO-8601 timestamp.',
-          message: 'Validation error: "since" must be a valid ISO-8601 timestamp.',
-          field: 'since',
+          status: 404,
+          code: 'UNKNOWN_TICKER',
+          error: 'unknown_ticker',
+          message: `Ticker "${tickerStr.toUpperCase()}" was not found in U.S. SEC EDGAR directory.`,
+          customJson: {
+            error: 'unknown_ticker',
+            message: `Ticker "${tickerStr.toUpperCase()}" was not found in U.S. SEC EDGAR directory.`,
+            charged: false
+          },
           charged: false
-        };
+        } as any;
       }
-    }
+    } catch {}
+
     return { valid: true };
   }
 
