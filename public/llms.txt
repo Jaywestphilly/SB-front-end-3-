@@ -61,6 +61,8 @@ All programmatic agent intelligence endpoints are priced in USDC on Base Mainnet
 | 10 | **Per-Ticker Change Detector** | `intelligence_delta` | `GET /api/v1/intelligence/changes` | **$0.01 USDC** | `10000` | What changed for a `ticker` since `since` across SEC filings (`8-K`/`10-K`/`10-Q`), 5-factor SB Score deltas (>=2 total or >=3 factor move), and tracked Form 13F filings (clamped at 90 days). |
 | 11 | **Space & Orbital Telemetry API** | `space_telemetry` | `GET /api/v1/space/telemetry` | **$0.05 USDC** | `50000` | Live CelesTrak Starlink SATCAT counts, Launch Library 2 orbital windows, and space/power equity quotes (RKLB, ASTS, LUNR, PL, BE, CEG, TLN). |
 | 12 | **8-K Event Monitor** | `signals_8k` | `GET /api/v1/signals/8k` | **$0.05 USDC** | `50000` | Real-time SEC EDGAR Form 8-K monitor for a `ticker` or `watchlist` (up to 20) since a timestamp (default 24h), returning newest-first filings with `items`, plain-English `itemLabels`, `filingUrl`, and a 2-3 sentence `summary` from the filing text. |
+| 13 | **Insider Trades Feed (Form 4)** | `insider_congress` | `GET /api/v1/data/insider` | **$0.02 USDC** | `20000` | Live SEC EDGAR Form 4 open-market insider buys (`P`) and sells (`S`) for a `ticker`, newest first, with `insiderName`, `insiderTitle`, `shares`, `pricePerShare`, `totalValue`, `sharesOwnedAfter`, and `filingUrl`. |
+| 14 | **Congressional Trades Feed (House & Senate PTR)** | `insider_congress` | `GET /api/v1/data/congress` | **$0.02 USDC** | `20000` | Live U.S. House Clerk and Senate eFD congressional Periodic Transaction Report (PTR) stock trades filtered by `ticker` or `person`, newest first, with verbatim `amountRange` and `sourceUrl`. |
 
 ### Free Inspection Routes & Static Samples (Zero Cost / Zero x402)
 - **Daily SEC Watchlist Triggers (Free live scan)**: `GET https://stockbloc.ai.studio/api/v1/signals/daily-triggers`
@@ -76,6 +78,8 @@ All programmatic agent intelligence endpoints are priced in USDC on Base Mainnet
   - `GET https://stockbloc.ai.studio/api/v1/intelligence/changes/sample`
   - `GET https://stockbloc.ai.studio/api/v1/space/telemetry/sample`
   - `GET https://stockbloc.ai.studio/api/v1/signals/8k/sample`
+  - `GET https://stockbloc.ai.studio/api/v1/data/insider/sample`
+  - `GET https://stockbloc.ai.studio/api/v1/data/congress/sample`
 
 ### 8-K Event Monitor (`GET /api/v1/signals/8k`) — $0.05 USDC
 Query live SEC EDGAR Form 8-K filings by single `ticker` or comma-separated `watchlist` (max 20) with optional `since` ISO timestamp (defaults to 24h ago) and `limit` (default 20, max 50). Returns newest-first filings with `ticker`, `filedDate`, `accessionNumber`, `filingUrl`, `items`, `itemLabels`, and a 2–3 sentence `summary` drawn from the filing text (`asOf` included; empty `filings: []` returns 200; unknown ticker returns free 404; invalid `since` returns free 400).
@@ -92,6 +96,24 @@ Poll what changed for a `ticker` since `since` (ISO-8601, windows >90 days clamp
 - **Example call**:
 ```bash
 curl -s "https://stockbloc.ai.studio/api/v1/intelligence/changes?ticker=NVDA&since=2026-11-17T00:00:00Z" \
+  -H "PAYMENT-SIGNATURE: <base64_x402_signature>"
+```
+
+### Insider Trades Feed (`GET /api/v1/data/insider`) — $0.02 USDC
+Live SEC EDGAR Form 4 open-market purchases (`P`) and sales (`S`) for a required `ticker` (`limit` default 20 / max 50, optional `since` ISO timestamp). Returns newest-first `{ ticker, insiderName, insiderTitle, transactionDate, filedDate, transactionType, shares, pricePerShare, totalValue, sharesOwnedAfter, filingUrl, asOf }` (unknown ticker returns free 404; invalid params return free 400; empty results return 200 with `transactions: []`).
+- **Free sample**: `GET https://stockbloc.ai.studio/api/v1/data/insider/sample`
+- **Example call**:
+```bash
+curl -s "https://stockbloc.ai.studio/api/v1/data/insider?ticker=NVDA" \
+  -H "PAYMENT-SIGNATURE: <base64_x402_signature>"
+```
+
+### Congressional Trades Feed (`GET /api/v1/data/congress`) — $0.02 USDC
+Live U.S. House Clerk and U.S. Senate eFD Periodic Transaction Report (PTR) stock trades filtered by `ticker` and/or `person` (at least one required; `limit` default 20 / max 50, optional `since`). Returns newest-first `{ person, chamber, ticker, transactionDate, disclosedDate, transactionType, amountRange, sourceUrl, asOf }` plus `chamberStatus` (`house` & `senate` live/unavailable honesty; verbatim disclosed ranges, never estimated).
+- **Free sample**: `GET https://stockbloc.ai.studio/api/v1/data/congress/sample`
+- **Example call**:
+```bash
+curl -s "https://stockbloc.ai.studio/api/v1/data/congress?person=Pelosi" \
   -H "PAYMENT-SIGNATURE: <base64_x402_signature>"
 ```
 
@@ -340,6 +362,8 @@ Stock Bloc provides a native Model Context Protocol (MCP) server for Claude Desk
   - `get_sec_8k_events`: Structured Form 8-K item-level material events from SEC EDGAR ($0.05 USDC)
   - `get_intelligence_changes`: Lightweight intelligence delta feed across filings, movers, memos, forecasts, and launches ($0.01 USDC)
   - `get_space_telemetry`: Live CelesTrak Starlink SATCAT counts, Launch Library 2 windows, and space/power equities ($0.05 USDC)
+  - `get_insider_trades`: SEC EDGAR Form 4 open-market insider buys and sells by ticker ($0.02 USDC)
+  - `get_congress_trades`: U.S. House Clerk and Senate eFD congressional PTR stock trades by ticker or person ($0.02 USDC)
   - `get_data_status`: Check data pipeline freshness (Free)
   - `get_ebook_playbook`: Read financial instructional playbooks (Free)
 

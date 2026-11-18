@@ -957,6 +957,207 @@ export async function validatePricedRequestInput(
     return { valid: true };
   }
 
+  // 13. data_insider (GET /api/v1/data/insider)
+  if (endpointId === 'data_insider') {
+    if (normMethod !== 'GET') {
+      return {
+        valid: false,
+        status: 405,
+        code: 'METHOD_NOT_ALLOWED',
+        error: 'Method Not Allowed. data_insider requires GET.',
+        message: 'Method Not Allowed. data_insider requires GET.',
+        allowHeader: 'GET',
+        charged: false
+      };
+    }
+
+    const rawTicker = query?.ticker || query?.symbol;
+    const tickerStr = rawTicker !== undefined ? String(rawTicker).trim() : '';
+    if (!tickerStr) {
+      return {
+        valid: false,
+        status: 400,
+        code: 'INVALID_INPUT',
+        error: 'Query parameter "ticker" is required (e.g. ?ticker=NVDA).',
+        message: 'Query parameter "ticker" is required (e.g. ?ticker=NVDA).',
+        field: 'ticker',
+        example: {
+          method: 'GET',
+          url: 'https://stockbloc.ai.studio/api/v1/data/insider?ticker=NVDA'
+        },
+        charged: false
+      };
+    }
+
+    if (!isValidSymbolFormat(tickerStr)) {
+      return {
+        valid: false,
+        status: 400,
+        code: 'INVALID_INPUT',
+        error: `Invalid ticker format: "${tickerStr}".`,
+        message: `Invalid ticker format: "${tickerStr}".`,
+        field: 'ticker',
+        charged: false
+      };
+    }
+
+    if (query?.since !== undefined && String(query.since).trim().length > 0) {
+      const sinceRaw = String(query.since).trim();
+      const parsed = Date.parse(sinceRaw);
+      if (!/^\d{4}-\d{2}-\d{2}/.test(sinceRaw) || Number.isNaN(parsed)) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Invalid "since" timestamp. Provide a valid ISO-8601 timestamp (e.g. 2026-09-01T00:00:00Z).',
+          message: 'Invalid "since" timestamp. Provide a valid ISO-8601 timestamp (e.g. 2026-09-01T00:00:00Z).',
+          field: 'since',
+          charged: false
+        };
+      }
+    }
+
+    if (query?.limit !== undefined && String(query.limit).trim().length > 0) {
+      const limStr = String(query.limit).trim();
+      if (!/^\d+$/.test(limStr)) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Validation error: "limit" must be an integer between 1 and 50.',
+          message: 'Validation error: "limit" must be an integer between 1 and 50.',
+          field: 'limit',
+          charged: false
+        };
+      }
+      const lim = parseInt(limStr, 10);
+      if (lim < 1 || lim > 50) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Validation error: "limit" must be an integer between 1 and 50.',
+          message: 'Validation error: "limit" must be an integer between 1 and 50.',
+          field: 'limit',
+          charged: false
+        };
+      }
+    }
+
+    try {
+      const { cik, secReachable } = await lookupTickerCik(tickerStr);
+      if (!cik && secReachable) {
+        return {
+          valid: false,
+          status: 404,
+          code: 'UNKNOWN_TICKER',
+          error: 'unknown_ticker',
+          message: `Ticker "${tickerStr.toUpperCase()}" was not found in U.S. SEC EDGAR directory.`,
+          customJson: {
+            error: 'unknown_ticker',
+            message: `Ticker "${tickerStr.toUpperCase()}" was not found in U.S. SEC EDGAR directory.`,
+            charged: false
+          },
+          charged: false
+        } as any;
+      }
+    } catch {}
+
+    return { valid: true };
+  }
+
+  // 14. data_congress (GET /api/v1/data/congress)
+  if (endpointId === 'data_congress') {
+    if (normMethod !== 'GET') {
+      return {
+        valid: false,
+        status: 405,
+        code: 'METHOD_NOT_ALLOWED',
+        error: 'Method Not Allowed. data_congress requires GET.',
+        message: 'Method Not Allowed. data_congress requires GET.',
+        allowHeader: 'GET',
+        charged: false
+      };
+    }
+
+    const rawTicker = query?.ticker || query?.symbol;
+    const tickerStr = rawTicker !== undefined ? String(rawTicker).trim() : '';
+    const personStr = query?.person !== undefined ? String(query.person).trim() : '';
+
+    if (!tickerStr && !personStr) {
+      return {
+        valid: false,
+        status: 400,
+        code: 'INVALID_INPUT',
+        error: 'Provide at least one query parameter: "ticker" (e.g. ?ticker=NVDA) or "person" (e.g. ?person=Pelosi).',
+        message: 'Provide at least one query parameter: "ticker" (e.g. ?ticker=NVDA) or "person" (e.g. ?person=Pelosi).',
+        field: 'ticker',
+        example: {
+          method: 'GET',
+          url: 'https://stockbloc.ai.studio/api/v1/data/congress?ticker=NVDA'
+        },
+        charged: false
+      };
+    }
+
+    if (tickerStr && !isValidSymbolFormat(tickerStr)) {
+      return {
+        valid: false,
+        status: 400,
+        code: 'INVALID_INPUT',
+        error: `Invalid ticker format: "${tickerStr}".`,
+        message: `Invalid ticker format: "${tickerStr}".`,
+        field: 'ticker',
+        charged: false
+      };
+    }
+
+    if (query?.since !== undefined && String(query.since).trim().length > 0) {
+      const sinceRaw = String(query.since).trim();
+      const parsed = Date.parse(sinceRaw);
+      if (!/^\d{4}-\d{2}-\d{2}/.test(sinceRaw) || Number.isNaN(parsed)) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Invalid "since" timestamp. Provide a valid ISO-8601 timestamp (e.g. 2026-01-01T00:00:00Z).',
+          message: 'Invalid "since" timestamp. Provide a valid ISO-8601 timestamp (e.g. 2026-01-01T00:00:00Z).',
+          field: 'since',
+          charged: false
+        };
+      }
+    }
+
+    if (query?.limit !== undefined && String(query.limit).trim().length > 0) {
+      const limStr = String(query.limit).trim();
+      if (!/^\d+$/.test(limStr)) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Validation error: "limit" must be an integer between 1 and 50.',
+          message: 'Validation error: "limit" must be an integer between 1 and 50.',
+          field: 'limit',
+          charged: false
+        };
+      }
+      const lim = parseInt(limStr, 10);
+      if (lim < 1 || lim > 50) {
+        return {
+          valid: false,
+          status: 400,
+          code: 'INVALID_INPUT',
+          error: 'Validation error: "limit" must be an integer between 1 and 50.',
+          message: 'Validation error: "limit" must be an integer between 1 and 50.',
+          field: 'limit',
+          charged: false
+        };
+      }
+    }
+
+    return { valid: true };
+  }
+
   return { valid: true };
 }
 

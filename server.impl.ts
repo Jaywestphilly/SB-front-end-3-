@@ -49,6 +49,8 @@ import {
 } from './server/newStreamsService.js';
 import { fetchSignals8k } from './server/signals8kService.js';
 import { fetchTickerIntelligenceChanges } from './server/intelligenceChangesService.js';
+import { fetchInsiderTrades } from './server/insiderTradesService.js';
+import { fetchCongressTrades } from './server/congressTradesService.js';
 
 const app = express();
 const portArgIndex = process.argv.indexOf('--port');
@@ -210,6 +212,18 @@ app.get(['/api/v1/signals/8k/sample', '/api/signals/8k/sample'], (_req, res) => 
   return res.status(200).json(STATIC_SAMPLES.signals_8k);
 });
 
+app.get(['/api/v1/data/insider/sample', '/api/data/insider/sample'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(STATIC_SAMPLES.data_insider);
+});
+
+app.get(['/api/v1/data/congress/sample', '/api/data/congress/sample'], (_req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('X-Stock-Bloc-Sample', 'true');
+  return res.status(200).json(STATIC_SAMPLES.data_congress);
+});
+
 app.get('/.well-known/x402list.txt', (_req, res) => {
   res.setHeader('Content-Type', 'text/plain');
   return res.status(200).send('x402list-verify-ZYKyA4-o5e_y370ZiumJz1gXUMqMmnkK66p-z9S09Os');
@@ -348,6 +362,41 @@ app.get(['/api/v1/intelligence/changes', '/api/intelligence/changes'], async (re
       status: 'error',
       error: 'intelligence_changes_unavailable',
       message: err?.message || 'Failed to compute ticker intelligence changes.'
+    });
+  }
+});
+
+app.get(['/api/v1/data/insider', '/api/data/insider'], async (req, res) => {
+  try {
+    const ticker = (req.query.ticker as string) || (req.query.symbol as string);
+    const limit = req.query.limit !== undefined ? Number(req.query.limit) : undefined;
+    const since = req.query.since !== undefined ? String(req.query.since) : undefined;
+    const { status, body } = await fetchInsiderTrades({ ticker, limit, since });
+    res.setHeader('Cache-Control', 'public, max-age=120');
+    return res.status(status).json(body);
+  } catch (err: any) {
+    return res.status(503).json({
+      status: 'error',
+      error: 'sec_edgar_unavailable',
+      message: err?.message || 'SEC EDGAR Form 4 insider trading feed unavailable.'
+    });
+  }
+});
+
+app.get(['/api/v1/data/congress', '/api/data/congress'], async (req, res) => {
+  try {
+    const ticker = (req.query.ticker as string) || (req.query.symbol as string);
+    const person = req.query.person !== undefined ? String(req.query.person) : undefined;
+    const limit = req.query.limit !== undefined ? Number(req.query.limit) : undefined;
+    const since = req.query.since !== undefined ? String(req.query.since) : undefined;
+    const { status, body } = await fetchCongressTrades({ ticker, person, limit, since });
+    res.setHeader('Cache-Control', 'public, max-age=180');
+    return res.status(status).json(body);
+  } catch (err: any) {
+    return res.status(503).json({
+      status: 'error',
+      error: 'congress_feeds_unavailable',
+      message: err?.message || 'Congressional trading disclosure feeds temporarily unavailable.'
     });
   }
 });

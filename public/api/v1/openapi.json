@@ -1292,6 +1292,94 @@
         "security": [],
         "responses": { "200": { "description": "Static NVDA Form 8-K sample." } }
       }
+    },
+    "/api/v1/data/insider": {
+      "get": {
+        "summary": "SEC Form 4 Insider Trades Feed ($0.02 USDC)",
+        "description": "Live open-market insider purchases (P) and sales (S) from SEC EDGAR Form 4 XML filings, sorted newest first with shares, prices, total value, post-transaction holdings, and filing URLs.",
+        "operationId": "getInsiderTradesV1",
+        "parameters": [
+          { "name": "ticker", "in": "query", "required": true, "schema": { "type": "string", "example": "NVDA" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 } },
+          { "name": "since", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time", "example": "2026-01-01T00:00:00Z" } }
+        ],
+        "x-example-request": {
+          "ticker": "NVDA",
+          "limit": 20
+        },
+        "x-payment-info": {
+          "price": { "mode": "fixed", "currency": "USD", "amount": "0.020000" },
+          "protocols": [{
+            "x402": {
+              "version": 2,
+              "scheme": "exact",
+              "network": "eip155:8453",
+              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+              "amountAtomic": "20000",
+              "decimals": 6
+            }
+          }]
+        },
+        "responses": {
+          "200": { "description": "Newest-first Form 4 insider transactions." },
+          "400": { "description": "Free validation error." },
+          "402": { "description": "Payment Required." },
+          "404": { "description": "Free unknown ticker error." }
+        }
+      }
+    },
+    "/api/v1/data/insider/sample": {
+      "get": {
+        "summary": "Free static sample of SEC Form 4 Insider Trades Feed",
+        "operationId": "getInsiderTradesSampleV1",
+        "security": [],
+        "responses": { "200": { "description": "Static NVDA Form 4 insider sample." } }
+      }
+    },
+    "/api/v1/data/congress": {
+      "get": {
+        "summary": "Congressional Stock Trades Feed (House & Senate PTR) ($0.02 USDC)",
+        "description": "Live congressional PTR stock trades from U.S. House Clerk and U.S. Senate eFD disclosures filtered by ticker or person, newest first, with verbatim disclosed dollar ranges and official source URLs.",
+        "operationId": "getCongressTradesV1",
+        "parameters": [
+          { "name": "ticker", "in": "query", "required": false, "schema": { "type": "string", "example": "NVDA" } },
+          { "name": "person", "in": "query", "required": false, "schema": { "type": "string", "example": "Pelosi" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 } },
+          { "name": "since", "in": "query", "required": false, "schema": { "type": "string", "format": "date-time", "example": "2026-01-01T00:00:00Z" } }
+        ],
+        "x-example-request": {
+          "ticker": "NVDA",
+          "person": "Pelosi"
+        },
+        "x-payment-info": {
+          "price": { "mode": "fixed", "currency": "USD", "amount": "0.020000" },
+          "protocols": [{
+            "x402": {
+              "version": 2,
+              "scheme": "exact",
+              "network": "eip155:8453",
+              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+              "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+              "amountAtomic": "20000",
+              "decimals": 6
+            }
+          }]
+        },
+        "responses": {
+          "200": { "description": "Newest-first congressional PTR trades with chamberStatus." },
+          "400": { "description": "Free validation error." },
+          "402": { "description": "Payment Required." }
+        }
+      }
+    },
+    "/api/v1/data/congress/sample": {
+      "get": {
+        "summary": "Free static sample of Congressional Stock Trades Feed",
+        "operationId": "getCongressTradesSampleV1",
+        "security": [],
+        "responses": { "200": { "description": "Static House Clerk PTR congressional sample." } }
+      }
     }
   },
   "components": {

@@ -225,6 +225,8 @@ describe('Dyson Swarm Live Telemetry & Part 2 x402 Streams Suite', () => {
     expect(toolNames).toContain('get_sec_8k_events');
     expect(toolNames).toContain('get_intelligence_changes');
     expect(toolNames).toContain('get_space_telemetry');
-    expect(toolNames).toHaveLength(17);
+    expect(toolNames).toContain('get_insider_trades');
+    expect(toolNames).toContain('get_congress_trades');
+    expect(toolNames).toHaveLength(19);
   });
 });

@@ -41,7 +41,8 @@ export interface X402PricedEndpoint {
     | 'earnings_pack'
     | 'sec_events'
     | 'intelligence_delta'
-    | 'space_telemetry';
+    | 'space_telemetry'
+    | 'insider_congress';
   priceUsd: number;
   priceDisplay: string;
   atomicAmount: string; // 6 decimal string
@@ -230,6 +231,34 @@ export const PRICED_ENDPOINTS: Record<string, X402PricedEndpoint> = {
     exampleRequest: {
       method: 'GET',
       url: 'https://stockbloc.ai.studio/api/v1/signals/8k?ticker=NVDA'
+    }
+  },
+  // Insider Trading Feed (SEC Form 4, $0.02 USDC)
+  data_insider: {
+    id: 'data_insider',
+    name: 'Stock Bloc SEC Form 4 Insider Trading Feed',
+    category: 'insider_congress',
+    priceUsd: 0.02,
+    priceDisplay: '$0.02',
+    atomicAmount: '20000',
+    description: "SEC EDGAR Form 4 insider buys and sells for a ticker: insiderName, insiderTitle, transactionDate, filedDate, shares, pricePerShare, totalValue, sharesOwnedAfter, and SEC link. $0.02. Free sample: https://stockbloc.ai.studio/api/v1/data/insider/sample",
+    exampleRequest: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/data/insider?ticker=NVDA'
+    }
+  },
+  // Congressional Trading Feed (House & Senate PTRs, $0.02 USDC)
+  data_congress: {
+    id: 'data_congress',
+    name: 'Stock Bloc Congressional Trade Disclosure Feed',
+    category: 'insider_congress',
+    priceUsd: 0.02,
+    priceDisplay: '$0.02',
+    atomicAmount: '20000',
+    description: "U.S. House and Senate STOCK Act periodic transaction disclosures filtered by ticker or member name with disclosed dollar brackets and official source URLs. $0.02. Free sample: https://stockbloc.ai.studio/api/v1/data/congress/sample",
+    exampleRequest: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/data/congress?ticker=NVDA'
     }
   }
 };
@@ -656,6 +685,88 @@ export const BAZAAR_DISCOVERY_EXTENSIONS: Record<string, { bazaar: any }> = {
         ]
       }
     }
+  }),
+
+  data_insider: declareDiscovery({
+    method: 'GET',
+    input: { ticker: 'NVDA' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ticker: { type: 'string', description: 'Required US stock ticker (e.g. NVDA)' },
+        limit: { type: 'integer', minimum: 1, maximum: 50, description: 'Maximum transactions to return (default 20, max 50)' },
+        since: { type: 'string', description: 'Optional ISO-8601 cutoff timestamp' }
+      },
+      required: ['ticker'],
+      additionalProperties: false
+    },
+    output: {
+      example: {
+        status: 'string',
+        source: 'string',
+        ticker: 'string',
+        companyName: 'string',
+        cik: 'string',
+        count: 'number',
+        asOf: 'ISO 8601 string',
+        transactions: [
+          {
+            ticker: 'string',
+            insiderName: 'string',
+            insiderTitle: 'string',
+            transactionDate: 'YYYY-MM-DD',
+            filedDate: 'YYYY-MM-DD',
+            transactionType: 'buy | sell',
+            shares: 'number',
+            pricePerShare: 'number',
+            totalValue: 'number',
+            sharesOwnedAfter: 'number',
+            filingUrl: 'string',
+            asOf: 'ISO 8601 string'
+          }
+        ]
+      }
+    }
+  }),
+
+  data_congress: declareDiscovery({
+    method: 'GET',
+    input: { ticker: 'NVDA' },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ticker: { type: 'string', description: 'US stock ticker (required unless person is specified, e.g. NVDA)' },
+        person: { type: 'string', description: 'Member of Congress name filter (required unless ticker is specified, e.g. Pelosi)' },
+        limit: { type: 'integer', minimum: 1, maximum: 50, description: 'Maximum trades to return (default 20, max 50)' },
+        since: { type: 'string', description: 'Optional ISO-8601 cutoff timestamp' }
+      },
+      additionalProperties: false
+    },
+    output: {
+      example: {
+        status: 'string',
+        query: { ticker: 'string' },
+        count: 'number',
+        asOf: 'ISO 8601 string',
+        chamberStatus: {
+          house: 'available | unavailable',
+          senate: 'available | unavailable'
+        },
+        trades: [
+          {
+            person: 'string',
+            chamber: 'House | Senate',
+            ticker: 'string',
+            transactionDate: 'YYYY-MM-DD',
+            disclosedDate: 'YYYY-MM-DD',
+            transactionType: 'purchase | sale',
+            amountRange: 'string',
+            sourceUrl: 'string',
+            asOf: 'ISO 8601 string'
+          }
+        ]
+      }
+    }
   })
 };
 
@@ -726,6 +837,14 @@ export const X402_ROUTE_PATHS: Record<string, string[]> = {
   signals_8k: [
     '/api/v1/signals/8k',
     '/api/signals/8k'
+  ],
+  data_insider: [
+    '/api/v1/data/insider',
+    '/api/data/insider'
+  ],
+  data_congress: [
+    '/api/v1/data/congress',
+    '/api/data/congress'
   ]
 };
 
@@ -941,6 +1060,16 @@ export function matchPricedEndpoint(path: string, method: string = 'GET'): X402P
   // 8-K Event Monitor ($0.05 USDC)
   if (normalized === '/api/v1/signals/8k' || normalized === '/api/signals/8k') {
     return PRICED_ENDPOINTS.signals_8k;
+  }
+
+  // SEC Form 4 Insider Trading Feed ($0.02 USDC)
+  if (normalized === '/api/v1/data/insider' || normalized === '/api/data/insider') {
+    return PRICED_ENDPOINTS.data_insider;
+  }
+
+  // Congressional Trading Disclosure Feed ($0.02 USDC)
+  if (normalized === '/api/v1/data/congress' || normalized === '/api/data/congress') {
+    return PRICED_ENDPOINTS.data_congress;
   }
 
   // Earnings Prep Pack Bundle ($0.35 USDC)

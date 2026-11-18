@@ -266,4 +266,82 @@ export const STATIC_SAMPLES: Record<string, any> = {
       ],
     },
   },
+  data_insider: {
+    sample: true,
+    sampleNote:
+      'Static sample of a real SEC EDGAR Form 4 filing for NVDA (0 network calls). Call GET /api/v1/data/insider?ticker=NVDA via x402 ($0.02 USDC on Base) for live Form 4 insider buys and sells.',
+    paidRoute: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/data/insider?ticker=NVDA',
+      price: '$0.02 USDC (x402, Base)',
+      atomicAmount: '20000',
+    },
+    output: {
+      status: 'success',
+      source: 'SEC EDGAR Form 4',
+      ticker: 'NVDA',
+      companyName: 'NVIDIA CORP',
+      cik: '0001045810',
+      count: 1,
+      asOf: '2026-11-18T22:25:00.000Z',
+      coverageNote:
+        'Covers open-market and private insider purchases (Form 4 code P) and sales (Form 4 code S) from SEC EDGAR recent Form 4 XML filings; excludes gifts, tax withholdings, and equity awards.',
+      transactions: [
+        {
+          ticker: 'NVDA',
+          insiderName: 'Teter Timothy S.',
+          insiderTitle: 'EVP, General Counsel and Sec',
+          transactionDate: '2026-09-21',
+          filedDate: '2026-09-23',
+          transactionType: 'sell',
+          shares: 12483,
+          pricePerShare: 222.1932,
+          totalValue: 2773637.72,
+          sharesOwnedAfter: 2705637,
+          filingUrl:
+            'https://www.sec.gov/Archives/edgar/data/1045810/000169684126000014/xslF345X06/wk-form4_1790196985.xml',
+          asOf: '2026-11-18T22:25:00.000Z',
+        },
+      ],
+    },
+  },
+  data_congress: {
+    sample: true,
+    sampleNote:
+      'Static sample of a real U.S. House Periodic Transaction Report for NVDA (0 network calls). Call GET /api/v1/data/congress?ticker=NVDA or ?person=Pelosi via x402 ($0.02 USDC on Base) for live House and Senate disclosures.',
+    paidRoute: {
+      method: 'GET',
+      url: 'https://stockbloc.ai.studio/api/v1/data/congress?ticker=NVDA',
+      price: '$0.02 USDC (x402, Base)',
+      atomicAmount: '20000',
+    },
+    output: {
+      status: 'success',
+      query: {
+        ticker: 'NVDA',
+      },
+      count: 1,
+      asOf: '2026-11-18T22:25:00.000Z',
+      chamberStatus: {
+        house: 'available',
+        senate: 'available',
+      },
+      coverageNote:
+        'House Clerk electronic Periodic Transaction Reports (200* PTR PDFs); Senate eFD electronic Periodic Transaction Reports (HTML tables). Scanned paper PDFs are excluded unless electronically filed; amountRange reflects disclosed bracket verbatim.',
+      trades: [
+        {
+          person: 'Hon. Nancy Pelosi',
+          chamber: 'House',
+          ticker: 'NVDA',
+          transactionDate: '2026-01-16',
+          disclosedDate: '2026-01-23',
+          transactionType: 'purchase',
+          amountRange: '$250,001 - $500,000',
+          sourceUrl: 'https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033725.pdf',
+          asOf: '2026-11-18T22:25:00.000Z',
+        },
+      ],
+    },
+  },
 };
+

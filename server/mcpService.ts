@@ -229,6 +229,32 @@ export const MCP_TOOLS = [
       type: "object",
       properties: {}
     }
+  },
+  {
+    name: "get_insider_trades",
+    description: "SEC EDGAR Form 4 insider buys and sells for a ticker with shares, pricePerShare, totalValue, sharesOwnedAfter, and SEC link. $0.02.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ticker: { type: "string", description: "Required US stock ticker (e.g. NVDA)" },
+        limit: { type: "number", description: "Maximum transactions to return (default 20, max 50)" },
+        since: { type: "string", description: "Optional ISO-8601 cutoff timestamp" }
+      },
+      required: ["ticker"]
+    }
+  },
+  {
+    name: "get_congress_trades",
+    description: "U.S. House Clerk and Senate eFD STOCK Act periodic transaction disclosures by ticker or member name with disclosed dollar brackets. $0.02.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        ticker: { type: "string", description: "US stock ticker filter (e.g. NVDA)" },
+        person: { type: "string", description: "Congress member name filter (e.g. Pelosi)" },
+        limit: { type: "number", description: "Maximum trades to return (default 20, max 50)" },
+        since: { type: "string", description: "Optional ISO-8601 cutoff timestamp" }
+      }
+    }
   }
 ];
 
@@ -244,7 +270,9 @@ export const PAID_MCP_TOOLS = new Set([
   'get_sb_score_history',
   'get_sec_8k_events',
   'get_intelligence_changes',
-  'get_space_telemetry'
+  'get_space_telemetry',
+  'get_insider_trades',
+  'get_congress_trades'
 ]);
 
 export interface McpToolPricingConfig {
@@ -320,6 +348,18 @@ export const MCP_TOOL_PRICING: Record<string, McpToolPricingConfig> = {
     priceUsd: 0.05,
     priceDisplay: '$0.05',
     atomicAmount: '50000'
+  },
+  get_insider_trades: {
+    endpointId: 'data_insider',
+    priceUsd: 0.02,
+    priceDisplay: '$0.02',
+    atomicAmount: '20000'
+  },
+  get_congress_trades: {
+    endpointId: 'data_congress',
+    priceUsd: 0.02,
+    priceDisplay: '$0.02',
+    atomicAmount: '20000'
   }
 };
 
@@ -527,6 +567,22 @@ function getMcpValidationParams(name: string, args: any = {}) {
         rawPath: '/api/v1/space/telemetry',
         method: 'GET',
         query: {},
+        body: {}
+      };
+    case 'get_insider_trades':
+      return {
+        endpointId: 'data_insider',
+        rawPath: '/api/v1/data/insider',
+        method: 'GET',
+        query: { ticker: args.ticker, limit: args.limit, since: args.since },
+        body: {}
+      };
+    case 'get_congress_trades':
+      return {
+        endpointId: 'data_congress',
+        rawPath: '/api/v1/data/congress',
+        method: 'GET',
+        query: { ticker: args.ticker, person: args.person, limit: args.limit, since: args.since },
         body: {}
       };
     default:
@@ -863,6 +919,23 @@ export const handleMcpRpcRequest = async (req: express.Request, res: express.Res
         });
       } else if (name === "get_space_telemetry") {
         fetchRes = await fetch(`${baseUrl}/api/v1/space/telemetry`, {
+          headers: forwardHeaders
+        });
+      } else if (name === "get_insider_trades") {
+        const url = new URL(`${baseUrl}/api/v1/data/insider`);
+        if (args?.ticker) url.searchParams.set("ticker", String(args.ticker).toUpperCase().trim());
+        if (args?.limit !== undefined) url.searchParams.set("limit", String(args.limit));
+        if (args?.since) url.searchParams.set("since", String(args.since));
+        fetchRes = await fetch(url.toString(), {
+          headers: forwardHeaders
+        });
+      } else if (name === "get_congress_trades") {
+        const url = new URL(`${baseUrl}/api/v1/data/congress`);
+        if (args?.ticker) url.searchParams.set("ticker", String(args.ticker).toUpperCase().trim());
+        if (args?.person) url.searchParams.set("person", String(args.person).trim());
+        if (args?.limit !== undefined) url.searchParams.set("limit", String(args.limit));
+        if (args?.since) url.searchParams.set("since", String(args.since));
+        fetchRes = await fetch(url.toString(), {
           headers: forwardHeaders
         });
       } else if (name === "get_ebook_playbook") {

@@ -510,9 +510,9 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
       expect(bodyValidation.valid).toBe(true);
     });
 
-    it('asserts Bazaar discovery extension validation passes for all 12 priced endpoints', () => {
+    it('asserts Bazaar discovery extension validation passes for all 14 priced endpoints', () => {
       const endpointIds = Object.keys(PRICED_ENDPOINTS);
-      expect(endpointIds).toHaveLength(12);
+      expect(endpointIds).toHaveLength(14);
 
       for (const id of endpointIds) {
         const ext = BAZAAR_DISCOVERY_EXTENSIONS[id];
@@ -536,7 +536,7 @@ describe('Coinbase CDP x402 Real Payment Protocol Integration', () => {
 
     it('exports X402_ROUTE_PATHS covering all priced endpoints with valid routes', () => {
       const endpointIds = Object.keys(PRICED_ENDPOINTS);
-      expect(endpointIds).toHaveLength(12);
+      expect(endpointIds).toHaveLength(14);
 
       for (const id of endpointIds) {
         const paths = X402_ROUTE_PATHS[id];

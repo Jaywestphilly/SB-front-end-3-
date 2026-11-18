@@ -2045,6 +2045,55 @@ const handleManifest = (req: Request, res: Response) => {
           howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.01 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
         }
       },
+      dataInsider: {
+        method: 'GET',
+        path: '/api/v1/data/insider',
+        alias: '/api/data/insider',
+        scope: 'metered_data',
+        description: 'Live SEC EDGAR Form 4 open-market insider buys (P) and sells (S) for a ticker, newest first, with insiderName, insiderTitle, shares, pricePerShare, totalValue, sharesOwnedAfter, and filingUrl. Free sample: https://stockbloc.ai.studio/api/v1/data/insider/sample',
+        queryParams: {
+          ticker: 'string (required, e.g. NVDA; unknown ticker returns free 404)',
+          limit: 'integer (optional, default 20, max 50)',
+          since: 'string (optional ISO-8601 transactionDate lower bound)'
+        },
+        x402: {
+          priced: true,
+          priceUsd: 0.02,
+          priceDisplay: '$0.02 USDC',
+          atomicAmount: '20000',
+          asset: 'USDC',
+          assetContract: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          network: 'Base',
+          networkCaip2: 'eip155:8453',
+          chainId: 8453,
+          howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.02 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
+        }
+      },
+      dataCongress: {
+        method: 'GET',
+        path: '/api/v1/data/congress',
+        alias: '/api/data/congress',
+        scope: 'metered_data',
+        description: 'Live U.S. House Clerk and U.S. Senate eFD congressional PTR stock trades filtered by ticker or person (e.g. Pelosi), newest first, with verbatim disclosed amountRange and official sourceUrl. Honest chamberStatus if a chamber feed is unavailable. Free sample: https://stockbloc.ai.studio/api/v1/data/congress/sample',
+        queryParams: {
+          ticker: 'string (optional stock ticker, e.g. NVDA; ticker or person is required)',
+          person: 'string (optional member last/full name, e.g. Pelosi; ticker or person is required)',
+          limit: 'integer (optional, default 20, max 50)',
+          since: 'string (optional ISO-8601 transactionDate lower bound)'
+        },
+        x402: {
+          priced: true,
+          priceUsd: 0.02,
+          priceDisplay: '$0.02 USDC',
+          atomicAmount: '20000',
+          asset: 'USDC',
+          assetContract: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          network: 'Base',
+          networkCaip2: 'eip155:8453',
+          chainId: 8453,
+          howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.02 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
+        }
+      },
       spaceTelemetry: {
         method: 'GET',
         path: '/api/v1/space/telemetry',
