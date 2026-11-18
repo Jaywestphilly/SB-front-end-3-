@@ -51,6 +51,12 @@ import { fetchSignals8k } from './server/signals8kService.js';
 import { fetchTickerIntelligenceChanges } from './server/intelligenceChangesService.js';
 import { fetchInsiderTrades } from './server/insiderTradesService.js';
 import { fetchCongressTrades } from './server/congressTradesService.js';
+import {
+  createVerifiedReceiptsRouter,
+  getPublicReceiptKey
+} from './server/verifiedReceiptsService.js';
+import { createMarketplaceRailRouter } from './server/marketplaceRailService.js';
+import { getMarketplaceWalletAddress } from './server/marketplacePayoutService.js';
 
 const app = express();
 const portArgIndex = process.argv.indexOf('--port');
@@ -249,7 +255,9 @@ app.get(['/api/v1/signals/daily-triggers', '/api/signals/daily-triggers'], async
 // 1c. Real Coinbase CDP x402 Payment Gatekeeper Middleware (for priced endpoints)
 app.use(requireX402Payment());
 
-// 2. Direct Bounties & Marketplace API Routers
+// 2. Direct Bounties, Verified Delivery Receipts & Marketplace API Routers
+app.use('/api/v1/receipts', createVerifiedReceiptsRouter());
+app.use('/api/v1/marketplace', createMarketplaceRailRouter());
 app.use('/api/v1/bounties', agentExchangeRouter);
 app.use('/api/bounties', agentExchangeRouter);
 app.use('/api/v1/marketplace', agentExchangeRouter);
@@ -433,6 +441,13 @@ app.get('/.well-known/stock-bloc-agent.json', (req, res) => {
   res.redirect('/api/v1/.well-known/stock-bloc-agent.json');
 });
 
+// Public Ed25519 signing key for Stock Bloc Verified Delivery Receipts
+app.get(['/.well-known/receipts-pubkey.json', '/.well-known/receipt-key.json'], (_req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  return res.status(200).json(getPublicReceiptKey());
+});
+
 // agent402.tools and x402scan crawler discovery endpoint
 app.get('/.well-known/x402', (_req, res) => {
   res.setHeader('Content-Type', 'application/json');
@@ -449,6 +464,27 @@ app.get('/.well-known/x402', (_req, res) => {
     ...(ep.exampleRequest ? { exampleRequest: ep.exampleRequest } : {})
   }));
 
+  const marketplaceEndpoints = [
+    {
+      id: 'marketplace_buy',
+      name: 'Stock Bloc Finance Agent Marketplace Buy',
+      method: 'POST',
+      paths: ['/api/v1/marketplace/buy'],
+      variablePricing: true,
+      priceRangeUsd: { min: 0.001, max: 1.0 },
+      priceDisplay: 'Variable per listing ($0.001-$1.00 USDC)',
+      payTo: getMarketplaceWalletAddress(),
+      takeRatePercent: 10,
+      sellerSharePercent: 90,
+      description: 'Buy a verified third-party finance agent endpoint through Stock Bloc x402 rails. Variable per-listing USDC price on Base; 10% platform take rate on verified deliveries; 100% automatic buyer refund on failed delivery; signed Ed25519 receipt included.',
+      exampleRequest: {
+        method: 'POST',
+        path: '/api/v1/marketplace/buy',
+        body: { listingId: 'lst_example', params: { ticker: 'NVDA' } }
+      }
+    }
+  ];
+
   const freeEndpoints = [
     {
       id: 'daily_triggers',
@@ -456,16 +492,24 @@ app.get('/.well-known/x402', (_req, res) => {
       paths: ['/api/v1/signals/daily-triggers'],
       description: 'Real SEC events from the last 24 hours on the watchlist: new 10-K, 10-Q or 8-K filings, each with the paid route to inspect it. Empty list when nothing was filed. Free.',
       free: true
+    },
+    {
+      id: 'marketplace_listings',
+      name: 'Stock Bloc Finance Agent Marketplace Listings',
+      paths: ['/api/v1/marketplace/listings'],
+      description: 'Public catalog of live, probe-verified third-party finance agent endpoints available via POST /api/v1/marketplace/buy. Free.',
+      free: true
     }
   ];
 
-  const allEndpoints = [...endpoints, ...freeEndpoints];
+  const allEndpoints = [...endpoints, ...marketplaceEndpoints, ...freeEndpoints];
 
   return res.status(200).json({
     x402Version: 2,
     network: 'eip155:8453',
     asset: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
     payTo: recipient,
+    marketplacePayTo: getMarketplaceWalletAddress(),
     facilitator: 'https://api.cdp.coinbase.com/platform/v2/x402',
     endpoints: allEndpoints,
     resources: allEndpoints

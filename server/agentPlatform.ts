@@ -2147,6 +2147,65 @@ const handleManifest = (req: Request, res: Response) => {
           chainId: 8453,
           howToPay: 'Unpaid requests receive HTTP 402 with PAYMENT-REQUIRED header. Sign a USDC authorization on Base for 0.05 USDC and send base64-encoded payload in PAYMENT-SIGNATURE header. Verified and settled via Coinbase CDP facilitator.'
         }
+      },
+      receiptsVerify: {
+        method: 'GET',
+        path: '/api/v1/receipts/verify',
+        alias: 'POST /api/v1/receipts/verify',
+        scope: 'public',
+        authRequired: false,
+        description: 'Free cryptographic verification for Ed25519 Verified Delivery Receipts returned with every paid x402 response. GET ?receiptId=rcpt_... verifies the stored receipt and payloadHash on record; POST { receipt, payload } verifies any receipt against a delivered JSON payload.',
+        queryParams: {
+          receiptId: 'string (required for GET, e.g. rcpt_...)'
+        }
+      },
+      receiptsPublicKey: {
+        method: 'GET',
+        path: '/.well-known/receipts-pubkey.json',
+        alias: '/api/v1/receipts/public-key',
+        scope: 'public',
+        authRequired: false,
+        description: 'Public Ed25519 key (PEM + JWK) for offline deterministic verification of Stock Bloc Verified Delivery Receipts.'
+      },
+      marketplaceListings: {
+        method: 'GET',
+        path: '/api/v1/marketplace/listings',
+        scope: 'public',
+        authRequired: false,
+        description: 'Free public catalog of approved, probe-verified third-party finance endpoints sold through Stock Bloc x402 rails. Returns listingId, name, description, priceUsd, seller, verified, salesCount, deliveryRate, and listedAt.'
+      },
+      marketplaceApply: {
+        method: 'POST',
+        path: '/api/v1/marketplace/listings/apply',
+        scope: 'public',
+        authRequired: false,
+        description: 'Free seller listing application ($0 listing fee, 10% take rate on verified sales only). Submit { name, endpointUrl, priceUsd ($0.001-$1.00), description, payoutWallet, contact }. Stored as PENDING until probed and approved by an operator.'
+      },
+      marketplaceBuy: {
+        method: 'POST',
+        path: '/api/v1/marketplace/buy',
+        scope: 'marketplace_buy',
+        authRequired: false,
+        description: 'Buy any approved third-party finance endpoint via x402 USDC on Base. Send { listingId, params }; unpaid calls return HTTP 402 for the listing price. Verified deliveries return seller JSON + signed Ed25519 receipt and release 90% to seller (10% Stock Bloc take). Failed deliveries trigger an automatic 100% buyer refund and $0 seller payout.',
+        body: {
+          listingId: 'string (required, from GET /api/v1/marketplace/listings)',
+          params: 'object (optional parameters forwarded to seller endpoint)'
+        },
+        payment: {
+          protocol: 'x402',
+          version: 2,
+          pricingMode: 'variable_per_listing',
+          priceRangeUsd: { min: 0.001, max: 1.0 },
+          asset: 'USDC',
+          assetContract: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+          network: 'Base',
+          networkCaip2: 'eip155:8453',
+          chainId: 8453,
+          takeRatePercent: 10,
+          sellerSharePercent: 90,
+          verifiedDeliveryGuaranteed: true,
+          refundOnFailedDelivery: true
+        }
       }
     },
     rateLimits: {

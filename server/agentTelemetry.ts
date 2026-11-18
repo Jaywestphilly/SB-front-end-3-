@@ -26,7 +26,13 @@ export interface MachineCommerceEvent {
     | 'data_delivered'
     | 'first_paid_call'
     | 'second_paid_call'
-    | 'repeat_payer';
+    | 'repeat_payer'
+    | 'marketplace_challenge'
+    | 'marketplace_payment_verified'
+    | 'marketplace_settlement'
+    | 'marketplace_delivery'
+    | 'marketplace_payout'
+    | 'marketplace_refund';
   source?: 'mcp' | 'rest' | 'discovery';
   endpoint?: string;
   payer?: string;
@@ -35,6 +41,15 @@ export interface MachineCommerceEvent {
   paymentId?: string;
   details?: Record<string, any>;
   timestamp?: string;
+}
+
+export interface MarketplaceFunnelMetrics {
+  challenges: number;
+  verifiedPayments: number;
+  settlements: number;
+  deliveries: number;
+  payouts: number;
+  refunds: number;
 }
 
 export interface TransactionFunnelMetrics {
@@ -53,6 +68,7 @@ export interface TransactionFunnelMetrics {
     settlementToDelivery: number;
     firstToRepeatPaid: number;
   };
+  marketplace: MarketplaceFunnelMetrics;
 }
 
 export interface MachineRevenueMetrics {
@@ -146,6 +162,14 @@ const inMemoryChallengesByEndpoint = new Map<string, number>();
 const inMemorySuccessesByEndpoint = new Map<string, number>();
 const machineCommerceEvents: MachineCommerceEvent[] = [];
 
+// Marketplace funnel counters (challenges, verified payments, settlements, deliveries, payouts, refunds)
+let marketplaceChallengesCount = 0;
+let marketplaceVerifiedPaymentsCount = 0;
+let marketplaceSettlementsCount = 0;
+let marketplaceDeliveriesCount = 0;
+let marketplacePayoutsCount = 0;
+let marketplaceRefundsCount = 0;
+
 // Flag to track initial database hydration
 let hasHydratedFromDb = false;
 let lastFirestoreSyncTime = 0;
@@ -186,6 +210,12 @@ export function clearMachineCommerceState(): void {
   inMemoryChallengesByEndpoint.clear();
   inMemorySuccessesByEndpoint.clear();
   machineCommerceEvents.length = 0;
+  marketplaceChallengesCount = 0;
+  marketplaceVerifiedPaymentsCount = 0;
+  marketplaceSettlementsCount = 0;
+  marketplaceDeliveriesCount = 0;
+  marketplacePayoutsCount = 0;
+  marketplaceRefundsCount = 0;
 }
 
 /**
@@ -394,6 +424,57 @@ export function recordMachineCommerceEvent(event: MachineCommerceEvent): void {
       }
     }
   }
+
+  // Marketplace funnel events
+  if (
+    event.eventType === 'marketplace_challenge' ||
+    event.eventType === 'marketplace_payment_verified' ||
+    event.eventType === 'marketplace_settlement' ||
+    event.eventType === 'marketplace_delivery' ||
+    event.eventType === 'marketplace_payout' ||
+    event.eventType === 'marketplace_refund'
+  ) {
+    let fieldName = '';
+    if (event.eventType === 'marketplace_challenge') {
+      marketplaceChallengesCount++;
+      fieldName = 'challenges';
+    } else if (event.eventType === 'marketplace_payment_verified') {
+      marketplaceVerifiedPaymentsCount++;
+      fieldName = 'verifiedPayments';
+    } else if (event.eventType === 'marketplace_settlement') {
+      marketplaceSettlementsCount++;
+      fieldName = 'settlements';
+    } else if (event.eventType === 'marketplace_delivery') {
+      marketplaceDeliveriesCount++;
+      fieldName = 'deliveries';
+    } else if (event.eventType === 'marketplace_payout') {
+      marketplacePayoutsCount++;
+      fieldName = 'payouts';
+    } else if (event.eventType === 'marketplace_refund') {
+      marketplaceRefundsCount++;
+      fieldName = 'refunds';
+    }
+
+    if (fieldName && db && typeof db.collection === 'function') {
+      const utcDay = new Date().toISOString().slice(0, 10);
+      const payload = { [fieldName]: FieldValue.increment(1) };
+      Promise.all([
+        db.collection('telemetry_aggregates').doc('marketplace_lifetime').set(payload, { merge: true }),
+        db.collection('telemetry_aggregates').doc(`marketplace_day_${utcDay}`).set(payload, { merge: true })
+      ]).catch(() => {});
+    }
+  }
+}
+
+export function getMarketplaceFunnelMetrics(): MarketplaceFunnelMetrics {
+  return {
+    challenges: marketplaceChallengesCount,
+    verifiedPayments: marketplaceVerifiedPaymentsCount,
+    settlements: marketplaceSettlementsCount,
+    deliveries: marketplaceDeliveriesCount,
+    payouts: marketplacePayoutsCount,
+    refunds: marketplaceRefundsCount
+  };
 }
 
 /**
@@ -475,7 +556,8 @@ export function getTransactionFunnelMetrics(): TransactionFunnelMetrics {
       attemptToSettlement,
       settlementToDelivery,
       firstToRepeatPaid
-    }
+    },
+    marketplace: getMarketplaceFunnelMetrics()
   };
 }
 

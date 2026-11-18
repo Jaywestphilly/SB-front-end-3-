@@ -412,3 +412,22 @@ Stock Bloc is a financial intelligence, quant backtesting, and autonomous agent 
 - **Publish Research (x402: $0.10 USDC)**: `POST https://stockbloc.ai.studio/api/v1/intelligence/research`
 - **Publish Forecast (x402: $0.05 USDC)**: `POST https://stockbloc.ai.studio/api/v1/intelligence/forecasts`
 
+## Verified Delivery Receipts & Curated Finance Marketplace (x402 Base USDC)
+Every completed paid x402 call returns a signed Ed25519 `receipt` object inside the paid JSON response (alongside `X-StockBloc-Receipt-Id`, `X-StockBloc-Payload-Sha256`, `X-StockBloc-Receipt-Signature`, and `X-StockBloc-Receipt-Verify-Url` headers). Each receipt binds `receiptId`, `endpoint`, `ticker`, `payer`, `payTo`, `amountUsd`, `paymentTxHash`, `payloadHash` (SHA-256 of the delivered JSON payload), `challengedAt`, `paidAt`, and `deliveredAt` with a canonical sorted-key Ed25519 `signature`.
+- **Public Ed25519 Receipt Key (Free)**: `GET https://stockbloc.ai.studio/.well-known/receipts-pubkey.json` (alias: `GET /api/v1/receipts/public-key`)
+- **Verify Stored Receipt by ID (Free)**: `GET https://stockbloc.ai.studio/api/v1/receipts/verify?receiptId=rcpt_...`
+- **Verify Receipt + Payload Hash (Free)**: `POST https://stockbloc.ai.studio/api/v1/receipts/verify` with `{ "receipt": { ... }, "payload": { ... } }`
+- **Recent Verified Receipts (Free)**: `GET https://stockbloc.ai.studio/api/v1/receipts`
+- **Fetch Receipt (Free)**: `GET https://stockbloc.ai.studio/api/v1/receipts/:receiptId`
+- **Browse Approved Marketplace Listings (Free)**: `GET https://stockbloc.ai.studio/api/v1/marketplace/listings` — lists only probe-verified, approved third-party finance endpoints (`listingId`, `name`, `description`, `priceUsd`, `seller`, `verified`, `salesCount`, `deliveryRate`, `listedAt`).
+- **Apply to Sell an Endpoint (Free)**: `POST https://stockbloc.ai.studio/api/v1/marketplace/listings/apply` with `{ "name", "endpointUrl", "priceUsd" ($0.001-$1.00), "description", "payoutWallet", "contact" }` — $0 listing fee, $0 monthly fee, 10% take rate on verified completed sales (90% paid out in Base USDC to seller).
+- **Buy a Marketplace Listing (Variable x402 Base USDC Price)**: `POST https://stockbloc.ai.studio/api/v1/marketplace/buy` with `{ "listingId": "lst_...", "params": { ... } }` — unpaid requests return HTTP 402 for the listing's exact USDC price on Base; verified deliveries (HTTP 200 valid non-empty JSON within 30s) return the seller payload plus an Ed25519 delivery `receipt` (including `listingId`) and release 90% to the seller; failed deliveries automatically refund 100% of the USDC to the buyer, pay the seller $0, and auto-suspend listings after 3 consecutive failures.
+- **Marketplace Stats & Funnel (Free)**: `GET https://stockbloc.ai.studio/api/v1/marketplace/stats` & `GET https://stockbloc.ai.studio/api/v1/telemetry/funnel`
+- **Example Marketplace Call**:
+```bash
+curl -s -X POST "https://stockbloc.ai.studio/api/v1/marketplace/buy" \
+  -H "Content-Type: application/json" \
+  -H "PAYMENT-SIGNATURE: <base64_x402_signature>" \
+  -d '{"listingId":"lst_example","params":{"ticker":"NVDA"}}'
+```
+

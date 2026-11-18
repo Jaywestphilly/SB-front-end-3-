@@ -16,6 +16,12 @@ import { recordMachineCommerceEvent } from './agentTelemetry.js';
 import { validatePricedRequestInput } from './x402InputValidation.js';
 import { SecIntelService } from '../src/services/secIntelService.js';
 import { verifyUiCookie, uiBypassAllowed } from './uiSession.js';
+import {
+  issueVerifiedDeliveryReceipt,
+  attachReceiptHeaders,
+  recordChallengeTimestamp,
+  getRecentChallengeTimestamp
+} from './verifiedReceiptsService.js';
 
 // ============================================================================
 // COINBASE CDP X402 CONSTANTS & SPECIFICATION (BASE MAINNET)
@@ -1229,12 +1235,123 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint, options?: 
     const fullPath = (req.originalUrl || (req.baseUrl ? req.baseUrl + req.path : req.path) || '').split('?')[0];
 
     const forwardNext = () => {
+      if (endpointConfig) {
+        let receiptIssued = false;
+        const extractTicker = (): string | null => {
+          const raw =
+            (req.query?.ticker as string) ||
+            (req.query?.symbol as string) ||
+            (req.body?.ticker as string) ||
+            (req.params?.symbol as string) ||
+            (req.params?.ticker as string);
+          return typeof raw === 'string' && raw.trim().length > 0 ? raw.trim().toUpperCase() : null;
+        };
+
+        const issueReceiptForPayload = (rawBody: string | Buffer, parsedObj?: unknown) => {
+          if (receiptIssued) return null;
+          const status = res.statusCode || 200;
+          const payment = (req as any).x402Payment;
+          if (status >= 200 && status < 300 && payment?.settled) {
+            receiptIssued = true;
+            try {
+              const receipt = issueVerifiedDeliveryReceipt({
+                endpoint: fullPath || req.path,
+                ticker: extractTicker(),
+                // Privacy: store only the wallet address from the payment (never store handles, emails, or IPs)
+                payer: payment.payer || '0x0000000000000000000000000000000000000000',
+                payTo: getX402RecipientAddress(),
+                amountUsd: endpointConfig.priceUsd,
+                paymentTxHash: payment.txHash || '0x_settled',
+                rawPayload: rawBody,
+                parsedPayload: parsedObj,
+                challengedAt:
+                  getRecentChallengeTimestamp(fullPath) ||
+                  getRecentChallengeTimestamp(endpointConfig.id),
+                paidAt: payment.settledAt || new Date().toISOString()
+              });
+              (req as any).x402Receipt = receipt;
+              attachReceiptHeaders(res, receipt);
+              return receipt;
+            } catch (rcptErr: any) {
+              console.warn('Non-fatal error issuing verified delivery receipt:', rcptErr?.message);
+            }
+          }
+          return null;
+        };
+
+        if (typeof res.json === 'function') {
+          const origJson = res.json.bind(res);
+          (res as any).json = (body: any) => {
+            const status = res.statusCode || 200;
+            const payment = (req as any).x402Payment;
+            if (!receiptIssued && status >= 200 && status < 300 && payment?.settled) {
+              try {
+                if (body && typeof body === 'object' && !Array.isArray(body)) {
+                  const { receipt: _existing, ...cleanBody } = body;
+                  const cleanSerialized = JSON.stringify(cleanBody);
+                  const receipt = issueReceiptForPayload(cleanSerialized, cleanBody);
+                  if (receipt) {
+                    return origJson({ ...cleanBody, receipt });
+                  }
+                } else if (body !== undefined) {
+                  const serialized = typeof body === 'string' ? body : JSON.stringify(body);
+                  if (serialized !== undefined) {
+                    issueReceiptForPayload(serialized);
+                  }
+                }
+              } catch {
+                // Non-fatal; still return original payload
+              }
+            }
+            return origJson(body);
+          };
+        }
+
+        if (typeof res.send === 'function') {
+          const origSend = res.send.bind(res);
+          (res as any).send = (body?: any) => {
+            const status = res.statusCode || 200;
+            const payment = (req as any).x402Payment;
+            if (!receiptIssued && status >= 200 && status < 300 && payment?.settled && body !== undefined && body !== null) {
+              try {
+                if (typeof body === 'string') {
+                  try {
+                    const parsed = JSON.parse(body);
+                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                      const { receipt: _existing, ...cleanObj } = parsed;
+                      const cleanSerialized = JSON.stringify(cleanObj);
+                      const receipt = issueReceiptForPayload(cleanSerialized, cleanObj);
+                      if (receipt) {
+                        return origSend(JSON.stringify({ ...cleanObj, receipt }));
+                      }
+                    }
+                  } catch {
+                    // Non-JSON text (e.g., CSV)
+                  }
+                }
+                const raw =
+                  Buffer.isBuffer(body) || typeof body === 'string'
+                    ? body
+                    : JSON.stringify(body);
+                if (raw !== undefined) {
+                  issueReceiptForPayload(raw);
+                }
+              } catch {
+                // Non-fatal
+              }
+            }
+            return origSend(body);
+          };
+        }
+      }
+
       res.once('finish', () => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           const isPaid = Boolean((req as any).x402Payment?.settled);
           if (isPaid && endpointConfig) {
             const payer = (req as any).x402Payment?.payer || (req as any).agent?.agentId;
             const txHash = (req as any).x402Payment?.txHash;
+            const receiptId = (req as any).x402Receipt?.receiptId;
             try {
               recordMachineCommerceEvent({
                 eventType: 'data_delivered',
@@ -1245,7 +1362,8 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint, options?: 
                 amountUsd: endpointConfig.priceUsd,
                 timestamp: new Date().toISOString(),
                 details: {
-                  path: fullPath
+                  path: fullPath,
+                  ...(receiptId ? { receiptId } : {})
                 }
               });
             } catch {
@@ -1768,7 +1886,8 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint, options?: 
             settled: true,
             settleResult,
             payer: settlementRecord.payer,
-            txHash: settlementRecord.txHash
+            txHash: settlementRecord.txHash,
+            settledAt: settlementRecord.settledAt
           };
 
           recordMachineCommerceEvent({
@@ -1952,14 +2071,17 @@ export function requireX402Payment(forcedConfig?: X402PricedEndpoint, options?: 
       console.warn('Failed to encode PAYMENT-REQUIRED header:', headerErr);
     }
     res.setHeader('Cache-Control', 'no-store, private');
+    const challengeTs = new Date().toISOString();
     try {
+      recordChallengeTimestamp(fullPath || endpointConfig.id, challengeTs);
+      recordChallengeTimestamp(endpointConfig.id, challengeTs);
       recordMachineCommerceEvent({
         eventType: 'payment_required',
         source: paymentSource,
         endpoint: endpointConfig.id,
         payer: (req as any).agent?.agentId,
         amountUsd: endpointConfig.priceUsd,
-        timestamp: new Date().toISOString(),
+        timestamp: challengeTs,
         details: {
           priceDisplay: endpointConfig.priceDisplay,
           path: fullPath

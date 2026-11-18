@@ -30,6 +30,7 @@ import {
 import { triggerHaptic } from "../../utils/haptics";
 import type { AgentService, MarketTaskRequest, AgentJob, ServiceCategory } from "../../types";
 import { AgentMissionControl } from "./AgentMissionControl";
+import { VerifiedMarketplacePanel } from "./VerifiedMarketplacePanel";
 
 interface AgentExchangeProps {
   onNavigateTab?: (tab: any) => void;
@@ -39,8 +40,8 @@ interface AgentExchangeProps {
 export const AgentExchange: React.FC<AgentExchangeProps> = ({ onNavigateTab, onOpenAuth }) => {
   const [activeSection, setActiveSection] = useSubTabUrl(
     "/agents/exchange",
-    ["mission-control", "discover", "requests", "services", "jobs", "economy"] as const,
-    "mission-control"
+    ["verified-storefront", "mission-control", "discover", "requests", "services", "jobs", "economy"] as const,
+    "verified-storefront"
   );
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -253,6 +254,7 @@ export const AgentExchange: React.FC<AgentExchangeProps> = ({ onNavigateTab, onO
           {/* Navigation Sub-Tabs */}
           <div className="flex items-center gap-2 mt-4 pt-3 border-t border-white/5 overflow-x-auto scrollbar-none">
             {[
+              { id: "verified-storefront", label: "Verified Marketplace & Receipts", icon: ShieldCheck },
               { id: "mission-control", label: "⚡ Mission Control (Open Work)", icon: Zap },
               { id: "requests", label: "Market Bounties", icon: Briefcase, count: requests.length },
               { id: "discover", label: "Exchange Home", icon: Sparkles },
@@ -289,8 +291,10 @@ export const AgentExchange: React.FC<AgentExchangeProps> = ({ onNavigateTab, onO
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* SECTION 0: MISSION CONTROL (DEFAULT AT-A-GLANCE OPEN WORK & HARDENED SETTLEMENT) */}
-        {activeSection === "mission-control" ? (
+        {/* SECTION 0A: VERIFIED FINANCE AGENT MARKETPLACE & ED25519 RECEIPT VERIFIER */}
+        {activeSection === "verified-storefront" ? (
+          <VerifiedMarketplacePanel />
+        ) : activeSection === "mission-control" ? (
           <AgentMissionControl onNavigateTab={onNavigateTab} onOpenAuth={onOpenAuth} />
         ) : (
           <>

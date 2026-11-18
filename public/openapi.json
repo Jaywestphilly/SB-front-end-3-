@@ -2362,6 +2362,211 @@
         "security": [],
         "responses": { "200": { "description": "Static House Clerk PTR congressional trade sample payload." } }
       }
+    },
+    "/.well-known/receipts-pubkey.json": {
+      "get": {
+        "summary": "Public Ed25519 Signing Key for Verified Delivery Receipts (Free)",
+        "operationId": "getReceiptPublicKeyWellKnown",
+        "security": [],
+        "responses": {
+          "200": { "description": "Ed25519 public key in PEM and JWK formats for verifying Stock Bloc delivery receipts offline." }
+        }
+      }
+    },
+    "/api/v1/receipts": {
+      "get": {
+        "summary": "List Recent Verified Delivery Receipts (Free)",
+        "operationId": "listVerifiedReceipts",
+        "security": [],
+        "responses": {
+          "200": { "description": "Recent real Ed25519-signed delivery receipts binding x402 txHashes to delivered payload SHA-256 hashes." }
+        }
+      }
+    },
+    "/api/v1/receipts/verify": {
+      "get": {
+        "summary": "Verify a Stored Delivery Receipt by receiptId (Free)",
+        "operationId": "verifyStoredDeliveryReceipt",
+        "security": [],
+        "parameters": [
+          { "name": "receiptId", "in": "query", "required": true, "schema": { "type": "string" }, "description": "Receipt ID (rcpt_...)" }
+        ],
+        "responses": {
+          "200": { "description": "Stored receipt, signatureValid, and payloadHashMatches against the payload on record." },
+          "404": { "description": "Receipt not found." }
+        }
+      },
+      "post": {
+        "summary": "Cryptographically Verify a Delivery Receipt & Payload SHA-256 (Free)",
+        "operationId": "verifyDeliveryReceipt",
+        "security": [],
+        "responses": {
+          "200": { "description": "Ed25519 signature verification and SHA-256 payloadHash comparison result." }
+        }
+      }
+    },
+    "/api/v1/receipts/{receiptId}": {
+      "get": {
+        "summary": "Fetch a Signed Verified Delivery Receipt by ID (Free)",
+        "operationId": "getVerifiedReceiptById",
+        "security": [],
+        "parameters": [
+          { "name": "receiptId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Signed Verified Delivery Receipt." },
+          "404": { "description": "Receipt not found." }
+        }
+      }
+    },
+    "/api/v1/marketplace/stats": {
+      "get": {
+        "summary": "Live Finance Agent Marketplace Economics & Telemetry (Free)",
+        "operationId": "getMarketplaceStats",
+        "security": [],
+        "responses": {
+          "200": { "description": "10% take rate economics, verified delivery guarantees, and live honest marketplace counts." }
+        }
+      }
+    },
+    "/api/v1/marketplace/listings": {
+      "get": {
+        "summary": "List Approved Finance Agent Marketplace Endpoints (Free)",
+        "description": "Public catalog of probe-verified, operator-approved third-party finance listings. Returns listingId, name, description, priceUsd, seller, verified, salesCount, deliveryRate, and listedAt. Never exposes seller contact details or pending/rejected listings.",
+        "operationId": "listMarketplaceListings",
+        "security": [],
+        "responses": {
+          "200": { "description": "Approved third-party finance listings with live salesCount and deliveryRate." }
+        }
+      }
+    },
+    "/api/v1/marketplace/listings/apply": {
+      "post": {
+        "summary": "Apply to List a Finance Endpoint on Stock Bloc Marketplace (Free)",
+        "description": "Submit a seller listing application ($0 listing fee, 10% take rate on verified sales only). Validates HTTPS URL, priceUsd ($0.001-$1.00), and Base payoutWallet. Stored as PENDING until live-probed and approved.",
+        "operationId": "applyMarketplaceListing",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "endpointUrl", "priceUsd", "description", "payoutWallet", "contact"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "endpointUrl": { "type": "string", "format": "uri" },
+                  "priceUsd": { "type": "number", "minimum": 0.001, "maximum": 1.0 },
+                  "description": { "type": "string" },
+                  "payoutWallet": { "type": "string", "pattern": "^0x[a-fA-F0-9]{40}$" },
+                  "contact": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Application stored as PENDING." },
+          "400": { "description": "Validation failed (invalid HTTPS URL, price range, or Base wallet)." }
+        }
+      }
+    },
+    "/api/v1/marketplace/buy": {
+      "post": {
+        "summary": "Buy a Verified Marketplace Listing (Variable x402 Base USDC Price)",
+        "description": "Unpaid calls return HTTP 402 with x402 v2 challenge for the listing's exact USDC price on Base. Paid calls verify and settle USDC through CDP facilitator, call the seller endpoint (30s timeout), validate HTTP 200 non-empty JSON, return seller JSON + signed Ed25519 receipt, and queue a 90% USDC payout to the seller (10% Stock Bloc take). Failed deliveries trigger an automatic 100% buyer refund, $0 seller payout, and auto-suspend listings after 3 consecutive failures.",
+        "operationId": "buyMarketplaceListing",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["listingId"],
+                "properties": {
+                  "listingId": { "type": "string" },
+                  "params": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Verified delivered seller JSON payload together with signed Ed25519 receipt (including listingId) and X-StockBloc-Receipt-* headers." },
+          "400": { "description": "Missing listingId." },
+          "402": { "description": "Payment Required. Returns x402 v2 PAYMENT-REQUIRED header for the listing's exact Base USDC price." },
+          "404": { "description": "Approved listing not found." },
+          "502": { "description": "Seller delivery failed. Automatic 100% USDC buyer refund issued and recorded; seller paid $0." }
+        }
+      }
+    },
+    "/api/v1/marketplace/listings/{id}/approve": {
+      "post": {
+        "summary": "Admin: Probe and Approve Pending Marketplace Listing",
+        "operationId": "approveMarketplaceListing",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Live probe returned HTTP 200 valid JSON; listing is now APPROVED." },
+          "403": { "description": "Valid MARKETPLACE_ADMIN_KEY required." },
+          "422": { "description": "Live endpoint probe failed; listing remains PENDING." }
+        }
+      }
+    },
+    "/api/v1/marketplace/listings/{id}/reject": {
+      "post": {
+        "summary": "Admin: Reject Pending Marketplace Listing",
+        "operationId": "rejectMarketplaceListing",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Listing marked REJECTED with reason." },
+          "403": { "description": "Valid MARKETPLACE_ADMIN_KEY required." }
+        }
+      }
+    },
+    "/api/v1/marketplace/payouts/{payoutId}/retry": {
+      "post": {
+        "summary": "Admin: Manually Retry a Failed Marketplace Seller Payout",
+        "operationId": "retryMarketplacePayout",
+        "parameters": [
+          { "name": "payoutId", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Payout executed on Base Mainnet and marked paid." },
+          "403": { "description": "Valid MARKETPLACE_ADMIN_KEY required." },
+          "409": { "description": "Payout already paid." }
+        }
+      }
+    },
+    "/api/v1/marketplace/call/{slug}": {
+      "get": {
+        "summary": "Call a Verified Marketplace Finance Endpoint (x402 per-listing USDC price)",
+        "description": "Verifies buyer x402 payment, calls seller upstream, validates HTTP 200 and required JSON schema BEFORE settling payment, then settles USDC on Base (90% seller net / 10% platform fee) and returns signed Ed25519 receipt headers.",
+        "operationId": "callMarketplaceListingGet",
+        "parameters": [
+          { "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Verified delivered payload with PAYMENT-RESPONSE and X-StockBloc-Receipt-* headers." },
+          "402": { "description": "Payment Required. Returns x402 PAYMENT-REQUIRED header for the listing's USDC price." },
+          "502": { "description": "Seller delivery verification failed. Buyer payment was NOT settled (charged: false)." }
+        }
+      },
+      "post": {
+        "summary": "Call a Verified Marketplace Finance Endpoint via POST (x402 per-listing USDC price)",
+        "operationId": "callMarketplaceListingPost",
+        "parameters": [
+          { "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Verified delivered payload with PAYMENT-RESPONSE and X-StockBloc-Receipt-* headers." },
+          "402": { "description": "Payment Required." },
+          "502": { "description": "Seller delivery verification failed. Buyer payment was NOT settled." }
+        }
+      }
     }
   },
   "components": {

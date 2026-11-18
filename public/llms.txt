@@ -369,8 +369,63 @@ Stock Bloc provides a native Model Context Protocol (MCP) server for Claude Desk
 
 ---
 
-## 6. Machine Discovery Standards
+## 6. Verified Delivery Receipts & Finance Agent Marketplace
+Every completed paid x402 call across all priced endpoints returns a cryptographically signed **Ed25519 Verified Delivery Receipt** embedded directly in the JSON response (`receipt: { ... }`) and via response headers, binding the Base USDC payment transaction hash to the exact SHA-256 hash (`payloadHash`) of the delivered JSON payload.
+
+### Receipt Object Returned with Every Paid Response
+```json
+{
+  "receipt": {
+    "receiptId": "rcpt_...",
+    "endpoint": "/api/v1/sec/analyst",
+    "ticker": "AAPL",
+    "payer": "0x...",
+    "payTo": "0x6A6f526d8686D0c9edEfc65252e720bFa5eA5708",
+    "amountUsd": 0.05,
+    "paymentTxHash": "0x...",
+    "payloadHash": "sha256 of the exact JSON payload delivered",
+    "challengedAt": "ISO timestamp of the 402",
+    "paidAt": "ISO timestamp of verified payment",
+    "deliveredAt": "ISO timestamp of delivery",
+    "signature": "Ed25519 signature over canonical JSON (sorted keys, no whitespace) of the receipt fields"
+  }
+}
+```
+Headers also returned: `X-StockBloc-Receipt-Id`, `X-StockBloc-Payload-Sha256`, `X-StockBloc-Receipt-Signature`, `X-StockBloc-Receipt-Verify-Url`.
+
+### Receipt Verification Endpoints (Free, No Payment)
+- **Public Ed25519 Key**: `GET https://stockbloc.ai.studio/.well-known/receipts-pubkey.json` (PEM + JWK for offline deterministic verification; alias: `GET /api/v1/receipts/public-key`)
+- **Verify Stored Receipt by ID**: `GET https://stockbloc.ai.studio/api/v1/receipts/verify?receiptId=rcpt_...` — returns the stored receipt from Firestore, whether the Ed25519 signature verifies, and whether `payloadHash` matches the payload on record.
+- **Verify Receipt Against Payload**: `POST https://stockbloc.ai.studio/api/v1/receipts/verify` with `{ "receipt": { ... }, "payload": { ... } }` — verifies the Ed25519 signature and confirms the payload's SHA-256 hash matches `receipt.payloadHash`.
+- **Recent Receipts Ledger**: `GET https://stockbloc.ai.studio/api/v1/receipts`
+- **Fetch Receipt by ID**: `GET https://stockbloc.ai.studio/api/v1/receipts/:receiptId`
+
+### Finance Agent Marketplace (10% Take Rate, Verified Delivery & Automatic Refund Guarantee)
+Third-party finance agents and data providers can sell endpoints through Stock Bloc's x402 Base USDC rails with **$0 listing fee**, **$0 monthly fee**, and a **10% take rate only on verified completed sales** (90% released in Base USDC to the seller's `payoutWallet`).
+- **Browse Approved Listings (Free)**: `GET https://stockbloc.ai.studio/api/v1/marketplace/listings` — returns only probe-verified, approved listings (`listingId`, `name`, `description`, `priceUsd`, `seller`, `verified`, `salesCount`, `deliveryRate`, `listedAt`).
+- **Apply to List an Endpoint (Free)**: `POST https://stockbloc.ai.studio/api/v1/marketplace/listings/apply` with `{ "name", "endpointUrl", "priceUsd" ($0.001-$1.00), "description", "payoutWallet", "contact" }`. Stored as `PENDING` until probed (HTTP 200 valid JSON required) and approved.
+- **Buy Any Approved Listing (x402 variable per-listing Base USDC price)**: `POST https://stockbloc.ai.studio/api/v1/marketplace/buy` with `{ "listingId": "lst_...", "params": { ... } }`.
+  - Unpaid calls return HTTP `402` with an x402 v2 challenge for the listing's exact USDC price on Base.
+  - On verified delivery (HTTP `200`, valid non-empty JSON within 30s), Stock Bloc returns the seller's payload together with a signed Ed25519 delivery `receipt` (including `listingId`) and queues a 90% USDC payout to the seller.
+  - On failed delivery (timeout, non-200, invalid JSON, or empty body), Stock Bloc automatically refunds **100%** of the USDC payment to the buyer's wallet, pays the seller `$0`, and auto-suspends any listing after 3 consecutive failures.
+- **Marketplace Live Stats & Funnel (Free)**: `GET https://stockbloc.ai.studio/api/v1/marketplace/stats` & `GET https://stockbloc.ai.studio/api/v1/telemetry/funnel`
+- **Example Marketplace Buy Call**:
+```bash
+# 1. Browse approved listings (free)
+curl -s "https://stockbloc.ai.studio/api/v1/marketplace/listings"
+
+# 2. Buy a listing (unpaid returns HTTP 402 with PAYMENT-REQUIRED; retry with PAYMENT-SIGNATURE)
+curl -s -X POST "https://stockbloc.ai.studio/api/v1/marketplace/buy" \
+  -H "Content-Type: application/json" \
+  -H "PAYMENT-SIGNATURE: <base64_x402_signature>" \
+  -d '{"listingId":"lst_example","params":{"ticker":"NVDA"}}'
+```
+
+---
+
+## 7. Machine Discovery Standards
 - **x402 Discovery**: `/.well-known/x402`
+- **Verified Receipt Ed25519 Public Key**: `/.well-known/receipts-pubkey.json`
 - **A2A Agent Manifest**: `/agents/manifest.json`
 - **Agent Skill**: `/agents/skill.md`
 - **OpenAPI 3.0**: `/api/v1/openapi.json`
@@ -378,3 +433,5 @@ Stock Bloc provides a native Model Context Protocol (MCP) server for Claude Desk
 - **AI Plugin**: `/.well-known/ai-plugin.json`
 - **Glama Connector**: `/.well-known/glama.json`
 - **MCP Manifest**: `/.well-known/mcp.json` / `/mcp.json`
+
+
