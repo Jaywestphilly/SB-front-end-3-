@@ -1,0 +1,605 @@
+/* ==========================================================================
+   STOCK BLOC — ALIEN XENOTECH HOLOGRAPHIC FUI DESIGN SYSTEM
+   Cinematic Sci-Fi Holographic Architecture (Chamfered Hulls, Neon Conduits,
+   Hexagonal Emitter Nodes, Volumetric Light Pillars & Precision HUD Frames)
+   ========================================================================== */
+
+:root {
+  /* Core Brand DNA Palette (Alien Bioluminescence + Hyper-Neon Holo) */
+  --sb-void-0: #02050a;
+  --sb-void-1: #040a14;
+  --sb-void-2: #071324;
+  --sb-glass-core: rgba(4, 13, 24, 0.84);
+  --sb-glass-core-deep: rgba(2, 8, 16, 0.92);
+  --sb-glass-core-elevated: rgba(6, 18, 34, 0.88);
+
+  --sb-cyan-core: #00f5d4;
+  --sb-cyan-bright: #00e5ff;
+  --sb-emerald-plasma: #00ff9d;
+  --sb-emerald-solid: #10b981;
+  --sb-cobalt-abyss: #0b4bff;
+  --sb-caustic-blue: #0ea5e9;
+  --sb-ion-purple: #a855f7;
+  --sb-plasma-magenta: #ff2e93;
+  --sb-amber-gold: #f59e0b;
+  --sb-crimson-alert: #f43f5e;
+
+  /* WCAG AA+ Accessible Foreground Ink (>= 4.5:1 against #040A14) */
+  --sb-ink-primary: #f2faff;
+  --sb-ink-secondary: #cde2f0;
+  --sb-ink-muted: #8fb2c9;
+
+  /* Holographic Rim & Energy Conduit Tokens */
+  --sb-rim-subtle: rgba(0, 245, 212, 0.2);
+  --sb-rim-specular: rgba(0, 245, 212, 0.48);
+  --sb-rim-emerald: rgba(0, 255, 157, 0.44);
+  --sb-rim-purple: rgba(168, 85, 247, 0.48);
+  --sb-rim-amber: rgba(245, 158, 11, 0.48);
+
+  /* Strict Z-Index Layering Contract (Eliminates Overlaps) */
+  --z-base: 0;
+  --z-ambient-canvas: 1;
+  --z-content: 10;
+  --z-ticker: 20;
+  --z-sticky-subnav: 30;
+  --z-sticky-header: 40;
+  --z-dropdown: 50;
+  --z-dock: 60;
+  --z-sheet-backdrop: 70;
+  --z-sheet: 75;
+  --z-modal-backdrop: 80;
+  --z-modal: 85;
+  --z-copilot: 95;
+  --z-toast: 100;
+
+  /* Motion Curves */
+  --ease-spring-snappy: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-glass-glide: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   ALIEN XENOTECH CHAMFERED GEOMETRY & HOLOGRAPHIC HULL PRIMITIVES
+   ========================================================================== */
+
+/* Large Asymmetric Alien Hull (Hero panels, Category Matrices, Manifesto) */
+.xeno-clip-lg {
+  clip-path: polygon(
+    22px 0%,
+    calc(100% - 22px) 0%,
+    100% 22px,
+    100% calc(100% - 22px),
+    calc(100% - 22px) 100%,
+    22px 100%,
+    0% calc(100% - 22px),
+    0% 22px
+  );
+}
+
+/* Medium Asymmetric Sci-Fi Module Tile (2 diagonal alien cuts) */
+.xeno-clip-md {
+  clip-path: polygon(
+    14px 0%,
+    100% 0%,
+    100% calc(100% - 14px),
+    calc(100% - 14px) 100%,
+    0% 100%,
+    0% 14px
+  );
+}
+
+/* Compact Angular Command Blade (Buttons, Nav Tabs, Filter Blades) */
+.xeno-clip-sm {
+  clip-path: polygon(
+    9px 0%,
+    100% 0%,
+    100% calc(100% - 9px),
+    calc(100% - 9px) 100%,
+    0% 100%,
+    0% 9px
+  );
+}
+
+/* Hexagonal Holographic Emitter Pod (Replaces generic rounded icon boxes) */
+.xeno-hex-pod {
+  clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+}
+
+/* Outer glowing drop-shadow wrapper for clipped neon polygons */
+.xeno-glow-shell {
+  filter: drop-shadow(0 0 18px rgba(0, 245, 212, 0.22))
+    drop-shadow(0 18px 42px rgba(0, 0, 0, 0.85));
+}
+
+.xeno-glow-shell-purple {
+  filter: drop-shadow(0 0 22px rgba(168, 85, 247, 0.28))
+    drop-shadow(0 18px 42px rgba(0, 0, 0, 0.88));
+}
+
+.xeno-glow-shell-cobalt {
+  filter: drop-shadow(0 0 20px rgba(14, 165, 233, 0.28))
+    drop-shadow(0 18px 42px rgba(0, 0, 0, 0.88));
+}
+
+.xeno-glow-shell-amber {
+  filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.22))
+    drop-shadow(0 18px 42px rgba(0, 0, 0, 0.85));
+}
+
+/* Holographic Hex-Circuit Micro-Pattern */
+.xeno-hex-grid {
+  background-image:
+    radial-gradient(rgba(0, 245, 212, 0.14) 1px, transparent 1px),
+    linear-gradient(
+      120deg,
+      rgba(0, 229, 255, 0.03) 25%,
+      transparent 25%,
+      transparent 75%,
+      rgba(168, 85, 247, 0.03) 75%
+    );
+  background-size: 20px 20px, 40px 40px;
+}
+
+/* Subtle Periodic Holographic Laser Scanline Sweep */
+@keyframes xeno-laser-sweep {
+  0% {
+    transform: translateY(-130%);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.75;
+  }
+  85% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateY(420%);
+    opacity: 0;
+  }
+}
+
+.xeno-scan-beam {
+  position: absolute;
+  inset-x: 0;
+  top: 0;
+  height: 28%;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(0, 245, 212, 0.055) 48%,
+    rgba(0, 245, 212, 0.16) 50%,
+    rgba(0, 229, 255, 0.04) 54%,
+    transparent 100%
+  );
+  animation: xeno-laser-sweep 7.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Orbiting Dashed Targeting Ring for Hexagonal Emitter Nodes */
+@keyframes xeno-orbit-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes xeno-orbit-spin-rev {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.xeno-spin-slow {
+  animation: xeno-orbit-spin 14s linear infinite;
+}
+
+.xeno-spin-rev-slow {
+  animation: xeno-orbit-spin-rev 18s linear infinite;
+}
+
+/* Pulsing Plasma Energy Conduit */
+@keyframes xeno-conduit-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.xeno-conduit-rail {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 245, 212, 0.2) 15%,
+    rgba(0, 245, 212, 0.95) 45%,
+    rgba(168, 85, 247, 0.85) 58%,
+    rgba(0, 229, 255, 0.2) 85%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: xeno-conduit-flow 5.5s linear infinite;
+}
+
+/* Crisp Sci-Fi Neon Text Bloom */
+.xeno-neon-text {
+  text-shadow:
+    0 0 12px rgba(0, 245, 212, 0.45),
+    0 0 28px rgba(0, 229, 255, 0.22);
+}
+
+.xeno-neon-text-purple {
+  text-shadow:
+    0 0 12px rgba(168, 85, 247, 0.55),
+    0 0 26px rgba(139, 92, 246, 0.28);
+}
+
+/* ==========================================================================
+   ALIEN HOLOGRAPHIC SURFACE PRIMITIVES (UPGRADED LIQUID GLASS + FUI HULLS)
+   ========================================================================== */
+
+.liquid-glass-surface {
+  position: relative;
+  background: linear-gradient(
+    152deg,
+    rgba(6, 19, 34, 0.86) 0%,
+    rgba(3, 10, 20, 0.92) 55%,
+    rgba(5, 13, 28, 0.9) 100%
+  );
+  backdrop-filter: blur(22px) saturate(175%);
+  -webkit-backdrop-filter: blur(22px) saturate(175%);
+  border: 1px solid var(--sb-rim-subtle);
+  box-shadow:
+    0 20px 48px -18px rgba(0, 0, 0, 0.9),
+    0 0 24px -10px rgba(0, 245, 212, 0.16),
+    inset 0 1px 0 0 rgba(0, 245, 212, 0.22),
+    inset 0 -1px 0 0 rgba(168, 85, 247, 0.14);
+  transform-style: preserve-3d;
+  transition:
+    border-color 220ms var(--ease-glass-glide),
+    box-shadow 240ms var(--ease-glass-glide);
+}
+
+/* Pointer-tracked holographic plasma flare */
+.liquid-glass-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(
+    460px circle at var(--mouse-x, 50%) var(--mouse-y, 0%),
+    var(--lg-sheen-color, rgba(0, 245, 212, 0.17)),
+    transparent 60%
+  );
+  opacity: var(--lg-sheen-opacity, 0.65);
+  transition: opacity 200ms ease-out;
+}
+
+/* Crisp prismatic laser rim */
+.liquid-glass-surface::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  z-index: 2;
+  background: linear-gradient(
+    135deg,
+    var(--lg-rim-start, rgba(0, 245, 212, 0.52)) 0%,
+    rgba(0, 229, 255, 0.16) 38%,
+    rgba(168, 85, 247, 0.14) 70%,
+    var(--lg-rim-end, rgba(168, 85, 247, 0.36)) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.liquid-glass-surface:hover {
+  border-color: var(--lg-hover-border, rgba(0, 245, 212, 0.52));
+  box-shadow:
+    0 24px 56px -18px rgba(0, 0, 0, 0.94),
+    0 0 34px -6px var(--lg-hover-glow, rgba(0, 245, 212, 0.32)),
+    inset 0 1px 0 0 rgba(0, 245, 212, 0.34);
+}
+
+/* Recessed obsidian-holographic slab */
+.liquid-glass-slab {
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 15, 28, 0.88) 0%,
+    rgba(3, 8, 17, 0.94) 100%
+  );
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(0, 245, 212, 0.18);
+  box-shadow:
+    0 14px 34px -16px rgba(0, 0, 0, 0.88),
+    inset 0 1px 0 rgba(0, 245, 212, 0.12);
+}
+
+/* ==========================================================================
+   ALIEN STARSHIP COMMAND DOCK (REPLACES GENERIC ROUNDED PILL DOCK)
+   ========================================================================== */
+
+.xeno-dock-console {
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(5, 18, 34, 0.92) 0%,
+    rgba(2, 8, 18, 0.97) 100%
+  );
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  clip-path: polygon(
+    18px 0%,
+    calc(100% - 18px) 0%,
+    100% 14px,
+    100% calc(100% - 10px),
+    calc(100% - 12px) 100%,
+    12px 100%,
+    0% calc(100% - 10px),
+    0% 14px
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(0, 245, 212, 0.45),
+    inset 0 -1px 0 rgba(168, 85, 247, 0.32);
+}
+
+.xeno-dock-wrap {
+  filter: drop-shadow(0 0 16px rgba(0, 245, 212, 0.34))
+    drop-shadow(0 16px 36px rgba(0, 0, 0, 0.92));
+}
+
+.dock-item-spring {
+  transition:
+    transform 190ms var(--ease-spring-snappy),
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 200ms ease;
+  will-change: transform;
+}
+
+@media (hover: hover) {
+  .dock-item-spring:hover {
+    transform: translateY(-3px);
+  }
+  .dock-item-spring:active {
+    transform: translateY(0px) scale(0.97);
+  }
+}
+
+/* Alien Command Bridge Header & Holographic Dropdowns */
+.liquid-glass-header {
+  background: linear-gradient(
+    180deg,
+    rgba(2, 8, 17, 0.94) 0%,
+    rgba(4, 13, 25, 0.88) 100%
+  );
+  backdrop-filter: blur(24px) saturate(175%);
+  -webkit-backdrop-filter: blur(24px) saturate(175%);
+  border-bottom: 1px solid rgba(0, 245, 212, 0.24);
+  box-shadow:
+    0 12px 36px -14px rgba(0, 0, 0, 0.92),
+    0 1px 24px -6px rgba(0, 229, 255, 0.16);
+}
+
+.xeno-dropdown-tray {
+  background: linear-gradient(
+    162deg,
+    rgba(5, 17, 32, 0.97) 0%,
+    rgba(2, 7, 16, 0.99) 100%
+  );
+  backdrop-filter: blur(24px) saturate(185%);
+  -webkit-backdrop-filter: blur(24px) saturate(185%);
+  border: 1px solid rgba(0, 245, 212, 0.38);
+  clip-path: polygon(
+    14px 0%,
+    100% 0%,
+    100% calc(100% - 14px),
+    calc(100% - 14px) 100%,
+    0% 100%,
+    0% 14px
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(0, 245, 212, 0.32),
+    inset 0 0 28px rgba(0, 229, 255, 0.07);
+}
+
+.liquid-glass-dropdown {
+  background: linear-gradient(
+    162deg,
+    rgba(5, 17, 32, 0.97) 0%,
+    rgba(2, 7, 16, 0.99) 100%
+  );
+  backdrop-filter: blur(24px) saturate(185%);
+  -webkit-backdrop-filter: blur(24px) saturate(185%);
+  border: 1px solid rgba(0, 245, 212, 0.36);
+  box-shadow:
+    0 24px 56px -14px rgba(0, 0, 0, 0.95),
+    0 0 28px -8px rgba(0, 229, 255, 0.28),
+    inset 0 1px 0 rgba(0, 245, 212, 0.26);
+}
+
+/* Angular Sci-Fi Command Button */
+.xeno-cmd-btn {
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(7, 22, 40, 0.88) 0%,
+    rgba(3, 11, 22, 0.94) 100%
+  );
+  border: 1px solid rgba(0, 245, 212, 0.28);
+  clip-path: polygon(
+    8px 0%,
+    100% 0%,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    0% 100%,
+    0% 8px
+  );
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 200ms ease,
+    transform 150ms ease;
+}
+
+.xeno-cmd-btn:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 245, 212, 0.18) 0%,
+    rgba(7, 25, 44, 0.95) 100%
+  );
+  border-color: rgba(0, 245, 212, 0.72);
+  box-shadow: 0 0 18px rgba(0, 245, 212, 0.26);
+}
+
+.xeno-cmd-btn-active {
+  background: linear-gradient(
+    135deg,
+    #00f5d4 0%,
+    #00d4ff 100%
+  );
+  border-color: #a5f3fc;
+  color: #020814;
+  box-shadow: 0 0 22px rgba(0, 245, 212, 0.48);
+}
+
+/* ==========================================================================
+   SCROLL FADE MASKS, SEAMLESS MARQUEE, SKELETON SHIMMER & CRT BEZEL
+   ========================================================================== */
+
+.scroll-fade-mask-x {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0px,
+    #000 18px,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0px,
+    #000 18px,
+    #000 calc(100% - 28px),
+    transparent 100%
+  );
+}
+
+.marquee-pause-on-hover:hover .animate-marquee-scroll,
+.marquee-pause-on-hover:focus-within .animate-marquee-scroll {
+  animation-play-state: paused;
+}
+
+@keyframes sb-glass-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.glass-skeleton-shimmer {
+  background: linear-gradient(
+    105deg,
+    rgba(7, 22, 40, 0.65) 20%,
+    rgba(0, 245, 212, 0.22) 50%,
+    rgba(7, 22, 40, 0.65) 80%
+  );
+  background-size: 220% 100%;
+  animation: sb-glass-shimmer 1.75s ease-in-out infinite;
+}
+
+/* Animated Copilot Streaming Border Glow */
+@keyframes sb-copilot-stream-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(0, 245, 212, 0.55),
+      0 0 32px -4px rgba(0, 229, 255, 0.42),
+      0 24px 60px -12px rgba(0, 0, 0, 0.95);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(168, 85, 247, 0.78),
+      0 0 46px -2px rgba(0, 245, 212, 0.58),
+      0 24px 60px -12px rgba(0, 0, 0, 0.95);
+  }
+}
+
+.copilot-streaming-frame {
+  animation: sb-copilot-stream-glow 1.8s ease-in-out infinite;
+}
+
+/* Optional Curved-Glass CRT Spatial Bezel for SB Terminal */
+.crt-spatial-bezel {
+  position: relative;
+  border-radius: 14px;
+  box-shadow:
+    inset 0 0 68px rgba(0, 0, 0, 0.74),
+    inset 0 1px 0 rgba(0, 245, 212, 0.22),
+    0 24px 64px -16px rgba(0, 0, 0, 0.95);
+}
+
+.crt-spatial-bezel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 40;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(0, 245, 212, 0.025) 0px,
+      rgba(0, 245, 212, 0.025) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(
+      115% 110% at 50% 50%,
+      transparent 60%,
+      rgba(0, 0, 0, 0.46) 100%
+    );
+}
+
+/* Strict Tabular Numerals for Zero-Jitter Financial Telemetry */
+.tabular-nums-strict {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* ==========================================================================
+   ACCESSIBILITY: PREFERS-REDUCED-MOTION OVERRIDES
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .dock-item-spring,
+  .liquid-glass-surface,
+  .glass-skeleton-shimmer,
+  .copilot-streaming-frame,
+  .xeno-scan-beam,
+  .xeno-spin-slow,
+  .xeno-spin-rev-slow,
+  .xeno-conduit-rail {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .animate-marquee-scroll {
+    animation: none !important;
+  }
+}

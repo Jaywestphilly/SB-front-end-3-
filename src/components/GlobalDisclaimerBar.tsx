@@ -46,16 +46,16 @@ export const GlobalDisclaimerBar: React.FC<GlobalDisclaimerBarProps> = ({ onOpen
   };
 
   return (
-    <div className="fixed bottom-16 sm:bottom-14 left-1/2 -translate-x-1/2 z-30 w-[96%] max-w-4xl pointer-events-none animate-fadeIn">
-      <div className="pointer-events-auto bg-[#080d14]/95 backdrop-blur-md border border-amber-500/50 alien-block-cut-sm p-2 sm:px-4 shadow-2xl shadow-amber-950/50 flex items-center justify-between gap-3 text-amber-200 text-[10px] sm:text-xs font-mono">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
-          <p className="truncate sm:whitespace-normal font-medium leading-tight">
-            <strong className="text-amber-300 uppercase font-black tracking-wider">STOCK BLOC</strong> is an educational intelligence platform. Nothing on this site is financial advice. Always do your own research.{" "}
-            <button 
+    <div className="w-full max-w-5xl mx-auto px-3 sm:px-4 pt-2 pb-4 animate-fadeIn">
+      <div className="liquid-glass-slab rounded-xl border border-amber-500/30 px-3.5 py-2 flex items-center justify-between gap-3 text-slate-200 text-[10.5px] sm:text-xs font-mono">
+        <div className="flex items-center gap-2 min-w-0">
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <p className="leading-snug text-slate-300">
+            <strong className="text-amber-300 uppercase font-bold tracking-wider">STOCK BLOC</strong> is an educational intelligence platform. Nothing on this site is financial advice. Always do your own research.{" "}
+            <button
               type="button"
               onClick={handleViewDisclaimer}
-              className="text-amber-400 hover:text-white font-bold underline inline-flex items-center gap-0.5 ml-1 transition-colors cursor-pointer"
+              className="text-amber-300 hover:text-white font-bold underline inline-flex items-center gap-0.5 ml-1 transition-colors cursor-pointer"
             >
               See full disclaimer
             </button>
@@ -65,7 +65,7 @@ export const GlobalDisclaimerBar: React.FC<GlobalDisclaimerBarProps> = ({ onOpen
         <button
           type="button"
           onClick={handleDismiss}
-          className="p-1 hover:bg-amber-500/20 text-amber-300 hover:text-white rounded transition-colors cursor-pointer shrink-0"
+          className="p-1 hover:bg-white/10 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer shrink-0"
           aria-label="Dismiss disclaimer"
           title="Dismiss disclaimer bar"
         >

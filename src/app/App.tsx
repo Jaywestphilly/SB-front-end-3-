@@ -279,22 +279,12 @@ const PrivacyPolicyPage = safeLazy(
 );
 
 
-const HubLoadingFallback: React.FC = () => (
-  <div className="p-8 sm:p-12 flex flex-col items-center justify-center min-h-[320px] font-mono text-cyan-400 space-y-4 bg-neutral-950/40 border border-cyan-500/20 rounded-xl my-4 mx-2">
-    <div className="relative w-12 h-12 flex items-center justify-center">
-      <div className="absolute inset-0 border-2 border-cyan-500/20 rounded-full animate-ping" />
-      <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-    </div>
-    <div className="text-xs uppercase font-black tracking-widest text-cyan-300 animate-pulse flex items-center gap-2">
-      <span className="w-2 h-2 bg-cyan-400 rounded-full animate-ping" />
-      LOADING MODULE...
-    </div>
-  </div>
-);
+import { RouteSkeleton } from "../components/ui/RouteSkeleton";
+
+const HubLoadingFallback: React.FC = () => <RouteSkeleton />;
 
 import { DisclaimerBar } from "../components/DisclaimerBar";
 import { trackEvent } from "../utils/analytics";
-import { FloatingCommunityButton } from "../components/FloatingCommunityButton";
 import { MissionHubModal } from "../components/MissionHubModal";
 import { INITIAL_STOCKS, STOCK_NEWS_FEED } from "../data/stocks";
 import { StockTicker, SectorCategory, SortField, ViewTab } from "../types";
@@ -1118,7 +1108,7 @@ export function App() {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className={`min-h-screen bg-black grid-bg scanlines text-cyan-100 pb-24 font-mono select-none antialiased relative overflow-hidden`}
+      className={`min-h-screen bg-[#03060a] grid-bg scanlines text-cyan-100 pb-32 font-mono select-none antialiased relative overflow-x-hidden`}
     >
       {/* Alien Laser Scan Beam */}
       <div className="scan-beam-line" />
@@ -1175,28 +1165,28 @@ export function App() {
         onOpenMissionHub={() => setIsMissionHubOpen(true)}
       />
 
-      {/* Ticker Tape Marquee Pill Banner - Hidden on agents and agent_feed */}
+      {/* Slim Optical Ticker Tape Ribbon with Pause-on-Hover - Hidden on agents and agent_feed */}
       {!isAgentRoute && (
         <div
-          className={`w-full bg-[#020813]/90 backdrop-blur-xl border-b py-1.5 px-3 flex items-center gap-2.5 text-xs font-mono transition-all relative z-10 ${
+          className={`w-full h-[30px] bg-[#030812]/92 backdrop-blur-xl border-b px-3 flex items-center gap-2.5 text-xs font-mono transition-all relative z-[20] marquee-pause-on-hover ${
             isSyncingLiveQuotes
-              ? "border-cyan-400 glitch-border-refresh"
-              : "border-cyan-500/25"
+              ? "border-[#00f5d4] glitch-border-refresh"
+              : "border-cyan-500/18"
           }`}
         >
           <span
-            className={`text-[9px] uppercase font-black bg-cyan-950/90 px-2 py-0.5 rounded-md border border-cyan-500/40 shrink-0 flex items-center gap-1.5 tracking-wider z-20 shadow-md tabular-telemetry ${
+            className={`text-[9px] uppercase font-bold bg-[#061322] px-2 py-0.5 rounded-md border border-cyan-500/35 shrink-0 flex items-center gap-1.5 tracking-wider z-20 tabular-nums-strict ${
               isSyncingLiveQuotes
-                ? "text-amber-300 glitch-text-refresh border-amber-400"
-                : "text-cyan-300"
+                ? "text-amber-300 border-amber-400"
+                : "text-[#00f5d4]"
             }`}
           >
-            <Clock className="w-2.5 h-2.5 text-cyan-400 shrink-0" />
+            <Clock className="w-2.5 h-2.5 text-[#00f5d4] shrink-0" />
             <span>LIVE · {formattedDataUpdateTime}</span>
           </span>
 
-          <div className="overflow-hidden w-full relative flex items-center py-0.5">
-            <div className="animate-marquee-scroll flex items-center gap-2">
+          <div className="overflow-hidden w-full relative flex items-center scroll-fade-mask-x">
+            <div className="animate-marquee-scroll flex items-center gap-1.5 px-4">
               {[...marqueeItems, ...marqueeItems].map((s, idx) => (
                 <button
                   key={`${s.symbol}-${idx}`}
@@ -1205,19 +1195,11 @@ export function App() {
                     setSelectedStock(s);
                   }}
                   style={{ animationDelay: `${idx * 0.3}s` }}
-                  className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-[#051224]/80 hover:bg-cyan-950/70 border border-cyan-500/25 hover:border-cyan-400/60 text-cyan-100 shrink-0 font-bold active:scale-95 transition-all cursor-pointer text-[11px] tabular-telemetry ${
+                  className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#061322]/75 hover:bg-[#0b2038] border border-cyan-500/20 hover:border-[#00f5d4]/55 text-slate-100 shrink-0 font-semibold active:scale-95 transition-all cursor-pointer text-[10.5px] leading-none tabular-nums-strict ${
                     isSyncingLiveQuotes ? "glitch-border-refresh" : ""
                   }`}
                 >
-                  <span
-                    className={`font-black ${
-                      isSyncingLiveQuotes
-                        ? "glitch-text-refresh text-cyan-300"
-                        : "text-cyan-100"
-                    }`}
-                  >
-                    ${s.symbol}
-                  </span>
+                  <span className="font-bold text-cyan-100">${s.symbol}</span>
                   <span className="font-mono text-slate-300">
                     $
                     {s.price >= 1000
@@ -1228,8 +1210,8 @@ export function App() {
                       : s.price.toFixed(2)}
                   </span>
                   <span
-                    className={`font-black font-mono text-[10px] ${
-                      s.changePercent >= 0 ? "text-emerald-400" : "text-rose-400"
+                    className={`font-bold font-mono text-[10px] ${
+                      s.changePercent >= 0 ? "text-[#00ff9d]" : "text-rose-400"
                     }`}
                   >
                     {s.changePercent >= 0 ? "+" : ""}
@@ -1732,14 +1714,6 @@ export function App() {
         onOpenDataStatus={() => setIsDataStatusOpen(true)}
         onOpenAiCopilot={() => setIsAiCopilotOpen(true)}
       />
-
-      {/* Floating X / Twitter / Community Action Button - Demoted on agents, agent_feed, and pricing */}
-      {!isReducedChromeRoute && (
-        <FloatingCommunityButton
-          onSelectTab={handleSelectTab}
-          onOpenAuth={() => setIsAuthOpen(true)}
-        />
-      )}
 
       <Suspense fallback={null}>
         {/* Full Disclaimer Modal */}

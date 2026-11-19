@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ViewTab } from "../types";
 import {
   TrendingUp,
@@ -9,11 +9,7 @@ import {
   Layers,
   Orbit,
   ShieldAlert,
-  BookOpen,
   Sparkles,
-  ShoppingBag,
-  UserCheck,
-  ArrowRight,
   X,
   ChevronRight,
   Home,
@@ -25,7 +21,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics";
-import { VolcanicMagmaShader } from "./ui/VolcanicMagmaShader";
+import { LiquidGlassSurface, LiquidGlassAccent } from "./ui/LiquidGlassSurface";
 
 interface BottomNavProps {
   activeTab: ViewTab;
@@ -36,17 +32,56 @@ interface BottomNavProps {
   magmaMode?: "standard" | "surge" | "slow" | "off";
 }
 
+interface HoloModuleItem {
+  tab: ViewTab;
+  index: string;
+  icon: React.ElementType;
+  title: string;
+  desc: string;
+  hexBg: string;
+  ringStroke: string;
+  hoverBorder: string;
+  hoverTitle: string;
+  chevronColor: string;
+}
+
+interface HoloSectorConfig {
+  id: "markets" | "ai" | "education";
+  title: string;
+  subtitle: string;
+  closeLabel: string;
+  accent: LiquidGlassAccent;
+  glowShellClass: string;
+  headerIcon: React.ElementType;
+  headerColor: string;
+  headerRing: string;
+  items: HoloModuleItem[];
+}
+
 export const BottomNav: React.FC<BottomNavProps> = ({
   activeTab,
   onSelectTab,
-  onOpenTerminal,
   isTerminalOpen = false,
   demoted = false,
-  magmaMode = "standard",
 }) => {
   const [activeSheet, setActiveSheet] = useState<
     "markets" | "ai" | "education" | null
   >(null);
+
+  // Auto-close category sheets immediately whenever activeTab changes from anywhere
+  useEffect(() => {
+    setActiveSheet(null);
+  }, [activeTab]);
+
+  // Escape key closes active category sheet
+  useEffect(() => {
+    if (!activeSheet) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveSheet(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeSheet]);
 
   const handleOpenSheet = (sheet: "markets" | "ai" | "education") => {
     triggerHaptic("selection");
@@ -66,613 +101,621 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     ["watchlist", "brand", "macro", "intelligence"].includes(activeTab);
   const isAiActive =
     !isTerminalOpen &&
-    ["dyson_swarm", "war_gov_ufo", "ai_insights", "ai_revolution", "satellite_map"].includes(activeTab);
+    [
+      "dyson_swarm",
+      "war_gov_ufo",
+      "ai_insights",
+      "ai_revolution",
+      "satellite_map",
+      "agents",
+      "developers",
+    ].includes(activeTab);
   const isRealEstateActive = !isTerminalOpen && activeTab === "real_estate";
   const isCreditActive = !isTerminalOpen && activeTab === "credit";
   const isEducationActive =
     !isTerminalOpen &&
-    ["investopedia", "small_business", "youtube", "terminal_guide", "mit_courses"].includes(activeTab);
+    [
+      "investopedia",
+      "small_business",
+      "youtube",
+      "terminal_guide",
+      "mit_courses",
+    ].includes(activeTab);
+
+  const dockItems: {
+    id: string;
+    label: string;
+    shortLines?: [string, string];
+    icon: React.ElementType;
+    isActive: boolean;
+    accentColor: string;
+    beamGradient: string;
+    barColor: string;
+    activeBorder: string;
+    onClick: () => void;
+  }[] = [
+    {
+      id: "bloc",
+      label: "THE BLOC",
+      icon: Sparkles,
+      isActive: isBlocActive,
+      accentColor: "text-[#00f5d4]",
+      beamGradient:
+        "linear-gradient(180deg, rgba(0,245,212,0.34) 0%, rgba(0,245,212,0.06) 75%, transparent 100%)",
+      barColor: "bg-[#00f5d4] shadow-[0_0_12px_#00f5d4]",
+      activeBorder: "border-[#00f5d4]/70 text-white",
+      onClick: () => handleNavigate("bloc"),
+    },
+    {
+      id: "intel",
+      label: "INTEL",
+      icon: Globe,
+      isActive: isIntelActive,
+      accentColor: "text-[#00e5ff]",
+      beamGradient:
+        "linear-gradient(180deg, rgba(0,229,255,0.34) 0%, rgba(0,229,255,0.06) 75%, transparent 100%)",
+      barColor: "bg-[#00e5ff] shadow-[0_0_12px_#00e5ff]",
+      activeBorder: "border-[#00e5ff]/70 text-white",
+      onClick: () => handleNavigate("news"),
+    },
+    {
+      id: "markets",
+      label: "MARKETS",
+      icon: TrendingUp,
+      isActive: isMarketsActive || activeSheet === "markets",
+      accentColor: "text-[#00f5d4]",
+      beamGradient:
+        "linear-gradient(180deg, rgba(0,245,212,0.36) 0%, rgba(0,229,255,0.06) 75%, transparent 100%)",
+      barColor: "bg-[#00f5d4] shadow-[0_0_12px_#00f5d4]",
+      activeBorder: "border-[#00f5d4]/75 text-white",
+      onClick: () => handleOpenSheet("markets"),
+    },
+    {
+      id: "ai",
+      label: "AI",
+      icon: Cpu,
+      isActive: isAiActive || activeSheet === "ai",
+      accentColor: "text-[#c084fc]",
+      beamGradient:
+        "linear-gradient(180deg, rgba(168,85,247,0.38) 0%, rgba(168,85,247,0.08) 75%, transparent 100%)",
+      barColor: "bg-[#a855f7] shadow-[0_0_12px_#a855f7]",
+      activeBorder: "border-[#a855f7]/80 text-white",
+      onClick: () => handleOpenSheet("ai"),
+    },
+    {
+      id: "real_estate",
+      label: "REAL ESTATE",
+      shortLines: ["REAL", "ESTATE"],
+      icon: Building2,
+      isActive: isRealEstateActive,
+      accentColor: "text-amber-400",
+      beamGradient:
+        "linear-gradient(180deg, rgba(245,158,11,0.34) 0%, rgba(245,158,11,0.06) 75%, transparent 100%)",
+      barColor: "bg-amber-400 shadow-[0_0_12px_#f59e0b]",
+      activeBorder: "border-amber-400/75 text-amber-50",
+      onClick: () => handleNavigate("real_estate"),
+    },
+    {
+      id: "credit",
+      label: "CREDIT",
+      icon: ShieldCheck,
+      isActive: isCreditActive,
+      accentColor: "text-[#00ff9d]",
+      beamGradient:
+        "linear-gradient(180deg, rgba(0,255,157,0.34) 0%, rgba(0,255,157,0.06) 75%, transparent 100%)",
+      barColor: "bg-[#00ff9d] shadow-[0_0_12px_#00ff9d]",
+      activeBorder: "border-[#00ff9d]/75 text-emerald-50",
+      onClick: () => handleNavigate("credit"),
+    },
+    {
+      id: "education",
+      label: "EDUCATION",
+      icon: GraduationCap,
+      isActive: isEducationActive || activeSheet === "education",
+      accentColor: "text-[#38bdf8]",
+      beamGradient:
+        "linear-gradient(180deg, rgba(56,189,248,0.34) 0%, rgba(56,189,248,0.06) 75%, transparent 100%)",
+      barColor: "bg-[#38bdf8] shadow-[0_0_12px_#38bdf8]",
+      activeBorder: "border-[#38bdf8]/75 text-sky-50",
+      onClick: () => handleOpenSheet("education"),
+    },
+  ];
+
+  const sectorConfigs: Record<"markets" | "ai" | "education", HoloSectorConfig> =
+    {
+      markets: {
+        id: "markets",
+        title: "MARKETS MATRIX",
+        subtitle: "Select a live market intelligence desk",
+        closeLabel: "Close Markets Matrix",
+        accent: "cyan",
+        glowShellClass: "xeno-glow-shell",
+        headerIcon: TrendingUp,
+        headerColor: "text-[#00f5d4]",
+        headerRing: "#00f5d4",
+        items: [
+          {
+            tab: "watchlist",
+            index: "01",
+            icon: TrendingUp,
+            title: "Live Watchlist Workstation",
+            desc: "Live stock quotes, SB Scores & technical screeners.",
+            hexBg: "bg-[#00f5d4]/18 text-[#00f5d4]",
+            ringStroke: "#00f5d4",
+            hoverBorder: "hover:border-[#00f5d4]/80",
+            hoverTitle: "group-hover:text-[#00f5d4]",
+            chevronColor: "text-[#00f5d4]",
+          },
+          {
+            tab: "intelligence",
+            index: "02",
+            icon: Layers,
+            title: "13F Hedge Fund Intel",
+            desc: "Institutional SEC filings, whale tracking & Senate trades.",
+            hexBg: "bg-[#00e5ff]/18 text-[#00e5ff]",
+            ringStroke: "#00e5ff",
+            hoverBorder: "hover:border-[#00e5ff]/80",
+            hoverTitle: "group-hover:text-[#00e5ff]",
+            chevronColor: "text-[#00e5ff]",
+          },
+          {
+            tab: "macro",
+            index: "03",
+            icon: FileText,
+            title: "Macro Economic Briefings",
+            desc: "Fed rates, treasury yield curves & global liquidity trackers.",
+            hexBg: "bg-[#00ff9d]/18 text-[#00ff9d]",
+            ringStroke: "#00ff9d",
+            hoverBorder: "hover:border-[#00ff9d]/80",
+            hoverTitle: "group-hover:text-[#00ff9d]",
+            chevronColor: "text-[#00ff9d]",
+          },
+          {
+            tab: "brand",
+            index: "04",
+            icon: Home,
+            title: "Stock Bloc Brand Landing",
+            desc: "Platform philosophy, manifesto & architecture overview.",
+            hexBg: "bg-[#a855f7]/20 text-[#c084fc]",
+            ringStroke: "#a855f7",
+            hoverBorder: "hover:border-[#a855f7]/80",
+            hoverTitle: "group-hover:text-[#d8b4fe]",
+            chevronColor: "text-[#c084fc]",
+          },
+        ],
+      },
+      ai: {
+        id: "ai",
+        title: "AI & TECH MATRIX",
+        subtitle: "Deep-tech infrastructure, orbital compute & agent rails",
+        closeLabel: "Close AI & Tech Matrix",
+        accent: "purple",
+        glowShellClass: "xeno-glow-shell-purple",
+        headerIcon: Cpu,
+        headerColor: "text-[#c084fc]",
+        headerRing: "#a855f7",
+        items: [
+          {
+            tab: "ai_revolution",
+            index: "01",
+            icon: BarChart3,
+            title: "AI Infra & MS Value Chain",
+            desc: "Morgan Stanley Heatmap, Power Generation, Data Centers & Chips.",
+            hexBg: "bg-amber-400/18 text-amber-300",
+            ringStroke: "#fbbf24",
+            hoverBorder: "hover:border-amber-400/80",
+            hoverTitle: "group-hover:text-amber-300",
+            chevronColor: "text-amber-300",
+          },
+          {
+            tab: "dyson_swarm",
+            index: "02",
+            icon: Orbit,
+            title: "Dyson Swarm & Compute",
+            desc: "SpaceX orbital launches, space telemetry & Megawatt grids.",
+            hexBg: "bg-[#a855f7]/22 text-[#d8b4fe]",
+            ringStroke: "#a855f7",
+            hoverBorder: "hover:border-[#c084fc]/85",
+            hoverTitle: "group-hover:text-[#d8b4fe]",
+            chevronColor: "text-[#c084fc]",
+          },
+          {
+            tab: "war_gov_ufo",
+            index: "03",
+            icon: ShieldAlert,
+            title: "Defense Tech & Aerospace",
+            desc: "Autonomous defense systems, procurement & aerospace moats.",
+            hexBg: "bg-[#38bdf8]/20 text-[#38bdf8]",
+            ringStroke: "#38bdf8",
+            hoverBorder: "hover:border-[#38bdf8]/80",
+            hoverTitle: "group-hover:text-[#7dd3fc]",
+            chevronColor: "text-[#38bdf8]",
+          },
+          {
+            tab: "agents",
+            index: "04",
+            icon: Globe,
+            title: "AI Agent Directory",
+            desc: "Discover autonomous AI agents analyzing live filings.",
+            hexBg: "bg-[#00f5d4]/18 text-[#00f5d4]",
+            ringStroke: "#00f5d4",
+            hoverBorder: "hover:border-[#00f5d4]/80",
+            hoverTitle: "group-hover:text-[#00f5d4]",
+            chevronColor: "text-[#00f5d4]",
+          },
+          {
+            tab: "developers",
+            index: "05",
+            icon: Terminal,
+            title: "Developer Portal",
+            desc: "Register external AI agents and provision x402 API rails.",
+            hexBg: "bg-[#00ff9d]/18 text-[#00ff9d]",
+            ringStroke: "#00ff9d",
+            hoverBorder: "hover:border-[#00ff9d]/80",
+            hoverTitle: "group-hover:text-[#00ff9d]",
+            chevronColor: "text-[#00ff9d]",
+          },
+        ],
+      },
+      education: {
+        id: "education",
+        title: "EDUCATION MATRIX",
+        subtitle: "University courses, terminal manual & financial playbooks",
+        closeLabel: "Close Education Matrix",
+        accent: "cobalt",
+        glowShellClass: "xeno-glow-shell-cobalt",
+        headerIcon: GraduationCap,
+        headerColor: "text-[#38bdf8]",
+        headerRing: "#38bdf8",
+        items: [
+          {
+            tab: "mit_courses",
+            index: "01",
+            icon: GraduationCap,
+            title: "MIT & University Courses",
+            desc: "Official lectures from MIT OpenCourseWare, Yale & Stanford.",
+            hexBg: "bg-[#a855f7]/22 text-[#d8b4fe]",
+            ringStroke: "#a855f7",
+            hoverBorder: "hover:border-[#c084fc]/80",
+            hoverTitle: "group-hover:text-[#d8b4fe]",
+            chevronColor: "text-[#c084fc]",
+          },
+          {
+            tab: "terminal_guide",
+            index: "02",
+            icon: Terminal,
+            title: "Terminal Guide & Manual",
+            desc: "SB Terminal command codes, shortcuts & quantitative workflows.",
+            hexBg: "bg-amber-400/18 text-amber-300",
+            ringStroke: "#fbbf24",
+            hoverBorder: "hover:border-amber-400/80",
+            hoverTitle: "group-hover:text-amber-300",
+            chevronColor: "text-amber-300",
+          },
+          {
+            tab: "investopedia",
+            index: "03",
+            icon: Sparkles,
+            title: "Investopedia Free Trading Game",
+            desc: "Zero-risk paper trading simulator with live market order books.",
+            hexBg: "bg-[#38bdf8]/20 text-[#38bdf8]",
+            ringStroke: "#38bdf8",
+            hoverBorder: "hover:border-[#38bdf8]/80",
+            hoverTitle: "group-hover:text-[#7dd3fc]",
+            chevronColor: "text-[#38bdf8]",
+          },
+          {
+            tab: "small_business",
+            index: "04",
+            icon: Briefcase,
+            title: "Small Business & QSBS Tax Hub",
+            desc: "QSBS capital gains frameworks & founder equity term sheets.",
+            hexBg: "bg-[#00ff9d]/18 text-[#00ff9d]",
+            ringStroke: "#00ff9d",
+            hoverBorder: "hover:border-[#00ff9d]/80",
+            hoverTitle: "group-hover:text-[#00ff9d]",
+            chevronColor: "text-[#00ff9d]",
+          },
+          {
+            tab: "youtube",
+            index: "05",
+            icon: Radio,
+            title: "Free Game Educational Videos",
+            desc: "Curated YouTube breakdown videos & quantitative playbooks.",
+            hexBg: "bg-[#00f5d4]/18 text-[#00f5d4]",
+            ringStroke: "#00f5d4",
+            hoverBorder: "hover:border-[#00f5d4]/80",
+            hoverTitle: "group-hover:text-[#00f5d4]",
+            chevronColor: "text-[#00f5d4]",
+          },
+        ],
+      },
+    };
+
+  const currentSector = activeSheet ? sectorConfigs[activeSheet] : null;
 
   return (
     <>
-      {/* 5-7 Core Streamlined Floating Bottom Navigation Bar */}
+      {/* ALIEN STARSHIP HOLOGRAPHIC COMMAND DOCK */}
       <nav
         aria-label="Mobile Bottom Navigation"
         className={
           demoted
-            ? "fixed bottom-2 left-1/2 -translate-x-1/2 z-20 w-[96%] max-w-xl font-mono select-none md:hidden opacity-90 hover:opacity-100 transition-all overflow-hidden"
-            : "fixed bottom-2 left-1/2 -translate-x-1/2 z-40 w-[96%] max-w-xl font-mono select-none overflow-hidden"
+            ? "fixed bottom-3 left-1/2 -translate-x-1/2 z-[60] w-[96%] max-w-[640px] font-mono select-none md:hidden opacity-95 hover:opacity-100 transition-opacity"
+            : "fixed bottom-3 left-1/2 -translate-x-1/2 z-[60] w-[96%] max-w-[640px] font-mono select-none"
         }
       >
-        <div className="obsidian-magma-dock alien-block-cut p-1 sm:p-1.5 grid grid-cols-7 gap-0.5 sm:gap-1 relative overflow-hidden">
-          {/* Volcanic Magma WebGL Shader: continuous domain-warped molten flow rolling beneath translucent pads */}
-          {magmaMode !== "off" && (
-            <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-              <VolcanicMagmaShader
-                speed={magmaMode === "surge" ? 0.28 : magmaMode === "slow" ? 0.10 : 0.18}
-                viscosity={2.6}
-                crustThreshold={0.52}
-                heatIntensity={2.5}
-              />
-              {/* Crystalline dark matter refractive prism gradient */}
-              <div 
-                className="absolute inset-0 pointer-events-none z-[1]"
-                style={{
-                  background: "radial-gradient(130% 120% at 50% 110%, rgba(6, 4, 12, 0.18) 0%, rgba(2, 1, 6, 0.58) 100%)",
-                }}
-              />
-            </div>
-          )}
-
-          {/* Corner Ticks & Quantum Laser Marks */}
-          <div className="hud-corner-tl z-10" />
-          <div className="hud-corner-tr z-10" />
-          <div className="hud-corner-bl z-10" />
-          <div className="hud-corner-br z-10" />
-
-          {/* TAB 0: THE BLOC (PRIMARY CALL TO ACTION) */}
-          <button
-            onClick={() => handleNavigate("bloc")}
-            className={`min-h-[48px] py-1 px-0.5 sm:py-1.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
-              isBlocActive
-                ? "dark-matter-pad-active pad-intel text-cyan-100 font-black"
-                : "text-cyan-200 hover:text-white"
-            }`}
-          >
-            <div className="magma-conduit-glow" />
-            <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
-              style={{
-                background: isBlocActive 
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(34, 211, 238, 0.45) 0%, transparent 80%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(6, 182, 212, 0.25) 0%, transparent 65%)"
-              }}
+        <div className="xeno-dock-wrap relative">
+          <div className="xeno-dock-console border border-[#00f5d4]/40 px-2 py-1.5 grid grid-cols-7 gap-1 relative overflow-hidden">
+            {/* Animated Top Plasma Energy Conduit */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-x-5 top-0 h-[2px] xeno-conduit-rail pointer-events-none"
             />
-            <div className="relative z-10 flex items-center justify-center">
-              <Sparkles className={`w-4 h-4 shrink-0 transition-transform ${isBlocActive ? "text-cyan-200 drop-shadow-[0_0_10px_rgba(34,211,238,0.9)] scale-110" : "text-cyan-300 animate-pulse group-hover:scale-105"}`} />
-            </div>
-            <span className={`relative z-10 text-[7px] sm:text-[9.5px] font-black uppercase tracking-tight whitespace-nowrap leading-none ${isBlocActive ? "text-cyan-50 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" : "text-cyan-200"}`}>
-              THE BLOC
-            </span>
-          </button>
-
-          {/* TAB 1: YOUTUBE & INTEL FEED */}
-          <button
-            onClick={() => handleNavigate("news")}
-            className={`min-h-[48px] py-1 px-0.5 sm:py-1.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
-              isIntelActive
-                ? "dark-matter-pad-active pad-intel text-cyan-200 font-black"
-                : "text-cyan-300/85 hover:text-white"
-            }`}
-          >
-            {/* Flowing Internal Blue Plasma Conduit */}
-            <div className="magma-conduit-glow" />
-            {/* Gravitational Singularity Lens Flare */}
-            <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
-              style={{
-                background: isIntelActive 
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(34, 211, 238, 0.40) 0%, transparent 80%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(6, 182, 212, 0.18) 0%, transparent 65%)"
-              }}
+            {/* Subtle Hex Micro-Grid */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 xeno-hex-grid opacity-45 pointer-events-none"
             />
-            <div className="relative z-10 flex items-center justify-center">
-              <Globe className={`w-4 h-4 shrink-0 transition-transform ${isIntelActive ? "text-cyan-300 drop-shadow-[0_0_10px_rgba(34,211,238,0.9)] scale-110" : "text-cyan-400 group-hover:scale-105"}`} />
-            </div>
-            <span className={`relative z-10 text-[8px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${isIntelActive ? "text-cyan-100 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" : "text-cyan-300/90"}`}>
-              INTEL
-            </span>
-          </button>
-
-          {/* TAB 2: MARKETS */}
-          <button
-            onClick={() => handleOpenSheet("markets")}
-            className={`min-h-[48px] py-1 px-0.5 sm:py-1.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
-              isMarketsActive || activeSheet === "markets"
-                ? "dark-matter-pad-active pad-markets text-cyan-200 font-black"
-                : "text-cyan-300/85 hover:text-white"
-            }`}
-          >
-            <div className="magma-conduit-glow" />
-            <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
-              style={{
-                background: (isMarketsActive || activeSheet === "markets")
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(6, 182, 212, 0.42) 0%, transparent 80%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(6, 182, 212, 0.18) 0%, transparent 65%)"
-              }}
+            {/* Bottom Violet-Cyan Laser Trim */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-x-8 bottom-0 h-[1px] bg-gradient-to-r from-transparent via-[#a855f7]/70 to-transparent pointer-events-none"
             />
-            <TrendingUp className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${(isMarketsActive || activeSheet === "markets") ? "text-cyan-300 drop-shadow-[0_0_10px_rgba(6,182,212,0.9)] scale-110" : "text-cyan-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[8px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isMarketsActive || activeSheet === "markets") ? "text-cyan-100 drop-shadow-[0_0_8px_rgba(6,182,212,0.8)]" : "text-cyan-300/90"}`}>
-              MARKETS
-            </span>
-          </button>
 
-          {/* TAB 3: AI */}
-          <button
-            onClick={() => handleOpenSheet("ai")}
-            className={`min-h-[48px] py-1 px-0.5 sm:py-1.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
-              isAiActive || activeSheet === "ai"
-                ? "dark-matter-pad-active pad-ai text-purple-200 font-black"
-                : "text-purple-300/85 hover:text-white"
-            }`}
-          >
-            <div className="magma-conduit-glow" />
-            <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
-              style={{
-                background: (isAiActive || activeSheet === "ai")
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(168, 85, 247, 0.40) 0%, transparent 80%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(59, 130, 246, 0.18) 0%, transparent 65%)"
-              }}
-            />
-            <Cpu className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${(isAiActive || activeSheet === "ai") ? "text-purple-300 drop-shadow-[0_0_10px_rgba(168,85,247,0.9)] scale-110" : "text-purple-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[8px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isAiActive || activeSheet === "ai") ? "text-purple-100 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" : "text-purple-300/90"}`}>
-              AI
-            </span>
-          </button>
+            {dockItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={item.onClick}
+                  aria-pressed={item.isActive}
+                  className={`dock-item-spring xeno-clip-sm relative min-h-[52px] py-1.5 px-1 flex flex-col items-center justify-center gap-1 cursor-pointer w-full min-w-0 border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f5d4] overflow-hidden ${
+                    item.isActive
+                      ? `${item.activeBorder} bg-[#061c33]/90`
+                      : "border-transparent text-slate-300 hover:text-white hover:bg-[#00f5d4]/10 hover:border-[#00f5d4]/30"
+                  }`}
+                >
+                  {/* Holographic Vertical Projection Pillar on Active Tab */}
+                  {item.isActive && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-0 pointer-events-none"
+                      style={{ background: item.beamGradient }}
+                    />
+                  )}
 
-          {/* TAB 4: REAL ESTATE */}
-          <button
-            onClick={() => handleNavigate("real_estate")}
-            className={`min-h-[48px] py-1 px-0.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
-              isRealEstateActive
-                ? "dark-matter-pad-active pad-realestate text-amber-200 font-black"
-                : "text-amber-300/85 hover:text-white"
-            }`}
-          >
-            <div className="magma-conduit-glow" />
-            <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
-              style={{
-                background: isRealEstateActive 
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(245, 158, 11, 0.38) 0%, transparent 80%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(6, 182, 212, 0.18) 0%, transparent 65%)"
-              }}
-            />
-            <Building2 className={`relative z-10 w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 transition-transform ${isRealEstateActive ? "text-amber-300 drop-shadow-[0_0_10px_rgba(245,158,11,0.9)] scale-110" : "text-amber-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[7px] sm:text-[9px] font-black uppercase tracking-tight text-center leading-[1.05] flex flex-col items-center ${isRealEstateActive ? "text-amber-100 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]" : "text-amber-300/90"}`}>
-              <span>REAL</span>
-              <span>ESTATE</span>
-            </span>
-          </button>
+                  {/* Precision Corner Targeting Notches on Active Module */}
+                  {item.isActive && (
+                    <svg
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full pointer-events-none"
+                      viewBox="0 0 80 54"
+                      preserveAspectRatio="none"
+                    >
+                      <path
+                        d="M 3 14 L 3 4 L 14 4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        className={item.accentColor}
+                      />
+                      <path
+                        d="M 66 50 L 77 50 L 77 40"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        className={item.accentColor}
+                      />
+                    </svg>
+                  )}
 
-          {/* TAB 5: CREDIT */}
-          <button
-            onClick={() => handleNavigate("credit")}
-            className={`min-h-[48px] py-1 px-0.5 sm:py-1.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
-              isCreditActive
-                ? "dark-matter-pad-active pad-credit text-emerald-200 font-black"
-                : "text-emerald-300/85 hover:text-white"
-            }`}
-          >
-            <div className="magma-conduit-glow" />
-            <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
-              style={{
-                background: isCreditActive 
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(16, 185, 129, 0.38) 0%, transparent 80%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(6, 182, 212, 0.18) 0%, transparent 65%)"
-              }}
-            />
-            <ShieldCheck className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${isCreditActive ? "text-emerald-300 drop-shadow-[0_0_10px_rgba(16,185,129,0.9)] scale-110" : "text-emerald-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[8px] sm:text-[11px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${isCreditActive ? "text-emerald-100 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "text-emerald-300/90"}`}>
-              CREDIT
-            </span>
-          </button>
+                  <Icon
+                    className={`relative z-10 w-4 h-4 sm:w-[18px] sm:h-[18px] shrink-0 transition-transform ${item.accentColor} ${
+                      item.isActive
+                        ? "drop-shadow-[0_0_8px_currentColor] scale-110"
+                        : ""
+                    }`}
+                  />
 
-          {/* TAB 6: EDUCATION */}
-          <button
-            onClick={() => handleOpenSheet("education")}
-            className={`min-h-[48px] py-1 px-0.5 sm:py-1.5 alien-block-cut-sm flex flex-col items-center justify-center gap-0.5 sm:gap-1 transition-all active:scale-95 cursor-pointer w-full min-w-0 focus-visible:outline-none dark-matter-pad group z-10 ${
-              isEducationActive || activeSheet === "education"
-                ? "dark-matter-pad-active pad-education text-blue-200 font-black"
-                : "text-blue-300/85 hover:text-white"
-            }`}
-          >
-            <div className="magma-conduit-glow" />
-            <div 
-              className="absolute inset-0 pointer-events-none rounded-[inherit] z-0 overflow-hidden transition-opacity"
-              style={{
-                background: (isEducationActive || activeSheet === "education")
-                  ? "radial-gradient(100% 100% at 50% 0%, rgba(59, 130, 246, 0.40) 0%, transparent 80%)"
-                  : "radial-gradient(100% 100% at 50% 100%, rgba(59, 130, 246, 0.18) 0%, transparent 65%)"
-              }}
-            />
-            <GraduationCap className={`relative z-10 w-4 h-4 sm:w-5 sm:h-5 shrink-0 transition-transform ${(isEducationActive || activeSheet === "education") ? "text-blue-300 drop-shadow-[0_0_10px_rgba(59,130,246,0.9)] scale-110" : "text-blue-400 group-hover:scale-105"}`} />
-            <span className={`relative z-10 text-[7.5px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wider whitespace-nowrap leading-none ${(isEducationActive || activeSheet === "education") ? "text-blue-100 drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]" : "text-blue-300/90"}`}>
-              EDUCATION
-            </span>
-          </button>
+                  {item.shortLines ? (
+                    <span className="relative z-10 font-tech text-[7px] sm:text-[8.5px] font-bold uppercase tracking-wider text-center leading-[1.05] flex flex-col items-center">
+                      <span>{item.shortLines[0]}</span>
+                      <span>{item.shortLines[1]}</span>
+                    </span>
+                  ) : (
+                    <span className="relative z-10 font-tech text-[7.5px] sm:text-[9px] font-bold uppercase tracking-wider whitespace-nowrap leading-none">
+                      {item.label}
+                    </span>
+                  )}
+
+                  {/* Active Plasma Base Laser Bar */}
+                  {item.isActive && (
+                    <span
+                      aria-hidden="true"
+                      className={`absolute bottom-0.5 w-6 h-[2px] ${item.barColor}`}
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </nav>
 
-      {/* MARKETS CATEGORY BOTTOM SHEET */}
-      {activeSheet === "markets" && (
-        <div 
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-200 p-2 sm:p-4 font-mono"
+      {/* MOVIE-GRADE ALIEN HOLOGRAPHIC SECTOR MATRIX MODAL */}
+      {currentSector && (
+        <div
+          className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-[#01040a]/86 backdrop-blur-lg animate-in fade-in duration-150 p-3 sm:p-4 font-mono"
           onClick={() => setActiveSheet(null)}
         >
           <div
-            className="w-full max-w-lg obsidian-magma-dock border-2 border-cyan-500/50 rounded-t-2xl alien-block-cut p-4 sm:p-6 shadow-2xl shadow-cyan-500/20 space-y-4 relative text-cyan-100 overflow-hidden"
+            className={`w-full max-w-2xl z-[75] mb-20 sm:mb-0 ${currentSector.glowShellClass}`}
             onClick={(e) => e.stopPropagation()}
           >
-            {magmaMode !== "off" && (
-              <div className="absolute inset-0 pointer-events-none z-0 opacity-60">
-                <VolcanicMagmaShader
-                  speed={0.12}
-                  viscosity={2.8}
-                  crustThreshold={0.58}
-                  heatIntensity={1.8}
-                />
+            <LiquidGlassSurface
+              accent={currentSector.accent}
+              variant="modal"
+              shape="chamfered-lg"
+              reticles={true}
+              scanBeam={true}
+              className="p-5 sm:p-6"
+            >
+              {/* Top Animated Plasma Conduit Rail */}
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-8 top-0 h-[2px] xeno-conduit-rail pointer-events-none"
+              />
+
+              {/* Holographic Matrix Header */}
+              <div className="flex items-center justify-between gap-3 border-b border-[#00f5d4]/25 pb-4 mb-5">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  {/* Rotating Alien Astrolabe Hex Emblem */}
+                  <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 48 48"
+                      className="absolute inset-0 w-full h-full xeno-spin-slow"
+                    >
+                      <circle
+                        cx="24"
+                        cy="24"
+                        r="22"
+                        fill="none"
+                        stroke={currentSector.headerRing}
+                        strokeWidth="1.2"
+                        strokeDasharray="10 6 4 6"
+                        strokeOpacity="0.8"
+                      />
+                    </svg>
+                    <div
+                      className={`w-9 h-9 xeno-hex-pod bg-[#06182c] flex items-center justify-center ${currentSector.headerColor}`}
+                    >
+                      <currentSector.headerIcon className="w-4 h-4 drop-shadow-[0_0_8px_currentColor]" />
+                    </div>
+                  </div>
+
+                  <div className="min-w-0">
+                    <h3
+                      className={`font-display text-sm sm:text-base font-black uppercase tracking-[0.14em] text-white ${
+                        currentSector.id === "ai"
+                          ? "xeno-neon-text-purple"
+                          : "xeno-neon-text"
+                      }`}
+                    >
+                      {currentSector.title}
+                    </h3>
+                    <p className="text-xs text-slate-300 font-sans mt-0.5 truncate">
+                      {currentSector.subtitle}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Angular Chamfered Close Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setActiveSheet(null)}
+                  aria-label={currentSector.closeLabel}
+                  className="xeno-cmd-btn w-10 h-10 flex items-center justify-center text-cyan-200 hover:text-white cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f5d4]"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-            )}
-            <div className="relative z-10 flex items-center justify-between border-b border-cyan-500/30 pb-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-cyan-400" />
-                <h3 className="text-base sm:text-lg font-black uppercase text-white tracking-wider">
-                  MARKETS CATEGORY
-                </h3>
+
+              {/* Alien Holographic Command Module Grid (Zero Generic Rounded Cards!) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-h-[62vh] overflow-y-auto pr-0.5 no-scrollbar">
+                {currentSector.items.map((card) => {
+                  const Icon = card.icon;
+                  const isCurrentTab = activeTab === card.tab;
+                  return (
+                    <button
+                      key={card.tab}
+                      type="button"
+                      onClick={() => handleNavigate(card.tab)}
+                      className={`xeno-clip-md relative p-4 bg-gradient-to-br from-[#061528]/92 via-[#040d1c]/95 to-[#061124]/95 hover:from-[#0a223f]/95 hover:to-[#081730]/95 border text-left transition-all duration-200 group flex items-start gap-3.5 cursor-pointer active:scale-[0.985] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f5d4] overflow-hidden ${
+                        isCurrentTab
+                          ? "border-[#00f5d4]/85 shadow-[inset_0_0_24px_rgba(0,245,212,0.16)]"
+                          : `border-[#00f5d4]/22 ${card.hoverBorder}`
+                      }`}
+                    >
+                      {/* Subtle Laser Diagonal Corner Accent */}
+                      <svg
+                        aria-hidden="true"
+                        className="absolute top-0 left-0 w-5 h-5 pointer-events-none opacity-75 group-hover:opacity-100 transition-opacity"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                      >
+                        <path
+                          d="M 1 15 L 1 13 L 13 1 L 19 1"
+                          stroke={card.ringStroke}
+                          strokeWidth="1.6"
+                        />
+                      </svg>
+                      <svg
+                        aria-hidden="true"
+                        className="absolute bottom-0 right-0 w-5 h-5 pointer-events-none opacity-65 group-hover:opacity-100 transition-opacity"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                      >
+                        <path
+                          d="M 19 5 L 19 7 L 7 19 L 1 19"
+                          stroke={card.ringStroke}
+                          strokeWidth="1.6"
+                        />
+                      </svg>
+
+                      {/* Hexagonal Holographic Emitter Pod with Orbiting Targeting Ring */}
+                      <div className="relative w-12 h-12 flex items-center justify-center shrink-0 mt-0.5">
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 48 48"
+                          className="absolute inset-0 w-full h-full opacity-55 group-hover:opacity-100 transition-opacity duration-300 group-hover:rotate-90"
+                        >
+                          <circle
+                            cx="24"
+                            cy="24"
+                            r="22"
+                            fill="none"
+                            stroke={card.ringStroke}
+                            strokeWidth="1.2"
+                            strokeDasharray="8 6"
+                          />
+                        </svg>
+                        <div
+                          className={`w-9 h-9 xeno-hex-pod flex items-center justify-center transition-transform duration-200 group-hover:scale-110 ${card.hexBg}`}
+                        >
+                          <Icon className="w-4 h-4 drop-shadow-[0_0_6px_currentColor]" />
+                        </div>
+                      </div>
+
+                      {/* Crisp High-Contrast Module Text */}
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono text-[10px] tracking-[0.18em] text-cyan-300/80 tabular-nums-strict">
+                            {card.index}
+                          </span>
+                          <ChevronRight
+                            className={`w-4 h-4 shrink-0 transition-transform duration-200 group-hover:translate-x-1 ${card.chevronColor}`}
+                          />
+                        </div>
+                        <h4
+                          className={`font-alien-hud font-bold text-xs sm:text-[13.5px] tracking-wide text-white transition-colors leading-snug ${card.hoverTitle}`}
+                        >
+                          {card.title}
+                        </h4>
+                        <p className="text-[11.5px] text-slate-300 font-sans leading-relaxed">
+                          {card.desc}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-              <button
-                onClick={() => setActiveSheet(null)}
-                className="p-1.5 dark-matter-pad rounded-lg text-cyan-400 hover:text-white cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                onClick={() => handleNavigate("watchlist")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-cyan-500/30 hover:border-cyan-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400 shrink-0 relative z-10">
-                  <TrendingUp className="w-5 h-5" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-cyan-300 flex items-center justify-between">
-                    Live Watchlist Workstation
-                    <ChevronRight className="w-4 h-4 text-cyan-400" />
-                  </h4>
-                  <p className="text-[11px] text-cyan-300/70 mt-0.5">
-                    Live stock quotes, heatmap visualizer & technical screeners.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleNavigate("intelligence")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-cyan-500/30 hover:border-cyan-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400 shrink-0 relative z-10">
-                  <Layers className="w-5 h-5" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-cyan-300 flex items-center justify-between">
-                    13F Hedge Fund Intel
-                    <ChevronRight className="w-4 h-4 text-cyan-400" />
-                  </h4>
-                  <p className="text-[11px] text-cyan-300/70 mt-0.5">
-                    Institutional SEC filings, whale portfolio tracking & Senate trades.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleNavigate("macro")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-cyan-500/30 hover:border-cyan-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400 shrink-0 relative z-10">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-cyan-300 flex items-center justify-between">
-                    Macro Economic Briefings
-                    <ChevronRight className="w-4 h-4 text-cyan-400" />
-                  </h4>
-                  <p className="text-[11px] text-cyan-300/70 mt-0.5">
-                    Fed rates, treasury yield curves & global liquidity trackers.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleNavigate("brand")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-cyan-500/30 hover:border-cyan-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-cyan-500/20 rounded-lg text-cyan-400 shrink-0 relative z-10">
-                  <Home className="w-5 h-5" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-cyan-300 flex items-center justify-between">
-                    Stock Bloc Brand Landing
-                    <ChevronRight className="w-4 h-4 text-cyan-400" />
-                  </h4>
-                  <p className="text-[11px] text-cyan-300/70 mt-0.5">
-                    Platform philosophy, architecture overview & core mission.
-                  </p>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* AI CATEGORY BOTTOM SHEET */}
-      {activeSheet === "ai" && (
-        <div 
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-200 p-2 sm:p-4 font-mono"
-          onClick={() => setActiveSheet(null)}
-        >
-          <div
-            className="w-full max-w-lg obsidian-magma-dock border-2 border-purple-500/50 rounded-t-2xl alien-block-cut p-4 sm:p-6 shadow-2xl shadow-purple-500/20 space-y-4 relative text-purple-100 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {magmaMode !== "off" && (
-              <div className="absolute inset-0 pointer-events-none z-0 opacity-60">
-                <VolcanicMagmaShader
-                  speed={0.12}
-                  viscosity={2.8}
-                  crustThreshold={0.58}
-                  heatIntensity={1.8}
-                />
-              </div>
-            )}
-            <div className="relative z-10 flex items-center justify-between border-b border-purple-500/30 pb-3">
-              <div className="flex items-center gap-2">
-                <Cpu className="w-5 h-5 text-purple-400" />
-                <h3 className="text-base sm:text-lg font-black uppercase text-white tracking-wider">
-                  AI & TECH CATEGORY
-                </h3>
-              </div>
-              <button
-                onClick={() => setActiveSheet(null)}
-                className="p-1.5 dark-matter-pad rounded-lg text-purple-400 hover:text-white cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                onClick={() => handleNavigate("ai_revolution")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-amber-500/40 hover:border-amber-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400 shrink-0 relative z-10">
-                  <BarChart3 className="w-5 h-5 text-amber-400" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-amber-300 flex items-center justify-between">
-                    AI Infra & MS Value Chain
-                    <ChevronRight className="w-4 h-4 text-amber-400" />
-                  </h4>
-                  <p className="text-[11px] text-amber-300/80 mt-0.5">
-                    Morgan Stanley Heatmap, Power Generation, Data Centers & Chips.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleNavigate("dyson_swarm")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/30 hover:border-purple-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0 relative z-10">
-                  <Orbit className="w-5 h-5" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-purple-300 flex items-center justify-between">
-                    Dyson Swarm & Compute
-                    <ChevronRight className="w-4 h-4 text-purple-400" />
-                  </h4>
-                  <p className="text-[11px] text-purple-300/70 mt-0.5">
-                    SpaceX orbital launches, space telemetry & energy Megawatt grids.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleNavigate("war_gov_ufo")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/30 hover:border-purple-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0 relative z-10">
-                  <ShieldAlert className="w-5 h-5 text-blue-400" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-purple-300 flex items-center justify-between">
-                    Defense Tech & Aerospace
-                    <ChevronRight className="w-4 h-4 text-purple-400" />
-                  </h4>
-                  <p className="text-[11px] text-purple-300/70 mt-0.5">
-                    Autonomous defense systems, government procurement & aerospace moats.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleNavigate("agents")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/30 hover:border-purple-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0 relative z-10">
-                  <Globe className="w-5 h-5 text-cyan-400" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-purple-300 flex items-center justify-between">
-                    AI Agent Directory
-                    <ChevronRight className="w-4 h-4 text-purple-400" />
-                  </h4>
-                  <p className="text-[11px] text-purple-300/70 mt-0.5">
-                    Discover independently created AI agents analyzing the market.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleNavigate("developers")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/30 hover:border-purple-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0 relative z-10">
-                  <Terminal className="w-5 h-5 text-cyan-400" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-purple-300 flex items-center justify-between">
-                    Developer Portal
-                    <ChevronRight className="w-4 h-4 text-purple-400" />
-                  </h4>
-                  <p className="text-[11px] text-purple-300/70 mt-0.5">
-                    Register external AI agents and provision API keys for the matrix.
-                  </p>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* EDUCATION CATEGORY BOTTOM SHEET */}
-      {activeSheet === "education" && (
-        <div 
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-200 p-2 sm:p-4 font-mono"
-          onClick={() => setActiveSheet(null)}
-        >
-          <div
-            className="w-full max-w-lg obsidian-magma-dock border-2 border-blue-500/50 rounded-t-2xl alien-block-cut p-4 sm:p-6 shadow-2xl shadow-blue-500/20 space-y-4 relative text-blue-100 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {magmaMode !== "off" && (
-              <div className="absolute inset-0 pointer-events-none z-0 opacity-60">
-                <VolcanicMagmaShader
-                  speed={0.12}
-                  viscosity={2.8}
-                  crustThreshold={0.58}
-                  heatIntensity={1.8}
-                />
-              </div>
-            )}
-            <div className="relative z-10 flex items-center justify-between border-b border-blue-500/30 pb-3">
-              <div className="flex items-center gap-2">
-                <GraduationCap className="w-5 h-5 text-blue-400" />
-                <h3 className="text-base sm:text-lg font-black uppercase text-white tracking-wider">
-                  EDUCATION CATEGORY
-                </h3>
-              </div>
-              <button
-                onClick={() => setActiveSheet(null)}
-                className="p-1.5 dark-matter-pad rounded-lg text-blue-400 hover:text-white cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <button
-                onClick={() => handleNavigate("mit_courses")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-purple-500/40 hover:border-purple-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400 shrink-0 relative z-10">
-                  <GraduationCap className="w-5 h-5 text-purple-400" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-purple-300 flex items-center justify-between">
-                    MIT & University Courses
-                    <ChevronRight className="w-4 h-4 text-purple-400" />
-                  </h4>
-                  <p className="text-[11px] text-purple-300/80 mt-0.5">
-                    Free official lectures & playlists from MIT OpenCourseWare, Yale, and Stanford.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleNavigate("terminal_guide")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-amber-500/40 hover:border-amber-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400 shrink-0 relative z-10">
-                  <Terminal className="w-5 h-5 animate-pulse" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-amber-300 flex items-center justify-between">
-                    Terminal Guide & Manual
-                    <ChevronRight className="w-4 h-4 text-amber-400" />
-                  </h4>
-                  <p className="text-[11px] text-amber-300/80 mt-0.5">
-                    How to use the Stock Bloc Terminal, command codes & cheat sheet.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleNavigate("investopedia")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-blue-500/30 hover:border-blue-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400 shrink-0 relative z-10">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-blue-300 flex items-center justify-between">
-                    Investopedia Free Trading Game
-                    <ChevronRight className="w-4 h-4 text-blue-400" />
-                  </h4>
-                  <p className="text-[11px] text-blue-300/70 mt-0.5">
-                    Zero-risk paper trading simulator with live market order books.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleNavigate("small_business")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-blue-500/30 hover:border-blue-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400 shrink-0 relative z-10">
-                  <Briefcase className="w-5 h-5" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-blue-300 flex items-center justify-between">
-                    Small Business & QSBS Tax Hub
-                    <ChevronRight className="w-4 h-4 text-blue-400" />
-                  </h4>
-                  <p className="text-[11px] text-blue-300/70 mt-0.5">
-                    100% tax-free QSBS capital gains frameworks & SAFE term sheets.
-                  </p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => handleNavigate("youtube")}
-                className="p-3.5 dark-matter-pad rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer active:scale-95 border border-blue-500/30 hover:border-blue-400 relative overflow-hidden"
-              >
-                <div className="magma-conduit-glow" />
-                <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400 shrink-0 relative z-10">
-                  <Radio className="w-5 h-5" />
-                </div>
-                <div className="relative z-10">
-                  <h4 className="font-bold text-sm text-white group-hover:text-blue-300 flex items-center justify-between">
-                    Free Game Educational Videos
-                    <ChevronRight className="w-4 h-4 text-blue-400" />
-                  </h4>
-                  <p className="text-[11px] text-blue-300/70 mt-0.5">
-                    Curated YouTube breakdown videos & quantitative playbooks.
-                  </p>
-                </div>
-              </button>
-            </div>
+            </LiquidGlassSurface>
           </div>
         </div>
       )}
     </>
   );
 };
-

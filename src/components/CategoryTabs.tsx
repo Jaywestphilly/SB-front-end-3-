@@ -77,51 +77,51 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
   };
 
   return (
-    <div className="w-full px-2 sm:px-4 pt-1.5 pb-1 space-y-2 font-mono">
-      {/* Category Scroll Tabs */}
-      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
-        {categories.map((cat) => {
-          const Icon = cat.icon;
-          const isActive = selectedCategory === cat.id;
-          return (
-            <button
-              key={cat.id}
-              onClick={() => {
-                triggerHaptic("selection");
-                onSelectCategory(cat.id);
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer ${
-                isActive
-                  ? "obsidian-pill-btn obsidian-pill-btn-active font-black"
-                  : "obsidian-pill-btn text-cyan-200/85 hover:text-white"
-              }`}
-            >
-              <Icon
-                className={`w-3.5 h-3.5 shrink-0 ${
-                  isActive ? "text-slate-950" : "text-cyan-400"
+    <div className="w-full px-2 sm:px-4 pt-2 pb-1 space-y-2.5 font-mono">
+      {/* Angular Chamfered Alien Sector Blades with Edge Fade Mask */}
+      <div className="relative scroll-fade-mask-x">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1.5 px-3 text-xs">
+          {categories.map((cat) => {
+            const Icon = cat.icon;
+            const isActive = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => {
+                  triggerHaptic("selection");
+                  onSelectCategory(cat.id);
+                }}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 font-bold transition-all whitespace-nowrap shrink-0 cursor-pointer ${
+                  isActive
+                    ? "xeno-cmd-btn xeno-cmd-btn-active font-black"
+                    : "xeno-cmd-btn text-slate-200 hover:text-white"
                 }`}
-              />
-              <span className="uppercase text-[11px] font-tech tracking-wider">
-                {cat.label}
-              </span>
-            </button>
-          );
-        })}
+              >
+                <Icon
+                  className={`w-3.5 h-3.5 shrink-0 ${
+                    isActive ? "text-slate-950" : "text-[#00f5d4]"
+                  }`}
+                />
+                <span className="uppercase text-[11px] font-alien-hud tracking-wider">
+                  {cat.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Compact List Title Context Bar */}
-      <div className="flex items-center justify-between pt-0.5 pb-1 border-b border-cyan-500/20">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <h2 className="text-base sm:text-lg font-black font-mono tracking-wider text-cyan-50 uppercase leading-tight flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+      {/* Clean Sector Context Header (Unboxed Tabular Asset Count) */}
+      <div className="flex items-center justify-between pt-0.5 pb-2 border-b border-[#00f5d4]/25">
+        <div className="flex items-baseline gap-3 flex-wrap">
+          <h2 className="text-base sm:text-lg font-black font-display tracking-[0.1em] text-[#f2faff] uppercase leading-tight xeno-neon-text">
             {getCategoryTitle()}
           </h2>
-          <span className="text-[10px] px-2 py-0.5 rounded-md bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 font-mono font-bold tabular-telemetry">
-            {itemCount} ASSETS
+          <span className="text-xs text-[#00f5d4] font-mono font-bold tabular-nums-strict">
+            · {itemCount} ASSETS
           </span>
         </div>
       </div>
     </div>
   );
 };
-

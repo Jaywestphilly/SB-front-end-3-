@@ -20,9 +20,8 @@ import {
   Globe,
   BarChart3,
   Users,
-  MessageSquare,
   ShoppingBag,
-  ExternalLink,
+  ChevronRight,
 } from "lucide-react";
 import { triggerHaptic } from "../utils/haptics";
 
@@ -48,28 +47,64 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   ];
 
   const aiMenu = [
-    { id: "ai_revolution", label: "AI Infrastructure & MS Heatmap", icon: BarChart3 },
+    {
+      id: "ai_revolution",
+      label: "AI Infrastructure & MS Heatmap",
+      icon: BarChart3,
+    },
     { id: "dyson_swarm", label: "Dyson Swarm Compute Hub", icon: Orbit },
-    { id: "war_gov_ufo", label: "Defense Tech, Gov & Aerospace", icon: ShieldAlert },
+    {
+      id: "war_gov_ufo",
+      label: "Defense Tech, Gov & Aerospace",
+      icon: ShieldAlert,
+    },
     { id: "ai_insights", label: "Autonomous Agent Insights", icon: Cpu },
   ];
 
   const educationMenu = [
-    { id: "youtube", label: "Stock Bloc YouTube Channel (@stockbloc)", icon: Youtube },
+    {
+      id: "youtube",
+      label: "Stock Bloc YouTube Channel (@stockbloc)",
+      icon: Youtube,
+    },
     { id: "terminal_guide", label: "Terminal Guide & Manual", icon: Terminal },
-    { id: "mit_courses", label: "MIT & University Quant Courses", icon: GraduationCap },
-    { id: "investopedia", label: "Investopedia Free Trading Sim", icon: Sparkles },
-    { id: "small_business", label: "Small Business & QSBS Tax Hub", icon: Briefcase },
+    {
+      id: "mit_courses",
+      label: "MIT & University Quant Courses",
+      icon: GraduationCap,
+    },
+    {
+      id: "investopedia",
+      label: "Investopedia Free Trading Sim",
+      icon: Sparkles,
+    },
+    {
+      id: "small_business",
+      label: "Small Business & QSBS Tax Hub",
+      icon: Briefcase,
+    },
   ];
 
   const developersMenu = [
     { id: "developers", label: "Developers (x402 Portal)", icon: Terminal },
     { id: "agents", label: "Agents (Directory)", icon: Globe },
-    { id: "developer_docs", label: "Docs (API & SDK Documentation)", icon: BookOpen },
+    {
+      id: "developer_docs",
+      label: "Docs (API & SDK Documentation)",
+      icon: BookOpen,
+    },
     { id: "agent_feed", label: "Live Agent Activity Stream", icon: Radio },
     { id: "agent_join", label: "Register an Agent Node", icon: Sparkles },
-    { id: "web3_dot_btc", label: "Web3 Alpha & Vaults (DOT / BTC)", icon: ShieldCheck },
-    { id: "compare", label: "Compare vs Tavily & Twelve Data", icon: BarChart3 },
+    {
+      id: "web3_dot_btc",
+      label: "Web3 Alpha & Vaults (DOT / BTC)",
+      icon: ShieldCheck,
+    },
+    {
+      id: "compare",
+      label: "Compare vs Tavily & Twelve Data",
+      icon: BarChart3,
+    },
   ];
 
   const renderDropdown = (
@@ -93,61 +128,78 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               onSelectTab(items[0].id as ViewTab);
             }
           }}
-          className={`px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none ${
+          className={`px-3 py-1.5 font-alien-hud text-[10.5px] tracking-wider flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f5d4] ${
             isActive
-              ? "obsidian-pill-btn obsidian-pill-btn-active font-bold"
+              ? "xeno-cmd-btn xeno-cmd-btn-active font-black"
               : isOpen
-                ? "obsidian-pill-btn text-white border-cyan-400/70"
-                : "obsidian-pill-btn text-cyan-200/90 hover:text-white"
+                ? "xeno-cmd-btn text-white border-[#00f5d4]/80"
+                : "xeno-cmd-btn text-cyan-100/90 hover:text-white"
           }`}
         >
           <IconHeader
             className={`w-3.5 h-3.5 shrink-0 ${
-              isActive ? "text-slate-950" : "text-cyan-400"
+              isActive ? "text-slate-950" : "text-[#00f5d4]"
             }`}
           />
           <span>{label}</span>
           <ChevronDown
             className={`w-3 h-3 transition-transform duration-200 ${
-              isOpen ? "rotate-180" : "opacity-70"
+              isOpen ? "rotate-180 text-[#00f5d4]" : "opacity-75"
             }`}
           />
         </button>
 
         {isOpen && (
-          <div className="absolute top-full left-0 pt-1.5 w-64 z-50 animate-in fade-in slide-in-from-top-1 duration-150">
-            <div className="obsidian-dropdown-glass rounded-xl p-1.5 overflow-hidden">
-              {items.map((item) => {
-                const Icon = item.icon;
-                const itemActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      triggerHaptic("selection");
-                      setActiveDropdown(null);
-                      onSelectTab(item.id as ViewTab);
-                    }}
-                    className={`w-full px-3 py-2 rounded-lg text-left font-alien-hud text-[10px] flex items-center justify-between gap-2 transition-all cursor-pointer ${
-                      itemActive
-                        ? "bg-cyan-400/20 text-cyan-200 border border-cyan-400/40 font-bold"
-                        : "text-slate-200 hover:bg-cyan-500/15 hover:text-white border border-transparent"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2 truncate">
-                      <Icon
-                        className={`w-3.5 h-3.5 shrink-0 ${
-                          itemActive ? "text-cyan-300" : "text-cyan-400/80"
+          <div className="absolute top-full left-0 pt-2 min-w-[320px] w-max max-w-[380px] z-[50] animate-in fade-in slide-in-from-top-1 duration-150">
+            <div className="xeno-glow-shell">
+              <div className="xeno-dropdown-tray p-2 overflow-hidden space-y-1 relative">
+                {/* Animated Top Plasma Conduit */}
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-x-4 top-0 h-[1.5px] xeno-conduit-rail pointer-events-none"
+                />
+                {items.map((item, idx) => {
+                  const Icon = item.icon;
+                  const itemActive = activeTab === item.id;
+                  const num = String(idx + 1).padStart(2, "0");
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        triggerHaptic("selection");
+                        setActiveDropdown(null);
+                        onSelectTab(item.id as ViewTab);
+                      }}
+                      className={`w-full px-3 py-2 xeno-clip-sm text-left font-mono text-[11.5px] flex items-center justify-between gap-3 transition-all cursor-pointer whitespace-nowrap group/item ${
+                        itemActive
+                          ? "bg-[#00f5d4]/18 text-[#00f5d4] border border-[#00f5d4]/55 font-bold"
+                          : "text-slate-200 hover:bg-[#00f5d4]/12 hover:text-white border border-transparent hover:border-[#00f5d4]/30"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <span className="text-[9.5px] text-cyan-400/75 tabular-nums-strict">
+                          {num}
+                        </span>
+                        <span className="w-6 h-6 xeno-hex-pod bg-[#071b30] flex items-center justify-center shrink-0">
+                          <Icon
+                            className={`w-3 h-3 ${
+                              itemActive ? "text-[#00f5d4]" : "text-cyan-300"
+                            }`}
+                          />
+                        </span>
+                        <span className="font-sans font-semibold text-xs">
+                          {item.label}
+                        </span>
+                      </span>
+                      <ChevronRight
+                        className={`w-3.5 h-3.5 shrink-0 transition-transform group-hover/item:translate-x-0.5 ${
+                          itemActive ? "text-[#00f5d4]" : "text-cyan-400/60"
                         }`}
                       />
-                      <span className="truncate">{item.label}</span>
-                    </span>
-                    {itemActive && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -155,7 +207,12 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     );
   };
 
-  const isMarketsActive = ["watchlist", "intelligence", "macro", "news"].includes(activeTab);
+  const isMarketsActive = [
+    "watchlist",
+    "intelligence",
+    "macro",
+    "news",
+  ].includes(activeTab);
   const isAiActive = [
     "dyson_swarm",
     "war_gov_ufo",
@@ -185,10 +242,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 
   return (
     <nav
-      className="hidden md:flex items-center justify-center px-4 py-2 obsidian-glass-nav overflow-visible font-martian text-xs select-none relative z-20"
+      className="hidden md:flex items-center justify-center px-3 py-2 liquid-glass-header border-t-0 overflow-visible font-martian text-xs select-none relative z-[30]"
       aria-label="Desktop Top Navigation"
     >
-      <div className="max-w-[1800px] w-full flex items-center justify-center gap-2 flex-wrap">
+      <div className="max-w-[1800px] w-full flex items-center justify-center gap-1.5 flex-nowrap">
         {/* 0. THE BLOC - PRIMARY HIGHLIGHTED CALL TO ACTION */}
         <a
           href="/bloc"
@@ -197,31 +254,24 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             triggerHaptic("selection");
             onSelectTab("bloc");
           }}
-          className={`px-3.5 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none transition-all ${
+          className={`px-3 py-1.5 font-alien-hud text-[10.5px] tracking-wider flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none transition-all ${
             activeTab === "bloc"
-              ? "bg-cyan-400 text-slate-950 font-black shadow-[0_0_20px_rgba(6,182,212,0.6)] border border-cyan-200"
-              : "bg-gradient-to-r from-cyan-500/25 to-blue-500/25 hover:from-cyan-400/40 hover:to-blue-400/40 text-cyan-200 hover:text-white border border-cyan-400/70 shadow-[0_0_12px_rgba(6,182,212,0.3)] font-black"
+              ? "xeno-cmd-btn xeno-cmd-btn-active font-black"
+              : "xeno-cmd-btn text-[#00f5d4] hover:text-white border-[#00f5d4]/60 font-bold"
           }`}
           title="The Bloc Membership - Weekly Filings, 13F & Alpha"
         >
           <Sparkles
             className={`w-3.5 h-3.5 shrink-0 ${
-              activeTab === "bloc" ? "text-slate-950" : "text-cyan-300 animate-pulse"
+              activeTab === "bloc" ? "text-slate-950" : "text-[#00f5d4]"
             }`}
           />
           <span>THE BLOC</span>
-          <span
-            className={`text-[9px] px-1 py-0.5 rounded font-black uppercase tracking-wider ${
-              activeTab === "bloc" ? "bg-slate-950 text-cyan-300" : "bg-cyan-400 text-slate-950"
-            }`}
-          >
-            JOIN
-          </span>
         </a>
 
         {/* 1. WATCHLIST & MARKETS */}
         {renderDropdown(
-          "MARKETS & WATCHLIST",
+          "MARKETS",
           "markets",
           TrendingUp,
           marketsMenu,
@@ -246,10 +296,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             triggerHaptic("selection");
             onSelectTab("real_estate");
           }}
-          className={`px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none ${
+          className={`px-3 py-1.5 font-alien-hud text-[10.5px] tracking-wider flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none transition-all ${
             activeTab === "real_estate"
-              ? "bg-amber-400 text-slate-950 font-bold shadow-[0_0_18px_rgba(245,158,11,0.4)] border border-amber-200"
-              : "obsidian-pill-btn text-amber-200/90 hover:text-amber-100 border-amber-500/30"
+              ? "xeno-clip-sm bg-amber-400 text-slate-950 font-black shadow-[0_0_18px_rgba(245,158,11,0.5)] border border-amber-200"
+              : "xeno-cmd-btn text-amber-200 hover:text-amber-100 border-amber-500/35"
           }`}
         >
           <Building2
@@ -266,15 +316,15 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             triggerHaptic("selection");
             onSelectTab("credit");
           }}
-          className={`px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none ${
+          className={`px-3 py-1.5 font-alien-hud text-[10.5px] tracking-wider flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none transition-all ${
             activeTab === "credit"
-              ? "bg-emerald-400 text-slate-950 font-bold shadow-[0_0_18px_rgba(16,185,129,0.4)] border border-emerald-200"
-              : "obsidian-pill-btn text-emerald-200/90 hover:text-emerald-100 border-emerald-500/30"
+              ? "xeno-clip-sm bg-[#00ff9d] text-slate-950 font-black shadow-[0_0_18px_rgba(0,255,157,0.5)] border border-emerald-200"
+              : "xeno-cmd-btn text-emerald-200 hover:text-emerald-100 border-emerald-500/35"
           }`}
         >
           <ShieldCheck
             className={`w-3.5 h-3.5 shrink-0 ${
-              activeTab === "credit" ? "text-slate-950" : "text-emerald-400"
+              activeTab === "credit" ? "text-slate-950" : "text-[#00ff9d]"
             }`}
           />
           <span>CREDIT</span>
@@ -282,7 +332,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 
         {/* 6. EDUCATION & YOUTUBE */}
         {renderDropdown(
-          "EDUCATION & VIDEO",
+          "EDUCATION",
           "education",
           GraduationCap,
           educationMenu,
@@ -295,26 +345,19 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             triggerHaptic("selection");
             onSelectTab("community");
           }}
-          className={`px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none ${
+          className={`px-3 py-1.5 font-alien-hud text-[10.5px] tracking-wider flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none transition-all ${
             activeTab === "community"
-              ? "obsidian-pill-btn obsidian-pill-btn-active font-bold"
-              : "obsidian-pill-btn text-cyan-200/90 hover:text-white"
+              ? "xeno-cmd-btn xeno-cmd-btn-active font-black"
+              : "xeno-cmd-btn text-cyan-100/90 hover:text-white"
           }`}
           title="Community Alpha Theses, Profiles & Live Terminal Chat"
         >
           <Users
             className={`w-3.5 h-3.5 shrink-0 ${
-              activeTab === "community" ? "text-slate-950" : "text-cyan-400"
+              activeTab === "community" ? "text-slate-950" : "text-[#00f5d4]"
             }`}
           />
           <span>COMMUNITY</span>
-          <span
-            className={`w-1.5 h-1.5 rounded-full ${
-              activeTab === "community"
-                ? "bg-slate-950"
-                : "bg-emerald-400 animate-pulse"
-            }`}
-          />
         </button>
 
         {/* 8. BOOKS & STORE */}
@@ -323,18 +366,18 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             triggerHaptic("selection");
             onSelectTab("pricing");
           }}
-          className={`px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none ${
+          className={`px-3 py-1.5 font-alien-hud text-[10.5px] tracking-wider flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none transition-all ${
             activeTab === "pricing"
-              ? "bg-purple-400 text-slate-950 font-bold shadow-[0_0_18px_rgba(168,85,247,0.4)] border border-purple-200"
-              : "obsidian-pill-btn text-purple-200/90 hover:text-purple-100 border-purple-500/30"
+              ? "xeno-clip-sm bg-[#a855f7] text-white font-black shadow-[0_0_18px_rgba(168,85,247,0.55)] border border-purple-200"
+              : "xeno-cmd-btn text-purple-200 hover:text-purple-100 border-purple-500/40"
           }`}
         >
           <BookOpen
             className={`w-3.5 h-3.5 shrink-0 ${
-              activeTab === "pricing" ? "text-slate-950" : "text-purple-400"
+              activeTab === "pricing" ? "text-white" : "text-[#c084fc]"
             }`}
           />
-          <span>STORE & BOOKS</span>
+          <span>BOOKS</span>
         </button>
 
         {/* 9. SHOP (MERCH TEES) */}
@@ -343,10 +386,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => triggerHaptic("selection")}
-          className="px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none obsidian-pill-btn text-cyan-200/90 hover:text-white border-cyan-500/30 hover:border-cyan-400"
+          className="px-3 py-1.5 font-alien-hud text-[10.5px] tracking-wider flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none xeno-cmd-btn text-cyan-100/90 hover:text-white transition-all"
           title="Stock Bloc Merch Tees - Shopify Store"
         >
-          <ShoppingBag className="w-3.5 h-3.5 shrink-0 text-cyan-400" />
+          <ShoppingBag className="w-3.5 h-3.5 shrink-0 text-[#00f5d4]" />
           <span>SHOP</span>
         </a>
 
@@ -360,10 +403,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               onSelectTab("brand");
             }
           }}
-          className={`px-3 py-1.5 rounded-lg font-alien-hud text-[11px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap focus-visible:outline-none ${
+          className={`px-3 py-1.5 font-alien-hud text-[10.5px] tracking-wider flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none transition-all ${
             activeTab === "brand"
-              ? "obsidian-pill-btn obsidian-pill-btn-active font-bold"
-              : "obsidian-pill-btn text-cyan-200/90 hover:text-white"
+              ? "xeno-cmd-btn xeno-cmd-btn-active font-black"
+              : "xeno-cmd-btn text-cyan-100/90 hover:text-white"
           }`}
           title="About Stock Bloc, Mission Statement & Architecture"
         >
@@ -378,4 +421,3 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     </nav>
   );
 };
-

@@ -86,6 +86,7 @@ export const BloombergTerminalModal: React.FC<BloombergTerminalModalProps> = ({
   );
 
   const [viewMode, setViewMode] = useState<"single" | "quad">("single");
+  const [crtDepthMode, setCrtDepthMode] = useState(true);
   const [audioFeedback, setAudioFeedback] = useState(true);
   const [showHelp, setShowHelp] = useState(false);
   const [showAsciiModal, setShowAsciiModal] = useState(false);
@@ -299,9 +300,13 @@ export const BloombergTerminalModal: React.FC<BloombergTerminalModalProps> = ({
   }[terminalTheme];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-xl animate-fadeIn">
+    <div className="fixed inset-0 z-[85] flex items-center justify-center p-2 sm:p-4 bg-[#02050a]/88 backdrop-blur-xl animate-fadeIn">
       {/* TERMINAL CONTAINER */}
-      <div className={`w-full max-w-6xl max-h-[92vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden font-mono text-xs transition-colors ${themeClasses.container}`}>
+      <div
+        className={`w-full max-w-6xl max-h-[92vh] flex flex-col rounded-2xl border shadow-2xl overflow-hidden font-mono text-xs transition-all ${themeClasses.container} ${
+          crtDepthMode ? "crt-spatial-bezel" : ""
+        }`}
+      >
         {/* TERMINAL HEADER & TICKER TAPE */}
         <div className={`p-3 border-b flex flex-col gap-2 ${themeClasses.header}`}>
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -367,6 +372,23 @@ export const BloombergTerminalModal: React.FC<BloombergTerminalModalProps> = ({
                   CYAN
                 </button>
               </div>
+
+              {/* Curved-Glass CRT Spatial Depth Toggle */}
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic("selection");
+                  setCrtDepthMode((prev) => !prev);
+                }}
+                className={`px-2 py-1 rounded-lg border text-[10px] font-mono font-bold transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00f5d4] ${
+                  crtDepthMode
+                    ? "bg-[#00f5d4]/15 text-[#00f5d4] border-[#00f5d4]/50 shadow-[0_0_12px_rgba(0,245,212,0.2)]"
+                    : "bg-black/50 text-slate-400 border-white/15 hover:text-white"
+                }`}
+                title="Toggle Curved-Glass CRT Spatial Bezel"
+              >
+                CRT {crtDepthMode ? "ON" : "OFF"}
+              </button>
 
               {/* ASCII Snapshot Report Button */}
               <button
@@ -496,7 +518,7 @@ export const BloombergTerminalModal: React.FC<BloombergTerminalModalProps> = ({
                 value={commandInput}
                 onChange={(e) => setCommandInput(e.target.value)}
                 placeholder="Type symbol + command (e.g. NVDA DES, BIZCRED, WHOAMI, ABOUT)"
-                className={`w-full font-mono text-xs px-3 py-2 rounded-lg border focus:outline-none uppercase ${themeClasses.input}`}
+                className={`w-full font-mono text-xs px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#00f5d4]/50 uppercase ${themeClasses.input}`}
               />
             </div>
             <button

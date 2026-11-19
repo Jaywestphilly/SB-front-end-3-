@@ -36,6 +36,7 @@ import {
   Pie,
 } from "recharts";
 import { triggerHaptic } from "../../utils/haptics";
+import { LiquidGlassSurface } from "../../components/ui/LiquidGlassSurface";
 
 export interface CompanyEntry {
   company: string;
@@ -463,51 +464,67 @@ export const AiValueChainHeatmap: React.FC = () => {
           Comprehensive quantitative directory and architectural stack mapping power utilities, nuclear co-location, semiconductor foundries, EUV lithography, server ODMs, liquid cooling, and hyperscale compute operators.
         </p>
 
-        {/* TOP LEVEL METRICS */}
+        {/* TOP LEVEL CHOKEPOINT METRICS — 3D Interactive Telemetry Tiles */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-5 mt-4 border-t border-cyan-500/20">
-          <div className="p-3 rounded-2xl bg-black/50 border border-cyan-500/20 flex flex-col">
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
-              #1 Constraint
-            </span>
-            <span className="text-sm font-black text-amber-300 flex items-center gap-1 mt-0.5">
-              <Zap className="w-4 h-4 text-amber-400" />
-              Power & Grid Cap
-            </span>
-            <span className="text-[10px] text-neutral-400 mt-1">Nuclear & On-site Fuel Cells</span>
-          </div>
+          <LiquidGlassSurface accent="amber" interactive className="rounded-2xl p-3.5">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-mono text-slate-300 uppercase tracking-wider">
+                #1 Constraint
+              </span>
+              <span className="text-sm font-black text-amber-300 flex items-center gap-1.5 mt-1">
+                <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+                Power &amp; Grid Cap
+              </span>
+              <span className="text-[11px] text-slate-300 mt-1.5">
+                Nuclear &amp; On-site Fuel Cells
+              </span>
+            </div>
+          </LiquidGlassSurface>
 
-          <div className="p-3 rounded-2xl bg-black/50 border border-cyan-500/20 flex flex-col">
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
-              Dominant Foundry
-            </span>
-            <span className="text-sm font-black text-cyan-300 flex items-center gap-1 mt-0.5">
-              <Cpu className="w-4 h-4 text-cyan-400" />
-              TSMC (TSM)
-            </span>
-            <span className="text-[10px] text-neutral-400 mt-1">Monopolizes CoWoS Packaging</span>
-          </div>
+          <LiquidGlassSurface accent="cyan" interactive className="rounded-2xl p-3.5">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-mono text-slate-300 uppercase tracking-wider">
+                Dominant Foundry
+              </span>
+              <span className="text-sm font-black text-[#00f5d4] flex items-center gap-1.5 mt-1">
+                <Cpu className="w-4 h-4 text-[#00f5d4] shrink-0" />
+                TSMC (TSM)
+              </span>
+              <span className="text-[11px] text-slate-300 mt-1.5">
+                Monopolizes CoWoS Packaging
+              </span>
+            </div>
+          </LiquidGlassSurface>
 
-          <div className="p-3 rounded-2xl bg-black/50 border border-cyan-500/20 flex flex-col">
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
-              Thermal Shift
-            </span>
-            <span className="text-sm font-black text-emerald-300 flex items-center gap-1 mt-0.5">
-              <Flame className="w-4 h-4 text-emerald-400" />
-              Direct Liquid Cooling
-            </span>
-            <span className="text-[10px] text-neutral-400 mt-1">Vertiv, AVC, Schneider</span>
-          </div>
+          <LiquidGlassSurface accent="emerald" interactive className="rounded-2xl p-3.5">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-mono text-slate-300 uppercase tracking-wider">
+                Thermal Shift
+              </span>
+              <span className="text-sm font-black text-[#00ff9d] flex items-center gap-1.5 mt-1">
+                <Flame className="w-4 h-4 text-[#00ff9d] shrink-0" />
+                Direct Liquid Cooling
+              </span>
+              <span className="text-[11px] text-slate-300 mt-1.5">
+                Vertiv, AVC, Schneider
+              </span>
+            </div>
+          </LiquidGlassSurface>
 
-          <div className="p-3 rounded-2xl bg-black/50 border border-cyan-500/20 flex flex-col">
-            <span className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">
-              Monopoly CapEx
-            </span>
-            <span className="text-sm font-black text-purple-300 flex items-center gap-1 mt-0.5">
-              <Building2 className="w-4 h-4 text-purple-400" />
-              Hyperscale Cloud
-            </span>
-            <span className="text-[10px] text-neutral-400 mt-1">AMZN, MSFT, GOOGL, META</span>
-          </div>
+          <LiquidGlassSurface accent="purple" interactive className="rounded-2xl p-3.5">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-mono text-slate-300 uppercase tracking-wider">
+                Monopoly CapEx
+              </span>
+              <span className="text-sm font-black text-purple-300 flex items-center gap-1.5 mt-1">
+                <Building2 className="w-4 h-4 text-purple-400 shrink-0" />
+                Hyperscale Cloud
+              </span>
+              <span className="text-[11px] text-slate-300 mt-1.5">
+                AMZN, MSFT, GOOGL, META
+              </span>
+            </div>
+          </LiquidGlassSurface>
         </div>
       </div>
 
@@ -674,7 +691,7 @@ export const AiValueChainHeatmap: React.FC = () => {
       {viewMode === "tree" && (
         <div className="space-y-6">
           {/* SECTION 1: POWER & UTILITY FOUNDATION */}
-          <div className="p-5 rounded-2xl bg-[#030b14] border border-amber-500/30 shadow-xl space-y-3">
+          <div className="liquid-glass-slab p-5 rounded-2xl border border-amber-500/35 shadow-xl space-y-3">
             <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/40">
@@ -773,7 +790,7 @@ export const AiValueChainHeatmap: React.FC = () => {
           </div>
 
           {/* SECTION 2: SEMICONDUCTOR MANUFACTURING & FABRICATION */}
-          <div className="p-5 rounded-2xl bg-[#020b12] border border-cyan-500/30 shadow-xl space-y-3">
+          <div className="liquid-glass-slab p-5 rounded-2xl border border-cyan-500/35 shadow-xl space-y-3">
             <div className="flex items-center justify-between border-b border-cyan-500/20 pb-2">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">
@@ -872,7 +889,7 @@ export const AiValueChainHeatmap: React.FC = () => {
           </div>
 
           {/* SECTION 3: SERVER BRANDS, LIQUID COOLING & NETWORKING */}
-          <div className="p-5 rounded-2xl bg-[#090314] border border-purple-500/30 shadow-xl space-y-3">
+          <div className="liquid-glass-slab p-5 rounded-2xl border border-purple-500/35 shadow-xl space-y-3">
             <div className="flex items-center justify-between border-b border-purple-500/20 pb-2">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/40">

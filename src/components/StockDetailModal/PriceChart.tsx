@@ -1276,162 +1276,205 @@ export const PriceChart = (props: StockDetailSubProps) => {
                       );
                     })}
 
-                    {/* Live Current Price Scale Badge */}
-                    {activeStock && (
-                      <g
-                        transform={`translate(${plotWidth + 2}, ${plotBottom - ((activeStock.price - minVal) / valRange) * plotHeight - 9})`}
-                      >
-                        <rect
-                          x="0"
-                          y="0"
-                          width="58"
-                          height="18"
-                          rx="4"
-                          fill={isPositive ? "#00c805" : "#ff3b30"}
-                          className="shadow-md"
-                        />
-                        <text
-                          x="29"
-                          y="12"
-                          textAnchor="middle"
-                          fill="#ffffff"
-                          fontSize="10"
-                          fontFamily="monospace"
-                          fontWeight="bold"
-                        >
-                          ${activeStock.price.toFixed(2)}
-                        </text>
-                      </g>
-                    )}
+                    {/* Live Current Price Scale Badge & Collision-Free Hover Price Badge */}
+                    {(() => {
+                      const MIN_BADGE_SEPARATION = 22;
+                      const clampY = (y: number, h: number) =>
+                        Math.max(4, Math.min(plotBottom - h - 2, y));
 
-                    {/* DYNAMIC CROSSHAIR & AXIS MAGNET BADGES */}
-                    {hoverIndex !== null && activeCandle && (
-                      <g className="pointer-events-none">
-                        {/* Thin Vertical Crosshair Line */}
-                        <line
-                          x1={
-                            (hoverIndex /
-                              Math.max(1, candleOHLCData.length - 1)) *
-                            plotWidth
-                          }
-                          y1="0"
-                          x2={
-                            (hoverIndex /
-                              Math.max(1, candleOHLCData.length - 1)) *
-                            plotWidth
-                          }
-                          y2={plotBottom}
-                          stroke="rgba(255, 255, 255, 0.4)"
-                          strokeWidth="1"
-                          strokeDasharray="2 2"
-                        />
-                        {/* Horizontal Crosshair Line (in candle mode) */}
-                        {chartMode === "candle" && (
-                          <line
-                            x1="0"
-                            y1={
+                      const liveBadgeY = activeStock
+                        ? clampY(
+                            plotBottom -
+                              ((activeStock.price - minVal) / valRange) *
+                                plotHeight -
+                              9,
+                            18,
+                          )
+                        : 0;
+
+                      let hoverBadgeY =
+                        hoverIndex !== null && activeCandle
+                          ? clampY(
                               plotBottom -
-                              ((activeCandle.close - minVal) / valRange) *
-                                plotHeight
-                            }
-                            x2={plotWidth}
-                            y2={
-                              plotBottom -
-                              ((activeCandle.close - minVal) / valRange) *
-                                plotHeight
-                            }
-                            stroke="#38bdf8"
-                            strokeWidth="1"
-                            strokeDasharray="3 3"
-                          />
-                        )}
+                                ((activeCandle.close - minVal) / valRange) *
+                                  plotHeight -
+                                10,
+                              20,
+                            )
+                          : 0;
 
-                        {/* Glowing cursor dot on line in Line Mode */}
-                        {chartMode === "line" && (
-                          <g>
-                            <circle
-                              cx={
-                                (hoverIndex /
-                                  Math.max(1, candleOHLCData.length - 1)) *
-                                plotWidth
-                              }
-                              cy={
-                                plotBottom -
-                                ((activeCandle.close - minVal) / valRange) *
-                                  plotHeight
-                              }
-                              r="4"
-                              fill={isPositive ? "#10b981" : "#ef4444"}
-                              stroke="#ffffff"
-                              strokeWidth="2"
-                            />
-                            <circle
-                              cx={
-                                (hoverIndex /
-                                  Math.max(1, candleOHLCData.length - 1)) *
-                                plotWidth
-                              }
-                              cy={
-                                plotBottom -
-                                ((activeCandle.close - minVal) / valRange) *
-                                  plotHeight
-                              }
-                              r="8"
-                              fill={isPositive ? "#10b981" : "#ef4444"}
-                              opacity="0.35"
-                              className="animate-ping"
-                            />
-                            <circle
-                              cx={
-                                (hoverIndex /
-                                  Math.max(1, candleOHLCData.length - 1)) *
-                                plotWidth
-                              }
-                              cy={
-                                plotBottom -
-                                ((activeCandle.close - minVal) / valRange) *
-                                  plotHeight
-                              }
-                              r="10"
-                              fill={isPositive ? "#10b981" : "#ef4444"}
-                              opacity="0.25"
-                              filter="url(#softLineGlow)"
-                            />
-                          </g>
-                        )}
+                      if (
+                        activeStock &&
+                        hoverIndex !== null &&
+                        activeCandle &&
+                        Math.abs(hoverBadgeY - liveBadgeY) <
+                          MIN_BADGE_SEPARATION
+                      ) {
+                        const preferBelow = hoverBadgeY >= liveBadgeY;
+                        let candidate = preferBelow
+                          ? liveBadgeY + MIN_BADGE_SEPARATION
+                          : liveBadgeY - MIN_BADGE_SEPARATION;
+                        if (candidate < 4 || candidate > plotBottom - 22) {
+                          candidate = preferBelow
+                            ? liveBadgeY - MIN_BADGE_SEPARATION
+                            : liveBadgeY + MIN_BADGE_SEPARATION;
+                        }
+                        hoverBadgeY = clampY(candidate, 20);
+                      }
 
-                        {/* Right Y-Axis Hover Price Badge */}
-                        <g
-                          transform={`translate(${plotWidth + 2}, ${plotBottom - ((activeCandle.close - minVal) / valRange) * plotHeight - 10})`}
-                        >
-                          <rect
-                            x="0"
-                            y="0"
-                            width="58"
-                            height="20"
-                            rx="4"
-                            fill="#0f172a"
-                            stroke={
-                              chartMode === "line"
-                                ? isPositive
-                                  ? "#00c805"
-                                  : "#ff3b30"
-                                : "#38bdf8"
-                            }
-                            strokeWidth="1.5"
-                          />
-                          <text
-                            x="29"
-                            y="13"
-                            textAnchor="middle"
-                            fill="#ffffff"
-                            fontSize="10"
-                            fontFamily="monospace"
-                            fontWeight="bold"
-                          >
-                            ${activeCandle.close.toFixed(2)}
-                          </text>
-                        </g>
+                      return (
+                        <>
+                          {activeStock && (
+                            <g transform={`translate(${plotWidth + 2}, ${liveBadgeY})`}>
+                              <rect
+                                x="0"
+                                y="0"
+                                width="58"
+                                height="18"
+                                rx="4"
+                                fill={isPositive ? "#00c805" : "#ff3b30"}
+                                className="shadow-md"
+                              />
+                              <text
+                                x="29"
+                                y="12"
+                                textAnchor="middle"
+                                fill="#ffffff"
+                                fontSize="10"
+                                fontFamily="monospace"
+                                fontWeight="bold"
+                              >
+                                ${activeStock.price.toFixed(2)}
+                              </text>
+                            </g>
+                          )}
+
+                          {/* DYNAMIC CROSSHAIR & AXIS MAGNET BADGES */}
+                          {hoverIndex !== null && activeCandle && (
+                            <g className="pointer-events-none">
+                              {/* Thin Vertical Crosshair Line */}
+                              <line
+                                x1={
+                                  (hoverIndex /
+                                    Math.max(1, candleOHLCData.length - 1)) *
+                                  plotWidth
+                                }
+                                y1="0"
+                                x2={
+                                  (hoverIndex /
+                                    Math.max(1, candleOHLCData.length - 1)) *
+                                  plotWidth
+                                }
+                                y2={plotBottom}
+                                stroke="rgba(255, 255, 255, 0.4)"
+                                strokeWidth="1"
+                                strokeDasharray="2 2"
+                              />
+                              {/* Horizontal Crosshair Line (in candle mode) */}
+                              {chartMode === "candle" && (
+                                <line
+                                  x1="0"
+                                  y1={
+                                    plotBottom -
+                                    ((activeCandle.close - minVal) / valRange) *
+                                      plotHeight
+                                  }
+                                  x2={plotWidth}
+                                  y2={
+                                    plotBottom -
+                                    ((activeCandle.close - minVal) / valRange) *
+                                      plotHeight
+                                  }
+                                  stroke="#38bdf8"
+                                  strokeWidth="1"
+                                  strokeDasharray="3 3"
+                                />
+                              )}
+
+                              {/* Glowing cursor dot on line in Line Mode */}
+                              {chartMode === "line" && (
+                                <g>
+                                  <circle
+                                    cx={
+                                      (hoverIndex /
+                                        Math.max(1, candleOHLCData.length - 1)) *
+                                      plotWidth
+                                    }
+                                    cy={
+                                      plotBottom -
+                                      ((activeCandle.close - minVal) / valRange) *
+                                        plotHeight
+                                    }
+                                    r="4"
+                                    fill={isPositive ? "#10b981" : "#ef4444"}
+                                    stroke="#ffffff"
+                                    strokeWidth="2"
+                                  />
+                                  <circle
+                                    cx={
+                                      (hoverIndex /
+                                        Math.max(1, candleOHLCData.length - 1)) *
+                                      plotWidth
+                                    }
+                                    cy={
+                                      plotBottom -
+                                      ((activeCandle.close - minVal) / valRange) *
+                                        plotHeight
+                                    }
+                                    r="8"
+                                    fill={isPositive ? "#10b981" : "#ef4444"}
+                                    opacity="0.35"
+                                    className="animate-ping"
+                                  />
+                                  <circle
+                                    cx={
+                                      (hoverIndex /
+                                        Math.max(1, candleOHLCData.length - 1)) *
+                                      plotWidth
+                                    }
+                                    cy={
+                                      plotBottom -
+                                      ((activeCandle.close - minVal) / valRange) *
+                                        plotHeight
+                                    }
+                                    r="10"
+                                    fill={isPositive ? "#10b981" : "#ef4444"}
+                                    opacity="0.25"
+                                    filter="url(#softLineGlow)"
+                                  />
+                                </g>
+                              )}
+
+                              {/* Right Y-Axis Collision-Protected Hover Price Badge */}
+                              <g transform={`translate(${plotWidth + 2}, ${hoverBadgeY})`}>
+                                <rect
+                                  x="0"
+                                  y="0"
+                                  width="58"
+                                  height="20"
+                                  rx="4"
+                                  fill="#061220"
+                                  stroke={
+                                    chartMode === "line"
+                                      ? isPositive
+                                        ? "#00f5d4"
+                                        : "#fb7185"
+                                      : "#38bdf8"
+                                  }
+                                  strokeWidth="1.5"
+                                />
+                                <text
+                                  x="29"
+                                  y="13"
+                                  textAnchor="middle"
+                                  fill="#ffffff"
+                                  fontSize="10"
+                                  fontFamily="monospace"
+                                  fontWeight="bold"
+                                >
+                                  ${activeCandle.close.toFixed(2)}
+                                </text>
+                              </g>
 
                         {/* Bottom X-Axis Hover Timestamp Badge */}
                         <g
@@ -1473,6 +1516,9 @@ export const PriceChart = (props: StockDetailSubProps) => {
                         </g>
                       </g>
                     )}
+                        </>
+                      );
+                    })()}
 
                     {/* Interactive User Trendline Overlay */}
                     {trendline && (
@@ -1693,7 +1739,7 @@ export const PriceChart = (props: StockDetailSubProps) => {
               </div>
 
               {/* Relative Strength Index (RSI 14) Visual Gauge & Subchart Indicator */}
-              <div className="p-4 rounded-2xl bg-[#030e1a]/90 border border-cyan-500/30 space-y-3 shadow-lg">
+              <div className="liquid-glass-slab p-4 rounded-2xl border border-cyan-500/30 space-y-3 shadow-lg">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
@@ -2001,7 +2047,7 @@ export const PriceChart = (props: StockDetailSubProps) => {
               </div>
 
               {/* Moving Average Convergence Divergence (MACD 12, 26, 9) Panel */}
-              <div className="p-4 rounded-2xl bg-[#030e1a]/90 border border-cyan-500/30 space-y-3 shadow-lg">
+              <div className="liquid-glass-slab p-4 rounded-2xl border border-cyan-500/30 space-y-3 shadow-lg">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">

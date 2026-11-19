@@ -844,7 +844,10 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
     }
 
     const areaD = `${lineD} L ${(chartWidth - padX).toFixed(1)} ${(chartHeight - padY).toFixed(1)} L ${padX.toFixed(1)} ${(chartHeight - padY).toFixed(1)} Z`;
-    const gradId = `sparkGrad-${stock.symbol}`;
+    const safeSym = stock.symbol.replace(/[^a-zA-Z0-9_-]/g, "");
+    const gradId = `sparkGrad-${safeSym}`;
+    const glowId = `sparkGlow-${safeSym}`;
+    const vividStroke = trendIsPositive ? "#00ff9d" : "#fb7185";
 
     return (
       <div
@@ -869,18 +872,27 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
               x2="0"
               y2="1"
             >
-              <stop offset="0%" stopColor={strokeColor} stopOpacity="0.30" />
-              <stop offset="100%" stopColor={strokeColor} stopOpacity="0.0" />
+              <stop offset="0%" stopColor={vividStroke} stopOpacity="0.34" />
+              <stop offset="65%" stopColor={vividStroke} stopOpacity="0.08" />
+              <stop offset="100%" stopColor={vividStroke} stopOpacity="0.0" />
             </linearGradient>
+            <filter id={glowId} x="-10%" y="-30%" width="120%" height="160%">
+              <feGaussianBlur stdDeviation="1.4" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
           </defs>
           <path d={areaD} fill={`url(#${gradId})`} />
           <path
             d={lineD}
             fill="none"
-            stroke={strokeColor}
+            stroke={vividStroke}
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
+            filter={`url(#${glowId})`}
           />
         </svg>
       </div>
@@ -955,22 +967,22 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
       }}
       className="StockCard relative w-full overflow-hidden rounded-2xl my-0.5 select-none group/card-wrapper"
     >
-      {/* Sleek Data Stream Edge Accent Beam */}
+      {/* Left-Edge SB Score Plasma Indicator Bar */}
       <div
-        className={`absolute left-0 top-0 bottom-0 w-[2px] transition-opacity duration-300 pointer-events-none z-20 ${
+        className={`absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full transition-all duration-300 pointer-events-none z-20 ${
           isOrange
-            ? "bg-gradient-to-b from-orange-400 via-amber-400 to-orange-600/0 opacity-95 group-hover/card-wrapper:opacity-100"
+            ? "bg-gradient-to-b from-orange-400 via-amber-400 to-orange-500/40 shadow-[0_0_10px_rgba(249,115,22,0.7)]"
             : isGold
-              ? "bg-gradient-to-b from-amber-300 via-yellow-400 to-amber-600/0 opacity-90 group-hover/card-wrapper:opacity-100"
+              ? "bg-gradient-to-b from-amber-300 via-yellow-400 to-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.65)]"
               : isSilver
-                ? "bg-gradient-to-b from-slate-200 via-white to-slate-400/0 opacity-90 group-hover/card-wrapper:opacity-100"
+                ? "bg-gradient-to-b from-slate-100 via-slate-300 to-slate-400/40 shadow-[0_0_10px_rgba(226,232,240,0.55)]"
                 : isCopper
-                  ? "bg-gradient-to-b from-orange-400 via-amber-500 to-orange-700/0 opacity-90 group-hover/card-wrapper:opacity-100"
+                  ? "bg-gradient-to-b from-orange-400 via-amber-500 to-orange-600/40 shadow-[0_0_10px_rgba(234,88,12,0.6)]"
                   : isPurple
-                    ? "bg-gradient-to-b from-purple-400 via-fuchsia-400 to-purple-600/0 opacity-80 group-hover/card-wrapper:opacity-100"
+                    ? "bg-gradient-to-b from-[#8b5cf6] via-fuchsia-400 to-purple-600/40 shadow-[0_0_10px_rgba(139,92,246,0.7)]"
                     : isPositive
-                      ? "bg-gradient-to-b from-emerald-400 via-teal-300 to-emerald-600/0 opacity-60 group-hover/card-wrapper:opacity-100"
-                      : "bg-gradient-to-b from-blue-500 via-sky-400 to-blue-600/0 opacity-60 group-hover/card-wrapper:opacity-100"
+                      ? "bg-gradient-to-b from-[#00ff9d] via-[#00f5d4] to-emerald-600/35 shadow-[0_0_10px_rgba(0,255,157,0.65)]"
+                      : "bg-gradient-to-b from-rose-400 via-rose-500 to-rose-700/35 shadow-[0_0_10px_rgba(244,63,94,0.6)]"
         }`}
       />
 
@@ -1070,8 +1082,8 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
             onSelect(stock);
           }
         }}
-        className={`glass relative z-10 w-full px-4 py-3.5 rounded-2xl alien-card dark-matter-pad StockCard-pad obsidian-specular-rim my-2 transition-all duration-200 cursor-pointer overflow-hidden ${holoGlowClass} ${
-          stock.isPinned ? "alien-card-active dark-matter-pad-active" : ""
+        className={`liquid-glass-slab relative z-10 w-full px-4 py-3.5 rounded-2xl StockCard-pad my-1.5 transition-all duration-200 cursor-pointer overflow-hidden ${holoGlowClass} ${
+          stock.isPinned ? "ring-1 ring-[#00f5d4]/45" : ""
         } ${
           isShaking ? "ring-2 ring-amber-400 bg-amber-950/20 animate-shake-card" : ""
         } ${
@@ -1085,8 +1097,6 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
           background: cardTheme.background,
           borderColor: cardTheme.borderColor,
           boxShadow: cardTheme.boxShadow,
-          backdropFilter: "blur(28px) brightness(0.62) contrast(132%) saturate(155%)",
-          WebkitBackdropFilter: "blur(28px) brightness(0.62) contrast(132%) saturate(155%)",
         }}
       >
         {/* Flowing Internal Blue Plasma Conduit */}
@@ -1245,10 +1255,10 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
           </div>
 
           {/* Right Price & 1D % Change Pill */}
-          <div className="flex flex-col items-end justify-center shrink-0 pl-1.5 sm:pl-2 tabular-telemetry">
+          <div className="flex flex-col items-end justify-center shrink-0 pl-1.5 sm:pl-2 tabular-nums-strict">
             <span
-              className={`font-mono tabular-nums font-bold text-[16px] min-[380px]:text-[18px] tracking-tight leading-tight ${
-                isSyncing ? "glitch-text-refresh text-cyan-200" : "text-white"
+              className={`font-mono tabular-nums-strict font-bold text-[16px] min-[380px]:text-[18px] tracking-tight leading-tight ${
+                isSyncing ? "glitch-text-refresh text-cyan-200" : "text-[#f1f8fc]"
               }`}
             >
               $
@@ -1260,20 +1270,20 @@ export const StockCard: React.FC<StockCardProps> = React.memo(({
                 : stock.price.toFixed(2)}
             </span>
             <div
-              className={`shrink-0 px-2 min-[380px]:px-2.5 py-0.5 mt-1 rounded-lg font-mono tabular-nums font-bold text-[11px] min-[380px]:text-xs tracking-tight transition-all flex items-center justify-center gap-1 ${
+              className={`shrink-0 px-2 min-[380px]:px-2.5 py-0.5 mt-1 rounded-lg font-mono tabular-nums-strict font-bold text-[11px] min-[380px]:text-xs tracking-tight transition-all flex items-center justify-center gap-1 ${
                 isOrange
-                  ? "bg-orange-950/90 text-orange-200 border border-orange-400/80 shadow-[0_0_14px_rgba(247,147,26,0.4)]"
+                  ? "bg-orange-950/90 text-orange-200 border border-orange-400/70"
                   : isGold
-                    ? "bg-amber-950/90 text-amber-200 border border-amber-400/80 shadow-[0_0_12px_rgba(245,158,11,0.35)]"
+                    ? "bg-amber-950/90 text-amber-200 border border-amber-400/70"
                     : isSilver
-                      ? "bg-slate-900/90 text-slate-100 border border-slate-300/80 shadow-[0_0_12px_rgba(226,232,240,0.35)]"
+                      ? "bg-slate-900/90 text-slate-100 border border-slate-300/70"
                       : isCopper
-                        ? "bg-orange-950/90 text-orange-200 border border-orange-400/80 shadow-[0_0_12px_rgba(234,88,12,0.35)]"
+                        ? "bg-orange-950/90 text-orange-200 border border-orange-400/70"
                         : isPurple
-                          ? "bg-purple-950/90 text-purple-200 border border-purple-400/80 shadow-[0_0_12px_rgba(192,38,211,0.35)]"
+                          ? "bg-purple-950/90 text-purple-200 border border-purple-400/70"
                           : isPositive
-                            ? "bg-emerald-950/85 text-emerald-300 border border-emerald-400/75 shadow-[0_0_12px_rgba(16,185,129,0.28)]"
-                            : "bg-rose-950/85 text-rose-300 border border-rose-500/75 shadow-[0_0_12px_rgba(244,63,94,0.28)]"
+                            ? "bg-emerald-950/85 text-[#00ff9d] border border-[#00ff9d]/45 shadow-[0_0_12px_rgba(0,255,157,0.18)]"
+                            : "bg-rose-950/85 text-rose-300 border border-rose-500/50 shadow-[0_0_12px_rgba(244,63,94,0.18)]"
               } ${isSyncing ? "glitch-text-refresh" : ""}`}
             >
               <span className="text-[9px] font-bold text-current/75 mr-0.5">1D</span>
