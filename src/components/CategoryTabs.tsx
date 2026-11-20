@@ -40,7 +40,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
     { id: "asymmetry", label: "Max Asymmetry", icon: Star },
     { id: "reits", label: "Real Estate REITs", icon: Building2 },
     { id: "credit_fin", label: "Credit & FinTech", icon: CreditCard },
-    { id: "ai_infra", label: "AI Infrastructure & Cloud", icon: Cpu },
+    { id: "ai_infra", label: "AI & Tech", icon: Cpu },
     { id: "memory", label: "Memory & Chips", icon: MemoryStick },
     { id: "energy", label: "Energy & Grid", icon: Zap },
     { id: "indexes", label: "Indexes & Tech", icon: LineChart },
@@ -64,7 +64,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
       case "credit_fin":
         return "Credit & FinTech";
       case "ai_infra":
-        return "AI Infrastructure & Cloud Compute";
+        return "AI & Tech · Frontier Models & Infrastructure";
       case "memory":
         return "Memory Chips & Hardware";
       case "energy":

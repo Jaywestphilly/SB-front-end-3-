@@ -2,6 +2,36 @@ import { StockTicker, StockNews } from "../types";
 
 export const INITIAL_STOCKS: StockTicker[] = [
   {
+    "symbol": "ANT",
+    "name": "Anthropic",
+    "price": 0,
+    "change": 0,
+    "changePercent": 0,
+    "category": "ai_infra",
+    "bloc": "tsunami",
+    "quotePending": true,
+    "sparkline": [],
+    "history": {
+      "1D": [],
+      "1W": [],
+      "1M": [],
+      "1Y": [],
+      "ALL": []
+    },
+    "marketCap": "Pending",
+    "high52": 0,
+    "low52": 0,
+    "volume": "Pending",
+    "description": "Anthropic (Nasdaq: ANT) — Frontier AI research lab and creator of Claude. Live on Nasdaq since Nov 19, 2026 ($83.00 IPO price; closed $97.17 on first day, +17.07%). Live price and sparkline telemetry populate strictly from live market feeds.",
+    "tags": [
+      "AI & Tech",
+      "Frontier AI",
+      "Super Sonic Tsunami",
+      "Nasdaq IPO"
+    ],
+    "isPinned": false
+  },
+  {
     "symbol": "MSFT",
     "name": "Microsoft Corporation",
     "price": 448.2,

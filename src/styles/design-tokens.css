@@ -583,6 +583,83 @@
 }
 
 /* ==========================================================================
+   ALIEN WATCHLIST REFRACTIVE LIQUID-GLASS PODS & HOLOGRAPHIC CHAMBER
+   ========================================================================== */
+
+.xeno-watchlist-pod {
+  position: relative;
+  border-radius: 10px;
+  backdrop-filter: blur(22px) saturate(165%);
+  -webkit-backdrop-filter: blur(22px) saturate(165%);
+  border: 1px solid rgba(0, 245, 212, 0.24);
+  transition: border-color 220ms ease, box-shadow 240ms ease, transform 220ms ease;
+}
+
+.xeno-watchlist-pod::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(125deg, rgba(0, 245, 212, 0.12) 0%, transparent 34%, rgba(168, 85, 247, 0.06) 76%, rgba(0, 229, 255, 0.08) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 28%);
+  z-index: 1;
+}
+
+.xeno-watchlist-pod:hover {
+  border-color: rgba(0, 245, 212, 0.56);
+}
+
+@keyframes xeno-beacon-ripple {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  70% {
+    transform: scale(2.35);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.35);
+    opacity: 0;
+  }
+}
+
+.xeno-beacon-ring {
+  animation: xeno-beacon-ripple 2.1s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes xeno-reticle-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.xeno-reticle-orbit {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: xeno-reticle-rotate 9s linear infinite;
+}
+
+.xeno-holo-chamber {
+  position: relative;
+  background:
+    radial-gradient(95% 75% at 50% 0%, rgba(0, 245, 212, 0.11) 0%, rgba(4, 24, 34, 0.42) 45%, rgba(2, 6, 8, 0.98) 100%),
+    radial-gradient(60% 60% at 88% 92%, rgba(168, 85, 247, 0.12) 0%, transparent 72%),
+    #020608;
+  border: 1px solid rgba(0, 245, 212, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(0, 245, 212, 0.26),
+    inset 0 0 42px rgba(0, 229, 255, 0.06),
+    0 24px 64px -18px rgba(0, 0, 0, 0.96),
+    0 0 36px -14px rgba(0, 245, 212, 0.22);
+}
+
+/* ==========================================================================
    ACCESSIBILITY: PREFERS-REDUCED-MOTION OVERRIDES
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
@@ -593,7 +670,9 @@
   .xeno-scan-beam,
   .xeno-spin-slow,
   .xeno-spin-rev-slow,
-  .xeno-conduit-rail {
+  .xeno-conduit-rail,
+  .xeno-beacon-ring,
+  .xeno-reticle-orbit {
     transition: none !important;
     animation: none !important;
     transform: none !important;

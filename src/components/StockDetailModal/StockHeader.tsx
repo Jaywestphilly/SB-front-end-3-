@@ -148,8 +148,17 @@ export const StockHeader = (props: StockDetailSubProps) => {
 
   if (!stock) return null;
 
-  const isHovered = hoverIndex !== null;
-  const currentPrice = isHovered ? hoveredPoint.price : stock.price;
+  const isQuotePending =
+    (Boolean(stock.quotePending) || !stock.price || stock.price <= 0) &&
+    !(realHistory && realHistory.length > 0);
+  const isHovered = hoverIndex !== null && !isQuotePending && hoveredPoint?.price > 0;
+  const currentPrice = isHovered
+    ? hoveredPoint.price
+    : stock.price > 0
+      ? stock.price
+      : realHistory && realHistory.length > 0
+        ? realHistory[realHistory.length - 1].price
+        : 0;
   const basePrice = stockBasePrice || (stock.price - stock.change);
   const diff = isHovered ? currentPrice - basePrice : stock.change;
   const diffPct = isHovered
@@ -162,7 +171,7 @@ export const StockHeader = (props: StockDetailSubProps) => {
   return (
     <>
       {/* Modal Top Header (Symbol, Name, Actions) */}
-      <div className="flex items-center justify-between p-4 sm:p-6 pb-0 border-b border-white/5 mb-4 relative z-10 bg-neutral-900/50 backdrop-blur-md">
+      <div className="flex items-center justify-between p-4 sm:p-6 pb-4 border-b border-[#00f5d4]/20 mb-4 relative z-10 bg-[#020608]/92 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <button
             onClick={(e) => {
@@ -170,34 +179,58 @@ export const StockHeader = (props: StockDetailSubProps) => {
               toggleStarredTicker(stock.symbol);
               triggerHaptic("light");
             }}
-            className="group p-1.5 -ml-1.5 rounded-full hover:bg-white/10 transition-colors"
+            className="group p-1.5 -ml-1.5 rounded-full hover:bg-[#00f5d4]/10 transition-colors"
           >
             <Star
-              className={`w-6 h-6 transition-all duration-300 ${isStarred ? "fill-yellow-400 text-yellow-400 scale-110 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]" : "text-neutral-400 group-hover:text-neutral-200"}`}
+              className={`w-6 h-6 transition-all duration-300 ${isStarred ? "fill-amber-400 text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]" : "text-slate-400 group-hover:text-[#00f5d4]"}`}
             />
           </button>
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Pulsing Live-Node Beacon */}
+              <span className="relative flex h-2.5 w-2.5 shrink-0" title={isQuotePending ? "Awaiting live market quote" : "Live quote feed active"}>
+                <span
+                  className={`xeno-beacon-ring absolute inline-flex h-full w-full rounded-full ${
+                    isQuotePending ? "bg-amber-400" : "bg-[#00f5d4]"
+                  }`}
+                />
+                <span
+                  className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                    isQuotePending
+                      ? "bg-amber-400 shadow-[0_0_8px_#f59e0b]"
+                      : "bg-[#00ff9d] shadow-[0_0_8px_#00f5d4]"
+                  }`}
+                />
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none font-display">
                 {stock.symbol}
               </h2>
-              {(() => {
-                const signal = computeDeterministicSignal(stock);
-                const sbStyle = getSBScoreColor(signal.score);
-                return (
-                  <div
-                    className={`inline-flex items-center gap-1.5 px-2 py-0.5 border alien-block-cut-sm transition-all ${sbStyle.badgeClass}`}
-                    title={`Stock Bloc Rating: ${signal.score}/100 (${sbStyle.tier} - ${sbStyle.tierDescription})`}
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sbStyle.dotClass}`} />
-                    <span className={`text-[10px] font-martian font-black tracking-tight ${sbStyle.textClass}`}>
-                      SB {signal.score}
-                    </span>
-                  </div>
-                );
-              })()}
+              {!isQuotePending ? (
+                (() => {
+                  const signal = computeDeterministicSignal(stock);
+                  const sbStyle = getSBScoreColor(signal.score);
+                  return (
+                    <div
+                      className={`inline-flex items-center gap-1.5 px-2 py-0.5 border alien-block-cut-sm transition-all ${sbStyle.badgeClass}`}
+                      title={`Stock Bloc Rating: ${signal.score}/100 (${sbStyle.tier} - ${sbStyle.tierDescription})`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${sbStyle.dotClass}`} />
+                      <span className={`text-[10px] font-martian font-black tracking-tight ${sbStyle.textClass}`}>
+                        SB {signal.score}
+                      </span>
+                    </div>
+                  );
+                })()
+              ) : (
+                <div className="inline-flex items-center gap-1.5 px-2 py-0.5 border border-amber-400/45 bg-amber-500/12 text-amber-300 alien-block-cut-sm">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span className="text-[10px] font-mono font-bold tracking-wider uppercase">
+                    QUOTE PENDING
+                  </span>
+                </div>
+              )}
             </div>
-            <p className="text-xs sm:text-sm text-neutral-400 font-medium mt-1">
+            <p className="text-xs sm:text-sm text-cyan-200/75 font-medium mt-1">
               {stock.name}
             </p>
           </div>
@@ -206,13 +239,13 @@ export const StockHeader = (props: StockDetailSubProps) => {
         <div className="flex items-center gap-2">
           <button
             onClick={() => onShare(stock)}
-            className="p-2 sm:p-2.5 rounded-full bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white transition-colors"
+            className="p-2 sm:p-2.5 bg-[#04141d]/90 border border-[#00f5d4]/25 text-cyan-200 hover:border-[#00f5d4]/60 hover:text-white transition-colors cursor-pointer"
           >
             <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <button
             onClick={onClose}
-            className="p-2 sm:p-2.5 rounded-full bg-white/5 text-neutral-300 hover:bg-white/10 hover:text-white transition-colors"
+            className="p-2 sm:p-2.5 bg-[#04141d]/90 border border-[#00f5d4]/25 text-cyan-200 hover:border-[#00f5d4]/60 hover:text-white transition-colors cursor-pointer"
           >
             <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -220,58 +253,82 @@ export const StockHeader = (props: StockDetailSubProps) => {
       </div>
 
       {/* Price & Change Header */}
-      <div className="flex items-baseline justify-between px-6 pt-2">
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-3 px-6 pt-2">
         <div>
-          <div className="text-4xl font-black tracking-tight font-mono text-white">
-            $
-            {currentPrice.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <span
-              className={`flex items-center font-bold text-sm ${isDiffPositive ? "text-[#00c805]" : "text-[#ff3b30]"}`}
-            >
-              {isDiffPositive ? (
-                <TrendingUp className="w-4 h-4 mr-1" />
-              ) : (
-                <TrendingDown className="w-4 h-4 mr-1" />
-              )}
-              {isDiffPositive ? "+" : ""}${Math.abs(diff).toFixed(2)} (
-              {isDiffPositive ? "+" : ""}
-              {diffPct.toFixed(2)}%)
-            </span>
-            <span className="text-xs text-neutral-500 font-medium">
-              {isHovered ? "" : timeframe === "1D" ? "Today" : `Past ${timeframe}`}
-            </span>
-            {isHovered && (
-              <span className="text-xs text-cyan-400 font-mono bg-cyan-500/10 px-2.5 py-0.5 rounded-full border border-cyan-500/30">
-                {hoveredPoint.time}
-              </span>
-            )}
-          </div>
+          {isQuotePending ? (
+            <>
+              <div className="text-2xl sm:text-3xl font-black tracking-wider font-mono text-amber-300 drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]">
+                QUOTE PENDING
+              </div>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs font-mono text-cyan-200/80">
+                <span className="px-2 py-0.5 bg-[#04141d] border border-[#00f5d4]/30 text-[#00f5d4]">
+                  LIVE FEED ONLY
+                </span>
+                {stock.symbol.toUpperCase() === "ANT" ? (
+                  <span className="text-slate-300">
+                    Nasdaq Debut Nov 19 · IPO $83.00 · First-Day Close $97.17 (+17.07%)
+                  </span>
+                ) : (
+                  <span className="text-slate-400">
+                    Awaiting live market quote telemetry
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-4xl font-black tracking-tight font-mono tabular-nums-strict text-white drop-shadow-[0_0_16px_rgba(0,245,212,0.2)]">
+                $
+                {currentPrice.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <span
+                  className={`flex items-center font-bold text-sm font-mono tabular-nums-strict ${isDiffPositive ? "text-[#00ff9d]" : "text-rose-400"}`}
+                >
+                  {isDiffPositive ? (
+                    <TrendingUp className="w-4 h-4 mr-1" />
+                  ) : (
+                    <TrendingDown className="w-4 h-4 mr-1" />
+                  )}
+                  {isDiffPositive ? "+" : ""}${Math.abs(diff).toFixed(2)} (
+                  {isDiffPositive ? "+" : ""}
+                  {diffPct.toFixed(2)}%)
+                </span>
+                <span className="text-xs text-slate-400 font-mono">
+                  {isHovered ? "" : timeframe === "1D" ? "Today" : `Past ${timeframe}`}
+                </span>
+                {isHovered && (
+                  <span className="text-xs text-[#00f5d4] font-mono bg-[#04141d] px-2.5 py-0.5 border border-[#00f5d4]/40">
+                    {hoveredPoint.time}
+                  </span>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Tags & Screener Quick Badges */}
-        <div className="flex flex-col items-end gap-1.5 max-w-[280px]">
-          {tradeScreener && (
-            <div className="flex items-center gap-1.5 flex-wrap justify-end">
-              <span className="px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-martian font-bold rounded flex items-center gap-1 shadow-sm">
+        <div className="flex flex-col items-start sm:items-end gap-1.5 max-w-[300px]">
+          {tradeScreener && !isQuotePending && (
+            <div className="flex items-center gap-1.5 flex-wrap sm:justify-end">
+              <span className="px-2 py-0.5 bg-amber-500/15 text-amber-300 border border-amber-400/40 text-[10px] font-martian font-bold flex items-center gap-1 shadow-sm">
                 <Zap className="w-3 h-3 text-amber-400" />
                 DAY: {tradeScreener.dayTrade.bias} ({tradeScreener.dayTrade.conviction}%)
               </span>
-              <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[10px] font-martian font-bold rounded flex items-center gap-1 shadow-sm">
-                <TrendingUp className="w-3 h-3 text-cyan-400" />
+              <span className="px-2 py-0.5 bg-[#00f5d4]/12 text-[#00f5d4] border border-[#00f5d4]/40 text-[10px] font-martian font-bold flex items-center gap-1 shadow-sm">
+                <TrendingUp className="w-3 h-3 text-[#00f5d4]" />
                 SWING: 1:{tradeScreener.swingTrade.rewardToRiskRatio} R/R
               </span>
             </div>
           )}
-          <div className="flex flex-wrap gap-1.5 justify-end">
+          <div className="flex flex-wrap gap-1.5 sm:justify-end">
             {stock.tags.map((tag, idx) => (
               <span
                 key={idx}
-                className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-neutral-300"
+                className="text-[10px] font-mono font-semibold uppercase tracking-wider px-2 py-0.5 bg-[#04141d]/90 border border-[#00f5d4]/25 text-cyan-200/90"
               >
                 {tag}
               </span>
@@ -279,8 +336,6 @@ export const StockHeader = (props: StockDetailSubProps) => {
           </div>
         </div>
       </div>
-
-              
     </>
   );
 };

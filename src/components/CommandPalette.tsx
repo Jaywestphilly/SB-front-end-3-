@@ -39,6 +39,7 @@ interface CommandItem {
   id: string;
   title: string;
   subtitle: string;
+  keywords?: string;
   category: "Ticker" | "Hub" | "13F Fund" | "REIT" | "Tool" | "Defense" | "UAP Doc";
   icon: React.ReactNode;
   action: () => void;
@@ -204,9 +205,12 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   // Stock Items
   const stockItems: CommandItem[] = useMemo(() => {
     return stocks.map((stk) => {
+      const isPending = Boolean(stk.quotePending) || !stk.price || stk.price <= 0;
       let catLabel: CommandItem["category"] = "Ticker";
-      let color = "bg-cyan-500/20 text-cyan-300 border-cyan-500/40";
-      if (stk.category === "reits") {
+      let color = "bg-[#00f5d4]/15 text-[#00f5d4] border-[#00f5d4]/40";
+      if (isPending) {
+        color = "bg-amber-500/15 text-amber-300 border-amber-400/45";
+      } else if (stk.category === "reits") {
         catLabel = "REIT";
         color = "bg-amber-500/20 text-amber-300 border-amber-500/40";
       } else if (stk.tags.includes("Defense") || stk.tags.includes("GovContract")) {
@@ -214,12 +218,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         color = "bg-rose-500/20 text-rose-300 border-rose-500/40";
       }
 
+      const subtitle = isPending
+        ? stk.symbol.toUpperCase() === "ANT"
+          ? "Quote Pending · Live Nasdaq Feed · IPO $83.00 · Nov 19 Close $97.17 (+17.07%)"
+          : "Quote Pending · Live Market Feed"
+        : `$${stk.price.toFixed(2)} | 24h: ${stk.changePercent >= 0 ? "+" : ""}${stk.changePercent.toFixed(2)}%${stk.rsi !== undefined ? ` | RSI: ${stk.rsi}` : ""}`;
+
       return {
         id: `stock-${stk.symbol}`,
         title: `${stk.symbol} - ${stk.name}`,
-        subtitle: `$${stk.price.toFixed(2)} | RSI: ${stk.rsi ?? 50} | 24h: ${stk.changePercent >= 0 ? "+" : ""}${stk.changePercent.toFixed(2)}%`,
+        subtitle,
+        keywords: `${stk.symbol} ${stk.name} ${stk.category} ${(stk.tags || []).join(" ")} ${stk.bloc || ""}`,
         category: catLabel,
-        icon: <TrendingUp className="w-4 h-4 text-cyan-400" />,
+        icon: <TrendingUp className={`w-4 h-4 ${isPending ? "text-amber-400" : "text-[#00f5d4]"}`} />,
         action: () => {
           onSelectTab("watchlist");
           if (onSelectStock) onSelectStock(stk);
@@ -227,7 +238,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         badgeColor: color,
       };
     });
-  }, [onSelectTab, onSelectStock]);
+  }, [stocks, onSelectTab, onSelectStock]);
 
   // Filter items based on query
   const filteredItems = useMemo(() => {
@@ -239,7 +250,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       (item) =>
         item.title.toLowerCase().includes(q) ||
         item.subtitle.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q)
+        item.category.toLowerCase().includes(q) ||
+        (item.keywords && item.keywords.toLowerCase().includes(q))
     ).slice(0, 12);
   }, [navHubItems, stockItems, query]);
 
@@ -275,11 +287,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -10 }}
           transition={{ duration: 0.15 }}
-          className="relative w-full max-w-2xl bg-[#040f18] border border-cyan-500/40 rounded-2xl shadow-2xl shadow-cyan-950/80 overflow-hidden font-mono text-neutral-100"
+          className="relative w-full max-w-2xl bg-[#020608]/95 border border-[#00f5d4]/35 shadow-[0_24px_70px_-14px_rgba(0,0,0,0.95),0_0_40px_-12px_rgba(0,245,212,0.3)] overflow-hidden font-mono text-neutral-100 backdrop-blur-2xl"
         >
+          {/* Micro-Beveled Alien Corner Brackets */}
+          <span className="pointer-events-none absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#00f5d4] z-20" />
+          <span className="pointer-events-none absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#00f5d4] z-20" />
+          <span className="pointer-events-none absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#00f5d4]/70 z-20" />
+          <span className="pointer-events-none absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#00f5d4]/70 z-20" />
+
           {/* Top Search Input */}
-          <div className="relative flex items-center px-4 py-3.5 border-b border-cyan-500/30 bg-black/50">
-            <Search className="w-5 h-5 text-cyan-400 shrink-0 mr-3" />
+          <div className="relative flex items-center px-4 py-3.5 border-b border-[#00f5d4]/25 bg-[#04141d]/75">
+            <Search className="w-5 h-5 text-[#00f5d4] shrink-0 mr-3" />
             <input
               ref={inputRef}
               type="text"
@@ -289,22 +307,22 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                 setSelectedIndex(0);
               }}
               onKeyDown={handleKeyDown}
-              placeholder="Search tickers (NVDA, TSLA), hubs, 13F funds, REITs, defense stocks..."
-              className="w-full bg-transparent text-sm sm:text-base text-cyan-100 placeholder-cyan-500/60 focus:outline-none font-mono"
+              placeholder="Search tickers (ANT, NVDA, TSLA), Anthropic, AI & Tech, 13F funds..."
+              className="w-full bg-transparent text-sm sm:text-base text-cyan-50 placeholder-cyan-400/50 focus:outline-none font-mono"
             />
             {query && (
               <button
                 onClick={() => setQuery("")}
-                className="p-1 hover:bg-cyan-900/30 rounded text-cyan-400 mr-2"
+                className="p-1 hover:bg-[#00f5d4]/15 text-[#00f5d4] mr-2 cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
             <button
               onClick={onClose}
-              className="p-1 hover:bg-red-950/40 rounded text-neutral-400 hover:text-red-400"
+              className="p-1 hover:bg-rose-950/50 text-slate-400 hover:text-rose-300 cursor-pointer"
             >
-              <span className="text-xs font-bold border border-neutral-700 px-1.5 py-0.5 rounded">
+              <span className="text-xs font-bold border border-[#00f5d4]/30 px-1.5 py-0.5 text-[#00f5d4]">
                 ESC
               </span>
             </button>

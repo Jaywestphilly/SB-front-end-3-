@@ -269,18 +269,17 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
     }
   };
 
-  // Determine if stock is a Private/Pre-IPO Vehicle (e.g., SpaceX / SPCX is treated as public)
+  // Determine if stock is a Private/Pre-IPO Vehicle (SpaceX / SPCX and Nasdaq-listed Anthropic / ANT are public)
   const isPrivateCompany = useMemo(() => {
     if (!stock) return false;
     const sym = stock.symbol.toUpperCase();
-    if (sym === "SPCX") return false;
+    if (sym === "SPCX" || sym === "ANT") return false;
     const desc = (stock.description || "").toLowerCase();
     const name = (stock.name || "").toLowerCase();
     return (
       desc.includes("private") ||
       desc.includes("pre-ipo") ||
       name.includes("openai") ||
-      name.includes("anthropic") ||
       name.includes("stripe") ||
       name.includes("databricks") ||
       name.includes("bytedance")
@@ -294,7 +293,6 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
     const isPrivate =
       sym === "OPENAI" ||
       sym === "STRIPE" ||
-      sym === "ANTHROPIC" ||
       sym === "DATABRICKS" ||
       sym === "BYTEDANCE";
 
@@ -728,7 +726,8 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
   useEffect(() => {
     if (!stock) return;
     let isMounted = true;
-    fetch(`/api/stock-chart/${stock.symbol}?range=${timeframe}`)
+    setRealHistory(null);
+    fetch(`/api/stock-chart/${encodeURIComponent(stock.symbol)}?range=${timeframe}`)
       .then((res) => res.json())
       .then((data) => {
         if (
@@ -745,7 +744,7 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [stock, timeframe]);
+  }, [stock?.symbol, timeframe]);
 
   // Historical Benchmark Comparison Overlay State
   const [showOverlay, setShowOverlay] = useState<boolean>(false);
@@ -855,18 +854,21 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
       realHistory && realHistory.length > 0
         ? realHistory
         : stock.history?.[timeframe] || [];
-    if (!hist || hist.length === 0) return [];
+    const validHist = hist.filter(
+      (p: any) => typeof (p?.close ?? p?.price) === "number" && (p?.close ?? p?.price) > 0,
+    );
+    if (!validHist || validHist.length === 0) return [];
 
     let standardCandles: CandleDataPoint[] = [];
 
-    // Check if hist items already contain full OHLC properties
-    const hasFullOHLC = hist.every(
+    // Check if validHist items already contain full OHLC properties
+    const hasFullOHLC = validHist.every(
       (p: any) =>
         p.open !== undefined && p.high !== undefined && p.low !== undefined,
     );
 
     if (hasFullOHLC) {
-      standardCandles = hist.map((p: any, i: number) => {
+      standardCandles = validHist.map((p: any, i: number) => {
         const open = Number(p.open ?? p.price);
         const close = Number(p.close ?? p.price);
         const high = Math.max(Number(p.high ?? p.price), open, close);
@@ -876,7 +878,7 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
           high,
           low,
           close,
-          volume: p.volume || 10000,
+          volume: typeof p.volume === "number" ? p.volume : 0,
           time: p.time ? formatChartTimestamp(p.time) : `T-${i}`,
           isUp: close >= open,
           changePercent: open > 0 ? ((close - open) / open) * 100 : 0,
@@ -884,10 +886,10 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
       });
     } else {
       const targetCandles = 32;
-      const chunkSize = Math.max(1, Math.floor(hist.length / targetCandles));
+      const chunkSize = Math.max(1, Math.floor(validHist.length / targetCandles));
 
-      for (let i = 0; i < hist.length; i += chunkSize) {
-        const chunk = hist.slice(i, i + chunkSize);
+      for (let i = 0; i < validHist.length; i += chunkSize) {
+        const chunk = validHist.slice(i, i + chunkSize);
         if (chunk.length === 0) continue;
 
         let open = chunk[0].price;
@@ -921,7 +923,10 @@ export const StockDetailModal: React.FC<StockDetailModalProps> = ({
           bodyMin - wickPadding * (0.8 + Math.abs(Math.cos(i * 1.9)) * 0.4),
         );
         const time = formatChartTimestamp(chunk[chunk.length - 1].time) || `T-${i}`;
-        const volume = chunk.reduce((sum, p) => sum + (p.volume || 10000), 0);
+        const volume = chunk.reduce(
+          (sum, p) => sum + (typeof p.volume === "number" ? p.volume : 0),
+          0,
+        );
 
         standardCandles.push({
           open: Number(open.toFixed(2)),

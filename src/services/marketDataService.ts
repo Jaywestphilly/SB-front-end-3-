@@ -62,6 +62,7 @@ export interface WatchlistStock {
   category?: string;
   last_updated?: string;
   source?: string;
+  quotePending?: boolean;
 }
 
 export type FeedStatusLabel = "fresh" | "delayed" | "stale" | "very_stale";
@@ -290,7 +291,7 @@ export function calculateStockBlocSignal(stock: WatchlistStock, quant?: QuantMet
 
 export class MarketDataService {
   private static WATCHLIST_SYMBOLS = [
-    "MSFT", "GOOGL", "AMZN", "META", "ORCL", "BABA", "TCEHY", "CRWV", "AAPL", "TSLA",
+    "ANT", "MSFT", "GOOGL", "AMZN", "META", "ORCL", "BABA", "TCEHY", "CRWV", "AAPL", "TSLA",
     "SPCX", "STRIP", "CEG", "VST", "TLN", "BE", "SMR", "OKLO", "NEE", "ETN",
     "GEV", "PWR", "EME", "FIX", "HUBB", "POWL", "CAT", "CMI", "VRT", "MOD",
     "NVT", "SMCI", "ANET", "AVGO", "MRVL", "COHR", "CRDO", "IPGP", "LITE", "AAOI",
@@ -304,6 +305,11 @@ export class MarketDataService {
   ];
 
   private static COMPANY_METADATA: Record<string, { name: string; sector: string; summary: string }> = {
+    ANT: {
+      name: "Anthropic",
+      sector: "AI Infrastructure & Tech",
+      summary: "Frontier AI Lab & Foundation Models (Claude): Live on Nasdaq (debuted Nov 19, 2026 at $83.00 IPO price, closing first day at $97.17, +17.07%). Quotes stream from live market feeds only."
+    },
     AMTM: {
       name: "Amentum Holdings, Inc.",
       sector: "Critical Infrastructure & Defense Tech",
@@ -491,10 +497,38 @@ export class MarketDataService {
       const change = parseFloat((currentPrice - prevClose).toFixed(2));
       const percentChange = parseFloat((((currentPrice - prevClose) / prevClose) * 100).toFixed(2));
 
-      const sparkline = validCloses.slice(-7).map((p: number) => Number(p.toFixed(2)));
+      let sparkline = validCloses.slice(-7).map((p: number) => Number(p.toFixed(2)));
+      if (sparkline.length < 2) {
+        try {
+          const intradayController = new AbortController();
+          const intradayTimeout = setTimeout(() => intradayController.abort(), 4500);
+          const intradayRes = await fetch(
+            `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=15m&range=1d`,
+            {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
+              },
+              signal: intradayController.signal
+            }
+          );
+          clearTimeout(intradayTimeout);
+          if (intradayRes.ok) {
+            const intradayData = await intradayRes.json();
+            const intradayCloses: number[] = intradayData.chart?.result?.[0]?.indicators?.quote?.[0]?.close || [];
+            const validIntraday = intradayCloses.filter((c: any) => typeof c === 'number' && !isNaN(c) && c > 0);
+            if (validIntraday.length >= 2) {
+              sparkline = validIntraday.slice(-16).map((p: number) => Number(p.toFixed(2)));
+            }
+          }
+        } catch {
+          // Keep sparkline empty if intraday feed is unavailable — never fabricate
+        }
+      }
+
       const high52 = meta.fiftyTwoWeekHigh || Math.max(...validCloses, currentPrice);
       const low52 = meta.fiftyTwoWeekLow || Math.min(...validCloses, currentPrice);
-      const volume = meta.regularMarketVolume || meta.volume || 1000000;
+      const volume = meta.regularMarketVolume || meta.volume || 0;
 
       return {
         symbol: symbol.toUpperCase(),
@@ -507,7 +541,7 @@ export class MarketDataService {
         avgVolume: volume,
         high52: Number(high52.toFixed(2)),
         low52: Number(low52.toFixed(2)),
-        sparkline: sparkline.length > 0 ? sparkline : [currentPrice]
+        sparkline: sparkline.length >= 2 ? sparkline : []
       };
     } catch (e) {
       return null;
@@ -677,19 +711,23 @@ export class MarketDataService {
               price: fetched.price,
               change: fetched.change ?? baseStock.change,
               percent_change: fetched.percent_change ?? baseStock.percent_change,
-              sparkline: (fetched.sparkline && fetched.sparkline.length > 0) ? fetched.sparkline : baseStock.sparkline,
+              sparkline: (fetched.sparkline && fetched.sparkline.length >= 2) ? fetched.sparkline : (baseStock.sparkline || []),
               high52: fetched.high52 ?? baseStock.high52,
               low52: fetched.low52 ?? baseStock.low52,
               volume: fetched.volume ?? baseStock.volume,
+              quotePending: false,
               last_updated: nowIso,
               source: MarketDataService.toPublicSourceLabel("Yahoo Finance chart API")
             };
           } else {
-            // Provider failed for this stock -> preserve last verified record
+            // Provider returned no live quote for this stock -> preserve last verified record or mark quote pending without fabricating data
+            const hasVerifiedPrice = typeof baseStock.price === "number" && baseStock.price > 0;
             mergedStock = {
               ...baseStock,
-              last_updated: baseStock.last_updated || persisted?.updated_at || nowIso,
-              source: baseStock.source || persisted?.source || "Preserved Verified Cache"
+              sparkline: hasVerifiedPrice ? (baseStock.sparkline || []) : [],
+              quotePending: !hasVerifiedPrice,
+              last_updated: hasVerifiedPrice ? (baseStock.last_updated || persisted?.updated_at || nowIso) : nowIso,
+              source: hasVerifiedPrice ? (baseStock.source || persisted?.source || "Preserved Verified Cache") : "Quote Pending (Live Feed)"
             };
           }
 

@@ -235,1290 +235,1346 @@ export const PriceChart = (props: StockDetailSubProps) => {
   const smoothedMacdLinePath = useMemo(() => smoothPathD(macdLinePath), [macdLinePath]);
   const smoothedMacdSignalPath = useMemo(() => smoothPathD(macdSignalPath), [macdSignalPath]);
 
-  const mainLineColor = isPositive ? "#10b981" : "#ef4444";
+  const isQuotePending =
+    !candleOHLCData ||
+    candleOHLCData.length === 0 ||
+    ((Boolean(activeStock?.quotePending) || !activeStock?.price || activeStock.price <= 0) &&
+      !(realHistory && realHistory.length > 0));
+
+  const mainLineColor = isPositive ? "#00f5d4" : "#fb7185";
+  const accentMint = "#00ff9d";
+  const accentViolet = "#a855f7";
+  const accentAmber = "#f59e0b";
 
   if (!stock) return null;
   return (
     <>
-{/* Interactive SVG Line & Candlestick Chart Stage */}
-              <div className="relative bg-[#0b0e17] border border-slate-800 rounded-2xl p-4 overflow-hidden shadow-2xl">
-                {/* Controls Bar: Timeframe & Technical Indicator Toolbar */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-slate-800/80 text-xs">
-                  {/* Timeframe Selector & Chart Style (Line 6982 vs Candles 6984) Toggle */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <div className="flex items-center gap-1 bg-[#121624] p-1 rounded-xl border border-slate-800">
-                      {(["1D", "1W", "1M", "1Y", "ALL"] as TimeFrame[]).map(
-                        (tf) => (
-                          <button
-                            key={tf}
-                            onClick={() => {
-                              triggerHaptic("selection");
-                              setTimeframe(tf);
-                              setHoverIndex(null);
-                            }}
-                            className={`px-3 py-1 rounded-lg transition-all cursor-pointer active:scale-95 text-xs font-mono font-bold ${
-                              timeframe === tf
-                                ? "bg-slate-700 text-white font-black shadow-sm"
-                                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                            }`}
-                          >
-                            {tf}
-                          </button>
-                        ),
-                      )}
-                    </div>
+      {/* Alien Holographic Chamber Chart Stage */}
+      <div className="xeno-holo-chamber relative p-4 overflow-hidden">
+        {/* Micro-Beveled Chamber Corner Brackets */}
+        <svg className="pointer-events-none absolute top-1.5 left-1.5 w-4 h-4 z-20" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M1 15V5L5 1H15" stroke="#00f5d4" strokeWidth="1.5" strokeLinecap="square" />
+        </svg>
+        <svg className="pointer-events-none absolute top-1.5 right-1.5 w-4 h-4 z-20" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M1 1H11L15 5V15" stroke="#00f5d4" strokeWidth="1.5" strokeLinecap="square" />
+        </svg>
+        <svg className="pointer-events-none absolute bottom-1.5 left-1.5 w-4 h-4 z-20" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M1 1V11L5 15H15" stroke="#00f5d4" strokeOpacity="0.6" strokeWidth="1.5" strokeLinecap="square" />
+        </svg>
+        <svg className="pointer-events-none absolute bottom-1.5 right-1.5 w-4 h-4 z-20" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M1 15H11L15 11V1" stroke="#00f5d4" strokeOpacity="0.6" strokeWidth="1.5" strokeLinecap="square" />
+        </svg>
 
-                    {/* Chart Style Switcher: Line (Robinhood 6982) vs Candles (TradingView 6984) */}
-                    <div className="flex items-center gap-1 bg-[#121624] p-1 rounded-xl border border-slate-800">
-                      <button
-                        onClick={() => {
-                          triggerHaptic("selection");
-                          setChartMode("line");
-                          try {
-                            localStorage.setItem("stockbloc_modal_chart_style", "line");
-                          } catch (e) {}
-                        }}
-                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 text-xs font-mono font-bold ${
-                          chartMode === "line"
-                            ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.25)]"
-                            : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                        }`}
-                        title="Sleek Line Chart (Robinhood 6982)"
-                      >
-                        <LineChart className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Line</span>
-                      </button>
+        {/* Controls Bar: Timeframe & Technical Indicator Toolbar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3 pb-3 border-b border-[#00f5d4]/20 text-xs">
+          {/* Timeframe Selector & Chart Style Switcher */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 bg-[#04141d]/90 p-1 border border-[#00f5d4]/25">
+              {(["1D", "1W", "1M", "1Y", "ALL"] as TimeFrame[]).map((tf) => (
+                <button
+                  key={tf}
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setTimeframe(tf);
+                    setHoverIndex(null);
+                  }}
+                  className={`px-3 py-1 transition-all cursor-pointer active:scale-95 text-xs font-mono font-bold ${
+                    timeframe === tf
+                      ? "bg-[#00f5d4] text-[#020608] font-black shadow-[0_0_14px_rgba(0,245,212,0.5)]"
+                      : "text-cyan-200/75 hover:text-white hover:bg-[#00f5d4]/10"
+                  }`}
+                >
+                  {tf}
+                </button>
+              ))}
+            </div>
 
-                      <button
-                        onClick={() => {
-                          triggerHaptic("selection");
-                          setChartMode("candle");
-                          try {
-                            localStorage.setItem("stockbloc_modal_chart_style", "candle");
-                          } catch (e) {}
-                        }}
-                        className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 text-xs font-mono font-bold ${
-                          chartMode === "candle"
-                            ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.25)]"
-                            : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                        }`}
-                        title="Japanese Candlestick Chart (TradingView 6984)"
-                      >
-                        <CandlestickChart className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Candles</span>
-                      </button>
-                    </div>
-                  </div>
+            {/* Chart Style Switcher: Line vs Candles */}
+            <div className="flex items-center gap-1 bg-[#04141d]/90 p-1 border border-[#00f5d4]/25">
+              <button
+                onClick={() => {
+                  triggerHaptic("selection");
+                  setChartMode("line");
+                  try {
+                    localStorage.setItem("stockbloc_modal_chart_style", "line");
+                  } catch (e) {}
+                }}
+                className={`px-2.5 py-1 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-mono font-bold ${
+                  chartMode === "line"
+                    ? "bg-[#00f5d4]/20 text-[#00f5d4] border border-[#00f5d4]/60 shadow-[0_0_12px_rgba(0,245,212,0.28)]"
+                    : "text-slate-400 hover:text-cyan-200 hover:bg-[#00f5d4]/10 border border-transparent"
+                }`}
+                title="Holographic Plasma Line Beam"
+              >
+                <LineChart className="w-3.5 h-3.5 text-[#00f5d4]" />
+                <span>Beam</span>
+              </button>
 
-                  {/* Technical Indicator Toggles */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {/* 50-Day SMA Toggle */}
+              <button
+                onClick={() => {
+                  triggerHaptic("selection");
+                  setChartMode("candle");
+                  try {
+                    localStorage.setItem("stockbloc_modal_chart_style", "candle");
+                  } catch (e) {}
+                }}
+                className={`px-2.5 py-1 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-mono font-bold ${
+                  chartMode === "candle"
+                    ? "bg-[#00f5d4]/20 text-[#00f5d4] border border-[#00f5d4]/60 shadow-[0_0_12px_rgba(0,245,212,0.28)]"
+                    : "text-slate-400 hover:text-cyan-200 hover:bg-[#00f5d4]/10 border border-transparent"
+                }`}
+                title="Heikin-Ashi Crystal Candles"
+              >
+                <CandlestickChart className="w-3.5 h-3.5 text-[#00f5d4]" />
+                <span>Candles</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Technical Indicator Toggles */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* 50-Day SMA Toggle */}
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setShowSMA(!showSMA);
+              }}
+              className={`px-2.5 py-1 border font-mono font-semibold flex items-center gap-1.5 text-xs transition-all cursor-pointer active:scale-95 ${
+                showSMA
+                  ? "bg-amber-500/18 text-amber-300 border-amber-400/55 shadow-[0_0_10px_rgba(245,158,11,0.2)]"
+                  : "bg-[#04141d]/85 text-slate-400 border-[#00f5d4]/20 hover:text-cyan-200"
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span>50 SMA</span>
+            </button>
+
+            {/* VWAP Toggle */}
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setShowVWAP(!showVWAP);
+              }}
+              className={`px-2.5 py-1 border font-mono font-semibold flex items-center gap-1.5 text-xs transition-all cursor-pointer active:scale-95 ${
+                showVWAP
+                  ? "bg-purple-500/20 text-purple-300 border-purple-400/55 shadow-[0_0_10px_rgba(168,85,247,0.25)]"
+                  : "bg-[#04141d]/85 text-slate-400 border-[#00f5d4]/20 hover:text-cyan-200"
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full bg-[#a855f7]" />
+              <span>VWAP</span>
+            </button>
+
+            {/* RSI Toggle */}
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setShowRSI(!showRSI);
+              }}
+              className={`px-2.5 py-1 border font-mono font-semibold flex items-center gap-1.5 text-xs transition-all cursor-pointer active:scale-95 ${
+                showRSI
+                  ? "bg-[#00e5ff]/18 text-[#00e5ff] border-[#00e5ff]/55"
+                  : "bg-[#04141d]/85 text-slate-400 border-[#00f5d4]/20 hover:text-cyan-200"
+              }`}
+            >
+              <Activity className="w-3.5 h-3.5 text-[#00e5ff]" />
+              <span>RSI (14)</span>
+            </button>
+
+            {/* Trendline Tool Toggle */}
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setIsTrendlineActive(!isTrendlineActive);
+              }}
+              className={`px-2.5 py-1 border font-mono font-semibold flex items-center gap-1.5 text-xs transition-all cursor-pointer active:scale-95 ${
+                isTrendlineActive
+                  ? "bg-amber-500/20 text-amber-300 border-amber-400/55"
+                  : "bg-[#04141d]/85 text-slate-400 border-[#00f5d4]/20 hover:text-cyan-200"
+              }`}
+            >
+              <PenTool className="w-3.5 h-3.5 text-amber-400" />
+              <span>Vector</span>
+            </button>
+
+            {/* Benchmark Overlay Toggle */}
+            <button
+              onClick={() => {
+                triggerHaptic("selection");
+                setShowOverlay(!showOverlay);
+                setHoverIndex(null);
+              }}
+              className={`px-2.5 py-1 border font-mono font-semibold flex items-center gap-1.5 text-xs transition-all cursor-pointer active:scale-95 ${
+                showOverlay
+                  ? "bg-[#00f5d4]/18 text-[#00f5d4] border-[#00f5d4]/55"
+                  : "bg-[#04141d]/85 text-slate-400 border-[#00f5d4]/20 hover:text-cyan-200"
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5 text-[#00f5d4]" />
+              <span>Overlay</span>
+            </button>
+
+            {/* Benchmark Selector when Overlay is ON */}
+            {showOverlay && (
+              <div className="flex items-center gap-1 bg-[#04141d] p-0.5 border border-[#00f5d4]/25">
+                {(["SPY", "QQQ", "DIA"] as const).map((sym) => {
+                  const isActive = benchmarkSymbol === sym;
+                  return (
                     <button
+                      key={sym}
                       onClick={() => {
                         triggerHaptic("selection");
-                        setShowSMA(!showSMA);
-                      }}
-                      className={`px-2.5 py-1.2 rounded-lg border font-mono font-semibold flex items-center gap-1.5 text-xs transition-all cursor-pointer active:scale-95 ${
-                        showSMA
-                          ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
-                          : "bg-[#121624] text-slate-400 border-slate-800 hover:text-slate-200"
-                      }`}
-                    >
-                      <span className="w-2 h-2 rounded-full bg-amber-400" />
-                      <span>50 SMA</span>
-                    </button>
-
-                    {/* VWAP Toggle */}
-                    <button
-                      onClick={() => {
-                        triggerHaptic("selection");
-                        setShowVWAP(!showVWAP);
-                      }}
-                      className={`px-2.5 py-1.2 rounded-lg border font-mono font-semibold flex items-center gap-1.5 text-xs transition-all cursor-pointer active:scale-95 ${
-                        showVWAP
-                          ? "bg-indigo-500/15 text-indigo-300 border-indigo-500/40"
-                          : "bg-[#121624] text-slate-400 border-slate-800 hover:text-slate-200"
-                      }`}
-                    >
-                      <span className="w-2 h-2 rounded-full bg-indigo-400" />
-                      <span>VWAP</span>
-                    </button>
-
-                    {/* RSI Toggle */}
-                    <button
-                      onClick={() => {
-                        triggerHaptic("selection");
-                        setShowRSI(!showRSI);
-                      }}
-                      className={`px-2.5 py-1.2 rounded-lg border font-mono font-semibold flex items-center gap-1.5 text-xs transition-all cursor-pointer active:scale-95 ${
-                        showRSI
-                          ? "bg-sky-500/15 text-sky-300 border-sky-500/40"
-                          : "bg-[#121624] text-slate-400 border-slate-800 hover:text-slate-200"
-                      }`}
-                    >
-                      <Activity className="w-3.5 h-3.5 text-sky-400" />
-                      <span>RSI (14)</span>
-                    </button>
-
-                    {/* Trendline Tool Toggle */}
-                    <button
-                      onClick={() => {
-                        triggerHaptic("selection");
-                        setIsTrendlineActive(!isTrendlineActive);
-                      }}
-                      className={`px-2.5 py-1.2 rounded-lg border font-mono font-semibold flex items-center gap-1.5 text-xs transition-all cursor-pointer active:scale-95 ${
-                        isTrendlineActive
-                          ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
-                          : "bg-[#121624] text-slate-400 border-slate-800 hover:text-slate-200"
-                      }`}
-                    >
-                      <PenTool className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Trendline</span>
-                    </button>
-
-                    {/* Benchmark Overlay Toggle */}
-                    <button
-                      onClick={() => {
-                        triggerHaptic("selection");
-                        setShowOverlay(!showOverlay);
+                        setBenchmarkSymbol(sym);
                         setHoverIndex(null);
                       }}
-                      className={`px-2.5 py-1.2 rounded-lg border font-mono font-semibold flex items-center gap-1.5 text-xs transition-all cursor-pointer active:scale-95 ${
-                        showOverlay
-                          ? "bg-cyan-500/15 text-cyan-300 border-cyan-500/40"
-                          : "bg-[#121624] text-slate-400 border-slate-800 hover:text-slate-200"
+                      className={`px-2 py-0.5 font-mono text-xs font-bold transition-all cursor-pointer ${
+                        isActive
+                          ? "bg-[#00f5d4] text-[#020608]"
+                          : "text-cyan-200/75 hover:text-white"
                       }`}
                     >
-                      <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Overlay</span>
+                      vs {sym}
                     </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
 
-                    {/* Benchmark Selector Pills when Overlay is ON */}
-                    {showOverlay && (
-                      <div className="flex items-center gap-1 bg-[#121624] p-1 rounded-lg border border-slate-800">
-                        {(["SPY", "QQQ", "DIA"] as const).map((sym) => {
-                          const isActive = benchmarkSymbol === sym;
-                          return (
-                            <button
-                              key={sym}
-                              onClick={() => {
-                                triggerHaptic("selection");
-                                setBenchmarkSymbol(sym);
-                                setHoverIndex(null);
-                              }}
-                              className={`px-2 py-0.5 rounded font-mono text-xs font-bold transition-all cursor-pointer ${
-                                isActive
-                                  ? "bg-slate-700 text-white"
-                                  : "text-slate-400 hover:text-slate-200"
-                              }`}
-                            >
-                              vs {sym}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
+        {/* Historical Benchmark Legend & Alpha Banner */}
+        {showOverlay && !isQuotePending && (
+          <div className="mb-3 p-2.5 bg-[#04141d]/90 border border-[#00f5d4]/30 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="w-3 h-1"
+                  style={{
+                    backgroundColor: isPositive ? "#00ff9d" : "#fb7185",
+                  }}
+                />
+                <span className="font-extrabold text-white">
+                  ${stock.symbol}:
+                </span>
+                <span
+                  className={`font-black tabular-nums-strict ${hoveredStockReturn >= 0 ? "text-[#00ff9d]" : "text-rose-400"}`}
+                >
+                  {hoveredStockReturn >= 0 ? "+" : ""}
+                  {hoveredStockReturn.toFixed(2)}%
+                </span>
+              </div>
 
-                {/* Historical Benchmark Legend & Alpha Banner */}
-                {showOverlay && (
-                  <div className="mb-3 p-2.5 rounded-xl bg-[#030e1a]/90 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-                    <div className="flex items-center gap-3 flex-wrap">
-                      {/* Main Stock Return */}
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className="w-3 h-1 rounded-full"
-                          style={{
-                            backgroundColor: isPositive ? "#00ff88" : "#ff3b3b",
-                          }}
-                        />
-                        <span className="font-extrabold text-white">
-                          ${stock.symbol}:
-                        </span>
-                        <span
-                          className={`font-black ${hoveredStockReturn >= 0 ? "text-emerald-400" : "text-rose-400"}`}
-                        >
-                          {hoveredStockReturn >= 0 ? "+" : ""}
-                          {hoveredStockReturn.toFixed(2)}%
-                        </span>
-                      </div>
+              <span className="text-cyan-900">|</span>
 
-                      <span className="text-neutral-600">|</span>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="w-3 h-0.5 border-t-2 border-dashed"
+                  style={{ borderColor: activeBenchmark.color }}
+                />
+                <span className="font-extrabold text-cyan-100">
+                  {benchmarkSymbol}:
+                </span>
+                <span
+                  className={`font-black tabular-nums-strict ${hoveredBenchReturn >= 0 ? "text-[#00ff9d]" : "text-rose-400"}`}
+                >
+                  {hoveredBenchReturn >= 0 ? "+" : ""}
+                  {hoveredBenchReturn.toFixed(2)}%
+                </span>
+              </div>
+            </div>
 
-                      {/* Benchmark Return */}
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className="w-3 h-0.5 border-t-2 border-dashed"
-                          style={{ borderColor: activeBenchmark.color }}
-                        />
-                        <span className="font-extrabold text-neutral-200">
-                          {benchmarkSymbol}:
-                        </span>
-                        <span
-                          className={`font-black ${hoveredBenchReturn >= 0 ? "text-emerald-400" : "text-rose-400"}`}
-                        >
-                          {hoveredBenchReturn >= 0 ? "+" : ""}
-                          {hoveredBenchReturn.toFixed(2)}%
-                        </span>
-                      </div>
-                    </div>
+            <div
+              className={`px-2 py-0.5 border text-[11px] font-black flex items-center gap-1 tabular-nums-strict ${
+                hoveredAlpha >= 0
+                  ? "bg-[#00ff9d]/15 text-[#00ff9d] border-[#00ff9d]/40"
+                  : "bg-rose-500/15 text-rose-300 border-rose-500/40"
+              }`}
+            >
+              <span>Alpha:</span>
+              <span>
+                {hoveredAlpha >= 0 ? "+" : ""}
+                {hoveredAlpha.toFixed(2)}%
+              </span>
+              <span className="text-[9px] uppercase font-bold opacity-80">
+                vs {benchmarkSymbol}
+              </span>
+            </div>
+          </div>
+        )}
 
-                    {/* Relative Alpha Performance Badge */}
-                    <div
-                      className={`px-2 py-0.5 rounded-lg border text-[11px] font-black flex items-center gap-1 ${
-                        hoveredAlpha >= 0
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                          : "bg-rose-500/20 text-rose-300 border-rose-500/30"
-                      }`}
-                    >
-                      <span>Alpha:</span>
-                      <span>
-                        {hoveredAlpha >= 0 ? "+" : ""}
-                        {hoveredAlpha.toFixed(2)}%
-                      </span>
-                      <span className="text-[9px] uppercase font-bold opacity-80">
-                        vs {benchmarkSymbol}
-                      </span>
-                    </div>
-                  </div>
+        {/* High Density Holographic Telemetry Strip */}
+        <div className="mb-2.5 px-3 py-2 bg-[#04141d]/85 border border-[#00f5d4]/22 backdrop-blur-md flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-cyan-100 font-bold flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span
+                  className={`xeno-beacon-ring absolute inline-flex h-full w-full rounded-full ${
+                    isQuotePending
+                      ? "bg-amber-400"
+                      : isPositive
+                        ? "bg-[#00f5d4]"
+                        : "bg-rose-400"
+                  }`}
+                />
+                <span
+                  className={`relative inline-flex rounded-full h-2 w-2 ${
+                    isQuotePending
+                      ? "bg-amber-400"
+                      : isPositive
+                        ? "bg-[#00ff9d]"
+                        : "bg-rose-400"
+                  }`}
+                />
+              </span>
+              <span className="text-white font-extrabold tracking-wider">
+                {stock.symbol}
+              </span>
+              <span className="text-cyan-300/75 text-[11px]">
+                {isQuotePending
+                  ? "[AWAITING FEED]"
+                  : `(${hoverIndex !== null ? activeCandle.time : "LIVE BEAM"})`}
+              </span>
+            </span>
+
+            {isQuotePending ? (
+              <span className="text-amber-300 font-bold tracking-wider uppercase text-[11px]">
+                QUOTE PENDING · LIVE NASDAQ TELEMETRY ONLY
+              </span>
+            ) : chartMode === "line" ? (
+              <>
+                <span className="text-cyan-300/70">
+                  LOCK{" "}
+                  <strong className="text-white font-bold text-sm tabular-nums-strict">
+                    ${activeCandle.close.toFixed(2)}
+                  </strong>
+                </span>
+                <span className="text-cyan-300/70 border-l border-[#00f5d4]/20 pl-2.5">
+                  VOL{" "}
+                  <strong className="text-[#00f5d4] tabular-nums-strict">
+                    {activeCandle.volume
+                      ? `${(activeCandle.volume / 1000).toFixed(1)}k`
+                      : "—"}
+                  </strong>
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="text-cyan-300/70">
+                  O <strong className="text-slate-100 tabular-nums-strict">${activeCandle.open.toFixed(2)}</strong>
+                </span>
+                <span className="text-cyan-300/70">
+                  H <strong className="text-[#00ff9d] tabular-nums-strict">${activeCandle.high.toFixed(2)}</strong>
+                </span>
+                <span className="text-cyan-300/70">
+                  L <strong className="text-rose-400 tabular-nums-strict">${activeCandle.low.toFixed(2)}</strong>
+                </span>
+                <span className="text-cyan-300/70">
+                  C{" "}
+                  <strong className={`tabular-nums-strict font-bold ${activeCandle.isUp ? "text-[#00ff9d]" : "text-rose-400"}`}>
+                    ${activeCandle.close.toFixed(2)}
+                  </strong>
+                </span>
+                <span className="text-cyan-300/70 border-l border-[#00f5d4]/20 pl-2">
+                  VOL{" "}
+                  <strong className="text-[#00f5d4] tabular-nums-strict">
+                    {activeCandle.volume
+                      ? `${(activeCandle.volume / 1000).toFixed(1)}k`
+                      : "—"}
+                  </strong>
+                </span>
+              </>
+            )}
+
+            {!isQuotePending && showSMA && activeSma !== undefined && (
+              <span className="text-cyan-300/70 border-l border-[#00f5d4]/20 pl-2.5">
+                SMA(50) <strong className="text-amber-300 tabular-nums-strict">${activeSma.toFixed(2)}</strong>
+              </span>
+            )}
+            {!isQuotePending && showVWAP && activeVwap !== undefined && (
+              <span className="text-cyan-300/70 border-l border-[#00f5d4]/20 pl-2.5">
+                VWAP <strong className="text-purple-300 tabular-nums-strict">${activeVwap.toFixed(2)}</strong>
+              </span>
+            )}
+            {!isQuotePending && showRSI && activeRsi !== undefined && (
+              <span className="text-cyan-300/70 border-l border-[#00f5d4]/20 pl-2.5">
+                RSI(14){" "}
+                <strong
+                  className={`tabular-nums-strict font-bold ${
+                    activeRsi >= 70
+                      ? "text-amber-300"
+                      : activeRsi <= 30
+                        ? "text-[#00ff9d]"
+                        : "text-[#00e5ff]"
+                  }`}
+                >
+                  {activeRsi.toFixed(1)}
+                </strong>
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Zoom Controls */}
+            {!isQuotePending && (
+              <div className="flex items-center gap-1 bg-[#020608]/90 p-0.5 border border-[#00f5d4]/25">
+                <button
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    const next = Math.max(1.0, Number((zoomLevel - 0.5).toFixed(1)));
+                    setZoomLevel(next);
+                    if (next === 1.0) setPanOffset(0.0);
+                  }}
+                  disabled={zoomLevel <= 1.0}
+                  title="Zoom Out"
+                  className="p-1 text-cyan-300/80 hover:text-white disabled:opacity-30 cursor-pointer"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+
+                <span className="px-1 text-[11px] font-mono text-cyan-200 min-w-[28px] text-center tabular-nums-strict">
+                  {zoomLevel.toFixed(1)}x
+                </span>
+
+                <button
+                  onClick={() => {
+                    triggerHaptic("selection");
+                    setZoomLevel((z) => Math.min(5.0, Number((z + 0.5).toFixed(1))));
+                  }}
+                  disabled={zoomLevel >= 5.0}
+                  title="Zoom In"
+                  className="p-1 text-cyan-300/80 hover:text-white disabled:opacity-30 cursor-pointer"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+
+                {zoomLevel > 1.01 && (
+                  <button
+                    onClick={() => {
+                      triggerHaptic("selection");
+                      setZoomLevel(1.0);
+                      setPanOffset(0.0);
+                    }}
+                    title="Reset Zoom"
+                    className="p-1 ml-0.5 text-rose-400 hover:bg-rose-500/20 cursor-pointer text-[10px] font-bold"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                  </button>
                 )}
+              </div>
+            )}
 
-                {/* High Density Header HUD (Dynamic for Line vs Candle) */}
-                <div className="glass mb-2 p-2 rounded-xl flex flex-wrap items-center justify-between gap-2 text-xs font-mono">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="text-slate-300 font-bold flex items-center gap-1.5">
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          chartMode === "line"
-                            ? isPositive
-                              ? "bg-[#00c805]"
-                              : "bg-[#ff3b30]"
-                            : activeCandle.isUp
-                              ? "bg-emerald-400"
-                              : "bg-rose-400"
-                        } animate-pulse`}
-                      />
-                      <span className="text-slate-200 font-bold">
-                        {stock.symbol}
-                      </span>
-                      <span className="text-slate-400 text-[11px]">
-                        ({hoverIndex !== null ? activeCandle.time : "Latest"}):
-                      </span>
-                    </span>
+            {!isQuotePending && (
+              <span
+                className={`px-2 py-0.5 text-[11px] font-bold font-mono tabular-nums-strict border ${
+                  activeCandle.isUp
+                    ? "bg-[#00ff9d]/12 text-[#00ff9d] border-[#00ff9d]/40"
+                    : "bg-rose-500/12 text-rose-300 border-rose-500/40"
+                }`}
+              >
+                {activeCandle.isUp ? "+" : ""}
+                {activeCandle.changePercent.toFixed(2)}%
+              </span>
+            )}
+          </div>
+        </div>
 
-                    {chartMode === "line" ? (
-                      <>
-                        <span className="text-slate-400">
-                          Price{" "}
-                          <strong className="text-white font-bold text-sm font-mono">
-                            ${activeCandle.close.toFixed(2)}
-                          </strong>
-                        </span>
-                        <span className="text-slate-400 border-l border-slate-800 pl-2.5">
-                          Vol{" "}
-                          <strong className="text-cyan-300">
-                            {activeCandle.volume
-                              ? `${(activeCandle.volume / 1000).toFixed(1)}k`
-                              : "Norm"}
-                          </strong>
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-slate-400">
-                          O{" "}
-                          <strong className="text-slate-200">
-                            ${activeCandle.open.toFixed(2)}
-                          </strong>
-                        </span>
-                        <span className="text-slate-400">
-                          H{" "}
-                          <strong className="text-emerald-400">
-                            ${activeCandle.high.toFixed(2)}
-                          </strong>
-                        </span>
-                        <span className="text-slate-400">
-                          L{" "}
-                          <strong className="text-rose-400">
-                            ${activeCandle.low.toFixed(2)}
-                          </strong>
-                        </span>
-                        <span className="text-slate-400">
-                          C{" "}
-                          <strong
-                            className={
-                              activeCandle.isUp
-                                ? "text-emerald-400 font-bold"
-                                : "text-rose-400 font-bold"
-                            }
-                          >
-                            ${activeCandle.close.toFixed(2)}
-                          </strong>
-                        </span>
-                        <span className="text-slate-400 border-l border-slate-800 pl-2">
-                          Vol{" "}
-                          <strong className="text-cyan-300">
-                            {activeCandle.volume
-                              ? `${(activeCandle.volume / 1000).toFixed(1)}k`
-                              : "Norm"}
-                          </strong>
-                        </span>
-                      </>
-                    )}
+        {/* Interactive Alien Holographic Chamber Viewport */}
+        <div
+          className="relative w-full h-64 sm:h-72 md:h-80 select-none touch-none cursor-crosshair overflow-hidden border border-[#00f5d4]/30 bg-[#020608] shadow-[inset_0_0_54px_rgba(0,245,212,0.08)]"
+          style={{ touchAction: "none" }}
+          onTouchStart={!isQuotePending ? handleTouchStart : undefined}
+          onTouchMove={!isQuotePending ? handleTouchMove : undefined}
+          onTouchEnd={!isQuotePending ? handleTouchEnd : undefined}
+          onWheel={!isQuotePending ? handleWheelZoom : undefined}
+          onMouseDown={!isQuotePending ? handleMouseDown : undefined}
+          onMouseMove={!isQuotePending ? handleMouseMove : undefined}
+          onMouseUp={!isQuotePending ? handleMouseUp : undefined}
+          onMouseLeave={() => {
+            handleMouseUp();
+            setHoverIndex(null);
+          }}
+        >
+          {isQuotePending ? (
+            /* Authentic Holographic Chamber Standby State (ZERO Fabricated Prices or Candles) */
+            <div className="relative w-full h-full flex flex-col items-center justify-center p-6 text-center overflow-hidden">
+              <svg
+                viewBox="0 0 600 280"
+                className="absolute inset-0 w-full h-full pointer-events-none opacity-65"
+                aria-hidden="true"
+              >
+                <defs>
+                  <radialGradient id="pendingChamberGlow" cx="50%" cy="50%" r="55%">
+                    <stop offset="0%" stopColor="#00f5d4" stopOpacity="0.16" />
+                    <stop offset="55%" stopColor="#a855f7" stopOpacity="0.06" />
+                    <stop offset="100%" stopColor="#020608" stopOpacity="0" />
+                  </radialGradient>
+                </defs>
+                <rect x="0" y="0" width="600" height="280" fill="#020608" />
+                <ellipse cx="300" cy="140" rx="250" ry="118" fill="url(#pendingChamberGlow)" />
+                <ellipse cx="300" cy="140" rx="220" ry="102" fill="none" stroke="rgba(0,245,212,0.14)" strokeWidth="1" strokeDasharray="4 6" />
+                <ellipse cx="300" cy="140" rx="150" ry="70" fill="none" stroke="rgba(0,229,255,0.16)" strokeWidth="1" strokeDasharray="3 5" />
+                <circle cx="300" cy="140" r="46" fill="none" stroke="rgba(245,158,11,0.28)" strokeWidth="1" strokeDasharray="6 4" className="xeno-reticle-orbit" />
+                <line x1="0" y1="140" x2="600" y2="140" stroke="rgba(0,245,212,0.12)" strokeWidth="1" strokeDasharray="3 6" />
+                <line x1="300" y1="0" x2="300" y2="280" stroke="rgba(0,245,212,0.12)" strokeWidth="1" strokeDasharray="3 6" />
+              </svg>
 
-                    {showSMA && activeSma !== undefined && (
-                      <span className="text-slate-400 border-l border-slate-800 pl-2.5">
-                        SMA(50){" "}
-                        <strong className="text-amber-300">
-                          ${activeSma.toFixed(2)}
-                        </strong>
-                      </span>
-                    )}
-                    {showVWAP && activeVwap !== undefined && (
-                      <span className="text-slate-400 border-l border-slate-800 pl-2.5">
-                        VWAP{" "}
-                        <strong className="text-indigo-300">
-                          ${activeVwap.toFixed(2)}
-                        </strong>
-                      </span>
-                    )}
-                    {showRSI && activeRsi !== undefined && (
-                      <span className="text-slate-400 border-l border-slate-800 pl-2.5">
-                        RSI(14){" "}
-                        <strong
-                          className={
-                            activeRsi >= 70
-                              ? "text-amber-300 font-bold"
-                              : activeRsi <= 30
-                                ? "text-emerald-300 font-bold"
-                                : "text-sky-300 font-bold"
-                          }
-                        >
-                          {activeRsi.toFixed(1)}
-                        </strong>
-                      </span>
-                    )}
-                  </div>
+              <div className="relative z-10 max-w-md px-5 py-4 bg-[#04141d]/88 border border-[#00f5d4]/35 backdrop-blur-xl shadow-[0_0_32px_rgba(0,245,212,0.14)]">
+                <div className="inline-flex items-center gap-2 px-2.5 py-0.5 mb-2.5 bg-amber-500/15 border border-amber-400/45 text-amber-300 text-[10px] font-mono font-bold tracking-[0.16em] uppercase">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                  <span>LIVE QUOTE PENDING</span>
+                </div>
+                <h4 className="text-sm sm:text-base font-display font-black tracking-wider text-white uppercase">
+                  {stock.symbol} · {stock.name}
+                </h4>
+                <p className="text-xs font-mono text-cyan-100/80 mt-1.5 leading-relaxed">
+                  {stock.symbol.toUpperCase() === "ANT"
+                    ? "Live on Nasdaq (Debuted Nov 19, 2026 · IPO $83.00 · First-Day Close $97.17, +17.07%). Awaiting live market quote & intraday candle feed — synthetic chart data is disabled."
+                    : "Awaiting verified live quote ticks from exchange feed. Stock Bloc never fabricates price curves or volume bars."}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Floating Chamber Telemetry & Zoom Readout */}
+              <div className="absolute top-2 left-2 z-10 px-2.5 py-1 bg-[#04141d]/88 border border-[#00f5d4]/35 text-[10px] font-mono text-[#00f5d4] flex items-center gap-1.5 shadow-lg backdrop-blur-md pointer-events-none">
+                {zoomLevel > 1.05 ? (
+                  <>
+                    <Move className="w-3 h-3 text-[#00f5d4] animate-pulse" />
+                    <span>OPTICAL LOCK {zoomLevel.toFixed(1)}x · DRAG TO PAN</span>
+                  </>
+                ) : (
+                  <>
+                    <Target className="w-3 h-3 text-[#00f5d4]" />
+                    <span>HOLO-CHAMBER · SCRUB OR SCROLL TO ZOOM</span>
+                  </>
+                )}
+              </div>
 
-                  <div className="flex items-center gap-2">
-                    {/* Zoom Controls */}
-                    <div className="flex items-center gap-1 bg-[#121624] p-0.5 rounded border border-slate-800">
-                      <button
-                        onClick={() => {
-                          triggerHaptic("selection");
-                          const next = Math.max(
-                            1.0,
-                            Number((zoomLevel - 0.5).toFixed(1)),
-                          );
-                          setZoomLevel(next);
-                          if (next === 1.0) setPanOffset(0.0);
-                        }}
-                        disabled={zoomLevel <= 1.0}
-                        title="Zoom Out"
-                        className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30 cursor-pointer"
-                      >
-                        <ZoomOut className="w-3.5 h-3.5" />
-                      </button>
+              {/* Floating Guidance for Trendline Tool */}
+              {isTrendlineActive && (
+                <div className="absolute top-2 right-16 z-10 px-2.5 py-1 bg-[#181004]/90 border border-amber-400/55 text-[10px] font-mono text-amber-300 flex items-center gap-1.5 shadow-lg backdrop-blur-md pointer-events-none">
+                  <PenTool className="w-3 h-3 text-amber-400 animate-bounce" />
+                  <span>
+                    {trendline
+                      ? "Drag to re-calibrate vector"
+                      : "Click & drag to project vector"}
+                  </span>
+                </div>
+              )}
 
-                      <span className="px-1 text-[11px] font-mono text-slate-300 min-w-[28px] text-center">
-                        {zoomLevel.toFixed(1)}x
-                      </span>
-
-                      <button
-                        onClick={() => {
-                          triggerHaptic("selection");
-                          setZoomLevel((z) =>
-                            Math.min(5.0, Number((z + 0.5).toFixed(1))),
-                          );
-                        }}
-                        disabled={zoomLevel >= 5.0}
-                        title="Zoom In"
-                        className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30 cursor-pointer"
-                      >
-                        <ZoomIn className="w-3.5 h-3.5" />
-                      </button>
-
-                      {zoomLevel > 1.01 && (
-                        <button
-                          onClick={() => {
-                            triggerHaptic("selection");
-                            setZoomLevel(1.0);
-                            setPanOffset(0.0);
-                          }}
-                          title="Reset Zoom"
-                          className="p-1 ml-0.5 rounded text-rose-400 hover:bg-rose-500/20 cursor-pointer text-[10px] font-bold"
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-
+              {/* Refractive Dark-Teal Liquid-Glass Targeting HUD Tooltip */}
+              {hoverIndex !== null && activeCandle && (
+                <div
+                  className="absolute pointer-events-none z-20 px-3 py-2 bg-[#04141d]/92 border border-[#00f5d4]/50 backdrop-blur-xl text-xs flex flex-col gap-0.5 shadow-[0_0_24px_rgba(0,245,212,0.22)] transition-all duration-75"
+                  style={{
+                    left: Math.min(
+                      Math.max(
+                        8,
+                        (hoverIndex / Math.max(1, candleOHLCData.length - 1)) *
+                          plotWidth -
+                          70,
+                      ),
+                      plotWidth - 152,
+                    ),
+                    top: 10,
+                  }}
+                >
+                  <span className="pointer-events-none absolute top-0 left-0 w-2 h-2 border-t border-l border-[#00ff9d]" />
+                  <span className="pointer-events-none absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#00f5d4]" />
+                  <div className="flex items-center justify-between gap-3 text-[10px] text-cyan-200/80 font-mono">
+                    <span className="font-bold uppercase tracking-wider">{activeCandle.time}</span>
                     <span
-                      className={`px-2 py-0.5 rounded text-[11px] font-bold font-mono ${activeCandle.isUp ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30" : "bg-rose-500/10 text-rose-400 border border-rose-500/30"}`}
+                      className={`font-black tabular-nums-strict ${
+                        activeCandle.isUp ? "text-[#00ff9d]" : "text-rose-400"
+                      }`}
                     >
                       {activeCandle.isUp ? "+" : ""}
                       {activeCandle.changePercent.toFixed(2)}%
                     </span>
                   </div>
-                </div>
-
-                {/* Interactive Chart Stage with Pinch-to-Zoom & Pan */}
-                <div
-                  className="relative w-full h-64 sm:h-72 md:h-80 select-none touch-none cursor-crosshair overflow-hidden rounded-xl border border-white/10 bg-[#070a12] shadow-inner"
-                  style={{ touchAction: "none" }}
-                  onTouchStart={handleTouchStart}
-                  onTouchMove={handleTouchMove}
-                  onTouchEnd={handleTouchEnd}
-                  onWheel={handleWheelZoom}
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={() => {
-                    handleMouseUp();
-                    setHoverIndex(null);
-                  }}
-                >
-                  {/* Floating Gesture & Zoom Indicator */}
-                  <div className="absolute top-2 left-2 z-10 px-2.5 py-1 rounded-lg bg-black/80 border border-cyan-500/40 text-[10px] font-mono text-cyan-300 flex items-center gap-1.5 shadow-lg backdrop-blur-md pointer-events-none">
-                    {zoomLevel > 1.05 ? (
-                      <>
-                        <Move className="w-3 h-3 text-cyan-400 animate-pulse" />
-                        <span>
-                          Zoomed {zoomLevel.toFixed(1)}x • Drag to Pan
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <ZoomIn className="w-3 h-3 text-cyan-400" />
-                        <span>Pinch or scroll to Zoom</span>
-                      </>
-                    )}
+                  <div className="text-white font-black text-base tabular-nums-strict font-mono drop-shadow-[0_0_8px_rgba(0,245,212,0.35)]">
+                    ${activeCandle.close.toFixed(2)}
                   </div>
-
-                  {/* Floating Guidance for Trendline Tool */}
-                  {isTrendlineActive && (
-                    <div className="absolute top-2 right-16 z-10 px-2.5 py-1 rounded-lg bg-yellow-950/90 border border-yellow-500/50 text-[10px] font-mono text-yellow-300 flex items-center gap-1.5 shadow-lg backdrop-blur-md pointer-events-none">
-                      <PenTool className="w-3 h-3 text-yellow-400 animate-bounce" />
-                      <span>
-                        {trendline
-                          ? "Drag to re-draw line"
-                          : "Click & drag across chart to draw line"}
-                      </span>
+                  {activeCandle.volume ? (
+                    <div className="text-[10px] text-[#00f5d4] font-mono tabular-nums-strict">
+                      CRYSTAL VOL: {(activeCandle.volume / 1000).toFixed(1)}k
                     </div>
-                  )}
+                  ) : null}
+                </div>
+              )}
 
-                  {/* Floating Hover Tooltip Box Styled with .glass */}
-                  {hoverIndex !== null && activeCandle && (
-                    <div
-                      className="glass absolute pointer-events-none z-20 px-3 py-2 rounded-xl text-xs flex flex-col gap-0.5 shadow-xl transition-all duration-75"
-                      style={{
-                        left: Math.min(
-                          Math.max(
-                            8,
-                            (hoverIndex /
-                              Math.max(1, candleOHLCData.length - 1)) *
-                              plotWidth -
-                              65,
-                          ),
-                          plotWidth - 140,
-                        ),
-                        top: 10,
-                      }}
-                    >
-                      <div className="flex items-center justify-between gap-3 text-[11px] text-slate-300 font-sans">
-                        <span className="font-semibold">{activeCandle.time}</span>
-                        <span
-                          className={`font-bold ${
-                            activeCandle.isUp
-                              ? "text-emerald-400"
-                              : "text-rose-400"
-                          }`}
-                        >
-                          {activeCandle.isUp ? "+" : ""}
-                          {activeCandle.changePercent.toFixed(2)}%
-                        </span>
-                      </div>
-                      <div className="text-white font-bold text-base tabular-nums font-mono">
-                        ${activeCandle.close.toFixed(2)}
-                      </div>
-                      {activeCandle.volume ? (
-                        <div className="text-[10px] text-cyan-300 font-mono">
-                          Vol: {(activeCandle.volume / 1000).toFixed(1)}k
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
+              <svg
+                viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+                className="w-full h-full overflow-visible"
+              >
+                <defs>
+                  {/* Wide Atmospheric Outer Plasma Beam Bloom Filter */}
+                  <filter id="plasmaBeamOuterGlow" x="-20%" y="-35%" width="140%" height="170%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="4.8" result="outerBlur" />
+                    <feComponentTransfer in="outerBlur" result="softPlasma">
+                      <feFuncA type="linear" slope="0.72" />
+                    </feComponentTransfer>
+                    <feMerge>
+                      <feMergeNode in="softPlasma" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
 
-                  <svg
-                    viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-                    className="w-full h-full overflow-visible"
-                  >
-                    <defs>
-                      {/* Soft glow filter for the main price line */}
-                      <filter
-                        id="softLineGlow"
-                        x="-20%"
-                        y="-20%"
-                        width="140%"
-                        height="140%"
-                      >
-                        <feGaussianBlur
-                          in="SourceGraphic"
-                          stdDeviation="3"
-                          result="blur"
-                        />
-                        <feComponentTransfer in="blur" result="lowOpacityGlow">
-                          <feFuncA type="linear" slope="0.35" />
-                        </feComponentTransfer>
-                        <feMerge>
-                          <feMergeNode in="lowOpacityGlow" />
-                          <feMergeNode in="SourceGraphic" />
-                        </feMerge>
-                      </filter>
+                  {/* Crisp Core Glow Filter */}
+                  <filter id="softLineGlow" x="-15%" y="-25%" width="130%" height="150%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="2.1" result="blur" />
+                    <feComponentTransfer in="blur" result="lowOpacityGlow">
+                      <feFuncA type="linear" slope="0.55" />
+                    </feComponentTransfer>
+                    <feMerge>
+                      <feMergeNode in="lowOpacityGlow" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
 
-                      <linearGradient
-                        id="chartGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="#06b6d4"
-                          stopOpacity="0.4"
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="#10b981"
-                          stopOpacity="0.0"
-                        />
-                      </linearGradient>
+                  {/* Chamber Deep Bioluminescent Radial Backdrop */}
+                  <radialGradient id="chamberRadialCore" cx="48%" cy="32%" r="68%">
+                    <stop offset="0%" stopColor={isPositive ? "#00f5d4" : "#a855f7"} stopOpacity="0.11" />
+                    <stop offset="48%" stopColor="#041926" stopOpacity="0.32" />
+                    <stop offset="100%" stopColor="#020608" stopOpacity="0.98" />
+                  </radialGradient>
 
-                      {/* Area fill vertical linearGradient from line color at 35% opacity to 0% at bottom */}
-                      <linearGradient
-                        id="rhGradientUp"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="#10b981"
-                          stopOpacity="0.35"
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="#10b981"
-                          stopOpacity="0.0"
-                        />
-                      </linearGradient>
-                      <linearGradient
-                        id="rhGradientDown"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="#ef4444"
-                          stopOpacity="0.35"
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="#ef4444"
-                          stopOpacity="0.0"
-                        />
-                      </linearGradient>
+                  {/* Dual-Layer Beam Horizontal Stroke Gradients */}
+                  <linearGradient id="beamStrokeUp" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#00e5ff" />
+                    <stop offset="50%" stopColor="#00f5d4" />
+                    <stop offset="100%" stopColor="#00ff9d" />
+                  </linearGradient>
+                  <linearGradient id="beamStrokeDown" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#a855f7" />
+                    <stop offset="55%" stopColor="#f43f5e" />
+                    <stop offset="100%" stopColor="#fb7185" />
+                  </linearGradient>
 
-                      {/* Volume Bar Gradients with 40% Opacity */}
-                      <linearGradient
-                        id="volGradientUp"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="#10b981"
-                          stopOpacity="0.40"
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="#10b981"
-                          stopOpacity="0.10"
-                        />
-                      </linearGradient>
-                      <linearGradient
-                        id="volGradientDown"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="#ef4444"
-                          stopOpacity="0.40"
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="#ef4444"
-                          stopOpacity="0.10"
-                        />
-                      </linearGradient>
-                    </defs>
+                  {/* Holographic Energy Veil Under Price Beam */}
+                  <linearGradient id="rhGradientUp" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#00f5d4" stopOpacity="0.34" />
+                    <stop offset="45%" stopColor="#00ff9d" stopOpacity="0.11" />
+                    <stop offset="85%" stopColor="#a855f7" stopOpacity="0.03" />
+                    <stop offset="100%" stopColor="#020608" stopOpacity="0.0" />
+                  </linearGradient>
+                  <linearGradient id="rhGradientDown" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#fb7185" stopOpacity="0.32" />
+                    <stop offset="50%" stopColor="#a855f7" stopOpacity="0.12" />
+                    <stop offset="100%" stopColor="#020608" stopOpacity="0.0" />
+                  </linearGradient>
 
-                    {/* Dark TradingView Background Canvas */}
-                    <rect
-                      x="0"
-                      y="0"
-                      width={svgWidth}
-                      height={svgHeight}
-                      fill="#090d16"
+                  {/* Crystal Volume Pillar Gradients */}
+                  <linearGradient id="volCrystalUp" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#00ff9d" stopOpacity="0.62" />
+                    <stop offset="38%" stopColor="#00f5d4" stopOpacity="0.34" />
+                    <stop offset="100%" stopColor="#00e5ff" stopOpacity="0.08" />
+                  </linearGradient>
+                  <linearGradient id="volCrystalDown" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#fb7185" stopOpacity="0.58" />
+                    <stop offset="42%" stopColor="#a855f7" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#581c87" stopOpacity="0.08" />
+                  </linearGradient>
+                </defs>
+
+                {/* #020608 Obsidian Holographic Chamber Base */}
+                <rect x="0" y="0" width={svgWidth} height={svgHeight} fill="#020608" />
+                <rect x="0" y="0" width={plotWidth} height={plotBottom} fill="url(#chamberRadialCore)" />
+
+                {/* Alien Orbital Gridlines & Concentric Calibration Arcs */}
+                <g className="pointer-events-none" opacity="0.9">
+                  <ellipse
+                    cx={plotWidth * 0.5}
+                    cy={plotTop + plotHeight * 0.54}
+                    rx={plotWidth * 0.44}
+                    ry={plotHeight * 0.48}
+                    fill="none"
+                    stroke="rgba(0, 245, 212, 0.1)"
+                    strokeWidth="1"
+                    strokeDasharray="3 6"
+                  />
+                  <ellipse
+                    cx={plotWidth * 0.5}
+                    cy={plotTop + plotHeight * 0.54}
+                    rx={plotWidth * 0.29}
+                    ry={plotHeight * 0.32}
+                    fill="none"
+                    stroke="rgba(0, 229, 255, 0.12)"
+                    strokeWidth="0.9"
+                    strokeDasharray="2 5"
+                  />
+                  <circle
+                    cx={plotWidth * 0.5}
+                    cy={plotTop + plotHeight * 0.54}
+                    r={plotHeight * 0.16}
+                    fill="none"
+                    stroke="rgba(168, 85, 247, 0.16)"
+                    strokeWidth="0.85"
+                    strokeDasharray="4 4"
+                  />
+                  {/* Subtle vertical orbital meridian guides */}
+                  {[0.25, 0.5, 0.75].map((ratio) => (
+                    <line
+                      key={`meridian-${ratio}`}
+                      x1={plotWidth * ratio}
+                      y1={plotTop}
+                      x2={plotWidth * ratio}
+                      y2={plotBottom}
+                      stroke="rgba(0, 245, 212, 0.06)"
+                      strokeWidth="0.8"
+                      strokeDasharray="2 6"
                     />
+                  ))}
+                </g>
 
-                    {/* Horizontal Grid Lines & Y-Axis Scale (1px, rgba(255,255,255,0.06), dashed, horizontal only; 11px Inter, rgba(255,255,255,0.5)) */}
-                    {yAxisTicks.map((tick, i) => (
-                      <g key={tick.label + "_" + i}>
-                        <line
-                          x1="0"
-                          y1={tick.y}
-                          x2={plotWidth}
-                          y2={tick.y}
-                          stroke="rgba(255, 255, 255, 0.06)"
-                          strokeWidth="1"
-                          strokeDasharray="4 4"
-                        />
-                        <text
-                          x={plotWidth + 6}
-                          y={tick.y + 4}
-                          fill="rgba(255, 255, 255, 0.5)"
-                          fontSize="11"
-                          fontFamily="Inter, sans-serif"
-                          fontWeight="500"
-                        >
-                          {tick.label}
-                        </text>
-                      </g>
-                    ))}
-
-                    {/* Zero % Baseline line when Overlay is ON */}
-                    {showOverlay && (
-                      <>
-                        <line
-                          x1="0"
-                          y1={zeroY}
-                          x2={plotWidth}
-                          y2={zeroY}
-                          stroke="rgba(255, 255, 255, 0.25)"
-                          strokeWidth="1.5"
-                          strokeDasharray="4 4"
-                        />
-                        <text
-                          x={plotWidth - 80}
-                          y={zeroY - 4}
-                          fill="rgba(255, 255, 255, 0.5)"
-                          fontSize="11"
-                          fontFamily="Inter, sans-serif"
-                          fontWeight="bold"
-                        >
-                          0.0% Baseline
-                        </text>
-                      </>
-                    )}
-
-                    {/* Volume Histogram Baseline */}
+                {/* Horizontal Telemetry Gridlines & Right Y-Axis Scale */}
+                {yAxisTicks.map((tick, i) => (
+                  <g key={tick.label + "_" + i}>
                     <line
                       x1="0"
-                      y1={plotBottom}
+                      y1={tick.y}
                       x2={plotWidth}
-                      y2={plotBottom}
-                      stroke="rgba(255, 255, 255, 0.12)"
+                      y2={tick.y}
+                      stroke="rgba(0, 245, 212, 0.11)"
+                      strokeWidth="0.9"
+                      strokeDasharray="3 5"
+                    />
+                    <line
+                      x1={plotWidth - 4}
+                      y1={tick.y}
+                      x2={plotWidth}
+                      y2={tick.y}
+                      stroke="rgba(0, 245, 212, 0.45)"
                       strokeWidth="1"
                     />
+                    <text
+                      x={plotWidth + 6}
+                      y={tick.y + 3.5}
+                      fill="rgba(165, 243, 252, 0.68)"
+                      fontSize="10"
+                      fontFamily="'JetBrains Mono', monospace"
+                      fontWeight="600"
+                    >
+                      {tick.label}
+                    </text>
+                  </g>
+                ))}
 
-                    {/* Bottom Volume Histogram Bars (rx 2, gradient fill at 40% opacity) */}
-                    <g>
-                      {candleOHLCData.map((c, idx) => {
-                        const x =
-                          (idx / Math.max(1, candleOHLCData.length - 1)) *
-                          plotWidth;
-                        const pointSpacing =
-                          plotWidth / Math.max(1, candleOHLCData.length - 1);
-                        const barW = Math.max(2, pointSpacing * 0.65);
-                        const vol = c.volume || 1000;
-                        const volH = Math.max(2, (vol / maxVolume) * 22);
-                        const volY = plotBottom - volH;
-                        return (
-                          <rect
-                            key={`vol-${idx}`}
-                            x={x - barW / 2}
-                            y={volY}
-                            width={barW}
-                            height={volH}
-                            fill={c.isUp ? "url(#volGradientUp)" : "url(#volGradientDown)"}
-                            rx="2"
-                          />
-                        );
-                      })}
+                {/* Zero % Baseline line when Overlay is ON */}
+                {showOverlay && (
+                  <>
+                    <line
+                      x1="0"
+                      y1={zeroY}
+                      x2={plotWidth}
+                      y2={zeroY}
+                      stroke="rgba(0, 245, 212, 0.35)"
+                      strokeWidth="1.25"
+                      strokeDasharray="4 4"
+                    />
+                    <text
+                      x={plotWidth - 88}
+                      y={zeroY - 4}
+                      fill="rgba(0, 245, 212, 0.75)"
+                      fontSize="10"
+                      fontFamily="'JetBrains Mono', monospace"
+                      fontWeight="bold"
+                    >
+                      0.0% BASELINE
+                    </text>
+                  </>
+                )}
+
+                {/* Chamber Floor Baseline Rail */}
+                <line
+                  x1="0"
+                  y1={plotBottom}
+                  x2={plotWidth}
+                  y2={plotBottom}
+                  stroke="rgba(0, 245, 212, 0.28)"
+                  strokeWidth="1"
+                />
+                {/* Right Axis Divider Rail */}
+                <line
+                  x1={plotWidth}
+                  y1={plotTop}
+                  x2={plotWidth}
+                  y2={plotBottom}
+                  stroke="rgba(0, 245, 212, 0.16)"
+                  strokeWidth="1"
+                />
+
+                {/* Crystal Volume Pillars (Faceted Translucent Pillars + Luminous Top Cap Rim) */}
+                <g>
+                  {candleOHLCData.map((c, idx) => {
+                    const x =
+                      (idx / Math.max(1, candleOHLCData.length - 1)) * plotWidth;
+                    const pointSpacing =
+                      plotWidth / Math.max(1, candleOHLCData.length - 1);
+                    const barW = Math.max(3, Math.min(12, pointSpacing * 0.62));
+                    const vol = c.volume || 1000;
+                    const volH = Math.max(4, (vol / maxVolume) * 34);
+                    const volY = plotBottom - volH;
+                    const leftX = x - barW / 2;
+                    const isFocused = hoverIndex === idx;
+                    const capColor = c.isUp ? "#00ff9d" : "#fb7185";
+                    return (
+                      <g key={`vol-crystal-${idx}`} opacity={isFocused ? 1 : 0.82}>
+                        {/* Faceted Crystal Body */}
+                        <polygon
+                          points={`${leftX},${plotBottom} ${leftX},${volY + 1.5} ${x},${volY} ${leftX + barW},${volY + 1.5} ${leftX + barW},${plotBottom}`}
+                          fill={c.isUp ? "url(#volCrystalUp)" : "url(#volCrystalDown)"}
+                          stroke={isFocused ? capColor : "rgba(0, 245, 212, 0.18)"}
+                          strokeWidth={isFocused ? "0.9" : "0.45"}
+                        />
+                        {/* Internal Specular Crystal Facet Spine */}
+                        <line
+                          x1={x}
+                          y1={volY + 0.5}
+                          x2={x}
+                          y2={plotBottom}
+                          stroke="rgba(255, 255, 255, 0.18)"
+                          strokeWidth="0.6"
+                        />
+                        {/* Luminous Top Crystal Cap Highlight */}
+                        <line
+                          x1={leftX + 0.5}
+                          y1={volY + 1}
+                          x2={leftX + barW - 0.5}
+                          y2={volY + 1}
+                          stroke={capColor}
+                          strokeWidth={isFocused ? "2" : "1.3"}
+                          strokeOpacity={isFocused ? "1" : "0.85"}
+                        />
+                      </g>
+                    );
+                  })}
+                </g>
+
+                {/* X-Axis Time Ticks along bottom */}
+                <g>
+                  {timeTicks.map((tick, i) => (
+                    <g key={`time-tick-${i}`}>
+                      <line
+                        x1={tick.x}
+                        y1={plotBottom}
+                        x2={tick.x}
+                        y2={plotBottom + 4}
+                        stroke="rgba(0, 245, 212, 0.35)"
+                        strokeWidth="1"
+                      />
+                      <text
+                        x={tick.x}
+                        y={plotBottom + 16}
+                        textAnchor="middle"
+                        fill="rgba(165, 243, 252, 0.62)"
+                        fontSize="10"
+                        fontFamily="'JetBrains Mono', monospace"
+                        fontWeight="600"
+                      >
+                        {tick.label}
+                      </text>
                     </g>
+                  ))}
+                </g>
 
-                    {/* X-Axis Time Ticks along bottom (11px Inter, rgba(255,255,255,0.5)) */}
-                    <g>
-                      {timeTicks.map((tick, i) => (
-                        <text
-                          key={`time-tick-${i}`}
-                          x={tick.x}
-                          y={plotBottom + 16}
-                          textAnchor="middle"
-                          fill="rgba(255, 255, 255, 0.5)"
-                          fontSize="11"
-                          fontFamily="Inter, sans-serif"
-                          fontWeight="500"
-                        >
-                          {tick.label}
-                        </text>
-                      ))}
-                    </g>
+                {/* Benchmark Overlay Path */}
+                {showOverlay && benchmarkPathD && (
+                  <path
+                    d={benchmarkPathD}
+                    fill="none"
+                    stroke={activeBenchmark.color}
+                    strokeWidth="2.2"
+                    strokeDasharray="6 4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                )}
 
-                    {/* Benchmark Overlay Path */}
-                    {showOverlay && benchmarkPathD && (
-                      <path
-                        d={benchmarkPathD}
-                        fill="none"
-                        stroke={activeBenchmark.color}
-                        strokeWidth="2.5"
-                        strokeDasharray="6 4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                {/* 50-Day Simple Moving Average (SMA) Overlay Line */}
+                {showSMA && smoothedSmaPathD && (
+                  <g className="pointer-events-none">
+                    <path
+                      d={smoothedSmaPathD}
+                      fill="none"
+                      stroke={accentAmber}
+                      strokeWidth="1.5"
+                      opacity="0.85"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="transition-all duration-150 drop-shadow-[0_0_6px_rgba(245,158,11,0.55)]"
+                    />
+                    {hoverIndex !== null &&
+                      visibleSmaValues[hoverIndex] !== undefined && (
+                        <circle
+                          cx={
+                            (hoverIndex /
+                              Math.max(1, visibleSmaValues.length - 1)) *
+                            plotWidth
+                          }
+                          cy={
+                            plotBottom -
+                            ((visibleSmaValues[hoverIndex] - minVal) / valRange) *
+                              plotHeight
+                          }
+                          r="4"
+                          fill={accentAmber}
+                          stroke="#ffffff"
+                          strokeWidth="1.5"
+                        />
+                      )}
+                  </g>
+                )}
+
+                {/* Volume-Weighted Average Price (VWAP) Overlay Line */}
+                {showVWAP && smoothedVwapPathD && (
+                  <g className="pointer-events-none">
+                    <path
+                      d={smoothedVwapPathD}
+                      fill="none"
+                      stroke={accentViolet}
+                      strokeWidth="1.5"
+                      opacity="0.85"
+                      strokeDasharray="5 3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="transition-all duration-150 drop-shadow-[0_0_6px_rgba(168,85,247,0.65)]"
+                    />
+                    {hoverIndex !== null &&
+                      visibleVwapValues[hoverIndex] !== undefined && (
+                        <circle
+                          cx={
+                            (hoverIndex /
+                              Math.max(1, visibleVwapValues.length - 1)) *
+                            plotWidth
+                          }
+                          cy={
+                            plotBottom -
+                            ((visibleVwapValues[hoverIndex] - minVal) / valRange) *
+                              plotHeight
+                          }
+                          r="4"
+                          fill={accentViolet}
+                          stroke="#ffffff"
+                          strokeWidth="1.5"
+                        />
+                      )}
+                  </g>
+                )}
+
+                {/* ALIEN DUAL-LAYER GLOWING PRICE BEAM (Line Mode) */}
+                {chartMode === "line" && (
+                  <g>
+                    {/* Dotted Reference Baseline */}
+                    {stockBasePrice > 0 && (
+                      <line
+                        x1={0}
+                        y1={
+                          plotBottom -
+                          ((stockBasePrice - minVal) / valRange) * plotHeight
+                        }
+                        x2={plotWidth}
+                        y2={
+                          plotBottom -
+                          ((stockBasePrice - minVal) / valRange) * plotHeight
+                        }
+                        stroke="rgba(0, 245, 212, 0.2)"
+                        strokeDasharray="3 4"
+                        strokeWidth="1"
                       />
                     )}
 
-                    {/* 50-Day Simple Moving Average (SMA) Overlay Line (1.5px, smoothed, 80% opacity, same color) */}
-                    {showSMA && smoothedSmaPathD && (
-                      <g className="pointer-events-none">
-                        <path
-                          d={smoothedSmaPathD}
-                          fill="none"
-                          stroke="#f59e0b"
-                          strokeWidth="1.5"
-                          opacity="0.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="transition-all duration-150 drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]"
-                        />
-                        {/* Interactive Hover indicator dot on SMA Line */}
-                        {hoverIndex !== null &&
-                          visibleSmaValues[hoverIndex] !== undefined && (
-                            <circle
-                              cx={
-                                (hoverIndex /
-                                  Math.max(1, visibleSmaValues.length - 1)) *
-                                plotWidth
-                              }
-                              cy={
-                                plotBottom -
-                                ((visibleSmaValues[hoverIndex] - minVal) /
-                                  valRange) *
-                                  plotHeight
-                              }
-                              r="4.5"
-                              fill="#f59e0b"
-                              stroke="#ffffff"
-                              strokeWidth="2"
-                            />
-                          )}
-                      </g>
+                    {/* Holographic Gradient Energy Veil Under Beam */}
+                    {smoothedAreaD && (
+                      <path
+                        d={smoothedAreaD}
+                        fill={isPositive ? "url(#rhGradientUp)" : "url(#rhGradientDown)"}
+                        className="transition-all duration-200"
+                      />
                     )}
 
-                    {/* Volume-Weighted Average Price (VWAP) Overlay Line (1.5px, smoothed, 80% opacity, same color) */}
-                    {showVWAP && smoothedVwapPathD && (
-                      <g className="pointer-events-none">
-                        <path
-                          d={smoothedVwapPathD}
-                          fill="none"
-                          stroke="#c084fc"
-                          strokeWidth="1.5"
-                          opacity="0.8"
-                          strokeDasharray="5 3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="transition-all duration-150 drop-shadow-[0_0_6px_rgba(192,132,252,0.6)]"
-                        />
-                        {/* Interactive Hover indicator dot on VWAP Line */}
-                        {hoverIndex !== null &&
-                          visibleVwapValues[hoverIndex] !== undefined && (
-                            <circle
-                              cx={
-                                (hoverIndex /
-                                  Math.max(1, visibleVwapValues.length - 1)) *
-                                plotWidth
-                              }
-                              cy={
-                                plotBottom -
-                                ((visibleVwapValues[hoverIndex] - minVal) /
-                                  valRange) *
-                                  plotHeight
-                              }
-                              r="4.5"
-                              fill="#c084fc"
-                              stroke="#ffffff"
-                              strokeWidth="2"
-                            />
-                          )}
-                      </g>
+                    {/* LAYER 1: Wide Atmospheric Outer Plasma Aura */}
+                    {smoothedLineD && (
+                      <path
+                        d={smoothedLineD}
+                        fill="none"
+                        stroke={isPositive ? "url(#beamStrokeUp)" : "url(#beamStrokeDown)"}
+                        strokeWidth="6.5"
+                        strokeOpacity="0.42"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        filter="url(#plasmaBeamOuterGlow)"
+                      />
                     )}
 
-                    {/* ROBINHOOD SLEEK SVG LINE CHART */}
-                    {chartMode === "line" && (
-                      <g>
-                        {/* Dotted Reference Baseline */}
-                        {stockBasePrice > 0 && (
-                          <line
-                            x1={0}
-                            y1={
-                              plotBottom -
-                              ((stockBasePrice - minVal) / valRange) *
-                                plotHeight
-                            }
-                            x2={plotWidth}
-                            y2={
-                              plotBottom -
-                              ((stockBasePrice - minVal) / valRange) *
-                                plotHeight
-                            }
-                            stroke="rgba(255, 255, 255, 0.18)"
-                            strokeDasharray="3 3"
-                            strokeWidth="1"
-                          />
-                        )}
+                    {/* LAYER 2: Razor-Sharp High-Luminance Inner Plasma Core Beam */}
+                    {smoothedLineD && (
+                      <>
+                        <path
+                          d={smoothedLineD}
+                          fill="none"
+                          stroke={isPositive ? "url(#beamStrokeUp)" : "url(#beamStrokeDown)"}
+                          strokeWidth="2.3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          filter="url(#softLineGlow)"
+                        />
+                        <path
+                          d={smoothedLineD}
+                          fill="none"
+                          stroke={isPositive ? "#e8fff9" : "#ffe4ea"}
+                          strokeWidth="0.9"
+                          strokeOpacity="0.88"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </>
+                    )}
 
-                        {/* Smooth Gradient Fill Under Line */}
-                        {smoothedAreaD && (
-                          <path
-                            d={smoothedAreaD}
-                            fill={
-                              isPositive
-                                ? "url(#rhGradientUp)"
-                                : "url(#rhGradientDown)"
-                            }
-                            className="transition-all duration-200"
-                          />
-                        )}
-
-                        {/* Crisp Glowing Neon Price Line Path (2px, smoothed, soft glow) */}
-                        {smoothedLineD && (
-                          <path
-                            d={smoothedLineD}
+                    {/* Live Price End-Point Bioluminescent Node Beacon (when not scrubbing) */}
+                    {hoverIndex === null && candleOHLCData.length > 0 && (() => {
+                      const endY =
+                        plotBottom -
+                        ((candleOHLCData[candleOHLCData.length - 1].close - minVal) /
+                          valRange) *
+                          plotHeight;
+                      return (
+                        <g className="pointer-events-none">
+                          <circle
+                            cx={plotWidth}
+                            cy={endY}
+                            r="10"
                             fill="none"
-                            stroke={isPositive ? "#10b981" : "#ef4444"}
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            filter="url(#softLineGlow)"
-                          />
-                        )}
-
-                        {/* Live Price End-Point Pulse Marker (when not scrubbing) */}
-                        {hoverIndex === null && candleOHLCData.length > 0 && (
-                          <g className="pointer-events-none">
-                            <circle
-                              cx={plotWidth}
-                              cy={
-                                plotBottom -
-                                ((candleOHLCData[candleOHLCData.length - 1].close -
-                                  minVal) /
-                                  valRange) *
-                                  plotHeight
-                              }
-                              r="3.5"
-                              fill={isPositive ? "#00c805" : "#ff3b30"}
-                            />
-                            <circle
-                              cx={plotWidth}
-                              cy={
-                                plotBottom -
-                                ((candleOHLCData[candleOHLCData.length - 1].close -
-                                  minVal) /
-                                  valRange) *
-                                  plotHeight
-                              }
-                              r="7"
-                              fill="none"
-                              stroke={isPositive ? "#00c805" : "#ff3b30"}
-                              strokeWidth="1.2"
-                              strokeOpacity="0.4"
-                              className="animate-ping"
-                            />
-                          </g>
-                        )}
-                      </g>
-                    )}
-
-                    {/* TRADINGVIEW HIGH-TECH SVG CANDLESTICK CHART (6984) */}
-                    {chartMode === "candle" && (
-                      <g>
-                        {/* Candlesticks */}
-                        {candleOHLCData.map((c, idx) => {
-                          const x =
-                            (idx / Math.max(1, candleOHLCData.length - 1)) *
-                            plotWidth;
-                          const yOpen =
-                            plotBottom -
-                            ((c.open - minVal) / valRange) * plotHeight;
-                          const yClose =
-                            plotBottom -
-                            ((c.close - minVal) / valRange) * plotHeight;
-                          const yHigh =
-                            plotBottom -
-                            ((c.high - minVal) / valRange) * plotHeight;
-                          const yLow =
-                            plotBottom -
-                            ((c.low - minVal) / valRange) * plotHeight;
-
-                          const isUp = c.close >= c.open;
-                          const color = isUp ? "#10b981" : "#ef4444";
-
-                          const rectY = Math.min(yOpen, yClose);
-                          const rectHeight = Math.max(
-                            1.5,
-                            Math.abs(yOpen - yClose),
-                          );
-
-                          const pointSpacing =
-                            plotWidth / Math.max(1, candleOHLCData.length - 1);
-                          const barW = Math.max(1.5, pointSpacing * 0.7);
-
-                          return (
-                            <g key={`candle-${idx}`}>
-                              {/* Wick */}
-                              <line
-                                x1={x}
-                                y1={yHigh}
-                                x2={x}
-                                y2={yLow}
-                                stroke={color}
-                                strokeWidth={Math.max(1, barW * 0.2)}
-                              />
-                              {/* Body */}
-                              <rect
-                                x={x - barW / 2}
-                                y={rectY}
-                                width={barW}
-                                height={rectHeight}
-                                fill={color}
-                                stroke={color}
-                                strokeWidth={1}
-                                rx={barW > 3 ? 1 : 0}
-                              />
-                            </g>
-                          );
-                        })}
-
-                        {/* Live Current Price Horizontal Line */}
-                        {candleOHLCData.length > 0 && (
-                          <line
-                            x1={0}
-                            y1={
-                              plotBottom -
-                              ((candleOHLCData[candleOHLCData.length - 1].close -
-                                minVal) /
-                                valRange) *
-                                plotHeight
-                            }
-                            x2={plotWidth}
-                            y2={
-                              plotBottom -
-                              ((candleOHLCData[candleOHLCData.length - 1].close -
-                                minVal) /
-                                valRange) *
-                                plotHeight
-                            }
-                            stroke={
-                              candleOHLCData[candleOHLCData.length - 1].close >=
-                              candleOHLCData[candleOHLCData.length - 1].open
-                                ? "#10b981"
-                                : "#ef4444"
-                            }
-                            strokeDasharray="4 4"
+                            stroke={isPositive ? accentMint : "#fb7185"}
                             strokeWidth="1"
-                            opacity="0.5"
+                            strokeOpacity="0.45"
+                            strokeDasharray="3 2"
+                            className="xeno-reticle-orbit"
                           />
-                        )}
-                      </g>
-                    )}
+                          <circle
+                            cx={plotWidth}
+                            cy={endY}
+                            r="6.5"
+                            fill={isPositive ? "#00f5d4" : "#fb7185"}
+                            fillOpacity="0.28"
+                            className="animate-ping"
+                          />
+                          <circle
+                            cx={plotWidth}
+                            cy={endY}
+                            r="3.5"
+                            fill="#ffffff"
+                            stroke={isPositive ? accentMint : "#fb7185"}
+                            strokeWidth="1.6"
+                          />
+                        </g>
+                      );
+                    })()}
+                  </g>
+                )}
 
-                    {/* Interactive Scrubbing Columns (both modes) */}
-                    {candleOHLCData.map((_, idx) => {
+                {/* HEIKIN-ASHI CRYSTAL CANDLESTICK CHART (Candle Mode) */}
+                {chartMode === "candle" && (
+                  <g>
+                    {candleOHLCData.map((c, idx) => {
                       const x =
-                        (idx / Math.max(1, candleOHLCData.length - 1)) *
-                        plotWidth;
+                        (idx / Math.max(1, candleOHLCData.length - 1)) * plotWidth;
+                      const yOpen =
+                        plotBottom - ((c.open - minVal) / valRange) * plotHeight;
+                      const yClose =
+                        plotBottom - ((c.close - minVal) / valRange) * plotHeight;
+                      const yHigh =
+                        plotBottom - ((c.high - minVal) / valRange) * plotHeight;
+                      const yLow =
+                        plotBottom - ((c.low - minVal) / valRange) * plotHeight;
+
+                      const isUp = c.close >= c.open;
+                      const color = isUp ? "#00ff9d" : "#fb7185";
+                      const edgeColor = isUp ? "#00f5d4" : "#a855f7";
+
+                      const rectY = Math.min(yOpen, yClose);
+                      const rectHeight = Math.max(1.5, Math.abs(yOpen - yClose));
+
                       const pointSpacing =
                         plotWidth / Math.max(1, candleOHLCData.length - 1);
-                      const rectW = Math.max(4, pointSpacing);
+                      const barW = Math.max(1.8, pointSpacing * 0.68);
+
                       return (
-                        <rect
-                          key={`scrub-col-${idx}`}
-                          x={x - rectW / 2}
-                          y="0"
-                          width={rectW}
-                          height={plotBottom}
-                          fill="transparent"
-                          className="cursor-crosshair"
-                          onMouseEnter={() => setHoverIndex(idx)}
-                          onTouchStart={() => setHoverIndex(idx)}
-                        />
+                        <g key={`candle-${idx}`}>
+                          <line
+                            x1={x}
+                            y1={yHigh}
+                            x2={x}
+                            y2={yLow}
+                            stroke={edgeColor}
+                            strokeWidth={Math.max(1, barW * 0.2)}
+                          />
+                          <rect
+                            x={x - barW / 2}
+                            y={rectY}
+                            width={barW}
+                            height={rectHeight}
+                            fill={color}
+                            fillOpacity="0.88"
+                            stroke={edgeColor}
+                            strokeWidth={0.8}
+                            rx={barW > 3 ? 1 : 0}
+                          />
+                        </g>
                       );
                     })}
 
-                    {/* Live Current Price Scale Badge & Collision-Free Hover Price Badge */}
-                    {(() => {
-                      const MIN_BADGE_SEPARATION = 22;
-                      const clampY = (y: number, h: number) =>
-                        Math.max(4, Math.min(plotBottom - h - 2, y));
-
-                      const liveBadgeY = activeStock
-                        ? clampY(
-                            plotBottom -
-                              ((activeStock.price - minVal) / valRange) *
-                                plotHeight -
-                              9,
-                            18,
-                          )
-                        : 0;
-
-                      let hoverBadgeY =
-                        hoverIndex !== null && activeCandle
-                          ? clampY(
-                              plotBottom -
-                                ((activeCandle.close - minVal) / valRange) *
-                                  plotHeight -
-                                10,
-                              20,
-                            )
-                          : 0;
-
-                      if (
-                        activeStock &&
-                        hoverIndex !== null &&
-                        activeCandle &&
-                        Math.abs(hoverBadgeY - liveBadgeY) <
-                          MIN_BADGE_SEPARATION
-                      ) {
-                        const preferBelow = hoverBadgeY >= liveBadgeY;
-                        let candidate = preferBelow
-                          ? liveBadgeY + MIN_BADGE_SEPARATION
-                          : liveBadgeY - MIN_BADGE_SEPARATION;
-                        if (candidate < 4 || candidate > plotBottom - 22) {
-                          candidate = preferBelow
-                            ? liveBadgeY - MIN_BADGE_SEPARATION
-                            : liveBadgeY + MIN_BADGE_SEPARATION;
+                    {/* Live Current Price Horizontal Laser Rail */}
+                    {candleOHLCData.length > 0 && (
+                      <line
+                        x1={0}
+                        y1={
+                          plotBottom -
+                          ((candleOHLCData[candleOHLCData.length - 1].close - minVal) /
+                            valRange) *
+                            plotHeight
                         }
-                        hoverBadgeY = clampY(candidate, 20);
-                      }
+                        x2={plotWidth}
+                        y2={
+                          plotBottom -
+                          ((candleOHLCData[candleOHLCData.length - 1].close - minVal) /
+                            valRange) *
+                            plotHeight
+                        }
+                        stroke={
+                          candleOHLCData[candleOHLCData.length - 1].close >=
+                          candleOHLCData[candleOHLCData.length - 1].open
+                            ? "#00f5d4"
+                            : "#fb7185"
+                        }
+                        strokeDasharray="4 4"
+                        strokeWidth="1"
+                        opacity="0.55"
+                      />
+                    )}
+                  </g>
+                )}
 
-                      return (
-                        <>
-                          {activeStock && (
-                            <g transform={`translate(${plotWidth + 2}, ${liveBadgeY})`}>
-                              <rect
-                                x="0"
-                                y="0"
-                                width="58"
-                                height="18"
-                                rx="4"
-                                fill={isPositive ? "#00c805" : "#ff3b30"}
-                                className="shadow-md"
-                              />
-                              <text
-                                x="29"
-                                y="12"
-                                textAnchor="middle"
-                                fill="#ffffff"
-                                fontSize="10"
-                                fontFamily="monospace"
-                                fontWeight="bold"
-                              >
-                                ${activeStock.price.toFixed(2)}
-                              </text>
-                            </g>
-                          )}
+                {/* Interactive Scrubbing Columns (both modes) */}
+                {candleOHLCData.map((_, idx) => {
+                  const x =
+                    (idx / Math.max(1, candleOHLCData.length - 1)) * plotWidth;
+                  const pointSpacing =
+                    plotWidth / Math.max(1, candleOHLCData.length - 1);
+                  const rectW = Math.max(4, pointSpacing);
+                  return (
+                    <rect
+                      key={`scrub-col-${idx}`}
+                      x={x - rectW / 2}
+                      y="0"
+                      width={rectW}
+                      height={plotBottom}
+                      fill="transparent"
+                      className="cursor-crosshair"
+                      onMouseEnter={() => setHoverIndex(idx)}
+                      onTouchStart={() => setHoverIndex(idx)}
+                    />
+                  );
+                })}
 
-                          {/* DYNAMIC CROSSHAIR & AXIS MAGNET BADGES */}
-                          {hoverIndex !== null && activeCandle && (
-                            <g className="pointer-events-none">
-                              {/* Thin Vertical Crosshair Line */}
-                              <line
-                                x1={
-                                  (hoverIndex /
-                                    Math.max(1, candleOHLCData.length - 1)) *
-                                  plotWidth
-                                }
-                                y1="0"
-                                x2={
-                                  (hoverIndex /
-                                    Math.max(1, candleOHLCData.length - 1)) *
-                                  plotWidth
-                                }
-                                y2={plotBottom}
-                                stroke="rgba(255, 255, 255, 0.4)"
-                                strokeWidth="1"
-                                strokeDasharray="2 2"
-                              />
-                              {/* Horizontal Crosshair Line (in candle mode) */}
-                              {chartMode === "candle" && (
-                                <line
-                                  x1="0"
-                                  y1={
-                                    plotBottom -
-                                    ((activeCandle.close - minVal) / valRange) *
-                                      plotHeight
-                                  }
-                                  x2={plotWidth}
-                                  y2={
-                                    plotBottom -
-                                    ((activeCandle.close - minVal) / valRange) *
-                                      plotHeight
-                                  }
-                                  stroke="#38bdf8"
-                                  strokeWidth="1"
-                                  strokeDasharray="3 3"
-                                />
-                              )}
+                {/* Live Price Badge & Targeting-Reticle Crosshair HUD */}
+                {(() => {
+                  const MIN_BADGE_SEPARATION = 22;
+                  const clampY = (y: number, h: number) =>
+                    Math.max(4, Math.min(plotBottom - h - 2, y));
 
-                              {/* Glowing cursor dot on line in Line Mode */}
-                              {chartMode === "line" && (
-                                <g>
-                                  <circle
-                                    cx={
-                                      (hoverIndex /
-                                        Math.max(1, candleOHLCData.length - 1)) *
-                                      plotWidth
-                                    }
-                                    cy={
-                                      plotBottom -
-                                      ((activeCandle.close - minVal) / valRange) *
-                                        plotHeight
-                                    }
-                                    r="4"
-                                    fill={isPositive ? "#10b981" : "#ef4444"}
-                                    stroke="#ffffff"
-                                    strokeWidth="2"
-                                  />
-                                  <circle
-                                    cx={
-                                      (hoverIndex /
-                                        Math.max(1, candleOHLCData.length - 1)) *
-                                      plotWidth
-                                    }
-                                    cy={
-                                      plotBottom -
-                                      ((activeCandle.close - minVal) / valRange) *
-                                        plotHeight
-                                    }
-                                    r="8"
-                                    fill={isPositive ? "#10b981" : "#ef4444"}
-                                    opacity="0.35"
-                                    className="animate-ping"
-                                  />
-                                  <circle
-                                    cx={
-                                      (hoverIndex /
-                                        Math.max(1, candleOHLCData.length - 1)) *
-                                      plotWidth
-                                    }
-                                    cy={
-                                      plotBottom -
-                                      ((activeCandle.close - minVal) / valRange) *
-                                        plotHeight
-                                    }
-                                    r="10"
-                                    fill={isPositive ? "#10b981" : "#ef4444"}
-                                    opacity="0.25"
-                                    filter="url(#softLineGlow)"
-                                  />
-                                </g>
-                              )}
+                  const liveDisplayPrice =
+                    activeStock && activeStock.price > 0
+                      ? activeStock.price
+                      : candleOHLCData[candleOHLCData.length - 1]?.close || 0;
 
-                              {/* Right Y-Axis Collision-Protected Hover Price Badge */}
-                              <g transform={`translate(${plotWidth + 2}, ${hoverBadgeY})`}>
-                                <rect
-                                  x="0"
-                                  y="0"
-                                  width="58"
-                                  height="20"
-                                  rx="4"
-                                  fill="#061220"
-                                  stroke={
-                                    chartMode === "line"
-                                      ? isPositive
-                                        ? "#00f5d4"
-                                        : "#fb7185"
-                                      : "#38bdf8"
-                                  }
-                                  strokeWidth="1.5"
-                                />
-                                <text
-                                  x="29"
-                                  y="13"
-                                  textAnchor="middle"
-                                  fill="#ffffff"
-                                  fontSize="10"
-                                  fontFamily="monospace"
-                                  fontWeight="bold"
-                                >
-                                  ${activeCandle.close.toFixed(2)}
-                                </text>
-                              </g>
+                  const liveBadgeY = liveDisplayPrice > 0
+                    ? clampY(
+                        plotBottom -
+                          ((liveDisplayPrice - minVal) / valRange) * plotHeight -
+                          9,
+                        18,
+                      )
+                    : 0;
 
-                        {/* Bottom X-Axis Hover Timestamp Badge */}
-                        <g
-                          transform={`translate(${Math.max(25, Math.min(plotWidth - 35, (hoverIndex / Math.max(1, candleOHLCData.length - 1)) * plotWidth)) - 30}, 266)`}
-                        >
+                  const hoverX =
+                    hoverIndex !== null
+                      ? (hoverIndex / Math.max(1, candleOHLCData.length - 1)) *
+                        plotWidth
+                      : 0;
+                  const hoverY =
+                    hoverIndex !== null && activeCandle
+                      ? plotBottom -
+                        ((activeCandle.close - minVal) / valRange) * plotHeight
+                      : 0;
+
+                  let hoverBadgeY =
+                    hoverIndex !== null && activeCandle
+                      ? clampY(hoverY - 10, 20)
+                      : 0;
+
+                  if (
+                    liveDisplayPrice > 0 &&
+                    hoverIndex !== null &&
+                    activeCandle &&
+                    Math.abs(hoverBadgeY - liveBadgeY) < MIN_BADGE_SEPARATION
+                  ) {
+                    const preferBelow = hoverBadgeY >= liveBadgeY;
+                    let candidate = preferBelow
+                      ? liveBadgeY + MIN_BADGE_SEPARATION
+                      : liveBadgeY - MIN_BADGE_SEPARATION;
+                    if (candidate < 4 || candidate > plotBottom - 22) {
+                      candidate = preferBelow
+                        ? liveBadgeY - MIN_BADGE_SEPARATION
+                        : liveBadgeY + MIN_BADGE_SEPARATION;
+                    }
+                    hoverBadgeY = clampY(candidate, 20);
+                  }
+
+                  const reticleColor = isPositive ? "#00f5d4" : "#fb7185";
+
+                  return (
+                    <>
+                      {liveDisplayPrice > 0 && (
+                        <g transform={`translate(${plotWidth + 2}, ${liveBadgeY})`}>
                           <rect
                             x="0"
                             y="0"
                             width="60"
-                            height="14"
-                            rx="3"
-                            fill="#0f172a"
-                            stroke={
-                              chartMode === "line"
-                                ? isPositive
-                                  ? "#00c805"
-                                  : "#ff3b30"
-                                : "#38bdf8"
-                            }
-                            strokeWidth="1"
+                            height="18"
+                            rx="2"
+                            fill={isPositive ? "#00ff9d" : "#fb7185"}
                           />
                           <text
                             x="30"
-                            y="10"
+                            y="12.5"
                             textAnchor="middle"
-                            fill={
-                              chartMode === "line"
-                                ? isPositive
-                                  ? "#00c805"
-                                  : "#ff3b30"
-                                : "#38bdf8"
-                            }
-                            fontSize="8"
-                            fontFamily="monospace"
-                            fontWeight="bold"
+                            fill="#020608"
+                            fontSize="9.5"
+                            fontFamily="'JetBrains Mono', monospace"
+                            fontWeight="800"
                           >
-                            {activeCandle.time}
+                            ${liveDisplayPrice.toFixed(2)}
                           </text>
                         </g>
-                      </g>
-                    )}
-                        </>
-                      );
-                    })()}
+                      )}
+
+                      {/* ALIEN TARGETING-RETICLE CROSSHAIR HUD */}
+                      {hoverIndex !== null && activeCandle && (
+                        <g className="pointer-events-none">
+                          {/* Vertical Laser Crosshair Beam */}
+                          <line
+                            x1={hoverX}
+                            y1={plotTop}
+                            x2={hoverX}
+                            y2={plotBottom}
+                            stroke="rgba(0, 245, 212, 0.55)"
+                            strokeWidth="1"
+                            strokeDasharray="3 3"
+                          />
+                          {/* Horizontal Laser Crosshair Beam */}
+                          <line
+                            x1="0"
+                            y1={hoverY}
+                            x2={plotWidth}
+                            y2={hoverY}
+                            stroke="rgba(0, 229, 255, 0.45)"
+                            strokeWidth="1"
+                            strokeDasharray="3 3"
+                          />
+
+                          {/* Multi-Ring Alien Targeting-Reticle Centered on Active Node */}
+                          <g transform={`translate(${hoverX}, ${hoverY})`}>
+                            {/* Outer Rotating Segmented Orbital Lock Ring */}
+                            <circle
+                              r="15"
+                              fill="none"
+                              stroke={reticleColor}
+                              strokeOpacity="0.65"
+                              strokeWidth="1.15"
+                              strokeDasharray="5 4"
+                              className="xeno-reticle-orbit"
+                            />
+                            {/* Inner Calibration Ring */}
+                            <circle
+                              r="8.5"
+                              fill={reticleColor}
+                              fillOpacity="0.12"
+                              stroke={reticleColor}
+                              strokeOpacity="0.9"
+                              strokeWidth="1"
+                            />
+                            {/* 4 Cardinal Precision Targeting Ticks */}
+                            <line x1="-20" y1="0" x2="-11" y2="0" stroke="#00f5d4" strokeWidth="1.2" />
+                            <line x1="11" y1="0" x2="20" y2="0" stroke="#00f5d4" strokeWidth="1.2" />
+                            <line x1="0" y1="-20" x2="0" y2="-11" stroke="#00f5d4" strokeWidth="1.2" />
+                            <line x1="0" y1="11" x2="0" y2="20" stroke="#00f5d4" strokeWidth="1.2" />
+                            {/* Glowing Central Lock Core */}
+                            <circle
+                              r="3.2"
+                              fill="#ffffff"
+                              stroke={reticleColor}
+                              strokeWidth="1.8"
+                              filter="url(#softLineGlow)"
+                            />
+                          </g>
+
+                          {/* Right Y-Axis Collision-Protected Target Lock Price Badge */}
+                          <g transform={`translate(${plotWidth + 2}, ${hoverBadgeY})`}>
+                            <rect
+                              x="0"
+                              y="0"
+                              width="60"
+                              height="20"
+                              rx="2"
+                              fill="#04141d"
+                              stroke={reticleColor}
+                              strokeWidth="1.3"
+                            />
+                            <text
+                              x="30"
+                              y="13"
+                              textAnchor="middle"
+                              fill="#ffffff"
+                              fontSize="9.5"
+                              fontFamily="'JetBrains Mono', monospace"
+                              fontWeight="bold"
+                            >
+                              ${activeCandle.close.toFixed(2)}
+                            </text>
+                          </g>
+
+                          {/* Bottom X-Axis Target Lock Timestamp Badge */}
+                          <g
+                            transform={`translate(${Math.max(30, Math.min(plotWidth - 34, hoverX)) - 32}, ${plotBottom + 24})`}
+                          >
+                            <rect
+                              x="0"
+                              y="0"
+                              width="64"
+                              height="16"
+                              rx="2"
+                              fill="#04141d"
+                              stroke={reticleColor}
+                              strokeWidth="1"
+                            />
+                            <text
+                              x="32"
+                              y="11"
+                              textAnchor="middle"
+                              fill={reticleColor}
+                              fontSize="8.5"
+                              fontFamily="'JetBrains Mono', monospace"
+                              fontWeight="bold"
+                            >
+                              {activeCandle.time}
+                            </text>
+                          </g>
+                        </g>
+                      )}
+                    </>
+                  );
+                })()}
 
                     {/* Interactive User Trendline Overlay */}
                     {trendline && (
@@ -1618,10 +1674,12 @@ export const PriceChart = (props: StockDetailSubProps) => {
                       </g>
                     )}
                   </svg>
-                </div>
+                </>
+              )}
+            </div>
 
-                {/* Trendline Slope & Technical Analysis Display Panel */}
-                {trendline && trendlineMetrics && (
+            {/* Trendline Slope & Technical Analysis Display Panel */}
+            {!isQuotePending && trendline && trendlineMetrics && (
                   <div className="mt-3 p-3.5 rounded-xl bg-gradient-to-r from-neutral-950 via-yellow-950/20 to-neutral-950 border border-yellow-500/30 font-mono text-xs text-neutral-200 flex flex-wrap items-center justify-between gap-3 shadow-lg">
                     <div className="flex items-center gap-2 flex-wrap">
                       <div className="px-2.5 py-1 rounded-lg bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 flex items-center gap-1.5 font-extrabold text-[11px] uppercase tracking-wider">
@@ -1699,7 +1757,7 @@ export const PriceChart = (props: StockDetailSubProps) => {
                 )}
 
                 {/* Mini Timeline Viewport Slider when Zoomed In */}
-                {zoomLevel > 1.05 && (
+                {!isQuotePending && zoomLevel > 1.05 && (
                   <div className="mt-2.5 pt-2 border-t border-white/10">
                     <div className="flex items-center justify-between text-[10px] font-mono text-neutral-400 mb-1">
                       <span>Start</span>
@@ -1739,6 +1797,8 @@ export const PriceChart = (props: StockDetailSubProps) => {
               </div>
 
               {/* Relative Strength Index (RSI 14) Visual Gauge & Subchart Indicator */}
+              {!isQuotePending && (
+              <>
               <div className="liquid-glass-slab p-4 rounded-2xl border border-cyan-500/30 space-y-3 shadow-lg">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
@@ -2332,8 +2392,8 @@ export const PriceChart = (props: StockDetailSubProps) => {
                   </div>
                 </div>
               </div>
-
-              
+              </>
+              )}
     </>
   );
 };

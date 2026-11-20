@@ -710,6 +710,16 @@ export function App() {
               t.toLowerCase().includes("self-driving"),
           ),
       );
+    } else if (selectedCategory === "ai_infra") {
+      result = result.filter(
+        (s) =>
+          s.category === "ai_infra" ||
+          s.tags.some(
+            (t) =>
+              t.toLowerCase().includes("ai & tech") ||
+              t.toLowerCase().includes("frontier ai"),
+          ),
+      );
     } else if (selectedCategory === "tsunami" || selectedCategory === "all") {
       // Wholesale include all stocks in Super Sonic Tsunami and All Watchlist
     } else {
@@ -948,17 +958,32 @@ export function App() {
 
       if (!json) throw new Error(res.error || "Failed to fetch market watchlist");
       if (json && json.watchlist && Array.isArray(json.watchlist)) {
+        const initialBySymbol = new Map<string, StockTicker>();
+        INITIAL_STOCKS.forEach((initStock) => {
+          initialBySymbol.set(initStock.symbol.toUpperCase(), initStock);
+        });
+
         const uniqueMap = new Map<string, any>();
         json.watchlist.forEach((backendStock: any) => {
           if (!backendStock || !backendStock.symbol) return;
           const symKey = backendStock.symbol.toUpperCase();
           if (uniqueMap.has(symKey)) return;
 
-          const history1D = (backendStock.sparkline || []).map((price: number, i: number) => ({
-            time: new Date(Date.now() - ((backendStock.sparkline || []).length - 1 - i) * 60 * 60 * 1000).toISOString(),
-            price
-          }));
-          const fakeHistory = {
+          const initMeta = initialBySymbol.get(symKey);
+          const rawPrice = typeof backendStock.price === "number" && !isNaN(backendStock.price) ? backendStock.price : 0;
+          const hasLivePrice = rawPrice > 0 && !backendStock.quotePending;
+
+          const validSparkline: number[] = hasLivePrice && Array.isArray(backendStock.sparkline)
+            ? backendStock.sparkline.filter((p: any) => typeof p === "number" && !isNaN(p) && p > 0)
+            : [];
+
+          const history1D = validSparkline.length >= 2
+            ? validSparkline.map((price: number, i: number) => ({
+                time: new Date(Date.now() - (validSparkline.length - 1 - i) * 60 * 60 * 1000).toISOString(),
+                price
+              }))
+            : [];
+          const syncedHistory = {
              "1D": history1D,
              "1W": history1D,
              "1M": history1D,
@@ -969,15 +994,17 @@ export function App() {
           const volVal = backendStock.volume || 0;
           const avgVolVal = backendStock.avgVolume || volVal;
           const volRatio = avgVolVal > 0 && volVal > 0 ? (volVal / avgVolVal).toFixed(2) : "1.00";
-          const formattedVol = volVal >= 1_000_000_000 
+          const formattedVol = !hasLivePrice
+            ? "Pending"
+            : volVal >= 1_000_000_000 
             ? `${(volVal / 1_000_000_000).toFixed(2)}B`
             : volVal >= 1_000_000
             ? `${(volVal / 1_000_000).toFixed(1)}M`
             : volVal > 0
             ? `${(volVal / 1_000).toFixed(0)}K`
-            : "1.2x avg";
+            : "—";
 
-          let mktCapStr = backendStock.market_cap || "N/A";
+          let mktCapStr = backendStock.market_cap || (hasLivePrice ? (initMeta?.marketCap || "N/A") : "Pending");
           if (typeof mktCapStr === "number" || (!isNaN(Number(mktCapStr)) && Number(mktCapStr) > 0)) {
             const num = Number(mktCapStr);
             if (num >= 1e12) mktCapStr = `${(num / 1e12).toFixed(2)}T`;
@@ -986,13 +1013,20 @@ export function App() {
           }
 
           const lastUpdatedIso = backendStock.last_updated || json.updated_at || new Date().toISOString();
+          const mergedTags = Array.from(
+            new Set([
+              ...(initMeta?.tags || []),
+              ...(backendStock.sector ? [backendStock.sector] : [])
+            ])
+          );
 
           uniqueMap.set(symKey, {
             symbol: backendStock.symbol,
-            name: backendStock.name || backendStock.symbol,
-            price: backendStock.price,
-            change: backendStock.change ?? 0,
-            changePercent: backendStock.percent_change ?? 0,
+            name: backendStock.name || initMeta?.name || backendStock.symbol,
+            price: hasLivePrice ? rawPrice : 0,
+            change: hasLivePrice ? (backendStock.change ?? 0) : 0,
+            changePercent: hasLivePrice ? (backendStock.percent_change ?? 0) : 0,
+            quotePending: !hasLivePrice,
             category: backendStock.sector
               ? backendStock.sector.toLowerCase().includes("crypto") || backendStock.sector.toLowerCase().includes("index") || backendStock.sector.toLowerCase().includes("market")
                 ? "indexes"
@@ -1008,23 +1042,24 @@ export function App() {
                 ? "memory"
                 : backendStock.sector.toLowerCase().includes("energy") || backendStock.sector.toLowerCase().includes("power")
                 ? "energy"
-                : backendStock.sector.toLowerCase().includes("infra")
+                : backendStock.sector.toLowerCase().includes("infra") || backendStock.sector.toLowerCase().includes("ai & tech")
                 ? "ai_infra"
                 : backendStock.sector.toLowerCase().replace(/[^a-z0-9]/g, "_")
-              : "tsunami",
-            sparkline: backendStock.sparkline || [],
-            history: fakeHistory,
+              : (initMeta?.category || "tsunami"),
+            bloc: initMeta?.bloc || backendStock.bloc || "tsunami",
+            sparkline: validSparkline,
+            history: syncedHistory,
             marketCap: mktCapStr,
             peRatio: "N/A",
-            high52: backendStock.high52 ?? Number((backendStock.price * 1.15).toFixed(2)),
-            low52: backendStock.low52 ?? Number((backendStock.price * 0.85).toFixed(2)),
+            high52: hasLivePrice ? (backendStock.high52 ?? Number((rawPrice * 1.15).toFixed(2))) : 0,
+            low52: hasLivePrice ? (backendStock.low52 ?? Number((rawPrice * 0.85).toFixed(2))) : 0,
             volume: formattedVol,
             volumeNum: volVal,
             avgVolumeNum: avgVolVal,
             volumeVsAvgRatio: parseFloat(volRatio),
-            description: backendStock.analysis_summary || "",
-            tags: backendStock.sector ? [backendStock.sector] : [],
-            isPinned: backendStock.pinned,
+            description: backendStock.analysis_summary || initMeta?.description || "",
+            tags: mergedTags,
+            isPinned: backendStock.pinned ?? initMeta?.isPinned ?? false,
             theme: backendStock.theme || backendStock.cardColor || backendStock.color,
             cardColor: backendStock.cardColor || backendStock.theme || backendStock.color,
             color: backendStock.color || backendStock.theme || backendStock.cardColor,
@@ -1033,9 +1068,9 @@ export function App() {
             instHolders: backendStock.inst_holders,
             headlines: backendStock.headlines || [],
             news: backendStock.news || [],
-            signalScore: backendStock.signal?.signalScore ?? 75,
-            signalLabel: backendStock.signal?.signalLabel ?? "Bullish",
-            quantMetrics: backendStock.quant || null,
+            signalScore: hasLivePrice ? (backendStock.signal?.signalScore ?? 75) : undefined,
+            signalLabel: hasLivePrice ? (backendStock.signal?.signalLabel ?? "Bullish") : "Pending",
+            quantMetrics: hasLivePrice ? (backendStock.quant || null) : null,
             lastUpdatedIso
           });
         });
@@ -1258,12 +1293,16 @@ export function App() {
               itemCount={filteredStocks.length}
             />
 
-            {/* Single Unified Watchlist Sorting Bar */}
-            <div className="glass mx-2 sm:mx-4 px-3 py-2 rounded-xl flex items-center justify-between gap-2 overflow-x-auto no-scrollbar my-1.5">
-              <div className="flex items-center gap-1.5 shrink-0 text-xs font-mono font-black text-cyan-300">
-                <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="font-tech uppercase tracking-wider text-[11px] text-cyan-200">
-                  Sort:
+            {/* Single Unified Alien Telemetry Watchlist Sorting Bar */}
+            <div className="relative mx-2 sm:mx-4 px-3.5 py-2.5 bg-[#020608]/92 border border-[#00f5d4]/25 backdrop-blur-xl flex items-center justify-between gap-2 overflow-x-auto no-scrollbar my-2 shadow-[0_12px_32px_-12px_rgba(0,0,0,0.9),inset_0_1px_0_rgba(0,245,212,0.2)]">
+              <span className="pointer-events-none absolute top-0 left-0 w-2.5 h-2.5 border-t border-l border-[#00f5d4]/70" />
+              <span className="pointer-events-none absolute top-0 right-0 w-2.5 h-2.5 border-t border-r border-[#00f5d4]/70" />
+              <span className="pointer-events-none absolute bottom-0 left-0 w-2.5 h-2.5 border-b border-l border-[#00f5d4]/45" />
+              <span className="pointer-events-none absolute bottom-0 right-0 w-2.5 h-2.5 border-b border-r border-[#00f5d4]/45" />
+              <div className="flex items-center gap-1.5 shrink-0 text-xs font-mono font-black text-[#00f5d4]">
+                <SlidersHorizontal className="w-3.5 h-3.5 text-[#00f5d4]" />
+                <span className="font-alien-hud uppercase tracking-[0.14em] text-[10px] text-[#00f5d4]">
+                  MATRIX SORT
                 </span>
               </div>
 
@@ -1274,10 +1313,10 @@ export function App() {
                     triggerHaptic("selection");
                     setSortDirection(sortDirection === "desc" ? "asc" : "desc");
                   }}
-                  className="px-2.5 py-1 rounded-lg obsidian-pill-btn text-cyan-200 text-[10px] font-black font-mono flex items-center gap-1 cursor-pointer"
+                  className="xeno-cmd-btn px-2.5 py-1 text-[#00f5d4] text-[10px] font-black font-mono flex items-center gap-1 cursor-pointer"
                   title="Toggle Sort Direction (High-to-Low or Low-to-High)"
                 >
-                  <ArrowUpDown className="w-3 h-3 text-cyan-400" />
+                  <ArrowUpDown className="w-3 h-3 text-[#00f5d4]" />
                   <span>{sortDirection === "desc" ? "HIGH → LOW" : "LOW → HIGH"}</span>
                 </button>
 
@@ -1292,15 +1331,15 @@ export function App() {
                       setSortDirection("desc");
                     }
                   }}
-                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1.5 transition-all cursor-pointer ${
+                  className={`xeno-cmd-btn px-2.5 py-1 font-black text-[11px] font-mono flex items-center gap-1.5 transition-all cursor-pointer ${
                     sortField === "signal"
-                      ? "bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-300 text-slate-950 shadow-[0_0_16px_rgba(16,185,129,0.4)] border border-emerald-200 font-bold"
-                      : "obsidian-pill-btn text-emerald-300 border-emerald-500/35"
+                      ? "xeno-cmd-btn-active font-bold"
+                      : "text-[#00ff9d] border-[#00ff9d]/35"
                   }`}
                   title="Sort by Stock Bloc Quant Score (0-100 Rating)"
                 >
                   <Sparkles
-                    className={`w-3.5 h-3.5 ${sortField === "signal" ? "text-slate-950 fill-current" : "text-emerald-400 fill-emerald-400/30"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "signal" ? "text-slate-950 fill-current" : "text-[#00ff9d] fill-[#00ff9d]/30"}`}
                   />
                   <span>SB Score</span>
                 </button>
@@ -1315,15 +1354,15 @@ export function App() {
                       setSortField("marketCap");
                     }
                   }}
-                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
+                  className={`xeno-cmd-btn px-2.5 py-1 font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "marketCap"
-                      ? "obsidian-pill-btn obsidian-pill-btn-active font-bold"
-                      : "obsidian-pill-btn text-cyan-200"
+                      ? "xeno-cmd-btn-active font-bold"
+                      : "text-cyan-200"
                   }`}
                   title="Sort by Market Capitalization (High/Low)"
                 >
                   <DollarSign
-                    className={`w-3.5 h-3.5 ${sortField === "marketCap" ? "text-slate-950" : "text-cyan-400"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "marketCap" ? "text-slate-950" : "text-[#00e5ff]"}`}
                   />
                   <span>Market Cap</span>
                 </button>
@@ -1335,15 +1374,15 @@ export function App() {
                     setSortField("changePercent");
                     setSortDirection("desc");
                   }}
-                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
+                  className={`xeno-cmd-btn px-2.5 py-1 font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "changePercent" && sortDirection === "desc"
-                      ? "bg-emerald-400 text-slate-950 shadow-[0_0_14px_rgba(16,185,129,0.35)] border border-emerald-200 font-bold"
-                      : "obsidian-pill-btn text-emerald-300 border-emerald-500/30"
+                      ? "bg-[#00ff9d] text-slate-950 shadow-[0_0_16px_rgba(0,255,157,0.45)] border-[#a7f3d0] font-bold"
+                      : "text-[#00ff9d] border-[#00ff9d]/30"
                   }`}
                   title="Sort by Top Gainers (% Change High to Low)"
                 >
                   <TrendingUp
-                    className={`w-3.5 h-3.5 ${sortField === "changePercent" && sortDirection === "desc" ? "text-slate-950" : "text-emerald-400"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "changePercent" && sortDirection === "desc" ? "text-slate-950" : "text-[#00ff9d]"}`}
                   />
                   <span>Gainers</span>
                 </button>
@@ -1355,10 +1394,10 @@ export function App() {
                     setSortField("changePercent");
                     setSortDirection("asc");
                   }}
-                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
+                  className={`xeno-cmd-btn px-2.5 py-1 font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "changePercent" && sortDirection === "asc"
-                      ? "bg-rose-400 text-slate-950 shadow-[0_0_14px_rgba(244,63,94,0.35)] border border-rose-200 font-bold"
-                      : "obsidian-pill-btn text-rose-300 border-rose-500/30"
+                      ? "bg-rose-400 text-slate-950 shadow-[0_0_16px_rgba(244,63,94,0.4)] border-rose-200 font-bold"
+                      : "text-rose-300 border-rose-500/35"
                   }`}
                   title="Sort by Top Losers (% Change Low to High)"
                 >
@@ -1378,15 +1417,15 @@ export function App() {
                       setSortField("volume");
                     }
                   }}
-                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
+                  className={`xeno-cmd-btn px-2.5 py-1 font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "volume"
-                      ? "obsidian-pill-btn obsidian-pill-btn-active font-bold"
-                      : "obsidian-pill-btn text-cyan-200"
+                      ? "xeno-cmd-btn-active font-bold"
+                      : "text-cyan-200"
                   }`}
                   title="Sort by Trading Volume"
                 >
                   <BarChart3
-                    className={`w-3.5 h-3.5 ${sortField === "volume" ? "text-slate-950" : "text-cyan-400"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "volume" ? "text-slate-950" : "text-[#00e5ff]"}`}
                   />
                   <span>Volume</span>
                 </button>
@@ -1401,15 +1440,15 @@ export function App() {
                       setSortField("rsi");
                     }
                   }}
-                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
+                  className={`xeno-cmd-btn px-2.5 py-1 font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "rsi"
-                      ? "bg-purple-400 text-slate-950 shadow-[0_0_14px_rgba(168,85,247,0.35)] border border-purple-200 font-bold"
-                      : "obsidian-pill-btn text-purple-300 border-purple-500/30"
+                      ? "bg-[#a855f7] text-slate-950 shadow-[0_0_16px_rgba(168,85,247,0.45)] border-purple-200 font-bold"
+                      : "text-purple-300 border-[#a855f7]/35"
                   }`}
                   title="Sort by RSI Momentum"
                 >
                   <Activity
-                    className={`w-3.5 h-3.5 ${sortField === "rsi" ? "text-slate-950" : "text-purple-400"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "rsi" ? "text-slate-950" : "text-[#a855f7]"}`}
                   />
                   <span>RSI</span>
                 </button>
@@ -1424,15 +1463,15 @@ export function App() {
                       setSortField("volatility");
                     }
                   }}
-                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
+                  className={`xeno-cmd-btn px-2.5 py-1 font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "volatility"
-                      ? "bg-amber-400 text-slate-950 shadow-[0_0_14px_rgba(245,158,11,0.35)] border border-amber-200 font-bold"
-                      : "obsidian-pill-btn text-amber-300 border-amber-500/30"
+                      ? "bg-[#f59e0b] text-slate-950 shadow-[0_0_16px_rgba(245,158,11,0.45)] border-amber-200 font-bold"
+                      : "text-amber-300 border-[#f59e0b]/35"
                   }`}
                   title="Sort by Volatility"
                 >
                   <Zap
-                    className={`w-3.5 h-3.5 ${sortField === "volatility" ? "text-slate-950" : "text-amber-400"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "volatility" ? "text-slate-950" : "text-[#f59e0b]"}`}
                   />
                   <span>Volatility</span>
                 </button>
@@ -1447,15 +1486,15 @@ export function App() {
                       setSortField("price");
                     }
                   }}
-                  className={`px-2.5 py-1 rounded-lg font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
+                  className={`xeno-cmd-btn px-2.5 py-1 font-black text-[11px] font-mono flex items-center gap-1 transition-all cursor-pointer ${
                     sortField === "price"
-                      ? "obsidian-pill-btn obsidian-pill-btn-active font-bold"
-                      : "obsidian-pill-btn text-cyan-200"
+                      ? "xeno-cmd-btn-active font-bold"
+                      : "text-cyan-200"
                   }`}
                   title="Sort by Share Price"
                 >
                   <DollarSign
-                    className={`w-3.5 h-3.5 ${sortField === "price" ? "text-slate-950" : "text-cyan-400"}`}
+                    className={`w-3.5 h-3.5 ${sortField === "price" ? "text-slate-950" : "text-[#00e5ff]"}`}
                   />
                   <span>Price</span>
                 </button>
@@ -1464,7 +1503,7 @@ export function App() {
                 <button
                   onClick={handleExportWatchlistCsv}
                   data-testid="export-watchlist-csv"
-                  className="px-2.5 py-1 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-[11px] font-mono flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
+                  className="xeno-cmd-btn px-2.5 py-1 bg-[#00ff9d]/90 hover:bg-[#00ff9d] text-slate-950 font-black text-[11px] font-mono flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-[0_0_16px_rgba(0,255,157,0.3)] border-[#a7f3d0]"
                   title="Export Watchlist to CSV File"
                 >
                   <Download className="w-3.5 h-3.5 text-slate-950" />
@@ -1473,9 +1512,9 @@ export function App() {
               </div>
             </div>
 
-            {/* Ticker List Container */}
-            <div className="glass w-full mt-1.5 relative rounded-2xl overflow-hidden min-h-[140px] alien-grid-subtle p-1.5 sm:p-2 transition-all duration-300">
-              <div className="relative z-10 w-full">
+            {/* Alien Refractive Watchlist Chamber Container */}
+            <div className="relative w-full mt-1.5 bg-[#020608]/95 border border-[#00f5d4]/20 overflow-hidden min-h-[140px] alien-grid-subtle p-2 sm:p-3 transition-all duration-300 shadow-[inset_0_0_40px_rgba(0,245,212,0.04)]">
+              <div className="relative z-10 w-full space-y-2">
 
               <AnimatePresence mode="popLayout">
                 {filteredStocks.length > 0 ? (

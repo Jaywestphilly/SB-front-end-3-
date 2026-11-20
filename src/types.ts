@@ -46,6 +46,7 @@ export interface StockTicker {
   avgVolumeNum?: number;
   volumeVsAvgRatio?: number;
   lastUpdatedIso?: string;
+  quotePending?: boolean;
   theme?: string;
   cardColor?: string;
   color?: string;
